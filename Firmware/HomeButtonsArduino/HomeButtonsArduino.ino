@@ -13,6 +13,12 @@
 #define BTN3_PIN 4
 #define BTN4_PIN 6
 
+#define SDA 10
+#define SCL 11
+#define VBAT_ADC 14
+#define CHARGER_STDBY 12
+#define BOOST_EN 13
+
 // ------ wakeup source bitmask ------
 #define BTN_BITMASK 0x56 // gpio 1, 2, 4, 6
 
