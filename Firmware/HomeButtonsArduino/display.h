@@ -3,9 +3,11 @@
 
 #include <Fonts/FreeSansBold24pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
 #include <Fonts/FreeSansBold12pt7b.h>
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeMono9pt7b.h>
 
 #include <qrcode.h>
 
@@ -17,15 +19,19 @@ namespace eink
 
   const uint16_t W = WIDTH / 2;
 
-  const uint16_t H1 = HEIGHT/8;
-  const uint16_t H2 = HEIGHT/8 + HEIGHT/4;
-  const uint16_t H3 = HEIGHT/8 + 2*HEIGHT/4;
-  const uint16_t H4 = HEIGHT/8 + 3*HEIGHT/4;
+  const uint16_t H1 = round(HEIGHT/12.);
+  const uint16_t H2 = round(HEIGHT/12. + HEIGHT/6.);
+  const uint16_t H3 = round(HEIGHT/12. + 2*HEIGHT/6.);
+  const uint16_t H4 = round(HEIGHT/12. + 3*HEIGHT/6.);
+  const uint16_t H5 = round(HEIGHT/12. + 4*HEIGHT/6.);
+  const uint16_t H6 = round(HEIGHT/12. + 5*HEIGHT/6.);
 
   const uint16_t num_fonts = 4;
   const GFXfont* fonts[] = {&FreeSansBold24pt7b, &FreeSansBold18pt7b, &FreeSansBold12pt7b, &FreeSansBold9pt7b};
-  const uint16_t num_buttons = 4;
-  const uint16_t heights[] = {H1, H2, H3, H4};
+  const uint16_t num_buttons = 6;
+  const uint16_t heights[] = {H1, H2, H3, H4, H5, H6};
+
+  const uint16_t h_padding = 5;
 
   void hibernate() {
     display.hibernate();
@@ -72,11 +78,14 @@ namespace eink
   }
 
   void display_buttons(const char* button_1_text,
-                    const char* button_2_text,
-                    const char* button_3_text,
-                    const char* button_4_text) {
+                        const char* button_2_text,
+                        const char* button_3_text,
+                        const char* button_4_text,
+                        const char* button_5_text,
+                        const char* button_6_text) {
 
-    const char* texts[] = {button_1_text, button_2_text, button_3_text, button_4_text};
+    const char* texts[] = {button_1_text, button_2_text, button_3_text,
+                           button_4_text, button_5_text, button_6_text};
 
     display.setRotation(0);
     display.setTextColor(GxEPD_BLACK);
@@ -86,23 +95,23 @@ namespace eink
     display.firstPage();
     do {
       display.fillScreen(GxEPD_WHITE);
+      display.setFont(&FreeSansBold18pt7b);
       
-      display.drawFastHLine(0, HEIGHT/4, WIDTH, GxEPD_BLACK);
-      display.drawFastHLine(0, 2*HEIGHT/4, WIDTH, GxEPD_BLACK);
-      display.drawFastHLine(0, 3*HEIGHT/4, WIDTH, GxEPD_BLACK);
-    
       int16_t x, y;
       uint16_t w, h;
       
       // Loop through buttons
       for (uint16_t i=0; i<num_buttons; i++) {
-        // Select smaller font if text width greater than display width
-        for (uint16_t j=0; j<num_fonts; j++) {
-          display.setFont(fonts[j]);
-          display.getTextBounds(texts[i], 0, 0, &x, &y, &w, &h);
-          if (w <= WIDTH) break;
+        display.getTextBounds(texts[i], 0, 0, &x, &y, &w, &h);
+        int16_t w_pos, h_pos;
+        if (i % 2 == 0) {
+          w_pos = -x + h_padding;
         }
-        display.setCursor(W - w/2, heights[i]+h/2);
+        else {
+          w_pos = WIDTH - w - x - h_padding;
+        }
+        h_pos = heights[i] - y - h/2;
+        display.setCursor(w_pos, h_pos);
         display.print(texts[i]);
       }
     }
@@ -376,6 +385,68 @@ namespace eink
       display.getTextBounds("OK", 0, 0, &x, &y, &w, &h);
       display.setCursor(WIDTH/2 - w/2, HEIGHT/2 - h/2);
       display.print("OK");
+    }
+    while (display.nextPage());
+  }
+
+  void display_please_recharge_screen() {
+    display.setRotation(0);
+    display.setTextColor(GxEPD_BLACK);
+    display.setTextWrap(true);
+    display.setFont(&FreeSansBold9pt7b);
+    display.setPartialWindow(0, 0, display.width(), display.height());
+
+    display.firstPage();
+    do {
+      display.setCursor(0, 0);
+      display.fillScreen(GxEPD_WHITE);
+
+      int16_t x, y;
+      uint16_t w, h;
+      display.getTextBounds("PLEASE", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 90);
+      display.print("PLEASE");
+
+      display.getTextBounds("RECHARGE", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 120);
+      display.print("RECHARGE");
+
+      display.getTextBounds("BATTERY", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 150);
+      display.print("BATTERY");
+    }
+    while (display.nextPage());
+  }
+
+  void display_welcome_screen(const char * uid) {
+    display.setRotation(0);
+    display.setTextColor(GxEPD_BLACK);
+    display.setTextWrap(false);
+    
+
+    display.firstPage();
+    do {
+      display.setCursor(0, 0);
+      display.fillScreen(GxEPD_WHITE);
+
+      int16_t x, y;
+      uint16_t w, h;
+      display.setFont(&FreeSans18pt7b);
+      display.getTextBounds("Home", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 60);
+      display.print("Home");
+      display.getTextBounds("Buttons", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2 - 3, 100);
+      display.print("Buttons");
+
+      display.setTextWrap(true);
+      display.setFont(&FreeSansBold9pt7b);
+      display.setCursor(0, 170);
+      display.print("Please\ncomplete\nsetup");
+
+      display.setFont(&FreeMono9pt7b);
+      display.setCursor(0, 275);
+      display.print(uid);
     }
     while (display.nextPage());
   }

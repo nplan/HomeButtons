@@ -3,5 +3,6 @@
     "board": "esp32:esp32:esp32s2",
     "sketch": "HomeButtonsArduino.ino",
     "port": "/dev/tty.usbmodem01",
-    "output": "../build"
+    "output": "../build",
+    "intelliSenseGen": "disable"
 }
