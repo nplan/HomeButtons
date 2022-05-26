@@ -61,10 +61,10 @@ const uint32_t TIMER_SLEEP_USEC = 600000000L;
 
 // ------ constants ------
 const char DEVICE_MODEL[] = "HomeButtons v0.1";
-const char SW_VERSION[] = "v0.2.0";
+const char SW_VERSION[] = "v0.2.1";
 const char MANUFACTURER[] = "Planinsek Industries";
-const char SERIAL_NUMBER[] = "0002";
-const char RANDOM_ID[] = "9DVHG6";
+const char SERIAL_NUMBER[] = "0000";
+const char RANDOM_ID[] = "000000";
 
 // ------ defaults ------
 const char DEVICE_NAME[] = "Home Buttons 001";
@@ -220,6 +220,7 @@ void setup() {
 
   // ------ read preferences ------
   read_preferences();
+  save_factory_preferences(); // added for future compatibility
 
   // ------ init display ------
   display.init();
@@ -620,7 +621,12 @@ bool connect_mqtt() {
   client.setBufferSize(2048);
   mqtt_start_time = millis();
   while(!client.connected()) {
-    client.connect(client_id.c_str());
+    if (mqtt_user.length() > 0 && mqtt_password.length() > 0) {
+      client.connect(client_id.c_str(), mqtt_user.c_str(), mqtt_password.c_str());
+    }
+    else {
+      client.connect(client_id.c_str());
+    }
     delay(50);
     if(millis() - mqtt_start_time > MQTT_TIMEOUT) {
       return false;
