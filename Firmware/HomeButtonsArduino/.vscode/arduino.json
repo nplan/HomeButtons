@@ -4,5 +4,5 @@
     "sketch": "HomeButtonsArduino.ino",
     "port": "/dev/tty.usbmodem01",
     "output": "../build",
-    "intelliSenseGen": "disable"
+    "intelliSenseGen": "enable"
 }

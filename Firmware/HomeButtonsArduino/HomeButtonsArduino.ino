@@ -85,11 +85,13 @@ const uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 const uint32_t WIFI_TIMEOUT = 10000L;
 const uint32_t MQTT_TIMEOUT = 10000L;
 const uint32_t SHORT_PRESS_TIME = 100;
+const uint32_t MEDIUM_PRESS_TIME = 2000L;
 const uint32_t LONG_PRESS_TIME = 10000L;
 const uint32_t EXTRA_LONG_PRESS_TIME = 20000L;
 const uint32_t ULTRA_LONG_PRESS_TIME = 30000L;
 const uint32_t CONFIG_TIMEOUT = 300; //s
 const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000;
+const uint32_t INFO_SCREEN_DISP_TIME = 20000L;
 
 const char WIFI_MANAGER_TITLE[] = "Home Buttons";
 const char AP_PASSWORD[] = "password123";
@@ -135,6 +137,7 @@ String button_6_text;
 // ------ global variables ------
 uint32_t wifi_start_time = 0;
 uint32_t mqtt_start_time = 0;
+uint32_t info_screen_start_time = 0;
 
 WiFiManager wifi_manager;
 WiFiClient wifi_client;
@@ -161,7 +164,7 @@ WiFiManagerParameter btn4_txt_param("btn4_txt", "BTN4 Text", "", 20);
 WiFiManagerParameter btn5_txt_param("btn5_txt", "BTN5 Text", "", 20);
 WiFiManagerParameter btn6_txt_param("btn6_txt", "BTN6 Text", "", 20);
 
-enum BootReason {NO_REASON, TMR, RST, BTN, BTN_LONG, BTN_EXTRA_LONG, BTN_ULTRA_LONG};
+enum BootReason {NO_REASON, TMR, RST, BTN, BTN_MEDIUM, BTN_LONG, BTN_EXTRA_LONG, BTN_ULTRA_LONG};
 BootReason boot_reason = NO_REASON;
 enum ControlFlow {NO_FLOW, WIFI_SETUP, SETUP, RESET, BTN_PRESS, FAC_RESET, TIMER};
 ControlFlow control_flow = NO_FLOW;
@@ -256,22 +259,40 @@ void setup() {
             boot_reason = BTN;
             ctrl = -1;
           }
-          else if (millis() - btn_press_time > LONG_PRESS_TIME) {
+          else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
+            eink::display_info_screen(temperature_meas, humidity_meas, batt_volt2percent((int)batt_volt));
+            info_screen_start_time = millis();
             ctrl = 1;
-            eink::display_string("Release\nfor\nSETUP\n\nKeep holding\nfor\nWiFi SETUP");
           }
           break;
         case 1:
+          if (!digitalRead(wakeup_pin)) {
+            delay(100); // debounce
+            ctrl = 2;
+          }
+          else if (millis() - btn_press_time > LONG_PRESS_TIME) {
+            eink::display_string("Release\nfor\nSETUP\n\nKeep holding\nfor\nWiFi SETUP");
+            ctrl = 3;
+          }
+          break;
+        case 2: // show info screen until timeout or btn press
+          if (digitalReadAny() || millis() - info_screen_start_time > INFO_SCREEN_DISP_TIME) {
+            boot_reason = BTN_MEDIUM;
+            ctrl = -1;
+            display_buttons();
+          }
+          break;
+        case 3:
           if (!digitalRead(wakeup_pin)) {
             boot_reason = BTN_LONG;
             ctrl = -1;
           }
           else if (millis() - btn_press_time > EXTRA_LONG_PRESS_TIME) {
-            ctrl = 2;
+            ctrl = 4;
             eink::display_string("Release\nfor\nWiFi SETUP\n\nKeep holding\nfor\nFACTORY\nRESET");
           }
           break;
-        case 2:
+        case 4:
           if (!digitalRead(wakeup_pin)) {
             boot_reason = BTN_EXTRA_LONG;
             ctrl = -1;
@@ -312,6 +333,7 @@ void setup() {
       else if (!setup_done) control_flow = SETUP;
       else control_flow = BTN_PRESS;
       break;
+    case BTN_MEDIUM: control_flow = NO_FLOW; break;
     case BTN_LONG:
       if (!wifi_done) control_flow = WIFI_SETUP;
       else control_flow = SETUP;

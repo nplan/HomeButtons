@@ -230,7 +230,7 @@ namespace eink
       display.print("http://");
       display.setCursor(0, 260);
       display.print(ip.c_str());
-      
+
     }
     while (display.nextPage());
   }
@@ -448,6 +448,63 @@ namespace eink
       display.setFont(&FreeMono9pt7b);
       display.setCursor(0, 275);
       display.print(uid);
+    }
+    while (display.nextPage());
+  }
+
+  void display_info_screen(float temp, float humid, uint8_t batt) {
+    display.setRotation(0);
+    display.setTextColor(GxEPD_BLACK);
+    display.setTextWrap(false);
+    
+    display.firstPage();
+    do {
+      display.setCursor(0, 0);
+      display.fillScreen(GxEPD_WHITE);
+
+      int16_t x, y;
+      uint16_t w, h;
+      String text;
+
+      text = "-- T --";
+      text = "- Temp -";
+      display.setFont(&FreeMono9pt7b);
+      display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 30);
+      display.print(text);
+
+      text = String(temp, 1) + String(" C");
+      display.setFont(&FreeSansBold18pt7b);
+      display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2 - 2, 70);
+      display.print(text);
+
+      text = "-- H --";
+      text = "- Humd -";
+      display.setFont(&FreeMono9pt7b);
+      display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 129);
+      display.print(text);
+
+      text = String(humid, 0) + String(" %");
+      display.setFont(&FreeSansBold18pt7b);
+      display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2 - 2, 169);
+      display.print(text);
+
+      text = "-- B --";
+      text = "- Batt -";
+      display.setFont(&FreeMono9pt7b);
+      display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 228);
+      display.print(text);
+
+      text = String(batt) + String(" %");
+      display.setFont(&FreeSansBold18pt7b);
+      display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2 - 2, 268);
+      display.print(text);
+
     }
     while (display.nextPage());
   }
