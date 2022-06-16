@@ -9,7 +9,7 @@
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeMono9pt7b.h>
 
-#include <qrcode.h>
+#include <qrcode_lib.h>
 
 namespace eink
 {
@@ -153,28 +153,28 @@ namespace eink
           }
         }
       }
-    display.setFont(&FreeSansBold9pt7b);
-    display.getTextBounds("------ or ------", 0, 0, &x, &y, &w, &h);
-    display.setCursor(WIDTH/2 - w/2, 153);
-    display.print("------ or ------");
+      display.setFont(&FreeSansBold9pt7b);
+      display.getTextBounds("------ or ------", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 153);
+      display.print("------ or ------");
 
-    display.setFont(&FreeSans9pt7b);
-    display.getTextBounds("Connect to:", 0, 0, &x, &y, &w, &h);
-    display.setCursor(WIDTH/2 - w/2, 190);
-    display.print("Connect to:");
+      display.setFont(&FreeSans9pt7b);
+      display.getTextBounds("Connect to:", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 190);
+      display.print("Connect to:");
 
-    display.setCursor(0, 220);
-    display.print("WiFi:");
-    display.setFont(&FreeSansBold9pt7b);
-    display.setCursor(0, 235);
-    display.print(ssid.c_str());
+      display.setCursor(0, 220);
+      display.print("WiFi:");
+      display.setFont(&FreeSansBold9pt7b);
+      display.setCursor(0, 235);
+      display.print(ssid.c_str());
 
-    display.setFont(&FreeSans9pt7b);
-    display.setCursor(0, 260);
-    display.print("Password:");
-    display.setFont(&FreeSansBold9pt7b);
-    display.setCursor(0, 275);
-    display.print(password.c_str());
+      display.setFont(&FreeSans9pt7b);
+      display.setCursor(0, 260);
+      display.print("Password:");
+      display.setFont(&FreeSansBold9pt7b);
+      display.setCursor(0, 275);
+      display.print(password.c_str());
 
     }
     while (display.nextPage());
@@ -215,22 +215,22 @@ namespace eink
           }
         }
       }
-    display.setFont(&FreeSansBold9pt7b);
-    display.getTextBounds("------ or ------", 0, 0, &x, &y, &w, &h);
-    display.setCursor(WIDTH/2 - w/2, 153);
-    display.print("------ or ------");
+      display.setFont(&FreeSansBold9pt7b);
+      display.getTextBounds("------ or ------", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 153);
+      display.print("------ or ------");
 
-    display.setFont(&FreeSans9pt7b);
-    display.getTextBounds("Go to:", 0, 0, &x, &y, &w, &h);
-    display.setCursor(WIDTH/2 - w/2, 200);
-    display.print("Go to:");
+      display.setFont(&FreeSans9pt7b);
+      display.getTextBounds("Go to:", 0, 0, &x, &y, &w, &h);
+      display.setCursor(WIDTH/2 - w/2, 200);
+      display.print("Go to:");
 
-    display.setFont(&FreeSansBold9pt7b);
-    display.setCursor(0, 240);
-    display.print("http://");
-    display.setCursor(0, 260);
-    display.print(ip.c_str());
-
+      display.setFont(&FreeSansBold9pt7b);
+      display.setCursor(0, 240);
+      display.print("http://");
+      display.setCursor(0, 260);
+      display.print(ip.c_str());
+      
     }
     while (display.nextPage());
   }

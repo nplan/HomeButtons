@@ -22,14 +22,17 @@
 #define LED4_PIN 37
 #define LED5_PIN 38
 #define LED6_PIN 45
-#define LED7_PIN 33
-#define LED8_PIN 21
 
 #define SDA 10
 #define SCL 11
 #define VBAT_ADC 14
 #define CHARGER_STDBY 12
 #define BOOST_EN 13
+
+#define EINK_CS 5
+#define EINK_DC 8
+#define EINK_RST 9
+#define EINK_BUSY 7
 
 // ------ LED analog parameters ------
 #define LED1_CH 0
@@ -38,8 +41,7 @@
 #define LED4_CH 3
 #define LED5_CH 4
 #define LED6_CH 5
-#define LED7_CH 6
-#define LED8_CH 7
+
 
 #define LED_RES 8
 #define LED_FREQ 1000
@@ -61,7 +63,7 @@ const uint32_t TIMER_SLEEP_USEC = 600000000L;
 
 // ------ constants ------
 const char DEVICE_MODEL[] = "HomeButtons v0.1";
-const char SW_VERSION[] = "v0.2.1";
+const char SW_VERSION[] = "v0.2.2";
 const char MANUFACTURER[] = "Planinsek Industries";
 const char SERIAL_NUMBER[] = "0000";
 const char RANDOM_ID[] = "000000";
@@ -171,15 +173,6 @@ int16_t wakeup_pin = -1;
 
 void setup() {
   // ------ hardware config ------
-  pinMode(LED1_PIN, OUTPUT);
-  pinMode(LED2_PIN, OUTPUT);
-  pinMode(LED3_PIN, OUTPUT);
-  pinMode(LED4_PIN, OUTPUT);
-  pinMode(LED5_PIN, OUTPUT);
-  pinMode(LED6_PIN, OUTPUT);
-  pinMode(LED7_PIN, OUTPUT);
-  pinMode(LED8_PIN, OUTPUT);
-
   pinMode(BTN1_PIN, INPUT);
   pinMode(BTN2_PIN, INPUT);
   pinMode(BTN3_PIN, INPUT);
@@ -187,29 +180,26 @@ void setup() {
   pinMode(BTN5_PIN, INPUT);
   pinMode(BTN6_PIN, INPUT);
 
-  ledcAttachPin(LED1_PIN, LED1_CH);
+  // ------ init display ------
+  display.init(); // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+
   ledcSetup(LED1_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED1_PIN, LED1_CH);
 
-  ledcAttachPin(LED2_PIN, LED2_CH);
   ledcSetup(LED2_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED2_PIN, LED2_CH);
 
-  ledcAttachPin(LED3_PIN, LED3_CH);
   ledcSetup(LED3_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED3_PIN, LED3_CH);
 
-  ledcAttachPin(LED4_PIN, LED4_CH);
   ledcSetup(LED4_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED4_PIN, LED4_CH);
 
-  ledcAttachPin(LED5_PIN, LED5_CH);
   ledcSetup(LED5_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED5_PIN, LED5_CH);
 
-  ledcAttachPin(LED6_PIN, LED6_CH);
   ledcSetup(LED6_CH, LED_FREQ, LED_RES);
-
-  ledcAttachPin(LED7_PIN, LED7_CH);
-  ledcSetup(LED7_CH, LED_FREQ, LED_RES);
-
-  ledcAttachPin(LED8_PIN, LED8_CH);
-  ledcSetup(LED8_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED6_PIN, LED6_CH);
 
   // battery voltage adc
   analogReadResolution(BAT_RES_BITS);
@@ -222,9 +212,6 @@ void setup() {
   read_preferences();
   save_factory_preferences(); // added for future compatibility
 
-  // ------ init display ------
-  display.init();
-
   // ------ check battery voltage first thing ------
   float batt_volt = read_battery_voltage();
   uint8_t batt_pct = batt_volt2percent(batt_volt);
@@ -234,7 +221,7 @@ void setup() {
       display_buttons();
     }
     else {
-      start_esp_sleep();
+      go_to_sleep();
     }
   }
   else {
@@ -242,7 +229,7 @@ void setup() {
       eink::display_turned_off_please_recharge_screen();
       low_batt_mode = true;
       save_preferences();
-      start_esp_sleep();
+      go_to_sleep();
     }
   }
 
@@ -553,7 +540,7 @@ void setup() {
     }
   }
   save_preferences();
-  eink::hibernate();
+  disconnect_mqtt();
   go_to_sleep();
 }
 
@@ -756,7 +743,6 @@ void start_esp_sleep() {
 void go_to_sleep() {
   eink::hibernate();
   set_all_leds(0);
-  disconnect_mqtt();
   start_esp_sleep();
 }
 
@@ -953,8 +939,6 @@ void set_all_leds(uint8_t brightness) {
   set_led(LED4_CH, brightness);
   set_led(LED5_CH, brightness);
   set_led(LED6_CH, brightness);
-  set_led(LED7_CH, brightness);
-  set_led(LED8_CH, brightness);
 }
 
 float read_battery_voltage() {
