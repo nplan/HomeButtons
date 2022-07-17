@@ -260,7 +260,7 @@ void setup() {
             ctrl = -1;
           }
           else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
-            eink::display_info_screen(temperature_meas, humidity_meas, batt_volt2percent((int)batt_volt));
+            eink::display_info_screen(temperature_meas, humidity_meas, batt_volt2percent(batt_volt));
             info_screen_start_time = millis();
             ctrl = 1;
           }
