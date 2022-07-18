@@ -1,6 +1,9 @@
-#include <GxEPD2_BW.h> // including both doesn't use more code or ram
-#include "GxEPD2_display_selection_new_style.h"
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
+#include <qrcode.h>
+
+#include <GxEPD2_BW.h>
 #include <Fonts/FreeSansBold24pt7b.h>
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>
@@ -9,7 +12,12 @@
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeMono9pt7b.h>
 
-#include <qrcode_lib.h>
+#define GxEPD2_DISPLAY_CLASS GxEPD2_BW
+#define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
+#define MAX_DISPLAY_BUFFER_SIZE 65536ul // e.g.
+#define MAX_HEIGHT(EPD) (EPD::HEIGHT <= MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8) ? EPD::HEIGHT : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
+
+GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> display(GxEPD2_DRIVER_CLASS(/*CS=5*/ SS, /*DC=*/ 8, /*RST=*/ 9, /*BUSY=*/ 7));
 
 namespace eink
 {
@@ -510,3 +518,5 @@ namespace eink
   }
 
 } //namespace
+
+#endif
