@@ -6,50 +6,10 @@
 #include <Wire.h>
 #include "Adafruit_SHTC3.h"
 
+#include "hardware.h"
 #include "display.h"
 
-// ------ PIN definitions ------
-// Note: button and LED numbers match PCB annotation
-#define BTN1_PIN 1
-#define BTN2_PIN 2
-#define BTN3_PIN 3
-#define BTN4_PIN 4
-#define BTN5_PIN 5
-#define BTN6_PIN 6
-
-#define LED1_PIN 15 
-#define LED2_PIN 16
-#define LED3_PIN 17
-#define LED4_PIN 37
-#define LED5_PIN 38
-#define LED6_PIN 45
-
-#define SDA 10
-#define SCL 11
-#define VBAT_ADC 14
-#define CHARGER_STDBY 12
-#define BOOST_EN 13
-
-#define EINK_CS 5
-#define EINK_DC 8
-#define EINK_RST 9
-#define EINK_BUSY 7
-
-// ------ LED analog parameters ------
-#define LED1_CH 0
-#define LED2_CH 1
-#define LED3_CH 2
-#define LED4_CH 3
-#define LED5_CH 4
-#define LED6_CH 5
-
-
-#define LED_RES 8
-#define LED_FREQ 1000
-#define LED_BRIGHT_DFLT 20
-
 // ------ battery reading ------
-#define BAT_RES_BITS 12
 const float BATT_DIVIDER = 0.5;
 const float BATT_ADC_REF_VOLT = 2.6;
 const float MIN_BATT_VOLT = 3.3;
@@ -59,15 +19,17 @@ const float BATT_FULL_VOLT = 4.2;
 const float BATT_EMPTY_VOLT = 3.3;
 
 // ------ wakeup ------
-#define BTN_BITMASK 0x7E // = hex of 2^PIN1 + 2^PIN2 + ...
 const uint32_t TIMER_SLEEP_USEC = 600000000L;
 
-// ------ constants ------
-const char DEVICE_MODEL[] = "HomeButtons v0.1";
-const char SW_VERSION[] = "v0.2.3";
+// ------ hardware constants ------
+const char DEVICE_MODEL[] = "HomeButtons";
+const uint16_t HW_VERSION = 20;
 const char MANUFACTURER[] = "Planinsek Industries";
-const char SERIAL_NUMBER[] = "0000";
+const char SERIAL_NUMBER[] = "0000-000";
 const char RANDOM_ID[] = "000000";
+
+// ------ software constants ------
+const char SW_VERSION[] = "v0.3.1";
 
 // ------ defaults ------
 const char DEVICE_NAME[] = "Home Buttons 001";
@@ -100,6 +62,7 @@ const char AP_PASSWORD[] = "password123";
 // ------ factory preferences ------
 String device_model;
 String sw_version;
+uint16_t hw_version;
 String manufacturer;
 String serial_number;
 String unique_id;
@@ -176,9 +139,9 @@ WakeupButton wakeup_button = NO_BTN;
 int16_t wakeup_pin = -1;
 
 bool digitalReadAny() {
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
-         digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
+  return digitalRead(HW.BTN1_PIN) || digitalRead(HW.BTN2_PIN) ||
+         digitalRead(HW.BTN3_PIN) || digitalRead(HW.BTN4_PIN) ||
+         digitalRead(HW.BTN5_PIN) || digitalRead(HW.BTN6_PIN);
 }
 
 void set_led(uint8_t ch, uint8_t brightness) {
@@ -186,20 +149,20 @@ void set_led(uint8_t ch, uint8_t brightness) {
 }
 
 void set_all_leds(uint8_t brightness) {
-  set_led(LED1_CH, brightness);
-  set_led(LED2_CH, brightness);
-  set_led(LED3_CH, brightness);
-  set_led(LED4_CH, brightness);
-  set_led(LED5_CH, brightness);
-  set_led(LED6_CH, brightness);
+  set_led(HW.LED1_CH, brightness);
+  set_led(HW.LED2_CH, brightness);
+  set_led(HW.LED3_CH, brightness);
+  set_led(HW.LED4_CH, brightness);
+  set_led(HW.LED5_CH, brightness);
+  set_led(HW.LED6_CH, brightness);
 }
 
 float read_battery_voltage() {
-  return analogRead(VBAT_ADC) / 4095.0 * BATT_ADC_REF_VOLT / BATT_DIVIDER;
+  return analogRead(HW.VBAT_ADC) / 4095.0 * HW.BATT_ADC_REF_VOLT / HW.BATT_DIVIDER;
 }
 
 uint8_t batt_volt2percent(float volt) {
-    float pct = 100 * (volt - BATT_EMPTY_VOLT)/(BATT_FULL_VOLT - BATT_EMPTY_VOLT);
+    float pct = 100 * (volt - HW.BATT_EMPTY_VOLT)/(HW.BATT_FULL_VOLT - HW.BATT_EMPTY_VOLT);
     if (pct < 0.0) pct = 0;
     else if (pct > 100.0) pct = 100;
     return (uint8_t) round(pct);
@@ -299,6 +262,7 @@ void read_preferences() {
   preferences.begin("factory", true);
   device_model = preferences.getString("device_model", DEVICE_MODEL);
   sw_version = preferences.getString("sw_version", SW_VERSION);
+  hw_version = preferences.getInt("hw_version", HW_VERSION);
   manufacturer = preferences.getString("manufacturer", MANUFACTURER);
   serial_number = preferences.getString("serial_number", SERIAL_NUMBER);
   unique_id = preferences.getString("unique_id", String("HBTNS-") + serial_number + "-" + RANDOM_ID);
@@ -339,6 +303,7 @@ void save_factory_preferences() {
   preferences.begin("factory", false);
   preferences.putString("device_model", device_model);
   preferences.putString("sw_version", sw_version);
+  preferences.putInt("hw_version", hw_version);
   preferences.putString("manufacturer", manufacturer);
   preferences.putString("serial_number", serial_number);
   preferences.putString("unique_id", unique_id);
@@ -566,10 +531,11 @@ void display_buttons() {
 }
 
 void start_esp_sleep() {
-  esp_sleep_enable_ext1_wakeup(BTN_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
   if (wifi_done && setup_done && !low_batt_mode) {
       esp_sleep_enable_timer_wakeup(TIMER_SLEEP_USEC);
   }
+  log_i("starting deep sleep");
   esp_deep_sleep_start();
 }
 
@@ -580,45 +546,18 @@ void go_to_sleep() {
 }
 
 void setup() {
-  // ------ hardware config ------
-  pinMode(BTN1_PIN, INPUT);
-  pinMode(BTN2_PIN, INPUT);
-  pinMode(BTN3_PIN, INPUT);
-  pinMode(BTN4_PIN, INPUT);
-  pinMode(BTN5_PIN, INPUT);
-  pinMode(BTN6_PIN, INPUT);
+  log_i("woke up");
+
+  // ------ read preferences ------
+  clear_factory_preferences(); // TODO: remove when factory mode implemented
+  read_preferences();
+  // save_factory_preferences();
 
   // ------ init display ------
   display.init(); // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
 
-  ledcSetup(LED1_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED1_PIN, LED1_CH);
-
-  ledcSetup(LED2_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED2_PIN, LED2_CH);
-
-  ledcSetup(LED3_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED3_PIN, LED3_CH);
-
-  ledcSetup(LED4_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED4_PIN, LED4_CH);
-
-  ledcSetup(LED5_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED5_PIN, LED5_CH);
-
-  ledcSetup(LED6_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED6_PIN, LED6_CH);
-
-  // battery voltage adc
-  analogReadResolution(BAT_RES_BITS);
-  analogSetPinAttenuation(VBAT_ADC, ADC_11db);
-
-  // ------ delay ------
-  delay(100); // wait for peripherals to boot up
-
-  // ------ read preferences ------
-  read_preferences();
-  save_factory_preferences(); // added for future compatibility
+  // ------ init hardware ------
+  setup_hardware(hw_version);
 
   // ------ check battery voltage first thing ------
   float batt_volt = read_battery_voltage();
@@ -626,6 +565,7 @@ void setup() {
   if (low_batt_mode) {
     if (batt_volt > BATT_HISTERESIS_VOLT) {
       low_batt_mode = false;
+      log_i("low batt mode disabled");
       display_buttons();
     }
     else {
@@ -634,15 +574,21 @@ void setup() {
   }
   else {
     if (batt_volt < MIN_BATT_VOLT) {
-      eink::display_turned_off_please_recharge_screen();
-      low_batt_mode = true;
-      save_preferences();
-      go_to_sleep();
+      // delay and check again
+      delay(1000);
+      batt_volt = read_battery_voltage();
+      if (batt_volt < MIN_BATT_VOLT) {
+        eink::display_turned_off_please_recharge_screen();
+        low_batt_mode = true;
+        log_w("low batt mode enabled. voltage: %f", batt_volt);
+        save_preferences();
+        go_to_sleep();
+      }
     }
   }
 
   // ------ read temp & humidity ------
-  shtc3_wire.begin(SDA, SCL);
+  shtc3_wire.begin((int)HW.SDA, (int)HW.SCL); // must be cast to int otherwise wrong begin() is called
   shtc3.begin(&shtc3_wire);
   sensors_event_t humidity_event, temp_event;
   shtc3.getEvent(&humidity_event, &temp_event);
@@ -653,8 +599,9 @@ void setup() {
   // ------ boot reason ------
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1) {
     btn_press_time = millis();
-    int16_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
+    uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
     wakeup_pin = (log(GPIO_reason))/log(2);
+    log_i("wakeup pin: %d", wakeup_pin);
     int16_t ctrl = 0;
     bool break_loop = false;
     while (!break_loop) {
@@ -723,33 +670,48 @@ void setup() {
 
 
   switch (boot_reason) {
-    case NO_REASON: control_flow = NO_FLOW; break;
+    case NO_REASON:
+      log_i("boot reason: no reason");
+      control_flow = NO_FLOW;
+      break;
     case RST:
+      log_i("boot reason: reset");
       if (!wifi_done) control_flow = WIFI_SETUP;
       else if (!setup_done) control_flow = SETUP;
       else control_flow = RESET;
       break;
     case TMR:
+      log_i("boot reason: timer");
       if (!wifi_done && !setup_done) control_flow = NO_FLOW;
       else control_flow = TIMER;
       break;
     case BTN:
+      log_i("boot reason: btn");
       if (!wifi_done) control_flow = WIFI_SETUP;
       else if (!setup_done) control_flow = SETUP;
       else control_flow = BTN_PRESS;
       break;
-    case BTN_MEDIUM: control_flow = NO_FLOW; break;
+    case BTN_MEDIUM:
+      log_i("boot reason: btn med");
+      control_flow = NO_FLOW; break;
     case BTN_LONG:
+      log_i("boot reason: btn long");
       if (!wifi_done) control_flow = WIFI_SETUP;
       else control_flow = SETUP;
       break;
-    case BTN_EXTRA_LONG:  control_flow = WIFI_SETUP; break;
-    case BTN_ULTRA_LONG: control_flow = FAC_RESET; break;
+    case BTN_EXTRA_LONG:
+      log_i("boot reason: btn extra long");
+      control_flow = WIFI_SETUP;
+      break;
+    case BTN_ULTRA_LONG: control_flow = FAC_RESET;
+      log_i("boot_reason: btn ultra long");
+      break;
   }
 
   // ------ main logic switch ------
   switch (control_flow) {
     case WIFI_SETUP: {
+      log_i("control flow: wifi setup");
       delay(50); // debounce
       eink::display_string("Starting\nWiFi setup...");
       wifi_quick_connect = false;
@@ -782,6 +744,7 @@ void setup() {
       break;
     }
     case SETUP: {
+      log_i("control flow: setup");
       delay(50); // debounce
       eink::display_string("Starting\nsetup...");
       bool wifi_connected = connect_wifi();
@@ -864,26 +827,33 @@ void setup() {
       break;
     }
     case BTN_PRESS: {
-      switch (wakeup_pin) {
-        case BTN1_PIN: wakeup_button = BTN1;
-          set_led(LED1_CH, LED_BRIGHT_DFLT);
-        break;
-        case BTN2_PIN: wakeup_button = BTN3;
-          set_led(LED2_CH, LED_BRIGHT_DFLT);
-        break;
-        case BTN3_PIN: wakeup_button = BTN5;
-          set_led(LED3_CH, LED_BRIGHT_DFLT);
-        break;
-        case BTN4_PIN: wakeup_button = BTN6;
-          set_led(LED4_CH, LED_BRIGHT_DFLT);
-        break;
-        case BTN5_PIN: wakeup_button = BTN4;
-          set_led(LED5_CH, LED_BRIGHT_DFLT);
-        break;
-        case BTN6_PIN: wakeup_button = BTN2;
-          set_led(LED6_CH, LED_BRIGHT_DFLT);
-        break;
+      log_i("control flow: btn press");
+
+      if (wakeup_pin == HW.BTN1_PIN) {
+        wakeup_button = BTN1;
+        set_led(HW.LED1_CH, HW.LED_BRIGHT_DFLT);
       }
+      else if (wakeup_pin == HW.BTN2_PIN) {
+        wakeup_button = BTN3;
+        set_led(HW.LED2_CH, HW.LED_BRIGHT_DFLT);
+      }
+      else if (wakeup_pin == HW.BTN3_PIN) {
+        wakeup_button = BTN5;
+        set_led(HW.LED3_CH, HW.LED_BRIGHT_DFLT);
+      }
+      else if (wakeup_pin == HW.BTN4_PIN) {
+        wakeup_button = BTN6;
+        set_led(HW.LED4_CH, HW.LED_BRIGHT_DFLT);
+      }
+      else if (wakeup_pin == HW.BTN5_PIN) {
+        wakeup_button = BTN4;
+        set_led(HW.LED5_CH, HW.LED_BRIGHT_DFLT);
+      }
+      else if (wakeup_pin == HW.BTN6_PIN) {
+        wakeup_button = BTN2;
+        set_led(HW.LED6_CH, HW.LED_BRIGHT_DFLT);
+      }
+
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
         eink::display_error("WiFi\nerror");
@@ -921,7 +891,7 @@ void setup() {
       client.publish(temperature_topic.c_str(), String(temperature_meas).c_str());
       client.publish(humidity_topic.c_str(), String(humidity_meas).c_str());
       client.publish(battery_topic.c_str(), String(batt_pct).c_str());
-      if (batt_volt < WARN_BATT_VOLT) {
+      if (batt_volt < HW.WARN_BATT_VOLT) {
         eink::display_please_recharge_soon_screen();
         delay(2000);
         display_buttons();
@@ -929,6 +899,7 @@ void setup() {
       break;
     }
     case RESET: {
+      log_i("control flow: reset");
       eink::display_string("RESET");
       if (wifi_done && setup_done) 
         display_buttons();
@@ -937,14 +908,17 @@ void setup() {
       break;
     }
     case FAC_RESET: {
+      log_i("control flow: fac reset");
       eink::display_string("Factory\nRESET");
       clear_preferences();
+      clear_factory_preferences(); // TODO: remove when factory mode is implemented
       wifi_manager.resetSettings();
       delay(3000);
       ESP.restart();
       break;
     }
     case TIMER: {
+      log_i("control flow: timer");
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
         break;

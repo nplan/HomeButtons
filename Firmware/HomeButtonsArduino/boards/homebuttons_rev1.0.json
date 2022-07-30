@@ -7,9 +7,9 @@
       "extra_flags":
         [
           "-DARDUINO_ESP32S2_DEV",
-          "-DCORE_DEBUG_LEVEL=0",
+          "-DCORE_DEBUG_LEVEL=3",
           "-DARDUINO_USB_MODE=0",
-          "-DARDUINO_USB_CDC_ON_BOOT=0",
+          "-DARDUINO_USB_CDC_ON_BOOT=1",
           "-DARDUINO_USB_MSC_ON_BOOT=0",
           "-DARDUINO_USB_DFU_ON_BOOT=0"
         ],

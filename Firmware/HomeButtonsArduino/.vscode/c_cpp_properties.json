@@ -453,9 +453,9 @@
             "defines": [
                 "PLATFORMIO=60101",
                 "ARDUINO_ESP32S2_DEV",
-                "CORE_DEBUG_LEVEL=0",
+                "CORE_DEBUG_LEVEL=3",
                 "ARDUINO_USB_MODE=0",
-                "ARDUINO_USB_CDC_ON_BOOT=0",
+                "ARDUINO_USB_CDC_ON_BOOT=1",
                 "ARDUINO_USB_MSC_ON_BOOT=0",
                 "ARDUINO_USB_DFU_ON_BOOT=0",
                 "HAVE_CONFIG_H",
