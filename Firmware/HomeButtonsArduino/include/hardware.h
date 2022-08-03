@@ -1,6 +1,8 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
+#include <Arduino.h>
+
 struct HardwareDefinition {
     // ------ PIN definitions ------
     uint8_t BTN1_PIN;
@@ -151,7 +153,7 @@ const HardwareDefinition hw_rev_2_0 {
     .BATT_DIVIDER = 0.5,
     .BATT_ADC_REF_VOLT = 2.6,
     .MIN_BATT_VOLT = 3.3,
-    .BATT_HISTERESIS_VOLT = 3.5,
+    .BATT_HISTERESIS_VOLT = 3.4,
     .WARN_BATT_VOLT = 3.5,
     .BATT_FULL_VOLT = 4.2,
     .BATT_EMPTY_VOLT = 3.3,
@@ -161,47 +163,21 @@ const HardwareDefinition hw_rev_2_0 {
 };
 
 // Struct containing current hardware configuration
-HardwareDefinition HW;
+extern HardwareDefinition HW;
 
-void setup_hardware(uint16_t hw_version) {
-    if (hw_version >= 20) {
-        HW = hw_rev_2_0;
-    }
-    else if (hw_version >= 10) {
-        HW = hw_rev_1_0;
-    }
+// ------ functions ------
+void init_hardware(String hw_version);
 
-    pinMode(HW.BTN1_PIN, INPUT);
-    pinMode(HW.BTN2_PIN, INPUT);
-    pinMode(HW.BTN3_PIN, INPUT);
-    pinMode(HW.BTN4_PIN, INPUT);
-    pinMode(HW.BTN5_PIN, INPUT);
-    pinMode(HW.BTN6_PIN, INPUT);
+void begin_hardware();
 
-    ledcSetup(HW.LED1_CH, HW.LED_FREQ, HW.LED_RES);
-    ledcAttachPin(HW.LED1_PIN, HW.LED1_CH);
+bool digitalReadAny();
 
-    ledcSetup(HW.LED2_CH, HW.LED_FREQ, HW.LED_RES);
-    ledcAttachPin(HW.LED2_PIN, HW.LED2_CH);
+void set_led(uint8_t ch, uint8_t brightness);
 
-    ledcSetup(HW.LED3_CH, HW.LED_FREQ, HW.LED_RES);
-    ledcAttachPin(HW.LED3_PIN, HW.LED3_CH);
+void set_all_leds(uint8_t brightness);
 
-    ledcSetup(HW.LED4_CH, HW.LED_FREQ, HW.LED_RES);
-    ledcAttachPin(HW.LED4_PIN, HW.LED4_CH);
+float read_battery_voltage();
 
-    ledcSetup(HW.LED5_CH, HW.LED_FREQ, HW.LED_RES);
-    ledcAttachPin(HW.LED5_PIN, HW.LED5_CH);
-
-    ledcSetup(HW.LED6_CH, HW.LED_FREQ, HW.LED_RES);
-    ledcAttachPin(HW.LED6_PIN, HW.LED6_CH);
-
-    // battery voltage adc
-    analogReadResolution(HW.BAT_RES_BITS);
-    analogSetPinAttenuation(HW.VBAT_ADC, ADC_11db);
-
-    // ------ delay ------
-    delay(100); // wait for peripherals to boot up
-}
+uint8_t batt_volt2percent(float volt);
 
 #endif

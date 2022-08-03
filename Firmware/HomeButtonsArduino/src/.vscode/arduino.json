@@ -1,8 +1,0 @@
-{
-    "configuration": "CDCOnBoot=default,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,PSRAM=disabled,PartitionScheme=default,CPUFreq=80,FlashMode=qio,FlashFreq=40,FlashSize=4M,UploadSpeed=921600,DebugLevel=none",
-    "board": "esp32:esp32:esp32s2",
-    "sketch": "HomeButtonsArduino.ino",
-    "port": "/dev/tty.usbmodem01",
-    "output": "../build",
-    "intelliSenseGen": "enable"
-}

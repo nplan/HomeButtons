@@ -1,112 +1,19 @@
 #include <Arduino.h>
-#include <PubSubClient.h>
-#include <ArduinoJson.h>
-#include <Preferences.h>
 #include <WiFiManager.h>
 #include <Wire.h>
 #include "Adafruit_SHTC3.h"
 
 #include "hardware.h"
 #include "display.h"
-
-// ------ battery reading ------
-const float BATT_DIVIDER = 0.5;
-const float BATT_ADC_REF_VOLT = 2.6;
-const float MIN_BATT_VOLT = 3.3;
-const float BATT_HISTERESIS_VOLT = 3.5;
-const float WARN_BATT_VOLT = 3.5;
-const float BATT_FULL_VOLT = 4.2;
-const float BATT_EMPTY_VOLT = 3.3;
-
-// ------ wakeup ------
-const uint32_t TIMER_SLEEP_USEC = 600000000L;
-
-// ------ hardware constants ------
-const char DEVICE_MODEL[] = "HomeButtons";
-const uint16_t HW_VERSION = 20;
-const char MANUFACTURER[] = "Planinsek Industries";
-const char SERIAL_NUMBER[] = "0000-000";
-const char RANDOM_ID[] = "000000";
-
-// ------ software constants ------
-const char SW_VERSION[] = "v0.3.1";
-
-// ------ defaults ------
-const char DEVICE_NAME[] = "Home Buttons 001";
-const uint16_t MQTT_PORT = 1883;
-const char BASE_TOPIC[] = "homebuttons";
-const char DISCOVERY_PREFIX[] = "homeassistant";
-const char BTN_1_TXT[] = "B1";
-const char BTN_2_TXT[] = "B2";
-const char BTN_3_TXT[] = "B3";
-const char BTN_4_TXT[] = "B4";
-const char BTN_5_TXT[] = "B5";
-const char BTN_6_TXT[] = "B6";
-
-const char BTN_PRESS_PAYLOAD[] = "PRESS";
-const uint32_t QUICK_WIFI_TIMEOUT = 5000L;
-const uint32_t WIFI_TIMEOUT = 10000L;
-const uint32_t MQTT_TIMEOUT = 10000L;
-const uint32_t SHORT_PRESS_TIME = 100;
-const uint32_t MEDIUM_PRESS_TIME = 2000L;
-const uint32_t LONG_PRESS_TIME = 10000L;
-const uint32_t EXTRA_LONG_PRESS_TIME = 20000L;
-const uint32_t ULTRA_LONG_PRESS_TIME = 30000L;
-const uint32_t CONFIG_TIMEOUT = 300; //s
-const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000;
-const uint32_t INFO_SCREEN_DISP_TIME = 20000L;
-
-const char WIFI_MANAGER_TITLE[] = "Home Buttons";
-const char AP_PASSWORD[] = "password123";
-
-// ------ factory preferences ------
-String device_model;
-String sw_version;
-uint16_t hw_version;
-String manufacturer;
-String serial_number;
-String unique_id;
-
-// ------ persisted variables ------
-bool low_batt_mode;
-bool wifi_done;
-bool setup_done;
-String client_id;
-bool wifi_quick_connect;
-String button_1_press_topic;
-String button_2_press_topic;
-String button_3_press_topic;
-String button_4_press_topic;
-String button_5_press_topic;
-String button_6_press_topic;
-String temperature_topic;
-String humidity_topic;
-String battery_topic;
-
-// ------ user configurable preferences ------
-String device_name;
-String mqtt_server;
-uint32_t mqtt_port;
-String mqtt_user;
-String mqtt_password;
-String base_topic;
-String discovery_prefix;
-String button_1_text;
-String button_2_text;
-String button_3_text;
-String button_4_text;
-String button_5_text;
-String button_6_text;
+#include "factory.h"
+#include "prefs.h"
+#include "network.h"
+#include "config.h"
+#include "autodiscovery.h"
 
 // ------ global variables ------
-uint32_t wifi_start_time = 0;
-uint32_t mqtt_start_time = 0;
-uint32_t info_screen_start_time = 0;
-
 WiFiManager wifi_manager;
-WiFiClient wifi_client;
-PubSubClient client(wifi_client);
-Preferences preferences;
+uint32_t info_screen_start_time = 0;
 
 bool web_portal_saved = false;
 
@@ -138,401 +45,52 @@ enum WakeupButton {NO_BTN, BTN1, BTN2, BTN3, BTN4, BTN5, BTN6};
 WakeupButton wakeup_button = NO_BTN;
 int16_t wakeup_pin = -1;
 
-bool digitalReadAny() {
-  return digitalRead(HW.BTN1_PIN) || digitalRead(HW.BTN2_PIN) ||
-         digitalRead(HW.BTN3_PIN) || digitalRead(HW.BTN4_PIN) ||
-         digitalRead(HW.BTN5_PIN) || digitalRead(HW.BTN6_PIN);
-}
-
-void set_led(uint8_t ch, uint8_t brightness) {
-  ledcWrite(ch, brightness);
-}
-
-void set_all_leds(uint8_t brightness) {
-  set_led(HW.LED1_CH, brightness);
-  set_led(HW.LED2_CH, brightness);
-  set_led(HW.LED3_CH, brightness);
-  set_led(HW.LED4_CH, brightness);
-  set_led(HW.LED5_CH, brightness);
-  set_led(HW.LED6_CH, brightness);
-}
-
-float read_battery_voltage() {
-  return analogRead(HW.VBAT_ADC) / 4095.0 * HW.BATT_ADC_REF_VOLT / HW.BATT_DIVIDER;
-}
-
-uint8_t batt_volt2percent(float volt) {
-    float pct = 100 * (volt - HW.BATT_EMPTY_VOLT)/(HW.BATT_FULL_VOLT - HW.BATT_EMPTY_VOLT);
-    if (pct < 0.0) pct = 0;
-    else if (pct > 100.0) pct = 100;
-    return (uint8_t) round(pct);
-}
-
-bool connect_wifi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.persistent(true);
-
-  // Try to connect with settings stored by ESP32
-  WiFi.begin();
-  wifi_start_time = millis();
-  while (true) {
-      delay(50);
-      if (WiFi.status() == WL_CONNECTED) {
-        if (wifi_quick_connect) {
-          return true;
-        }
-        else {
-          break;
-        }
-      }
-      else if (millis() - wifi_start_time > QUICK_WIFI_TIMEOUT) {
-        break;  // proceed with normal connection retry
-      }
-  }
-
-  // If not successful connect only with SSID and password, and then save new channel & BSSID info
-  String ssid = WiFi.SSID();  // returns empty string if WiFi.begin() is not called prior!
-  String psk = WiFi.psk();
-  WiFi.begin(ssid.c_str(), psk.c_str());
-  wifi_start_time = millis();
-  delay(2000);
-  while (true) {
-      delay(50);
-      if (WiFi.status() == WL_CONNECTED) {
-        uint8_t * bssid = WiFi.BSSID();
-        int32_t ch = WiFi.channel();
-        WiFi.disconnect();
-        WiFi.begin(ssid.c_str(), psk.c_str(), ch, bssid, true);
-        wifi_start_time = millis();
-        while (true) {
-          delay(50);
-          if (WiFi.status() == WL_CONNECTED) {
-            wifi_quick_connect = true; // can connect next time with params saved by esp
-            return true;
-          }
-          else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
-            wifi_quick_connect = false; // make sure next time quick connect is disabled
-            return false;
-          }
-        }
-      }
-      else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
-        wifi_quick_connect = false; // make sure next time quick connect is disabled
-        return false;
-      }
-  }
-}
-
-bool connect_mqtt() {
-  client.setServer(mqtt_server.c_str(), mqtt_port);
-  client.setBufferSize(2048);
-  mqtt_start_time = millis();
-  while(!client.connected()) {
-    if (mqtt_user.length() > 0 && mqtt_password.length() > 0) {
-      client.connect(client_id.c_str(), mqtt_user.c_str(), mqtt_password.c_str());
-    }
-    else {
-      client.connect(client_id.c_str());
-    }
-    delay(50);
-    if(millis() - mqtt_start_time > MQTT_TIMEOUT) {
-      return false;
-    }
-  }
-  return true;
-}
-
-void disconnect_mqtt() {
-  // Wait a bit
-  unsigned long tm = millis();
-  while (millis() - tm < MQTT_DISCONNECT_TIMEOUT) {
-    client.loop();
-  }
-  // disconnect and wait until closed
-  client.disconnect(); 
-  wifi_client.flush();
-  // wait until connection is closed completely
-  while( client.state() != -1){  
-    client.loop();
-    delay(10);
-  }
-}
-
-void read_preferences() {
-  preferences.begin("factory", true);
-  device_model = preferences.getString("device_model", DEVICE_MODEL);
-  sw_version = preferences.getString("sw_version", SW_VERSION);
-  hw_version = preferences.getInt("hw_version", HW_VERSION);
-  manufacturer = preferences.getString("manufacturer", MANUFACTURER);
-  serial_number = preferences.getString("serial_number", SERIAL_NUMBER);
-  unique_id = preferences.getString("unique_id", String("HBTNS-") + serial_number + "-" + RANDOM_ID);
-  preferences.end();
-
-  preferences.begin("user", true);
-  low_batt_mode = preferences.getBool("lb_mode", false);
-  wifi_done = preferences.getBool("wifi_done", false);
-  setup_done = preferences.getBool("setup_done", false);
-  device_name = preferences.getString("device_name", DEVICE_NAME);
-  mqtt_server = preferences.getString("mqtt_srv", "");
-  mqtt_port = preferences.getUInt("mqtt_port", MQTT_PORT);
-  mqtt_user = preferences.getString("mqtt_user", "");
-  mqtt_password = preferences.getString("mqtt_pass", "");
-  wifi_quick_connect = preferences.getBool("wifi_qc", false);
-  client_id = preferences.getString("client_id", "");
-  base_topic = preferences.getString("base_topic", BASE_TOPIC);
-  discovery_prefix = preferences.getString("disc_prefix", DISCOVERY_PREFIX);
-  button_1_press_topic = preferences.getString("btn1_p_topic", "");
-  button_2_press_topic = preferences.getString("btn2_p_topic", "");
-  button_3_press_topic = preferences.getString("btn3_p_topic", "");
-  button_4_press_topic = preferences.getString("btn4_p_topic", "");
-  button_5_press_topic = preferences.getString("btn5_p_topic", "");
-  button_6_press_topic = preferences.getString("btn6_p_topic", "");
-  temperature_topic = preferences.getString("tmp_topic", "");
-  humidity_topic = preferences.getString("humd_topic", "");
-  battery_topic = preferences.getString("batt_topic", "");
-  button_1_text = preferences.getString("btn1_txt", BTN_1_TXT);
-  button_2_text = preferences.getString("btn2_txt", BTN_2_TXT);
-  button_3_text = preferences.getString("btn3_txt", BTN_3_TXT);
-  button_4_text = preferences.getString("btn4_txt", BTN_4_TXT);
-  button_5_text = preferences.getString("btn5_txt", BTN_5_TXT);
-  button_6_text = preferences.getString("btn6_txt", BTN_6_TXT);
-  preferences.end();
-}
-
-void save_factory_preferences() {
-  preferences.begin("factory", false);
-  preferences.putString("device_model", device_model);
-  preferences.putString("sw_version", sw_version);
-  preferences.putInt("hw_version", hw_version);
-  preferences.putString("manufacturer", manufacturer);
-  preferences.putString("serial_number", serial_number);
-  preferences.putString("unique_id", unique_id);
-  preferences.end();
-}
-
-void save_preferences() {
-  preferences.begin("user", false);
-  preferences.putBool("lb_mode", low_batt_mode);
-  preferences.putBool("wifi_done", wifi_done);
-  preferences.putBool("setup_done", setup_done);
-  preferences.putString("device_name", device_name);
-  preferences.putString("mqtt_srv", mqtt_server);
-  preferences.putUInt("mqtt_port", mqtt_port);
-  preferences.putString("mqtt_user", mqtt_user);
-  preferences.putString("mqtt_pass", mqtt_password);
-  preferences.putString("client_id", client_id);
-  preferences.putBool("wifi_qc", wifi_quick_connect);
-  preferences.putString("base_topic", base_topic);
-  preferences.putString("disc_prefix", discovery_prefix);
-  preferences.putString("btn1_p_topic", button_1_press_topic);
-  preferences.putString("btn2_p_topic", button_2_press_topic);
-  preferences.putString("btn3_p_topic", button_3_press_topic);
-  preferences.putString("btn4_p_topic", button_4_press_topic);
-  preferences.putString("btn5_p_topic", button_5_press_topic);
-  preferences.putString("btn6_p_topic", button_6_press_topic);
-  preferences.putString("tmp_topic", temperature_topic);
-  preferences.putString("humd_topic", humidity_topic);
-  preferences.putString("batt_topic", battery_topic);
-  preferences.putString("btn1_txt", button_1_text);
-  preferences.putString("btn2_txt", button_2_text);
-  preferences.putString("btn3_txt", button_3_text);
-  preferences.putString("btn4_txt", button_4_text);
-  preferences.putString("btn5_txt", button_5_text);
-  preferences.putString("btn6_txt", button_6_text);
-  preferences.end();
-}
-
-void clear_factory_preferences() {
-  preferences.begin("factory", false);
-  preferences.clear();
-  preferences.end();
-}
-
-void clear_preferences() {
-  preferences.begin("user", false);
-  preferences.clear();
-  preferences.end();
-}
 
 void set_topics() {
-  String button_topic_common = base_topic + "/" + device_name + "/";
-  button_1_press_topic = button_topic_common + "button_1";
-  button_2_press_topic = button_topic_common + "button_2";
-  button_3_press_topic = button_topic_common + "button_3";
-  button_4_press_topic = button_topic_common + "button_4";
-  button_5_press_topic = button_topic_common + "button_5";
-  button_6_press_topic = button_topic_common + "button_6";
-  temperature_topic = button_topic_common + "temperature";
-  humidity_topic = button_topic_common + "humidity";
-  battery_topic = button_topic_common + "battery";
-}
-
-void send_autodiscovery_msg() {
-  // Construct topics
-  String trigger_topic_common = discovery_prefix + "/device_automation/" + unique_id;
-  String button_1_config_topic = trigger_topic_common + "/button1/config";
-  String button_2_config_topic = trigger_topic_common + "/button2/config";
-  String button_3_config_topic = trigger_topic_common + "/button3/config";
-  String button_4_config_topic = trigger_topic_common + "/button4/config";
-  String button_5_config_topic = trigger_topic_common + "/button5/config";
-  String button_6_config_topic = trigger_topic_common + "/button6/config";
-  String sensor_topic_common = discovery_prefix + "/sensor/" + unique_id;
-  String temperature_config_topic = sensor_topic_common + "/temperature/config";
-  String humidity_config_topic = sensor_topic_common + "/humidity/config";
-  String battery_config_topic = sensor_topic_common + "/battery/config";
-
-  // Construct autodiscovery config json
-  DynamicJsonDocument btn_1_conf(2048);
-  btn_1_conf["automation_type"] = "trigger";
-  btn_1_conf["topic"] = button_1_press_topic;
-  btn_1_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_1_conf["type"] = "button_short_press";
-  btn_1_conf["subtype"] = "button_1";
-  JsonObject device1 = btn_1_conf.createNestedObject("device");
-  device1["identifiers"][0] = unique_id;
-  device1["model"] = device_model;
-  device1["name"] = device_name;
-  device1["sw_version"] = sw_version;
-  device1["manufacturer"] = manufacturer;
-
-  DynamicJsonDocument btn_2_conf(2048);
-  btn_2_conf["automation_type"] = "trigger";
-  btn_2_conf["topic"] = button_2_press_topic;
-  btn_2_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_2_conf["type"] = "button_short_press";
-  btn_2_conf["subtype"] = "button_2";
-  JsonObject device2 = btn_2_conf.createNestedObject("device");
-  device2["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument btn_3_conf(2048);
-  btn_3_conf["automation_type"] = "trigger";
-  btn_3_conf["topic"] = button_3_press_topic;
-  btn_3_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_3_conf["type"] = "button_short_press";
-  btn_3_conf["subtype"] = "button_3";
-  JsonObject device3 = btn_3_conf.createNestedObject("device");
-  device3["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument btn_4_conf(2048);
-  btn_4_conf["automation_type"] = "trigger";
-  btn_4_conf["topic"] = button_4_press_topic;
-  btn_4_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_4_conf["type"] = "button_short_press";
-  btn_4_conf["subtype"] = "button_4";
-  JsonObject device4 = btn_4_conf.createNestedObject("device");
-  device4["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument btn_5_conf(2048);
-  btn_5_conf["automation_type"] = "trigger";
-  btn_5_conf["topic"] = button_5_press_topic;
-  btn_5_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_5_conf["type"] = "button_short_press";
-  btn_5_conf["subtype"] = "button_5";
-  JsonObject device5 = btn_5_conf.createNestedObject("device");
-  device5["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument btn_6_conf(2048);
-  btn_6_conf["automation_type"] = "trigger";
-  btn_6_conf["topic"] = button_6_press_topic;
-  btn_6_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_6_conf["type"] = "button_short_press";
-  btn_6_conf["subtype"] = "button_6";
-  JsonObject device6 = btn_6_conf.createNestedObject("device");
-  device6["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument temp_conf(2048);
-  temp_conf["name"] = device_name + " Temperature";
-  temp_conf["unique_id"] = unique_id + "_temperature";
-  temp_conf["state_topic"] = temperature_topic;
-  temp_conf["device_class"] = "temperature";
-  temp_conf["unit_of_measurement"] = "°C";
-  temp_conf["expire_after"] = "660";
-  JsonObject device7 = temp_conf.createNestedObject("device");
-  device7["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument humidity_conf(2048);
-  humidity_conf["name"] = device_name + " Humidity";
-  humidity_conf["unique_id"] = unique_id + "_humidity";
-  humidity_conf["state_topic"] = humidity_topic;
-  humidity_conf["device_class"] = "humidity";
-  humidity_conf["unit_of_measurement"] = "%";
-  humidity_conf["expire_after"] = "660";
-  JsonObject device8 = humidity_conf.createNestedObject("device");
-  device8["identifiers"][0] = unique_id;
-
-  DynamicJsonDocument battery_conf(2048);
-  battery_conf["name"] = device_name + " Battery";
-  battery_conf["unique_id"] = unique_id + "_battery";
-  battery_conf["state_topic"] = battery_topic;
-  battery_conf["device_class"] = "battery";
-  battery_conf["unit_of_measurement"] = "%";
-  battery_conf["expire_after"] = "660";
-  JsonObject device9 = battery_conf.createNestedObject("device");
-  device9["identifiers"][0] = unique_id;
-
-  // send mqtt msg
-  size_t n;
-  char buffer[2048];
-  // 1
-  n = serializeJson(btn_1_conf, buffer);
-  client.publish(button_1_config_topic.c_str(), buffer, n);
-  // 2
-  n = serializeJson(btn_2_conf, buffer);
-  client.publish(button_2_config_topic.c_str(), buffer, n);
-  // 3
-  n = serializeJson(btn_3_conf, buffer);
-  client.publish(button_3_config_topic.c_str(), buffer, n);
-  // 4
-  n = serializeJson(btn_4_conf, buffer);
-  client.publish(button_4_config_topic.c_str(), buffer, n);
-  // 5
-  n = serializeJson(btn_5_conf, buffer);
-  client.publish(button_5_config_topic.c_str(), buffer, n);
-  // 6
-  n = serializeJson(btn_6_conf, buffer);
-  client.publish(button_6_config_topic.c_str(), buffer, n);
-  // temp
-  n = serializeJson(temp_conf, buffer);
-  client.publish(temperature_config_topic.c_str(), buffer, n);
-  // humidity
-  n = serializeJson(humidity_conf, buffer);
-  client.publish(humidity_config_topic.c_str(), buffer, n);
-  // battery
-  n = serializeJson(battery_conf, buffer);
-  client.publish(battery_config_topic.c_str(), buffer, n);
+  String button_topic_common = user_s.base_topic + "/" + user_s.device_name + "/";
+  topic_s.button_1_press = button_topic_common + "button_1";
+  topic_s.button_2_press = button_topic_common + "button_2";
+  topic_s.button_3_press = button_topic_common + "button_3";
+  topic_s.button_4_press = button_topic_common + "button_4";
+  topic_s.button_5_press = button_topic_common + "button_5";
+  topic_s.button_6_press = button_topic_common + "button_6";
+  topic_s.temperature = button_topic_common + "temperature";
+  topic_s.humidity = button_topic_common + "humidity";
+  topic_s.battery = button_topic_common + "battery";
 }
 
 void save_params_clbk() {
-  device_name = device_name_param.getValue();
-  mqtt_server = mqtt_server_param.getValue();
-  mqtt_port = String(mqtt_port_param.getValue()).toInt();
-  mqtt_user = mqtt_user_param.getValue();
-  mqtt_password = mqtt_password_param.getValue();
-  base_topic = base_topic_param.getValue();
-  discovery_prefix = discovery_prefix_param.getValue();
-  button_1_text = btn1_txt_param.getValue();
-  button_2_text = btn2_txt_param.getValue();
-  button_3_text = btn3_txt_param.getValue();
-  button_4_text = btn4_txt_param.getValue();
-  button_5_text = btn5_txt_param.getValue();
-  button_6_text = btn6_txt_param.getValue();
+  user_s.device_name = device_name_param.getValue();
+  user_s.mqtt_server = mqtt_server_param.getValue();
+  user_s.mqtt_port = String(mqtt_port_param.getValue()).toInt();
+  user_s.mqtt_user = mqtt_user_param.getValue();
+  user_s.mqtt_password = mqtt_password_param.getValue();
+  user_s.base_topic = base_topic_param.getValue();
+  user_s.discovery_prefix = discovery_prefix_param.getValue();
+  user_s.button_1_text = btn1_txt_param.getValue();
+  user_s.button_2_text = btn2_txt_param.getValue();
+  user_s.button_3_text = btn3_txt_param.getValue();
+  user_s.button_4_text = btn4_txt_param.getValue();
+  user_s.button_5_text = btn5_txt_param.getValue();
+  user_s.button_6_text = btn6_txt_param.getValue();
+  save_user_settings(user_s);
   web_portal_saved = true;
 }
 
 void display_buttons() {
   eink::display_buttons(
-    button_1_text.c_str(),
-    button_2_text.c_str(),
-    button_3_text.c_str(),
-    button_4_text.c_str(),
-    button_5_text.c_str(),
-    button_6_text.c_str()
+    user_s.button_1_text.c_str(),
+    user_s.button_2_text.c_str(),
+    user_s.button_3_text.c_str(),
+    user_s.button_4_text.c_str(),
+    user_s.button_5_text.c_str(),
+    user_s.button_6_text.c_str()
   );
 }
 
 void start_esp_sleep() {
   esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
-  if (wifi_done && setup_done && !low_batt_mode) {
+  if (persisted_s.wifi_done && persisted_s.setup_done && !persisted_s.low_batt_mode) {
       esp_sleep_enable_timer_wakeup(TIMER_SLEEP_USEC);
   }
   log_i("starting deep sleep");
@@ -549,22 +107,33 @@ void setup() {
   log_i("woke up");
 
   // ------ read preferences ------
-  clear_factory_preferences(); // TODO: remove when factory mode implemented
-  read_preferences();
-  // save_factory_preferences();
+  factory_s = read_factory_settings();
+  user_s = read_user_settings();
+  persisted_s = read_persisted_vars();
+  topic_s = read_topics();
 
-  // ------ init display ------
-  display.init(); // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+  // ------ factory mode ------
+  if (factory_s.serial_number.length() < 1) {
+    log_i("first boot, starting factory mode...");
+    if (factory_mode()) {
+      factory_s = read_factory_settings();
+      log_i("factory settings complete. going to sleep");
+      eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
+      go_to_sleep();
+    }
+  }
 
   // ------ init hardware ------
-  setup_hardware(hw_version);
+  init_hardware(factory_s.hw_version);
+  eink::begin(); // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+  begin_hardware();
 
   // ------ check battery voltage first thing ------
   float batt_volt = read_battery_voltage();
   uint8_t batt_pct = batt_volt2percent(batt_volt);
-  if (low_batt_mode) {
-    if (batt_volt > BATT_HISTERESIS_VOLT) {
-      low_batt_mode = false;
+  if (persisted_s.low_batt_mode) {
+    if (batt_volt > HW.BATT_HISTERESIS_VOLT) {
+      persisted_s.low_batt_mode = false;
       log_i("low batt mode disabled");
       display_buttons();
     }
@@ -573,15 +142,15 @@ void setup() {
     }
   }
   else {
-    if (batt_volt < MIN_BATT_VOLT) {
+    if (batt_volt < HW.MIN_BATT_VOLT) {
       // delay and check again
       delay(1000);
       batt_volt = read_battery_voltage();
-      if (batt_volt < MIN_BATT_VOLT) {
+      if (batt_volt < HW.MIN_BATT_VOLT) {
         eink::display_turned_off_please_recharge_screen();
-        low_batt_mode = true;
+        persisted_s.low_batt_mode = true;
         log_w("low batt mode enabled. voltage: %f", batt_volt);
-        save_preferences();
+        save_persisted_vars(persisted_s);
         go_to_sleep();
       }
     }
@@ -668,7 +237,6 @@ void setup() {
     boot_reason = RST;
   }
 
-
   switch (boot_reason) {
     case NO_REASON:
       log_i("boot reason: no reason");
@@ -676,19 +244,19 @@ void setup() {
       break;
     case RST:
       log_i("boot reason: reset");
-      if (!wifi_done) control_flow = WIFI_SETUP;
-      else if (!setup_done) control_flow = SETUP;
+      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
+      else if (!persisted_s.setup_done) control_flow = SETUP;
       else control_flow = RESET;
       break;
     case TMR:
       log_i("boot reason: timer");
-      if (!wifi_done && !setup_done) control_flow = NO_FLOW;
+      if (!persisted_s.wifi_done && !persisted_s.setup_done) control_flow = NO_FLOW;
       else control_flow = TIMER;
       break;
     case BTN:
       log_i("boot reason: btn");
-      if (!wifi_done) control_flow = WIFI_SETUP;
-      else if (!setup_done) control_flow = SETUP;
+      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
+      else if (!persisted_s.setup_done) control_flow = SETUP;
       else control_flow = BTN_PRESS;
       break;
     case BTN_MEDIUM:
@@ -696,7 +264,7 @@ void setup() {
       control_flow = NO_FLOW; break;
     case BTN_LONG:
       log_i("boot reason: btn long");
-      if (!wifi_done) control_flow = WIFI_SETUP;
+      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
       else control_flow = SETUP;
       break;
     case BTN_EXTRA_LONG:
@@ -714,10 +282,10 @@ void setup() {
       log_i("control flow: wifi setup");
       delay(50); // debounce
       eink::display_string("Starting\nWiFi setup...");
-      wifi_quick_connect = false;
+      persisted_s.wifi_quick_connect = false;
       config_start_time = millis();
       // start wifi manager
-      String ap_name = String("HB-") + RANDOM_ID;
+      String ap_name = String("HB-") + factory_s.random_id;
       eink::display_ap_config_screen(ap_name, AP_PASSWORD);
 
       WiFi.mode(WIFI_STA);
@@ -731,13 +299,13 @@ void setup() {
       bool wifi_connected_2 = connect_wifi();
 
       if (!wifi_connected && !wifi_connected_2) { // double check that wifi can not be connected with connect_wifi() function
-        wifi_done = false;
-        eink::display_please_complete_setup_screen(unique_id.c_str());
+        persisted_s.wifi_done = false;
+        eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
         break;
       }
 
-      wifi_done = true;
-      save_preferences(); // save now because restarting before end of setup funciton
+      persisted_s.wifi_done = true;
+      save_persisted_vars(persisted_s); // save now because restarting before end of setup funciton
       eink::display_wifi_connected_screen();
       delay(3000);
       ESP.restart();
@@ -751,15 +319,15 @@ void setup() {
       if (!wifi_connected) {
         eink::display_error("WiFi\nerror");
         delay(3000);
-        if (setup_done) {
+        if (persisted_s.setup_done) {
           display_buttons();
         }
         else {
-          eink::display_please_complete_setup_screen(unique_id.c_str());
+          eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
         }
         break;
       }
-      wifi_quick_connect = false; // maybe user changed wifi settings
+      persisted_s.wifi_quick_connect = false; // maybe user changed wifi settings
       eink::display_web_config_screen(WiFi.localIP().toString());
       config_start_time = millis();
 
@@ -771,19 +339,19 @@ void setup() {
       wifi_manager.setDarkMode(true);
 
       // Parameters
-      device_name_param.setValue(device_name.c_str(), 20);
-      mqtt_server_param.setValue(mqtt_server.c_str(), 50);
-      mqtt_port_param.setValue(String(mqtt_port).c_str(), 6);
-      mqtt_user_param.setValue(mqtt_user.c_str(), 50);
-      mqtt_password_param.setValue(mqtt_password.c_str(), 50);
-      base_topic_param.setValue(base_topic.c_str(), 50);
-      discovery_prefix_param.setValue(discovery_prefix.c_str(), 50);
-      btn1_txt_param.setValue(button_1_text.c_str(), 20);
-      btn2_txt_param.setValue(button_2_text.c_str(), 20);
-      btn3_txt_param.setValue(button_3_text.c_str(), 20);
-      btn4_txt_param.setValue(button_4_text.c_str(), 20);
-      btn5_txt_param.setValue(button_5_text.c_str(), 20);
-      btn6_txt_param.setValue(button_6_text.c_str(), 20);
+      device_name_param.setValue(user_s.device_name.c_str(), 20);
+      mqtt_server_param.setValue(user_s.mqtt_server.c_str(), 50);
+      mqtt_port_param.setValue(String(user_s.mqtt_port).c_str(), 6);
+      mqtt_user_param.setValue(user_s.mqtt_user.c_str(), 50);
+      mqtt_password_param.setValue(user_s.mqtt_password.c_str(), 50);
+      base_topic_param.setValue(user_s.base_topic.c_str(), 50);
+      discovery_prefix_param.setValue(user_s.discovery_prefix.c_str(), 50);
+      btn1_txt_param.setValue(user_s.button_1_text.c_str(), 20);
+      btn2_txt_param.setValue(user_s.button_2_text.c_str(), 20);
+      btn3_txt_param.setValue(user_s.button_3_text.c_str(), 20);
+      btn4_txt_param.setValue(user_s.button_4_text.c_str(), 20);
+      btn5_txt_param.setValue(user_s.button_5_text.c_str(), 20);
+      btn6_txt_param.setValue(user_s.button_6_text.c_str(), 20);
       wifi_manager.addParameter(&device_name_param);
       wifi_manager.addParameter(&mqtt_server_param);
       wifi_manager.addParameter(&mqtt_port_param);
@@ -810,17 +378,18 @@ void setup() {
 
       bool mqtt_connected = connect_mqtt();
       if (!mqtt_connected) {
-        setup_done = false;
+        persisted_s.setup_done = false;
         eink::display_error("MQTT\nerror");
         delay(3000);
-        eink::display_please_complete_setup_screen(unique_id.c_str());
+        eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
         break;
       }
       else {
         set_topics();
         send_autodiscovery_msg();
+        save_topics(topic_s);
       }
-      setup_done = true;
+      persisted_s.setup_done = true;
       eink::display_setup_complete_screen();
       delay(3000);
       display_buttons();
@@ -870,27 +439,27 @@ void setup() {
       }
       switch (wakeup_button) {
         case BTN1:
-          client.publish(button_1_press_topic.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.button_1_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN2:
-          client.publish(button_2_press_topic.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.button_2_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN3:
-          client.publish(button_3_press_topic.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.button_3_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN4:
-          client.publish(button_4_press_topic.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.button_4_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN5:
-          client.publish(button_5_press_topic.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.button_5_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN6:
-          client.publish(button_6_press_topic.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.button_6_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
       }
-      client.publish(temperature_topic.c_str(), String(temperature_meas).c_str());
-      client.publish(humidity_topic.c_str(), String(humidity_meas).c_str());
-      client.publish(battery_topic.c_str(), String(batt_pct).c_str());
+      client.publish(topic_s.temperature.c_str(), String(temperature_meas).c_str());
+      client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
+      client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
       if (batt_volt < HW.WARN_BATT_VOLT) {
         eink::display_please_recharge_soon_screen();
         delay(2000);
@@ -901,17 +470,16 @@ void setup() {
     case RESET: {
       log_i("control flow: reset");
       eink::display_string("RESET");
-      if (wifi_done && setup_done) 
+      if (persisted_s.wifi_done && persisted_s.setup_done) 
         display_buttons();
       else
-        eink::display_please_complete_setup_screen(unique_id.c_str());
+        eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
       break;
     }
     case FAC_RESET: {
       log_i("control flow: fac reset");
       eink::display_string("Factory\nRESET");
-      clear_preferences();
-      clear_factory_preferences(); // TODO: remove when factory mode is implemented
+      clear_all_preferences();
       wifi_manager.resetSettings();
       delay(3000);
       ESP.restart();
@@ -927,9 +495,9 @@ void setup() {
       if (!mqtt_connected) {
         break;
       }
-      client.publish(temperature_topic.c_str(), String(temperature_meas).c_str());
-      client.publish(humidity_topic.c_str(), String(humidity_meas).c_str());
-      client.publish(battery_topic.c_str(), String(batt_pct).c_str());
+      client.publish(topic_s.temperature.c_str(), String(temperature_meas).c_str());
+      client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
+      client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
       break;
     }
     case NO_FLOW: {
@@ -940,7 +508,7 @@ void setup() {
       break;
     }
   }
-  save_preferences();
+  save_persisted_vars(persisted_s);
   disconnect_mqtt();
   go_to_sleep();
 }

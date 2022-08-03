@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.tcc": "cpp",
+        "exception": "cpp",
+        "optional": "cpp",
+        "memory": "cpp",
+        "istream": "cpp",
+        "new": "cpp",
+        "ostream": "cpp"
+    }
+}
