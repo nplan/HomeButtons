@@ -29,6 +29,8 @@ void begin_hardware() {
     pinMode(HW.BTN5_PIN, INPUT);
     pinMode(HW.BTN6_PIN, INPUT);
 
+    pinMode(HW.CHARGER_STDBY, INPUT_PULLUP);
+
     ledcSetup(HW.LED1_CH, HW.LED_FREQ, HW.LED_RES);
     ledcAttachPin(HW.LED1_PIN, HW.LED1_CH);
 
@@ -83,4 +85,8 @@ uint8_t batt_volt2percent(float volt) {
     if (pct < 0.0) pct = 0;
     else if (pct > 100.0) pct = 100;
     return (uint8_t) round(pct);
+}
+
+bool is_charger_in_standby() {
+    return !digitalRead(HW.CHARGER_STDBY);
 }

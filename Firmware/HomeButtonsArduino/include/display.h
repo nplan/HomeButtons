@@ -57,6 +57,9 @@ namespace eink
   void display_white_screen();
 
   void display_black_screen();
+
+  void display_fully_charged_screen();
+
 } //namespace
 
 #endif

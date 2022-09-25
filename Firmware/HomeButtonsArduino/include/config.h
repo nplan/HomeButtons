@@ -5,7 +5,7 @@
 
 // ------ constants ------
 const char MANUFACTURER[] = "Planinsek Industries";
-const char SW_VERSION[] = "v0.4.0";
+const char SW_VERSION[] = "v0.4.1";
 
 // ------ wifi AP ------
 const char WIFI_MANAGER_TITLE[] = "Home Buttons";

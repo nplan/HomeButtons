@@ -180,4 +180,6 @@ float read_battery_voltage();
 
 uint8_t batt_volt2percent(float volt);
 
+bool is_charger_in_standby();
+
 #endif

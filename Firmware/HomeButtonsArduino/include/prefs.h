@@ -61,6 +61,7 @@ struct PersistedVars {
   bool setup_done = false;
   bool wifi_quick_connect = false;
   bool info_screen_showing = false;
+  bool charge_complete_showing = false;
 };
 
 struct Topics {

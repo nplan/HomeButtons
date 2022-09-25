@@ -284,6 +284,8 @@ void setup() {
   switch (control_flow) {
     case WIFI_SETUP: {
       log_i("control flow: wifi setup");
+      persisted_s.info_screen_showing = false;
+      persisted_s.charge_complete_showing = false;
       delay(50); // debounce
       eink::display_string("Starting\nWiFi setup...");
       persisted_s.wifi_quick_connect = false;
@@ -317,6 +319,8 @@ void setup() {
     }
     case SETUP: {
       log_i("control flow: setup");
+      persisted_s.info_screen_showing = false;
+      persisted_s.charge_complete_showing = false;
       delay(50); // debounce
       eink::display_string("Starting\nsetup...");
       bool wifi_connected = connect_wifi();
@@ -408,6 +412,11 @@ void setup() {
         display_buttons();
         break;
       }
+      if (persisted_s.charge_complete_showing) {
+        persisted_s.charge_complete_showing = false;
+        display_buttons();
+        break;
+      }
 
       if (wakeup_pin == HW.BTN1_PIN) {
         wakeup_button = BTN1;
@@ -487,6 +496,7 @@ void setup() {
       log_i("control flow: reset");
       eink::display_string("Device RESET");
       persisted_s.info_screen_showing = false;
+      persisted_s.charge_complete_showing = false;
       if (persisted_s.wifi_done && persisted_s.setup_done) 
         display_buttons();
       else
@@ -510,6 +520,13 @@ void setup() {
         display_buttons();
         break;
       }
+
+      if (is_charger_in_standby() && !persisted_s.charge_complete_showing) {
+        persisted_s.charge_complete_showing = true;
+        eink::display_fully_charged_screen();
+      }
+
+
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
         break;

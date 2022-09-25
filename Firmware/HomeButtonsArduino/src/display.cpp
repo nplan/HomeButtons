@@ -527,7 +527,7 @@ namespace eink {
         while (display->nextPage());
         }
 
-        void display_white_screen() {
+    void display_white_screen() {
         display->firstPage();
         do {
             display->fillScreen(GxEPD_WHITE);
@@ -535,10 +535,38 @@ namespace eink {
         while (display->nextPage());
         }
 
-        void display_black_screen() {
+    void display_black_screen() {
         display->firstPage();
         do {
             display->fillScreen(GxEPD_BLACK);
+        }
+        while (display->nextPage());
+    }
+
+    void display_fully_charged_screen() {
+        display->setRotation(0);
+        display->setTextColor(GxEPD_BLACK);
+        display->setTextWrap(true);
+        display->setFont(&FreeSansBold9pt7b);
+
+        display->firstPage();
+        do {
+            display->setCursor(0, 0);
+            display->fillScreen(GxEPD_WHITE);
+
+            int16_t x, y;
+            uint16_t w, h;
+            display->getTextBounds("FULLY", 0, 0, &x, &y, &w, &h);
+            display->setCursor(WIDTH/2 - w/2, 120);
+            display->print("FULLY");
+
+            display->getTextBounds("CHARGED", 0, 0, &x, &y, &w, &h);
+            display->setCursor(WIDTH/2 - w/2, 150);
+            display->print("CHARGED");
+
+            display->getTextBounds(":)", 0, 0, &x, &y, &w, &h);
+            display->setCursor(WIDTH/2 - w/2, 180);
+            display->print(":)");
         }
         while (display->nextPage());
     }
