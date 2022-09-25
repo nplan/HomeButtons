@@ -27,7 +27,8 @@ const uint32_t EXTRA_LONG_PRESS_TIME = 20000L;
 const uint32_t ULTRA_LONG_PRESS_TIME = 30000L;
 const uint32_t CONFIG_TIMEOUT = 600; //s
 const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000;
-const uint32_t INFO_SCREEN_DISP_TIME = 20000L;
+const uint32_t INFO_SCREEN_DISP_TIME = 30000L; // ms
+const uint32_t SENSOR_PUBLISH_TIME = 600000; // ms
 
 struct FactorySettings {
   String serial_number = ""; // len = 8
@@ -59,6 +60,7 @@ struct PersistedVars {
   bool wifi_done = false;
   bool setup_done = false;
   bool wifi_quick_connect = false;
+  bool info_screen_showing = false;
 };
 
 struct Topics {

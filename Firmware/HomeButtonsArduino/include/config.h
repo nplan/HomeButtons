@@ -11,7 +11,4 @@ const char SW_VERSION[] = "v0.4.0";
 const char WIFI_MANAGER_TITLE[] = "Home Buttons";
 const char AP_PASSWORD[] = "password123";
 
-// ------ wakeup ------
-const uint32_t TIMER_SLEEP_USEC = 600000000L;
-
 #endif

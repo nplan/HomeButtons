@@ -37,7 +37,7 @@ WiFiManagerParameter btn6_txt_param("btn6_txt", "BTN6 Text", "", 20);
 
 enum BootReason {NO_REASON, TMR, RST, BTN, BTN_MEDIUM, BTN_LONG, BTN_EXTRA_LONG, BTN_ULTRA_LONG};
 BootReason boot_reason = NO_REASON;
-enum ControlFlow {NO_FLOW, WIFI_SETUP, SETUP, RESET, BTN_PRESS, FAC_RESET, TIMER};
+enum ControlFlow {NO_FLOW, WIFI_SETUP, SETUP, RESET, BTN_PRESS, FAC_RESET, TIMER, SHOW_INFO};
 ControlFlow control_flow = NO_FLOW;
 uint32_t btn_press_time = 0;
 uint32_t config_start_time = 0;
@@ -91,7 +91,12 @@ void display_buttons() {
 void start_esp_sleep() {
   esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
   if (persisted_s.wifi_done && persisted_s.setup_done && !persisted_s.low_batt_mode) {
-      esp_sleep_enable_timer_wakeup(TIMER_SLEEP_USEC);
+    if (persisted_s.info_screen_showing) {
+      esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
+    }
+    else {
+      esp_sleep_enable_timer_wakeup(SENSOR_PUBLISH_TIME * 1000UL);
+    }
   }
   log_i("starting deep sleep");
   esp_deep_sleep_start();
@@ -124,6 +129,7 @@ void setup() {
   }
 
   // ------ init hardware ------
+  log_i("hardware version: %s", factory_s.hw_version);
   init_hardware(factory_s.hw_version);
   eink::begin(); // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   begin_hardware();
@@ -175,32 +181,25 @@ void setup() {
     bool break_loop = false;
     while (!break_loop) {
       switch (ctrl) {
-        case 0: // time less than LONG_PRESS_TIME
+        case 0:
           if (!digitalRead(wakeup_pin)) {
             boot_reason = BTN;
             ctrl = -1;
           }
           else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
             eink::display_info_screen(temperature_meas, humidity_meas, batt_volt2percent(batt_volt));
-            info_screen_start_time = millis();
             ctrl = 1;
           }
           break;
         case 1:
           if (!digitalRead(wakeup_pin)) {
             delay(100); // debounce
-            ctrl = 2;
+            boot_reason = BTN_MEDIUM;
+            ctrl = -1;
           }
           else if (millis() - btn_press_time > LONG_PRESS_TIME) {
             eink::display_string("Release\nfor\nSETUP\n\nKeep holding\nfor\nWiFi SETUP");
             ctrl = 3;
-          }
-          break;
-        case 2: // show info screen until timeout or btn press
-          if (digitalReadAny() || millis() - info_screen_start_time > INFO_SCREEN_DISP_TIME) {
-            boot_reason = BTN_MEDIUM;
-            ctrl = -1;
-            display_buttons();
           }
           break;
         case 3:
@@ -261,7 +260,10 @@ void setup() {
       break;
     case BTN_MEDIUM:
       log_i("boot reason: btn med");
-      control_flow = NO_FLOW; break;
+      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
+      else if (!persisted_s.setup_done) control_flow = SETUP;
+      else control_flow = SHOW_INFO;
+      break;
     case BTN_LONG:
       log_i("boot reason: btn long");
       if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
@@ -271,8 +273,9 @@ void setup() {
       log_i("boot reason: btn extra long");
       control_flow = WIFI_SETUP;
       break;
-    case BTN_ULTRA_LONG: control_flow = FAC_RESET;
+    case BTN_ULTRA_LONG:
       log_i("boot_reason: btn ultra long");
+      control_flow = FAC_RESET;
       break;
   }
 
@@ -375,6 +378,7 @@ void setup() {
         }
       }
       wifi_manager.stopWebPortal();
+      eink::display_string("Exiting setup...");
 
       bool mqtt_connected = connect_mqtt();
       if (!mqtt_connected) {
@@ -397,6 +401,12 @@ void setup() {
     }
     case BTN_PRESS: {
       log_i("control flow: btn press");
+
+      if (persisted_s.info_screen_showing) {
+        persisted_s.info_screen_showing = false;
+        display_buttons();
+        break;
+      }
 
       if (wakeup_pin == HW.BTN1_PIN) {
         wakeup_button = BTN1;
@@ -467,9 +477,15 @@ void setup() {
       }
       break;
     }
+    case SHOW_INFO: {
+      log_i("control flow: show info");
+      persisted_s.info_screen_showing = true;
+      break;
+    }
     case RESET: {
       log_i("control flow: reset");
-      eink::display_string("RESET");
+      eink::display_string("Device RESET");
+      persisted_s.info_screen_showing = false;
       if (persisted_s.wifi_done && persisted_s.setup_done) 
         display_buttons();
       else
@@ -478,15 +494,21 @@ void setup() {
     }
     case FAC_RESET: {
       log_i("control flow: fac reset");
-      eink::display_string("Factory\nRESET");
+      eink::display_string("Starting\nFactory\nRESET...");
       clear_all_preferences();
       wifi_manager.resetSettings();
       delay(3000);
+      eink::display_string("Factory\nRESET\ncomplete");
       ESP.restart();
       break;
     }
     case TIMER: {
       log_i("control flow: timer");
+      if (persisted_s.info_screen_showing) {
+        persisted_s.info_screen_showing = false;
+        display_buttons();
+        break;
+      }
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
         break;
