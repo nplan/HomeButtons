@@ -16,6 +16,9 @@ void init_hardware(String hw_version) {
         HW = hw_rev_2_0;
         log_i("configured for hw version: 2.1");
     }
+    else {
+        log_e("HW rev %s not supported", hw_version);
+    }
 }
 
 void begin_hardware() {

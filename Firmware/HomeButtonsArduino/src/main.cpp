@@ -10,6 +10,7 @@
 #include "network.h"
 #include "config.h"
 #include "autodiscovery.h"
+#include "hw_tests.h"
 
 // ------ global variables ------
 WiFiManager wifi_manager;
