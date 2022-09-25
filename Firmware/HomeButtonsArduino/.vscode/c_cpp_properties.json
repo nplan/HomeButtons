@@ -451,7 +451,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=60103",
+                "PLATFORMIO=60104",
                 "ARDUINO_ESP32S2_DEV",
                 "CORE_DEBUG_LEVEL=3",
                 "ARDUINO_USB_MODE=0",

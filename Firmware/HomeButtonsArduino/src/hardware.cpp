@@ -4,13 +4,17 @@
 HardwareDefinition HW;
 
 void init_hardware(String hw_version) {
-    if (hw_version == "2.0") {
+    if (hw_version == "1.0") {
+        HW = hw_rev_1_0;
+        log_i("configured for hw version: 1.0");
+    }
+    else if (hw_version == "2.0") {
         HW = hw_rev_2_0;
         log_i("configured for hw version: 2.0");
     }
-    else if (hw_version == "1.0") {
-        HW = hw_rev_1_0;
-        log_i("configured for hw version: 1.0");
+    else if (hw_version == "2.1") {
+        HW = hw_rev_2_0;
+        log_i("configured for hw version: 2.1");
     }
 }
 
