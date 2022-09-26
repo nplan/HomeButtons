@@ -29,12 +29,12 @@ WiFiManagerParameter mqtt_user_param("mqtt_user", "MQTT User", "", 50);
 WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "", 50);
 WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "", 50);
 WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix", "", 50);
-WiFiManagerParameter btn1_txt_param("btn1_txt", "BTN1 Text", "", 20);
-WiFiManagerParameter btn2_txt_param("btn2_txt", "BTN2 Text", "", 20);
-WiFiManagerParameter btn3_txt_param("btn3_txt", "BTN3 Text", "", 20);
-WiFiManagerParameter btn4_txt_param("btn4_txt", "BTN4 Text", "", 20);
-WiFiManagerParameter btn5_txt_param("btn5_txt", "BTN5 Text", "", 20);
-WiFiManagerParameter btn6_txt_param("btn6_txt", "BTN6 Text", "", 20);
+WiFiManagerParameter btn1_txt_param("btn1_txt", "BTN1 Text", "", 10);
+WiFiManagerParameter btn2_txt_param("btn2_txt", "BTN2 Text", "", 10);
+WiFiManagerParameter btn3_txt_param("btn3_txt", "BTN3 Text", "", 10);
+WiFiManagerParameter btn4_txt_param("btn4_txt", "BTN4 Text", "", 10);
+WiFiManagerParameter btn5_txt_param("btn5_txt", "BTN5 Text", "", 10);
+WiFiManagerParameter btn6_txt_param("btn6_txt", "BTN6 Text", "", 10);
 
 enum BootReason {NO_REASON, TMR, RST, BTN, BTN_MEDIUM, BTN_LONG, BTN_EXTRA_LONG, BTN_ULTRA_LONG};
 BootReason boot_reason = NO_REASON;
@@ -80,12 +80,12 @@ void save_params_clbk() {
 
 void display_buttons() {
   eink::display_buttons(
-    user_s.button_1_text.c_str(),
-    user_s.button_2_text.c_str(),
-    user_s.button_3_text.c_str(),
-    user_s.button_4_text.c_str(),
-    user_s.button_5_text.c_str(),
-    user_s.button_6_text.c_str()
+    user_s.button_1_text,
+    user_s.button_2_text,
+    user_s.button_3_text,
+    user_s.button_4_text,
+    user_s.button_5_text,
+    user_s.button_6_text
   );
 }
 
@@ -124,7 +124,7 @@ void setup() {
     if (factory_mode()) {
       factory_s = read_factory_settings();
       log_i("factory settings complete. going to sleep");
-      eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
+      eink::display_start_setup_screen(factory_s.unique_id.c_str());
       go_to_sleep();
     }
   }
@@ -306,7 +306,7 @@ void setup() {
 
       if (!wifi_connected && !wifi_connected_2) { // double check that wifi can not be connected with connect_wifi() function
         persisted_s.wifi_done = false;
-        eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
+        eink::display_start_setup_screen(factory_s.unique_id.c_str());
         break;
       }
 
@@ -331,7 +331,7 @@ void setup() {
           display_buttons();
         }
         else {
-          eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
+          eink::display_start_setup_screen(factory_s.unique_id.c_str());
         }
         break;
       }
@@ -390,7 +390,7 @@ void setup() {
         persisted_s.setup_done = false;
         eink::display_error("MQTT\nerror");
         delay(3000);
-        eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
+        eink::display_start_setup_screen(factory_s.unique_id.c_str());
         break;
       }
       else {
@@ -500,7 +500,7 @@ void setup() {
       if (persisted_s.wifi_done && persisted_s.setup_done) 
         display_buttons();
       else
-        eink::display_please_complete_setup_screen(factory_s.unique_id.c_str());
+        eink::display_start_setup_screen(factory_s.unique_id.c_str());
       break;
     }
     case FAC_RESET: {

@@ -19,6 +19,8 @@ const uint16_t heights[] = {H1, H2, H3, H4, H5, H6};
 
 const uint16_t h_padding = 5;
 
+const uint16_t min_btn_clearance = 14;
+
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
 #define MAX_DISPLAY_BUFFER_SIZE 65536ul // e.g.
@@ -37,7 +39,7 @@ namespace eink {
         display->hibernate();
     }
 
-    void display_string(const char* string) {
+    void display_string(String string) {
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(true);
@@ -53,7 +55,7 @@ namespace eink {
         while (display->nextPage());
     }
 
-    void display_error(const char* string) {
+    void display_error(String string) {
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
@@ -77,15 +79,15 @@ namespace eink {
         while (display->nextPage());
     }
 
-    void display_buttons(const char* button_1_text,
-                        const char* button_2_text,
-                        const char* button_3_text,
-                        const char* button_4_text,
-                        const char* button_5_text,
-                        const char* button_6_text) {
+    void display_buttons(String button_1_text,
+                         String button_2_text,
+                         String button_3_text,
+                         String button_4_text,
+                         String button_5_text,
+                         String button_6_text) {
 
-        const char* texts[] = {button_1_text, button_2_text, button_3_text,
-                                button_4_text, button_5_text, button_6_text};
+        String texts[] = {button_1_text, button_2_text, button_3_text,
+                          button_4_text, button_5_text, button_6_text};
 
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
@@ -95,24 +97,42 @@ namespace eink {
         display->firstPage();
         do {
             display->fillScreen(GxEPD_WHITE);
-            display->setFont(&FreeSansBold18pt7b);
             
             int16_t x, y;
             uint16_t w, h;
             
             // Loop through buttons
             for (uint16_t i=0; i<num_buttons; i++) {
-            display->getTextBounds(texts[i], 0, 0, &x, &y, &w, &h);
-            int16_t w_pos, h_pos;
-            if (i % 2 == 0) {
-                w_pos = -x + h_padding;
-            }
-            else {
-                w_pos = WIDTH - w - x - h_padding;
-            }
-            h_pos = heights[i] - y - h/2;
-            display->setCursor(w_pos, h_pos);
-            display->print(texts[i]);
+                String t = texts[i];
+
+                display->setFont(&FreeSansBold18pt7b);
+                display->getTextBounds(t, 0, 0, &x, &y, &w, &h);
+                if (w >= WIDTH - min_btn_clearance) {
+                    display->setFont(&FreeSansBold12pt7b);
+                    display->getTextBounds(t, 0, 0, &x, &y, &w, &h);
+                    if (w >= WIDTH - min_btn_clearance) {
+                        t = t.substring(0, t.length()-1) + ".";
+                        while (1) {
+                            display->getTextBounds(t, 0, 0, &x, &y, &w, &h);
+                            if (w >= WIDTH - min_btn_clearance) {
+                                t = t.substring(0, t.length()-2) + ".";
+                            }
+                            else {
+                                break;
+                            }
+                        }
+                    }
+                }
+                int16_t w_pos, h_pos;
+                if (i % 2 == 0) {
+                    w_pos = -x + h_padding;
+                }
+                else {
+                    w_pos = WIDTH - w - x - h_padding;
+                }
+                h_pos = heights[i] - y - h/2;
+                display->setCursor(w_pos, h_pos);
+                display->print(t);
             }
         }
         while (display->nextPage());
@@ -130,6 +150,7 @@ namespace eink {
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
         display->setFont(&FreeSans9pt7b);
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -192,6 +213,7 @@ namespace eink {
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
         display->setFont(&FreeSans9pt7b);
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -264,35 +286,6 @@ namespace eink {
         while (display->nextPage());
     }
 
-    void display_wifi_not_connected_screen() {
-        display->setRotation(0);
-        display->setTextColor(GxEPD_BLACK);
-        display->setTextWrap(true);
-        display->setFont(&FreeSansBold9pt7b);
-        display->setPartialWindow(0, 0, display->width(), display->height());
-
-        display->firstPage();
-        do {
-            display->setCursor(0, 0);
-            display->fillScreen(GxEPD_WHITE);
-
-            int16_t x, y;
-            uint16_t w, h;
-            display->getTextBounds("WIFI", 0, 0, &x, &y, &w, &h);
-            display->setCursor(WIDTH/2 - w/2, 90);
-            display->print("WIFI");
-
-            display->getTextBounds("NOT", 0, 0, &x, &y, &w, &h);
-            display->setCursor(WIDTH/2 - w/2, 120);
-            display->print("NOT");
-
-            display->getTextBounds("CONNECTED", 0, 0, &x, &y, &w, &h);
-            display->setCursor(WIDTH/2 - w/2, 150);
-            display->print("CONNECTED");
-        }
-        while (display->nextPage());
-    }
-
     void display_setup_complete_screen() {
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
@@ -360,7 +353,7 @@ namespace eink {
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
         display->setFont(&FreeSansBold9pt7b);
-        display->setPartialWindow(0, 0, display->width(), display->height());
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -388,10 +381,11 @@ namespace eink {
         while (display->nextPage());
     }
 
-    void display_please_complete_setup_screen(const char * uid) {
+    void display_start_setup_screen(const char * uid) {
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -424,6 +418,7 @@ namespace eink {
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -456,6 +451,7 @@ namespace eink {
         display->setRotation(0);
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(false);
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -514,6 +510,7 @@ namespace eink {
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(true);
         display->setFont(&FreeSans9pt7b);
+        display->setFullWindow();
 
         display->firstPage();
         do {
@@ -528,6 +525,7 @@ namespace eink {
         }
 
     void display_white_screen() {
+        display->setFullWindow();
         display->firstPage();
         do {
             display->fillScreen(GxEPD_WHITE);
@@ -536,6 +534,7 @@ namespace eink {
         }
 
     void display_black_screen() {
+        display->setFullWindow();
         display->firstPage();
         do {
             display->fillScreen(GxEPD_BLACK);
@@ -548,6 +547,7 @@ namespace eink {
         display->setTextColor(GxEPD_BLACK);
         display->setTextWrap(true);
         display->setFont(&FreeSansBold9pt7b);
+        display->setFullWindow();
 
         display->firstPage();
         do {

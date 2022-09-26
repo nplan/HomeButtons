@@ -21,16 +21,16 @@ namespace eink
 
   void hibernate();
 
-  void display_string(const char* string);
+  void display_string(String string);
 
-  void display_error(const char* string);
+  void display_error(String string);
 
-  void display_buttons(const char* button_1_text,
-                        const char* button_2_text,
-                        const char* button_3_text,
-                        const char* button_4_text,
-                        const char* button_5_text,
-                        const char* button_6_text);
+  void display_buttons(String button_1_text,
+                       String button_2_text,
+                       String button_3_text,
+                       String button_4_text,
+                       String button_5_text,
+                       String button_6_text);
 
   void display_ap_config_screen(String ssid, String password);
 
@@ -38,15 +38,13 @@ namespace eink
 
   void display_wifi_connected_screen();
 
-  void display_wifi_not_connected_screen();
-
   void display_setup_complete_screen();
 
   void display_please_recharge_soon_screen();
 
   void display_turned_off_please_recharge_screen();
 
-  void display_please_complete_setup_screen(const char * uid);
+  void display_start_setup_screen(const char * uid);
 
   void display_unboxing_screen(const char * uid);
 
