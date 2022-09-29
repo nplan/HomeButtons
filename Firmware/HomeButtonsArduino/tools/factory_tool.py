@@ -7,6 +7,7 @@ import argparse
 port = "/dev/cu.usbmodem01"
 baud = 115200
 
+
 @dataclass
 class FactorySettings:
     serial_number: str = ""
@@ -17,11 +18,12 @@ class FactorySettings:
 
     def __repr__(self) -> str:
         return f"Factory settings:\n"\
-                f"    serial_number: {self.serial_number}\n"\
-                f"    random_id: {self.random_id}\n"\
-                f"    model_name: {self.model_name}\n"\
-                f"    model_id: {self.model_id}\n"\
-                f"    hw_version: {self.hw_version}\n"
+            f"    serial_number: {self.serial_number}\n"\
+            f"    random_id: {self.random_id}\n"\
+            f"    model_name: {self.model_name}\n"\
+            f"    model_id: {self.model_id}\n"\
+            f"    hw_version: {self.hw_version}\n"
+
 
 class FactoryHandler:
 
@@ -141,9 +143,11 @@ class FactoryHandler:
             else:
                 print("ABORTED. Repeat factory setup.")
 
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="HomeButtons Factory Setup Tool")
+    parser = argparse.ArgumentParser(
+        description="HomeButtons Factory Setup Tool")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
 
@@ -159,7 +163,8 @@ if __name__ == "__main__":
 
     settings = FactorySettings(
         serial_number=args.serial,
-        random_id=args.random_id if args.random_id else str(uuid4())[:6].upper(),
+        random_id=args.random_id if args.random_id else str(uuid4())[
+            :6].upper(),
         model_name=args.model_name,
         model_id=args.model_id,
         hw_version=args.hw_version

@@ -1,9 +1,10 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <WiFi.h>
-#include <PubSubClient.h>
 #include <Arduino.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
+
 #include "prefs.h"
 
 extern PubSubClient client;

@@ -1,16 +1,16 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
 #include <Wire.h>
-#include "Adafruit_SHTC3.h"
 
-#include "hardware.h"
+#include "Adafruit_SHTC3.h"
+#include "autodiscovery.h"
+#include "config.h"
 #include "display.h"
 #include "factory.h"
-#include "prefs.h"
-#include "network.h"
-#include "config.h"
-#include "autodiscovery.h"
+#include "hardware.h"
 #include "hw_tests.h"
+#include "network.h"
+#include "prefs.h"
 
 // ------ global variables ------
 WiFiManager wifi_manager;
@@ -26,9 +26,11 @@ WiFiManagerParameter device_name_param("device_name", "Device name", "", 20);
 WiFiManagerParameter mqtt_server_param("mqtt_server", "MQTT Server", "", 50);
 WiFiManagerParameter mqtt_port_param("mqtt_port", "MQTT Port", "", 6);
 WiFiManagerParameter mqtt_user_param("mqtt_user", "MQTT User", "", 50);
-WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "", 50);
+WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "",
+                                         50);
 WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "", 50);
-WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix", "", 50);
+WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix",
+                                            "", 50);
 WiFiManagerParameter btn1_txt_param("btn1_txt", "BTN1 Text", "", 10);
 WiFiManagerParameter btn2_txt_param("btn2_txt", "BTN2 Text", "", 10);
 WiFiManagerParameter btn3_txt_param("btn3_txt", "BTN3 Text", "", 10);
@@ -36,19 +38,37 @@ WiFiManagerParameter btn4_txt_param("btn4_txt", "BTN4 Text", "", 10);
 WiFiManagerParameter btn5_txt_param("btn5_txt", "BTN5 Text", "", 10);
 WiFiManagerParameter btn6_txt_param("btn6_txt", "BTN6 Text", "", 10);
 
-enum BootReason {NO_REASON, TMR, RST, BTN, BTN_MEDIUM, BTN_LONG, BTN_EXTRA_LONG, BTN_ULTRA_LONG};
+enum BootReason {
+  NO_REASON,
+  TMR,
+  RST,
+  BTN,
+  BTN_MEDIUM,
+  BTN_LONG,
+  BTN_EXTRA_LONG,
+  BTN_ULTRA_LONG
+};
 BootReason boot_reason = NO_REASON;
-enum ControlFlow {NO_FLOW, WIFI_SETUP, SETUP, RESET, BTN_PRESS, FAC_RESET, TIMER, SHOW_INFO};
+enum ControlFlow {
+  NO_FLOW,
+  WIFI_SETUP,
+  SETUP,
+  RESET,
+  BTN_PRESS,
+  FAC_RESET,
+  TIMER,
+  SHOW_INFO
+};
 ControlFlow control_flow = NO_FLOW;
 uint32_t btn_press_time = 0;
 uint32_t config_start_time = 0;
-enum WakeupButton {NO_BTN, BTN1, BTN2, BTN3, BTN4, BTN5, BTN6};
+enum WakeupButton { NO_BTN, BTN1, BTN2, BTN3, BTN4, BTN5, BTN6 };
 WakeupButton wakeup_button = NO_BTN;
 int16_t wakeup_pin = -1;
 
-
 void set_topics() {
-  String button_topic_common = user_s.base_topic + "/" + user_s.device_name + "/";
+  String button_topic_common =
+      user_s.base_topic + "/" + user_s.device_name + "/";
   topic_s.button_1_press = button_topic_common + "button_1";
   topic_s.button_2_press = button_topic_common + "button_2";
   topic_s.button_3_press = button_topic_common + "button_3";
@@ -79,23 +99,18 @@ void save_params_clbk() {
 }
 
 void display_buttons() {
-  eink::display_buttons(
-    user_s.button_1_text,
-    user_s.button_2_text,
-    user_s.button_3_text,
-    user_s.button_4_text,
-    user_s.button_5_text,
-    user_s.button_6_text
-  );
+  eink::display_buttons(user_s.button_1_text, user_s.button_2_text,
+                        user_s.button_3_text, user_s.button_4_text,
+                        user_s.button_5_text, user_s.button_6_text);
 }
 
 void start_esp_sleep() {
   esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
-  if (persisted_s.wifi_done && persisted_s.setup_done && !persisted_s.low_batt_mode) {
+  if (persisted_s.wifi_done && persisted_s.setup_done &&
+      !persisted_s.low_batt_mode) {
     if (persisted_s.info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
-    }
-    else {
+    } else {
       esp_sleep_enable_timer_wakeup(SENSOR_PUBLISH_TIME * 1000UL);
     }
   }
@@ -132,7 +147,7 @@ void setup() {
   // ------ init hardware ------
   log_i("hardware version: %s", factory_s.hw_version);
   init_hardware(factory_s.hw_version);
-  eink::begin(); // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+  eink::begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   begin_hardware();
 
   // ------ check battery voltage first thing ------
@@ -143,12 +158,10 @@ void setup() {
       persisted_s.low_batt_mode = false;
       log_i("low batt mode disabled");
       display_buttons();
-    }
-    else {
+    } else {
       go_to_sleep();
     }
-  }
-  else {
+  } else {
     if (batt_volt < HW.MIN_BATT_VOLT) {
       // delay and check again
       delay(1000);
@@ -164,7 +177,9 @@ void setup() {
   }
 
   // ------ read temp & humidity ------
-  shtc3_wire.begin((int)HW.SDA, (int)HW.SCL); // must be cast to int otherwise wrong begin() is called
+  shtc3_wire.begin(
+      (int)HW.SDA,
+      (int)HW.SCL);  // must be cast to int otherwise wrong begin() is called
   shtc3.begin(&shtc3_wire);
   sensors_event_t humidity_event, temp_event;
   shtc3.getEvent(&humidity_event, &temp_event);
@@ -176,7 +191,7 @@ void setup() {
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1) {
     btn_press_time = millis();
     uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
-    wakeup_pin = (log(GPIO_reason))/log(2);
+    wakeup_pin = (log(GPIO_reason)) / log(2);
     log_i("wakeup pin: %d", wakeup_pin);
     int16_t ctrl = 0;
     bool break_loop = false;
@@ -186,20 +201,20 @@ void setup() {
           if (!digitalRead(wakeup_pin)) {
             boot_reason = BTN;
             ctrl = -1;
-          }
-          else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
-            eink::display_info_screen(temperature_meas, humidity_meas, batt_volt2percent(batt_volt));
+          } else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
+            eink::display_info_screen(temperature_meas, humidity_meas,
+                                      batt_volt2percent(batt_volt));
             ctrl = 1;
           }
           break;
         case 1:
           if (!digitalRead(wakeup_pin)) {
-            delay(100); // debounce
+            delay(100);  // debounce
             boot_reason = BTN_MEDIUM;
             ctrl = -1;
-          }
-          else if (millis() - btn_press_time > LONG_PRESS_TIME) {
-            eink::display_string("Release\nfor\nSETUP\n\nKeep holding\nfor\nWiFi SETUP");
+          } else if (millis() - btn_press_time > LONG_PRESS_TIME) {
+            eink::display_string(
+                "Release\nfor\nSETUP\n\nKeep holding\nfor\nWiFi SETUP");
             ctrl = 3;
           }
           break;
@@ -207,18 +222,18 @@ void setup() {
           if (!digitalRead(wakeup_pin)) {
             boot_reason = BTN_LONG;
             ctrl = -1;
-          }
-          else if (millis() - btn_press_time > EXTRA_LONG_PRESS_TIME) {
+          } else if (millis() - btn_press_time > EXTRA_LONG_PRESS_TIME) {
             ctrl = 4;
-            eink::display_string("Release\nfor\nWiFi SETUP\n\nKeep holding\nfor\nFACTORY\nRESET");
+            eink::display_string(
+                "Release\nfor\nWiFi SETUP\n\nKeep "
+                "holding\nfor\nFACTORY\nRESET");
           }
           break;
         case 4:
           if (!digitalRead(wakeup_pin)) {
             boot_reason = BTN_EXTRA_LONG;
             ctrl = -1;
-          }
-          else if (millis() - btn_press_time > ULTRA_LONG_PRESS_TIME) {
+          } else if (millis() - btn_press_time > ULTRA_LONG_PRESS_TIME) {
             boot_reason = BTN_ULTRA_LONG;
             ctrl = -1;
           }
@@ -229,11 +244,9 @@ void setup() {
           break;
       }
     }
-  }
-  else if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
+  } else if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
     boot_reason = TMR;
-  }
-  else {
+  } else {
     boot_reason = RST;
   }
 
@@ -244,31 +257,44 @@ void setup() {
       break;
     case RST:
       log_i("boot reason: reset");
-      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
-      else if (!persisted_s.setup_done) control_flow = SETUP;
-      else control_flow = RESET;
+      if (!persisted_s.wifi_done)
+        control_flow = WIFI_SETUP;
+      else if (!persisted_s.setup_done)
+        control_flow = SETUP;
+      else
+        control_flow = RESET;
       break;
     case TMR:
       log_i("boot reason: timer");
-      if (!persisted_s.wifi_done && !persisted_s.setup_done) control_flow = NO_FLOW;
-      else control_flow = TIMER;
+      if (!persisted_s.wifi_done && !persisted_s.setup_done)
+        control_flow = NO_FLOW;
+      else
+        control_flow = TIMER;
       break;
     case BTN:
       log_i("boot reason: btn");
-      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
-      else if (!persisted_s.setup_done) control_flow = SETUP;
-      else control_flow = BTN_PRESS;
+      if (!persisted_s.wifi_done)
+        control_flow = WIFI_SETUP;
+      else if (!persisted_s.setup_done)
+        control_flow = SETUP;
+      else
+        control_flow = BTN_PRESS;
       break;
     case BTN_MEDIUM:
       log_i("boot reason: btn med");
-      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
-      else if (!persisted_s.setup_done) control_flow = SETUP;
-      else control_flow = SHOW_INFO;
+      if (!persisted_s.wifi_done)
+        control_flow = WIFI_SETUP;
+      else if (!persisted_s.setup_done)
+        control_flow = SETUP;
+      else
+        control_flow = SHOW_INFO;
       break;
     case BTN_LONG:
       log_i("boot reason: btn long");
-      if (!persisted_s.wifi_done) control_flow = WIFI_SETUP;
-      else control_flow = SETUP;
+      if (!persisted_s.wifi_done)
+        control_flow = WIFI_SETUP;
+      else
+        control_flow = SETUP;
       break;
     case BTN_EXTRA_LONG:
       log_i("boot reason: btn extra long");
@@ -286,7 +312,7 @@ void setup() {
       log_i("control flow: wifi setup");
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
-      delay(50); // debounce
+      delay(50);  // debounce
       eink::display_string("Starting\nWiFi setup...");
       persisted_s.wifi_quick_connect = false;
       config_start_time = millis();
@@ -300,18 +326,22 @@ void setup() {
       wifi_manager.setTitle(WIFI_MANAGER_TITLE);
       wifi_manager.setBreakAfterConfig(true);
       wifi_manager.setDarkMode(true);
-    
-      bool wifi_connected = wifi_manager.startConfigPortal(ap_name.c_str(), AP_PASSWORD);
+
+      bool wifi_connected =
+          wifi_manager.startConfigPortal(ap_name.c_str(), AP_PASSWORD);
       bool wifi_connected_2 = connect_wifi();
 
-      if (!wifi_connected && !wifi_connected_2) { // double check that wifi can not be connected with connect_wifi() function
+      if (!wifi_connected &&
+          !wifi_connected_2) {  // double check that wifi can not be connected
+                                // with connect_wifi() function
         persisted_s.wifi_done = false;
         eink::display_start_setup_screen(factory_s.unique_id.c_str());
         break;
       }
 
       persisted_s.wifi_done = true;
-      save_persisted_vars(persisted_s); // save now because restarting before end of setup funciton
+      save_persisted_vars(persisted_s);  // save now because restarting before
+                                         // end of setup funciton
       eink::display_wifi_connected_screen();
       delay(3000);
       ESP.restart();
@@ -321,7 +351,7 @@ void setup() {
       log_i("control flow: setup");
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
-      delay(50); // debounce
+      delay(50);  // debounce
       eink::display_string("Starting\nsetup...");
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
@@ -329,13 +359,13 @@ void setup() {
         delay(3000);
         if (persisted_s.setup_done) {
           display_buttons();
-        }
-        else {
+        } else {
           eink::display_start_setup_screen(factory_s.unique_id.c_str());
         }
         break;
       }
-      persisted_s.wifi_quick_connect = false; // maybe user changed wifi settings
+      persisted_s.wifi_quick_connect =
+          false;  // maybe user changed wifi settings
       eink::display_web_config_screen(WiFi.localIP().toString());
       config_start_time = millis();
 
@@ -374,9 +404,10 @@ void setup() {
       wifi_manager.addParameter(&btn5_txt_param);
       wifi_manager.addParameter(&btn6_txt_param);
 
-      web_portal_saved = false; // set to true in web portal save button callback
+      web_portal_saved =
+          false;  // set to true in web portal save button callback
       wifi_manager.startWebPortal();
-      while (millis() - config_start_time < CONFIG_TIMEOUT*1000L) {
+      while (millis() - config_start_time < CONFIG_TIMEOUT * 1000L) {
         wifi_manager.process();
         if (digitalReadAny() || web_portal_saved) {
           break;
@@ -392,8 +423,7 @@ void setup() {
         delay(3000);
         eink::display_start_setup_screen(factory_s.unique_id.c_str());
         break;
-      }
-      else {
+      } else {
         set_topics();
         send_autodiscovery_msg();
         save_topics(topic_s);
@@ -421,24 +451,19 @@ void setup() {
       if (wakeup_pin == HW.BTN1_PIN) {
         wakeup_button = BTN1;
         set_led(HW.LED1_CH, HW.LED_BRIGHT_DFLT);
-      }
-      else if (wakeup_pin == HW.BTN2_PIN) {
+      } else if (wakeup_pin == HW.BTN2_PIN) {
         wakeup_button = BTN3;
         set_led(HW.LED2_CH, HW.LED_BRIGHT_DFLT);
-      }
-      else if (wakeup_pin == HW.BTN3_PIN) {
+      } else if (wakeup_pin == HW.BTN3_PIN) {
         wakeup_button = BTN5;
         set_led(HW.LED3_CH, HW.LED_BRIGHT_DFLT);
-      }
-      else if (wakeup_pin == HW.BTN4_PIN) {
+      } else if (wakeup_pin == HW.BTN4_PIN) {
         wakeup_button = BTN6;
         set_led(HW.LED4_CH, HW.LED_BRIGHT_DFLT);
-      }
-      else if (wakeup_pin == HW.BTN5_PIN) {
+      } else if (wakeup_pin == HW.BTN5_PIN) {
         wakeup_button = BTN4;
         set_led(HW.LED5_CH, HW.LED_BRIGHT_DFLT);
-      }
-      else if (wakeup_pin == HW.BTN6_PIN) {
+      } else if (wakeup_pin == HW.BTN6_PIN) {
         wakeup_button = BTN2;
         set_led(HW.LED6_CH, HW.LED_BRIGHT_DFLT);
       }
@@ -477,7 +502,8 @@ void setup() {
           client.publish(topic_s.button_6_press.c_str(), BTN_PRESS_PAYLOAD);
           break;
       }
-      client.publish(topic_s.temperature.c_str(), String(temperature_meas).c_str());
+      client.publish(topic_s.temperature.c_str(),
+                     String(temperature_meas).c_str());
       client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
       client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
       if (batt_volt < HW.WARN_BATT_VOLT) {
@@ -497,7 +523,7 @@ void setup() {
       eink::display_string("Device RESET");
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
-      if (persisted_s.wifi_done && persisted_s.setup_done) 
+      if (persisted_s.wifi_done && persisted_s.setup_done)
         display_buttons();
       else
         eink::display_start_setup_screen(factory_s.unique_id.c_str());
@@ -526,7 +552,6 @@ void setup() {
         eink::display_fully_charged_screen();
       }
 
-
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
         break;
@@ -535,14 +560,15 @@ void setup() {
       if (!mqtt_connected) {
         break;
       }
-      client.publish(topic_s.temperature.c_str(), String(temperature_meas).c_str());
+      client.publish(topic_s.temperature.c_str(),
+                     String(temperature_meas).c_str());
       client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
       client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
       break;
     }
     case NO_FLOW: {
       // do nothing
-     break;
+      break;
     }
     default: {
       break;

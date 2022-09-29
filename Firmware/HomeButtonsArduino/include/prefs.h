@@ -25,18 +25,18 @@ const uint32_t MEDIUM_PRESS_TIME = 2000L;
 const uint32_t LONG_PRESS_TIME = 10000L;
 const uint32_t EXTRA_LONG_PRESS_TIME = 20000L;
 const uint32_t ULTRA_LONG_PRESS_TIME = 30000L;
-const uint32_t CONFIG_TIMEOUT = 600; //s
+const uint32_t CONFIG_TIMEOUT = 600;  // s
 const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000;
-const uint32_t INFO_SCREEN_DISP_TIME = 30000L; // ms
-const uint32_t SENSOR_PUBLISH_TIME = 600000; // ms
+const uint32_t INFO_SCREEN_DISP_TIME = 30000L;  // ms
+const uint32_t SENSOR_PUBLISH_TIME = 600000;    // ms
 
 struct FactorySettings {
-  String serial_number = ""; // len = 8
-  String random_id = ""; // len = 6
-  String model_name = ""; // 1 < len < 20
-  String model_id = ""; // len = 2
-  String hw_version = ""; // len = 3
-  String unique_id = ""; // len = 20
+  String serial_number = "";  // len = 8
+  String random_id = "";      // len = 6
+  String model_name = "";     // 1 < len < 20
+  String model_id = "";       // len = 2
+  String hw_version = "";     // len = 3
+  String unique_id = "";      // len = 20
 };
 
 struct UserSettings {
