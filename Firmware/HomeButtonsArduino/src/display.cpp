@@ -370,7 +370,7 @@ void display_turned_off_please_recharge_screen() {
   } while (display->nextPage());
 }
 
-void display_start_setup_screen(const char* uid) {
+void display_welcome_screen(const char* uid) {
   display->setRotation(0);
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(false);
@@ -383,53 +383,43 @@ void display_start_setup_screen(const char* uid) {
 
     int16_t x, y;
     uint16_t w, h;
-    display->setFont(&FreeSans18pt7b);
-    display->getTextBounds("Home", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 60);
-    display->print("Home");
-    display->getTextBounds("Buttons", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2 - 3, 100);
-    display->print("Buttons");
-
-    display->setTextWrap(true);
     display->setFont(&FreeSansBold9pt7b);
-    display->setCursor(0, 160);
-    display->print("Press\nany button\nto start\nsetup");
+    display->getTextBounds("Home Buttons", 0, 0, &x, &y, &w, &h);
+    display->setCursor(WIDTH / 2 - w / 2, 40);
+    display->print("Home Buttons");
 
-    display->setFont(&FreeMono9pt7b);
-    display->setCursor(0, 275);
-    display->print(uid);
-  } while (display->nextPage());
-}
+    display->drawBitmap(54, 52, hb_logo_20x21px, 20, 21, GxEPD_BLACK);
 
-void display_unboxing_screen(const char* uid) {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->setFont(&FreeSans18pt7b);
-    display->getTextBounds("Home", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 60);
-    display->print("Home");
-    display->getTextBounds("Buttons", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2 - 3, 100);
-    display->print("Buttons");
-
-    display->setTextWrap(true);
     display->setFont(&FreeSansBold9pt7b);
-    display->setCursor(0, 160);
-    display->print("Please\nconnect charger\nto wake\ndevice");
+    display->getTextBounds("--------------------", 0, 0, &x, &y, &w, &h);
+    display->setCursor(WIDTH / 2 - w / 2, 102);
+    display->print("--------------------");
 
-    display->setFont(&FreeMono9pt7b);
-    display->setCursor(0, 275);
+    uint8_t version = 6;  // 41x41px
+    QRCode qrcode;
+    uint8_t qrcodeData[qrcode_getBufferSize(version)];
+    qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
+
+    display->setFont(&FreeSans9pt7b);
+    display->getTextBounds("Setup guide:", 0, 0, &x, &y, &w, &h);
+    display->setCursor(WIDTH / 2 - w / 2, 145);
+    display->print("Setup guide:");
+
+    uint16_t qr_x = 23;
+    uint16_t qr_y = 165;
+    for (uint8_t y = 0; y < qrcode.size; y++) {
+      // Each horizontal module
+      for (uint8_t x = 0; x < qrcode.size; x++) {
+        // Display each module
+        if (qrcode_getModule(&qrcode, x, y)) {
+          display->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+        }
+      }
+    }
+
+    display->setFont();
+    display->setTextSize(1);
+    display->setCursor(0, 285);
     display->print(uid);
   } while (display->nextPage());
 }

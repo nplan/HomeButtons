@@ -139,7 +139,7 @@ void setup() {
     if (factory_mode()) {
       factory_s = read_factory_settings();
       log_i("factory settings complete. going to sleep");
-      eink::display_start_setup_screen(factory_s.unique_id.c_str());
+      eink::display_welcome_screen(factory_s.unique_id.c_str());
       go_to_sleep();
     }
   }
@@ -335,7 +335,7 @@ void setup() {
           !wifi_connected_2) {  // double check that wifi can not be connected
                                 // with connect_wifi() function
         persisted_s.wifi_done = false;
-        eink::display_start_setup_screen(factory_s.unique_id.c_str());
+        eink::display_welcome_screen(factory_s.unique_id.c_str());
         break;
       }
 
@@ -360,7 +360,7 @@ void setup() {
         if (persisted_s.setup_done) {
           display_buttons();
         } else {
-          eink::display_start_setup_screen(factory_s.unique_id.c_str());
+          eink::display_welcome_screen(factory_s.unique_id.c_str());
         }
         break;
       }
@@ -421,7 +421,7 @@ void setup() {
         persisted_s.setup_done = false;
         eink::display_error("MQTT\nerror");
         delay(3000);
-        eink::display_start_setup_screen(factory_s.unique_id.c_str());
+        eink::display_welcome_screen(factory_s.unique_id.c_str());
         break;
       } else {
         set_topics();
@@ -526,7 +526,7 @@ void setup() {
       if (persisted_s.wifi_done && persisted_s.setup_done)
         display_buttons();
       else
-        eink::display_start_setup_screen(factory_s.unique_id.c_str());
+        eink::display_welcome_screen(factory_s.unique_id.c_str());
       break;
     }
     case FAC_RESET: {
