@@ -30,6 +30,15 @@ const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000;
 const uint32_t INFO_SCREEN_DISP_TIME = 30000L;  // ms
 const uint32_t SENSOR_PUBLISH_TIME = 600000;    // ms
 
+struct NetworkSettings {
+  String wifi_ssid = "";
+  String wifi_password = "";
+  String mqtt_server = "";
+  String mqtt_user = "";
+  String mqtt_password = "";
+  int32_t mqtt_port = 0;
+};
+
 struct FactorySettings {
   String serial_number = "";  // len = 8
   String random_id = "";      // len = 6

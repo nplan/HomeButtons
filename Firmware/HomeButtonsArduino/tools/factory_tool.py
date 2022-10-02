@@ -1,13 +1,17 @@
+from asyncio import open_connection
 from dataclasses import dataclass
+from time import sleep
 from serial import Serial
 from datetime import date
 from uuid import uuid4
 import argparse
+import paho.mqtt.client as mqtt
 
 port = "/dev/cu.usbmodem01"
 baud = 115200
 
-
+test_topic = "homebuttons-factory/test"
+test_payload = "OK"
 @dataclass
 class FactorySettings:
     serial_number: str = ""
@@ -25,6 +29,16 @@ class FactorySettings:
             f"    hw_version: {self.hw_version}\n"
 
 
+@dataclass
+class NetworkSettings:
+    wifi_ssid: str = ""
+    wifi_password: str = ""
+    mqtt_server: str = ""
+    mqtt_user: str = ""
+    mqtt_password: str = ""
+    mqtt_port: int = 0
+
+
 class FactoryHandler:
 
     def __init__(self) -> None:
@@ -32,7 +46,7 @@ class FactoryHandler:
 
     def run_hw_test(self) -> bool:
         print("Starting HW test...", end="", flush=True)
-        self.serial.write(b"T\r")
+        self.serial.write(b"ST\r")
         while True:
             ret = self.serial.readline().decode().strip()
             if ret == "OK":
@@ -46,7 +60,7 @@ class FactoryHandler:
         assert type(serial_number) is str
         assert len(serial_number) == 8
         print("Setting serial number...", end="", flush=True)
-        self.serial.write(b"S-" + serial_number.encode("ascii") + b"\r")
+        self.serial.write(b"SN-" + serial_number.encode("ascii") + b"\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -59,7 +73,7 @@ class FactoryHandler:
         assert type(random_id) is str
         assert len(random_id) == 6
         print("Setting random id...", end="", flush=True)
-        self.serial.write(b"I-" + random_id.encode("ascii") + b"\r")
+        self.serial.write(b"RI-" + random_id.encode("ascii") + b"\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -72,7 +86,7 @@ class FactoryHandler:
         assert type(model_name) is str
         assert 0 < len(model_name) <= 20
         print("Setting model name...", end="", flush=True)
-        self.serial.write(b"M-" + model_name.encode("ascii") + b"\r")
+        self.serial.write(b"MN-" + model_name.encode("ascii") + b"\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -85,7 +99,7 @@ class FactoryHandler:
         assert type(model_id) is str
         assert len(model_id) == 2
         print("Setting model id...", end="", flush=True)
-        self.serial.write(b"D-" + model_id.encode("ascii") + b"\r")
+        self.serial.write(b"MI-" + model_id.encode("ascii") + b"\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -98,7 +112,7 @@ class FactoryHandler:
         assert type(hw_version) is str
         assert len(hw_version) == 3
         print("Setting hw version...", end="", flush=True)
-        self.serial.write(b"V-" + hw_version.encode("ascii") + b"\r")
+        self.serial.write(b"HV-" + hw_version.encode("ascii") + b"\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -109,7 +123,7 @@ class FactoryHandler:
 
     def save_settings(self) -> bool:
         print("Saving settings...", end="", flush=True)
-        self.serial.write(b"E\r")
+        self.serial.write(b"OK\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -118,7 +132,100 @@ class FactoryHandler:
             print("FAIL")
             return False
 
-    def run_factory_setup(self, settings: FactorySettings):
+    def set_wifi_ssid(self, wifi_ssid: str) -> bool:
+        print("Setting wifi ssid...", end="", flush=True)
+        self.serial.write(b"WS-" + wifi_ssid.encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def set_wifi_password(self, wifi_password: str) -> bool:
+        print("Setting wifi password...", end="", flush=True)
+        self.serial.write(b"WP-" + wifi_password.encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def set_mqtt_server(self, mqtt_server: str) -> bool:
+        print("Setting mqtt server...", end="", flush=True)
+        self.serial.write(b"MS-" + mqtt_server.encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def set_mqtt_user(self, mqtt_user: str) -> bool:
+        print("Setting mqtt user...", end="", flush=True)
+        self.serial.write(b"MU-" + mqtt_user.encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def set_mqtt_password(self, mqtt_password: str) -> bool:
+        print("Setting mqtt password...", end="", flush=True)
+        self.serial.write(b"MP-" + mqtt_password.encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def set_mqtt_port(self, mqtt_port: int) -> bool:
+        print("Setting mqtt port...", end="", flush=True)
+        self.serial.write(b"MT-" + str(mqtt_port).encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def start_wifi_test(self) -> bool:
+        print("Starting wifi test...", end="", flush=True)
+        self.serial.write(b"TW")
+        success = False
+
+        def on_connect(client, userdata, flags, rc):
+            client.subscribe(test_topic)
+
+        def on_message(client, userdata, msg):
+            nonlocal success
+            if msg.payload.decode("ascii") == "OK":
+                success = True
+
+        client = mqtt.Client()
+        client.on_connect = on_connect
+        client.on_message = on_message
+
+        client.connect(network_settings.mqtt_server, network_settings.mqtt_port, 60)
+        client.loop_start()
+
+        while not success:
+            sleep(0.1)
+
+        client.loop_stop()
+        print("OK")
+        return True
+
+    def run_factory_setup(self, settings: FactorySettings, network_settings: NetworkSettings=None):
         with Serial(port, baudrate=baud) as self.serial:
             if not self.set_hw_version(settings.hw_version):
                 return
@@ -132,6 +239,22 @@ class FactoryHandler:
                 return
             if not self.set_model_id(settings.model_id):
                 return
+
+            if network_settings:
+                if not self.set_wifi_ssid(network_settings.wifi_ssid):
+                    return
+                if not self.set_wifi_password(network_settings.wifi_password):
+                    return
+                if not self.set_mqtt_server(network_settings.mqtt_server):
+                    return
+                if not self.set_mqtt_user(network_settings.mqtt_user):
+                    return
+                if not self.set_mqtt_password(network_settings.mqtt_password):
+                    return
+                if not self.set_mqtt_port(network_settings.mqtt_port):
+                    return
+                if not self.start_wifi_test():
+                    return
 
             print("Settings to be saved: \n", settings)
             if input("Confirm save factory settings? y/n\n") == "y":
@@ -159,6 +282,13 @@ if __name__ == "__main__":
     required.add_argument("--model_id", type=str, required=True)
     required.add_argument("--hw_version", type=str, required=True)
 
+    required.add_argument("--wifi_ssid", type=str, required=True)
+    required.add_argument("--wifi_password", type=str, required=True)
+    required.add_argument("--mqtt_server", type=str, required=True)
+    required.add_argument("--mqtt_user", type=str, required=True)
+    required.add_argument("--mqtt_password", type=str, required=True)
+    required.add_argument("--mqtt_port", type=int, required=True)
+
     args = parser.parse_args()
 
     settings = FactorySettings(
@@ -170,5 +300,14 @@ if __name__ == "__main__":
         hw_version=args.hw_version
     )
 
+    network_settings = NetworkSettings(
+        wifi_ssid=args.wifi_ssid,
+        wifi_password=args.wifi_password,
+        mqtt_server=args.mqtt_server,
+        mqtt_user=args.mqtt_user,
+        mqtt_password=args.mqtt_password,
+        mqtt_port=args.mqtt_port
+    )
+
     factory = FactoryHandler()
-    factory.run_factory_setup(settings)
+    factory.run_factory_setup(settings, network_settings)
