@@ -1,0 +1,11 @@
+site_name: Home Buttons
+
+repo_url: https://github.com/nplan/HomeButtons
+repo_name: nplan/HomeButtons
+
+nav:
+  - Home: index.md
+  - Quick Setup: setup.md
+
+theme:
+  name: material

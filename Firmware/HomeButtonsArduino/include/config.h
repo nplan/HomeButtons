@@ -5,7 +5,7 @@
 
 // ------ device ------
 const char MANUFACTURER[] = "Planinsek Industries";
-const char SW_VERSION[] = "v0.4.2";
+const char SW_VERSION[] = "v1.0.0";
 const char DOCS_LINK[] = "https://docs.home-buttons.com";
 
 // ------ wifi AP ------
