@@ -9,3 +9,7 @@ nav:
 
 theme:
   name: material
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
