@@ -17,11 +17,11 @@ You will need one 18650 Li-Ion battery cell (not included). Please only use repu
 
 1. Open the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it.
 
-    ![Open back cover image](/assets/open_back_cover.jpeg){width="300"}
+    ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
 
 2. Insert the battery cell. Be careful to orient it so that polarity matches markings on the PCB.
 
-    ![Insert battery](/assets/insert_battery.jpeg){width="300"}
+    ![Insert battery](assets/insert_battery.jpeg){width="300"}
 
 3. Keep the back cover off for now. You will install it when mounting *Home Buttons* to the wall.
 
@@ -33,11 +33,11 @@ After inserting the battery cell, *Home Buttons* will turn on automatically and 
 
 1. *Home Buttons* establishes a Wi-Fi hotspot for configuration. Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
 
-    ![Wi-Fi Setup Screen](/assets/wifi_setup_screen.png){width="150"}
+    ![Wi-Fi Setup Screen](assets/wifi_setup_screen.png){width="150"}
 
 2. After connecting to *Home Buttons* Wi-Fi with your device, a **captive portal** will pop up automatically. If it doesn't, open the web browser and navigate to any web page. You will be redirected to the captive portal.
 
-    ![Wi-Fi Setup Page](/assets/wifi_setup_page.png){width="200"}
+    ![Wi-Fi Setup Page](assets/wifi_setup_page.png){width="200"}
 
 3. Click on *"Configure WiFi"* and wait a few seconds for a list of networks to appear.
 
@@ -53,7 +53,7 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
 
 1. Scan the QR code or enter the displayed local IP into a web browser. The setup page will load:
 
-    ![Setup Page](/assets/setup_page.jpeg){width="250"}
+    ![Setup Page](assets/setup_page.jpeg){width="250"}
 
 2. Click *"Setup"*
 
@@ -79,7 +79,7 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
 
     *Home Buttons* will choose font size automatically. It can display around 5 letters in large font and around 10 letters in smaller font. Text over 10 letters will be clipped. Choose what you want to display wisely :)
 
-    ![Button Text Size Comparison](/assets/text_sizes.png){width="150"}
+    ![Button Text Size Comparison](assets/text_sizes.png){width="150"}
 
 5. Confirm by clicking *"Save"*. Device will exit the setup and display buttons.
 
@@ -89,11 +89,11 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
 
 *Home Buttons* uses *MQTT Discovery* and will appear in *Home Assistant*'s device list automatically. There you can see device information, sensor readings, battery state and set up button actions.
 
-![Home Assistant Device Page](/assets/home_assistant_device.png){width="300"}
+![Home Assistant Device Page](assets/home_assistant_device.png){width="300"}
 
 To set up button actions, click "+" on *Automations* card, select one of the buttons and set up an automation with *Home Assistant*'s editor.
 
-![Home Assistant Triggers](/assets/home_assistant_triggers.png){width="350"}
+![Home Assistant Triggers](assets/home_assistant_triggers.png){width="350"}
 
 ### Mount To The Wall
 
