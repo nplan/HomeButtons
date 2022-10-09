@@ -50,7 +50,7 @@ void display_string(String string) {
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(true);
   display->setFont(&FreeSans9pt7b);
-  display->setPartialWindow(0, 0, display->width(), display->height());
+  display->setFullWindow();
 
   display->firstPage();
   do {
@@ -65,7 +65,7 @@ void display_error(String string) {
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(false);
   display->setFont(&FreeSansBold9pt7b);
-  display->setPartialWindow(0, 0, display->width(), display->height());
+  display->setFullWindow();
 
   display->firstPage();
   do {
@@ -181,7 +181,7 @@ void display_ap_config_screen(String ssid, String password) {
     display->print("Connect to:");
 
     display->setCursor(0, 220);
-    display->print("WiFi:");
+    display->print("Wi-Fi:");
     display->setFont(&FreeSansBold9pt7b);
     display->setCursor(0, 235);
     display->print(ssid.c_str());
@@ -255,7 +255,7 @@ void display_wifi_connected_screen() {
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(true);
   display->setFont(&FreeSansBold9pt7b);
-  display->setPartialWindow(0, 0, display->width(), display->height());
+  display->setFullWindow();
 
   display->firstPage();
   do {
@@ -264,9 +264,9 @@ void display_wifi_connected_screen() {
 
     int16_t x, y;
     uint16_t w, h;
-    display->getTextBounds("WIFI", 0, 0, &x, &y, &w, &h);
+    display->getTextBounds("Wi-Fi", 0, 0, &x, &y, &w, &h);
     display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("WIFI");
+    display->print("Wi-Fi");
 
     display->getTextBounds("CONNECTED", 0, 0, &x, &y, &w, &h);
     display->setCursor(WIDTH / 2 - w / 2, 150);
@@ -283,7 +283,7 @@ void display_setup_complete_screen() {
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(true);
   display->setFont(&FreeSansBold9pt7b);
-  display->setPartialWindow(0, 0, display->width(), display->height());
+  display->setFullWindow();
 
   display->firstPage();
   do {
@@ -311,7 +311,7 @@ void display_please_recharge_soon_screen() {
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(true);
   display->setFont(&FreeSansBold9pt7b);
-  display->setPartialWindow(0, 0, display->width(), display->height());
+  display->setFullWindow();
 
   display->firstPage();
   do {

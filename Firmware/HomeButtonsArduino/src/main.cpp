@@ -22,7 +22,7 @@ bool web_portal_saved = false;
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
-WiFiManagerParameter device_name_param("device_name", "Device name", "", 20);
+WiFiManagerParameter device_name_param("device_name", "Device Name", "", 20);
 WiFiManagerParameter mqtt_server_param("mqtt_server", "MQTT Server", "", 50);
 WiFiManagerParameter mqtt_port_param("mqtt_port", "MQTT Port", "", 6);
 WiFiManagerParameter mqtt_user_param("mqtt_user", "MQTT User", "", 50);
@@ -214,7 +214,7 @@ void setup() {
             ctrl = -1;
           } else if (millis() - btn_press_time > LONG_PRESS_TIME) {
             eink::display_string(
-                "Release\nfor\nSETUP\n\nKeep holding\nfor\nWiFi SETUP");
+                "Release\nfor\nSETUP\n\nKeep holding\nfor\nWi-Fi SETUP");
             ctrl = 3;
           }
           break;
@@ -225,7 +225,7 @@ void setup() {
           } else if (millis() - btn_press_time > EXTRA_LONG_PRESS_TIME) {
             ctrl = 4;
             eink::display_string(
-                "Release\nfor\nWiFi SETUP\n\nKeep "
+                "Release\nfor\nWi-Fi SETUP\n\nKeep "
                 "holding\nfor\nFACTORY\nRESET");
           }
           break;
@@ -313,7 +313,7 @@ void setup() {
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
       delay(50);  // debounce
-      eink::display_string("Starting\nWiFi setup...");
+      eink::display_string("Starting\nWi-Fi setup...");
       persisted_s.wifi_quick_connect = false;
       config_start_time = millis();
       // start wifi manager
@@ -326,6 +326,7 @@ void setup() {
       wifi_manager.setTitle(WIFI_MANAGER_TITLE);
       wifi_manager.setBreakAfterConfig(true);
       wifi_manager.setDarkMode(true);
+      wifi_manager.setShowInfoUpdate(false);
 
       bool wifi_connected =
           wifi_manager.startConfigPortal(ap_name.c_str(), AP_PASSWORD);
@@ -335,13 +336,15 @@ void setup() {
           !wifi_connected_2) {  // double check that wifi can not be connected
                                 // with connect_wifi() function
         persisted_s.wifi_done = false;
+        eink::display_error("Wi-Fi\nerror");
+        delay(5000);
         eink::display_welcome_screen(factory_s.unique_id.c_str());
         break;
       }
 
       persisted_s.wifi_done = true;
       save_persisted_vars(persisted_s);  // save now because restarting before
-                                         // end of setup funciton
+                                         // end of setup function
       eink::display_wifi_connected_screen();
       delay(3000);
       ESP.restart();
@@ -355,7 +358,7 @@ void setup() {
       eink::display_string("Starting\nsetup...");
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
-        eink::display_error("WiFi\nerror");
+        eink::display_error("Wi-Fi\nerror");
         delay(3000);
         if (persisted_s.setup_done) {
           display_buttons();
@@ -375,6 +378,7 @@ void setup() {
       wifi_manager.setShowPassword(true);
       wifi_manager.setParamsPage(true);
       wifi_manager.setDarkMode(true);
+      wifi_manager.setShowInfoUpdate(true);
 
       // Parameters
       device_name_param.setValue(user_s.device_name.c_str(), 20);
@@ -470,7 +474,7 @@ void setup() {
 
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
-        eink::display_error("WiFi\nerror");
+        eink::display_error("Wi-Fi\nerror");
         delay(3000);
         display_buttons();
         break;
