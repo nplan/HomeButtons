@@ -6,9 +6,30 @@ repo_name: nplan/HomeButtons
 nav:
   - Home: index.md
   - Quick Setup: setup.md
+  - Configuration: configuration.md
+  - Hardware Details: specs.md
 
 theme:
   name: material
+  logo: assets/home_buttons_logo.svg
+  favicon: assets/home_buttons_logo.svg
+    # Palette toggle for light mode
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+      primary: cyan
+      accent: orange
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+      primary: cyan
+      accent: orange
+
 
 markdown_extensions:
   - attr_list

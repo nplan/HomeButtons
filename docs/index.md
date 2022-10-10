@@ -1,3 +1,3 @@
-# Welcome to Home Buttons Documentation
+# Home Buttons Documentation
 
 TODO

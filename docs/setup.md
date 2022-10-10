@@ -11,7 +11,7 @@ You will need:
 - An MQTT broker (usually installed as *Home Assistant* add-on)
 - *Home Assistant* (optional - can work only through MQTT)
 
-### Insert The Battery
+## Insert The Battery
 
 You will need one 18650 Li-Ion battery cell (not included). Please only use reputable brands.
 
@@ -25,19 +25,23 @@ You will need one 18650 Li-Ion battery cell (not included). Please only use repu
 
 3. Keep the back cover off for now. You will install it when mounting *Home Buttons* to the wall.
 
-> If the device doesn't turn on by itself, please briefly connect it to a USB-C charger to wake it up.
+> If the device doesn't turn on by itself, please briefly connect it to an USB-C charger to wake it up.
 
-### Set Up Wi-Fi Connection
+## Set Up Wi-Fi Connection
 
-After inserting the battery cell, *Home Buttons* will turn on automatically and start Wi-Fi setup procedure. If you don't complete the setup in 10 minutes, *Home Buttons* will turn off again to save battery. Press any button to wake up and start again.
+After inserting the battery cell, *Home Buttons* will turn on automatically and start Wi-Fi setup procedure.
+If you don't complete the setup in 10 minutes, *Home Buttons* will turn off again to save battery.
+Press any button to wake up and start again.
 
-1. *Home Buttons* establishes a Wi-Fi hotspot for configuration. Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
+1. *Home Buttons* establishes a Wi-Fi hotspot for configuration.
+Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
 
-    ![Wi-Fi Setup Screen](assets/wifi_setup_screen.png){width="150"}
+    ![Wi-Fi Setup Screen](assets/wifi_setup_screen.png){width="125"}
 
-2. After connecting to *Home Buttons* Wi-Fi with your device, a **captive portal** will pop up automatically. If it doesn't, open the web browser and navigate to any web page. You will be redirected to the captive portal.
+2. After connecting to *Home Buttons* Wi-Fi with your device, a **captive portal** will pop up automatically.
+If it doesn't, open the web browser and navigate to any web page. You will be redirected to the captive portal.
 
-    ![Wi-Fi Setup Page](assets/wifi_setup_page.png){width="200"}
+    ![Wi-Fi Setup Page](assets/wifi_setup_page_1.png){width="200"}
 
 3. Click on *"Configure WiFi"* and wait a few seconds for a list of networks to appear.
 
@@ -45,14 +49,16 @@ After inserting the battery cell, *Home Buttons* will turn on automatically and 
 
 *Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. *"Wi-Fi CONNECTED"* will appear on display.
 
-> If connection is not successful, *"Wi-Fi error"* will be displayed and *Home Buttons* will return to welcome screen. You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
+> If connection is not successful, *"Wi-Fi error"* will be displayed and *Home Buttons* will return to welcome screen.
+You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
-### Set Up MQTT & Buttons
+## Set Up MQTT & Buttons
 
 When connected to your Wi-Fi network, *Home Buttons* can be configured using any device on your local network.
 
 1. Scan the QR code or enter the displayed local IP into a web browser. The setup page will load:
 
+    ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page](assets/setup_page.jpeg){width="250"}
 
 2. Click *"Setup"*
@@ -71,23 +77,27 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
 
     - `Base Topic` - MQTT topic that will be prepended to all topics used by *Home Buttons*. The default is `homebuttons`.
 
-    - `Discovery Prefix` - *Home Assistant* parameter for MQTT Autodiscovery. The default is `homeassistant`. Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
+    - `Discovery Prefix` - *Home Assistant* parameter for MQTT Autodiscovery. The default is `homeassistant`.
+    Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
 4. Enter button text
 
     - `BTN1 Text` - `BTN6 Text` - Text that will be displayed next to each button. The order is from top to bottom.
 
-    *Home Buttons* will choose font size automatically. It can display around 5 letters in large font and around 10 letters in smaller font. Text over 10 letters will be clipped. Choose what you want to display wisely :)
+    *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
+    Text over **7** letters will be clipped. Choose what you want to display wisely :)
 
-    ![Button Text Size Comparison](assets/text_sizes.png){width="150"}
+    ![Button Text Size Comparison](assets/text_sizes.png){width="125"}
 
 5. Confirm by clicking *"Save"*. Device will exit the setup and display buttons.
 
-> If MQTT connection is not successful, *"MQTT error"* will be displayed and *Home Buttons* will return to welcome screen. You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.
+> If MQTT connection is not successful, *"MQTT error"* will be displayed and *Home Buttons* will return to welcome screen.
+You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.
 
-### Set Up Home Assistant
+## Set Up Home Assistant
 
-*Home Buttons* uses *MQTT Discovery* and will appear in *Home Assistant*'s device list automatically. There you can see device information, sensor readings, battery state and set up button actions.
+*Home Buttons* uses *MQTT Discovery* and will appear in *Home Assistant*'s device list automatically.
+There you can see device information, sensor readings, battery state and set up button actions.
 
 ![Home Assistant Device Page](assets/home_assistant_device.png){width="300"}
 
@@ -95,10 +105,49 @@ To set up button actions, click "+" on *Automations* card, select one of the but
 
 ![Home Assistant Triggers](assets/home_assistant_triggers.png){width="350"}
 
-### Mount To The Wall
+## Mount To The Wall
 
-TODO
+![Mount To Wall](assets/mount_2_wall.jpeg){width="300"}
 
-### Other Important Information
+Mount the **back cover** of *Home Buttons* to the wall. There are 2 options:
 
-TODO
+1. **Screws**
+
+    Use two screws (max diameter 4.5 mm) with anchors suitable for your walls (not included).
+
+2. **Tape**
+
+    Use double sided tape (not included). Use only high quality heavy duty foam mounting tape.
+    A small patch of size around 1 x 1 cm in each corner works best.
+
+Either way, **make sure the arrow is pointing upwards!**
+
+When the back cover is securely mounted, you can clip on the front of the device. Push it firmly until it's flush with the wall.
+
+![Mount To Wall](assets/mount_2_wall_2.jpeg){width="300"}
+
+***DONE!***
+
+## Other Important Information
+
+### Charging
+
+The expected battery life is > 1.5 years with a high quality 18650 cell.
+When the battery is getting low, *Home Buttons* will remind you to charge after pressing a button.
+If the battery gets critically low, the device will turn off.
+The display will show: `TURNED OFF PLEASE RECHARGE BATTERY`. You can see the remaining batter percentage as a sensor in *Home Assistant*.
+
+Plug in any USB-C charger to charge the battery. The expected full charge time is 4 hours.
+There is no state of charge indication during charging. When the battery is fully charged, the display will show `FULLY CHARGED`.
+
+### Temperature & Humidity
+
+*Home Buttons* includes a high precision temperature and humidity sensor. The readings are taken every 10 minutes and on every button press.
+The values are displayed as sensors in *Home Assistant*. 
+
+> You can see current temperature, humidity & battery percentage by pressing any button for 2 seconds.
+The display will automatically revert to buttons in 30 seconds. Or do that by manually by pressing any button again.
+
+### Configuration
+
+For detailed configuration information see the [Configuration](configuration.md) section.
