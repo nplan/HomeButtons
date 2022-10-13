@@ -1,6 +1,8 @@
-# Hardware Details
+# Technical Specifications
 
-## Dimensions and materials
+## Physical
+
+![Dimensions](assets/dimensions.png){width="400"}
 
 * Width: 86.5 mm
 * Height: 86.5 mm

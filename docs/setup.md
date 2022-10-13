@@ -52,7 +52,7 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 > If connection is not successful, *"Wi-Fi error"* will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
-## Set Up MQTT & Buttons
+## Set Up MQTT & Button Labels
 
 When connected to your Wi-Fi network, *Home Buttons* can be configured using any device on your local network.
 
@@ -80,12 +80,12 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
     - `Discovery Prefix` - *Home Assistant* parameter for MQTT Autodiscovery. The default is `homeassistant`.
     Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
-4. Enter button text
+4. Enter button labels
 
-    - `BTN1 Text` - `BTN6 Text` - Text that will be displayed next to each button. The order is from top to bottom.
+    - `BTN1 Text` - `BTN6 Text` - Label that will be displayed next to each button. The order is from top to bottom.
 
     *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
-    Text over **7** letters will be clipped. Choose what you want to display wisely :)
+    Labels over **7** letters will be clipped. Choose what you want to display wisely :)
 
     ![Button Text Size Comparison](assets/text_sizes.png){width="125"}
 
@@ -145,9 +145,9 @@ There is no state of charge indication during charging. When the battery is full
 *Home Buttons* includes a high precision temperature and humidity sensor. The readings are taken every 10 minutes and on every button press.
 The values are displayed as sensors in *Home Assistant*. 
 
-> You can see current temperature, humidity & battery percentage by pressing any button for 2 seconds.
-The display will automatically revert to buttons in 30 seconds. Or do that by manually by pressing any button again.
+> You can bring up a display of current temperature, humidity & battery percentage by pressing any button for 2 seconds.
+The device will automatically revert to showing button labels in 30 seconds. Or do that by manually by pressing any button again.
 
-### Configuration
+## What's next?
 
-For detailed configuration information see the [Configuration](configuration.md) section.
+See [User Guide](user_guide.md) for further information about using and re-configuring the device.

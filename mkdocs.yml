@@ -6,8 +6,9 @@ repo_name: nplan/HomeButtons
 nav:
   - Home: index.md
   - Quick Setup: setup.md
-  - Configuration: configuration.md
-  - Hardware Details: specs.md
+  - User Guide: user_guide.md
+  - Tech Specs: specs.md
+  - About: about.md
 
 theme:
   name: material
