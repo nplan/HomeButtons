@@ -56,7 +56,7 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 
 When connected to your Wi-Fi network, *Home Buttons* can be configured using any device on your local network.
 
-1. Scan the QR code or enter the displayed local IP into a web browser. The setup page will load:
+1. Scan the QR code or enter the local IP into a web browser. The setup page will load:
 
     ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page](assets/setup_page.jpeg){width="250"}
@@ -77,19 +77,17 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
 
     - `Base Topic` - MQTT topic that will be prepended to all topics used by *Home Buttons*. The default is `homebuttons`.
 
-    - `Discovery Prefix` - *Home Assistant* parameter for MQTT Autodiscovery. The default is `homeassistant`.
+    - `Discovery Prefix` - *Home Assistant* parameter for MQTT discovery. The default is `homeassistant`.
     Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
 4. Enter button labels
 
-    - `BTN1 Text` - `BTN6 Text` - Label that will be displayed next to each button. The order is from top to bottom.
+    - `Button 1 Label` - `Button 6 Label` - Label that will be displayed next to each button. The order is from top to bottom.
 
-    *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
+    > *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
     Labels over **7** letters will be clipped. Choose what you want to display wisely :)
-
-    ![Button Text Size Comparison](assets/text_sizes.png){width="125"}
-
-5. Confirm by clicking *"Save"*. Device will exit the setup and display buttons.
+    
+5. Confirm by clicking *"Save"*. Device will exit the setup and display button labels.
 
 > If MQTT connection is not successful, *"MQTT error"* will be displayed and *Home Buttons* will return to welcome screen.
 You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.
@@ -145,8 +143,8 @@ There is no state of charge indication during charging. When the battery is full
 *Home Buttons* includes a high precision temperature and humidity sensor. The readings are taken every 10 minutes and on every button press.
 The values are displayed as sensors in *Home Assistant*. 
 
-> You can bring up a display of current temperature, humidity & battery percentage by pressing any button for 2 seconds.
-The device will automatically revert to showing button labels in 30 seconds. Or do that by manually by pressing any button again.
+> You can bring up a display of current temperature, humidity & battery charge percentage by pressing any button for 2 seconds.
+The device will automatically revert to showing button labels in 30 seconds. Or do that manually by pressing any button again.
 
 ## What's next?
 

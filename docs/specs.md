@@ -63,9 +63,9 @@
 ## Charging
 
 * Any standard USB Type-C power supply is sufficient for charging
-    * *Can also be charged using any computer USB port*
+> Can also be charged using any computer USB port
 * Battery charging current: **780 mA**
-    * *Make sure the selected battery can be safely charged at this rate*
+> Make sure the selected battery can be safely charged at this rate
 * Expected recharging time from empty: **4 hours**
-    * *Assuming Panasonic NCR18650B 3400  mAh or equivalent*
+> Assuming Panasonic NCR18650B 3400  mAh or equivalent
 
