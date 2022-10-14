@@ -31,12 +31,12 @@ WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "",
 WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "", 50);
 WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix",
                                             "", 50);
-WiFiManagerParameter btn1_txt_param("btn1_txt", "BTN1 Text", "", 10);
-WiFiManagerParameter btn2_txt_param("btn2_txt", "BTN2 Text", "", 10);
-WiFiManagerParameter btn3_txt_param("btn3_txt", "BTN3 Text", "", 10);
-WiFiManagerParameter btn4_txt_param("btn4_txt", "BTN4 Text", "", 10);
-WiFiManagerParameter btn5_txt_param("btn5_txt", "BTN5 Text", "", 10);
-WiFiManagerParameter btn6_txt_param("btn6_txt", "BTN6 Text", "", 10);
+WiFiManagerParameter btn1_txt_param("btn1_txt", "Button 1 Label", "", 10);
+WiFiManagerParameter btn2_txt_param("btn2_txt", "Button 2 Label", "", 10);
+WiFiManagerParameter btn3_txt_param("btn3_txt", "Button 3 Label", "", 10);
+WiFiManagerParameter btn4_txt_param("btn4_txt", "Button 4 Label", "", 10);
+WiFiManagerParameter btn5_txt_param("btn5_txt", "Button 5 Label", "", 10);
+WiFiManagerParameter btn6_txt_param("btn6_txt", "Button 6 Label", "", 10);
 
 enum BootReason {
   NO_REASON,
@@ -381,7 +381,7 @@ void setup() {
       wifi_manager.setShowInfoUpdate(true);
 
       // Parameters
-      device_name_param.setValue(user_s.device_name.c_str(), 20);
+      device_name_param.setValue((user_s.device_name + " " + factory_s.random_id).c_str(), 20);
       mqtt_server_param.setValue(user_s.mqtt_server.c_str(), 50);
       mqtt_port_param.setValue(String(user_s.mqtt_port).c_str(), 6);
       mqtt_user_param.setValue(user_s.mqtt_user.c_str(), 50);

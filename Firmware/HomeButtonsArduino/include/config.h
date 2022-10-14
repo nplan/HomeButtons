@@ -6,7 +6,7 @@
 // ------ device ------
 const char MANUFACTURER[] = "Planinsek Industries";
 const char SW_VERSION[] = "v1.0.0";
-const char DOCS_LINK[] = "https://docs.home-buttons.com";
+const char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
 
 // ------ wifi AP ------
 const char WIFI_MANAGER_TITLE[] = "Home Buttons";
@@ -16,16 +16,16 @@ const char AP_PASSWORD[] = "password123";
 const char BTN_PRESS_PAYLOAD[] = "PRESS";
 
 // ------ defaults ------
-const char DEVICE_NAME[] = "Home Buttons 001";
-const uint16_t MQTT_PORT = 1883;
-const char BASE_TOPIC[] = "homebuttons";
-const char DISCOVERY_PREFIX[] = "homeassistant";
-const char BTN_1_TXT[] = "B1";
-const char BTN_2_TXT[] = "B2";
-const char BTN_3_TXT[] = "B3";
-const char BTN_4_TXT[] = "B4";
-const char BTN_5_TXT[] = "B5";
-const char BTN_6_TXT[] = "B6";
+const char DEVICE_NAME_DFLT[] = "Home Buttons";
+const uint16_t MQTT_PORT_DFLT = 1883;
+const char BASE_TOPIC_DFLT[] = "homebuttons";
+const char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
+const char BTN_1_TXT_DFLT[] = "B1";
+const char BTN_2_TXT_DFLT[] = "B2";
+const char BTN_3_TXT_DFLT[] = "B3";
+const char BTN_4_TXT_DFLT[] = "B4";
+const char BTN_5_TXT_DFLT[] = "B5";
+const char BTN_6_TXT_DFLT[] = "B6";
 
 // ----- timing ------
 const uint32_t QUICK_WIFI_TIMEOUT = 5000L;

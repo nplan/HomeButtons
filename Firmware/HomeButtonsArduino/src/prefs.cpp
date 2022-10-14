@@ -59,20 +59,20 @@ void save_user_settings(UserSettings settings) {
 UserSettings read_user_settings() {
   UserSettings settings;
   preferences.begin("user", true);
-  settings.device_name = preferences.getString("device_name", DEVICE_NAME);
+  settings.device_name = preferences.getString("device_name", DEVICE_NAME_DFLT);
   settings.mqtt_server = preferences.getString("mqtt_srv", "");
-  settings.mqtt_port = preferences.getUInt("mqtt_port", MQTT_PORT);
+  settings.mqtt_port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
   settings.mqtt_user = preferences.getString("mqtt_user", "");
   settings.mqtt_password = preferences.getString("mqtt_pass", "");
-  settings.base_topic = preferences.getString("base_topic", BASE_TOPIC);
+  settings.base_topic = preferences.getString("base_topic", BASE_TOPIC_DFLT);
   settings.discovery_prefix =
-      preferences.getString("disc_prefix", DISCOVERY_PREFIX);
-  settings.button_1_text = preferences.getString("btn1_txt", BTN_1_TXT);
-  settings.button_2_text = preferences.getString("btn2_txt", BTN_2_TXT);
-  settings.button_3_text = preferences.getString("btn3_txt", BTN_3_TXT);
-  settings.button_4_text = preferences.getString("btn4_txt", BTN_4_TXT);
-  settings.button_5_text = preferences.getString("btn5_txt", BTN_5_TXT);
-  settings.button_6_text = preferences.getString("btn6_txt", BTN_6_TXT);
+      preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
+  settings.button_1_text = preferences.getString("btn1_txt", BTN_1_TXT_DFLT);
+  settings.button_2_text = preferences.getString("btn2_txt", BTN_2_TXT_DFLT);
+  settings.button_3_text = preferences.getString("btn3_txt", BTN_3_TXT_DFLT);
+  settings.button_4_text = preferences.getString("btn4_txt", BTN_4_TXT_DFLT);
+  settings.button_5_text = preferences.getString("btn5_txt", BTN_5_TXT_DFLT);
+  settings.button_6_text = preferences.getString("btn6_txt", BTN_6_TXT_DFLT);
   preferences.end();
   return settings;
 }

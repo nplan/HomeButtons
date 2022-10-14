@@ -1,6 +1,6 @@
 # Home Buttons
 
-![Home Buttons](assets/home_buttons_front.jpg){width="300", align=right} 
+![Home Buttons](assets/home_buttons_front.jpg){width="325", align=right} 
 
 **A simple device for controlling you smart home.**
 
@@ -19,7 +19,7 @@ Works seamlessly with *Home Assistant*.
 
 ## How it works
 
-![How It Works](assets/button_press.gif){width="300", align=left}
+![How It Works](assets/button_press.gif){width="325", align=left}
 
 **Always forgetting which button triggers which automation?**
 
