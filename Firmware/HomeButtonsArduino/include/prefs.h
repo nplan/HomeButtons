@@ -47,6 +47,7 @@ struct PersistedVars {
   bool wifi_quick_connect = false;
   bool info_screen_showing = false;
   bool charge_complete_showing = false;
+  bool reset_to_setup = false;
 };
 
 struct Topics {

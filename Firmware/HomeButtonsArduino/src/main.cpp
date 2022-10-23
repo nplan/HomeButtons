@@ -257,12 +257,13 @@ void setup() {
       break;
     case RST:
       log_i("boot reason: reset");
-      if (!persisted_s.wifi_done)
-        control_flow = WIFI_SETUP;
-      else if (!persisted_s.setup_done)
+      if (persisted_s.reset_to_setup) {
         control_flow = SETUP;
-      else
+        persisted_s.reset_to_setup = false;
+        save_persisted_vars(persisted_s);
+      } else {
         control_flow = RESET;
+      }
       break;
     case TMR:
       log_i("boot reason: timer");
@@ -343,6 +344,7 @@ void setup() {
       }
 
       persisted_s.wifi_done = true;
+      persisted_s.reset_to_setup = true;
       save_persisted_vars(persisted_s);  // save now because restarting before
                                          // end of setup function
       eink::display_wifi_connected_screen();
@@ -381,7 +383,8 @@ void setup() {
       wifi_manager.setShowInfoUpdate(true);
 
       // Parameters
-      device_name_param.setValue((user_s.device_name + " " + factory_s.random_id).c_str(), 20);
+      device_name_param.setValue(
+          (user_s.device_name + " " + factory_s.random_id).c_str(), 20);
       mqtt_server_param.setValue(user_s.mqtt_server.c_str(), 50);
       mqtt_port_param.setValue(String(user_s.mqtt_port).c_str(), 6);
       mqtt_user_param.setValue(user_s.mqtt_user.c_str(), 50);

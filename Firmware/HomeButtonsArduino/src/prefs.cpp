@@ -91,6 +91,7 @@ void save_persisted_vars(PersistedVars vars) {
   preferences.putBool("wifi_qc", vars.wifi_quick_connect);
   preferences.putBool("info_shwn", vars.info_screen_showing);
   preferences.putBool("chg_cpt_shwn", vars.charge_complete_showing);
+  preferences.putBool("rst_to_stp", vars.reset_to_setup);
   preferences.end();
 }
 
@@ -103,6 +104,7 @@ PersistedVars read_persisted_vars() {
   vars.wifi_quick_connect = preferences.getBool("wifi_qc", false);
   vars.info_screen_showing = preferences.getBool("info_shwn", false);
   vars.charge_complete_showing = preferences.getBool("chg_cpt_shwn", false);
+  vars.reset_to_setup = preferences.getBool("rst_to_stp", false);
   preferences.end();
   return vars;
 }
