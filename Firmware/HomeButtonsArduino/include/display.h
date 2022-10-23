@@ -3,6 +3,7 @@
 
 #include "hardware.h"
 #include "config.h"
+#include "prefs.h"
 #include "bitmaps.h"
 
 #include <qrcode.h>
@@ -46,7 +47,7 @@ namespace eink
 
   void display_turned_off_please_recharge_screen();
 
-  void display_welcome_screen(const char * uid);
+  void display_welcome_screen(const char * uid, FactorySettings fac);
 
   void display_info_screen(float temp, float humid, uint8_t batt);
 

@@ -370,7 +370,7 @@ void display_turned_off_please_recharge_screen() {
   } while (display->nextPage());
 }
 
-void display_welcome_screen(const char* uid) {
+void display_welcome_screen(const char* uid, FactorySettings fac) {
   display->setRotation(0);
   display->setTextColor(GxEPD_BLACK);
   display->setTextWrap(false);
@@ -419,6 +419,15 @@ void display_welcome_screen(const char* uid) {
 
     display->setFont();
     display->setTextSize(1);
+
+    display->setCursor(0, 265);
+    String sw_ver = String("Software: ") + SW_VERSION;
+    display->print(sw_ver);
+
+    display->setCursor(0, 275);
+    String model_info = String("Model: ") + fac.model_id + " rev " + fac.hw_version;
+    display->print(model_info);
+
     display->setCursor(0, 285);
     display->print(uid);
   } while (display->nextPage());
