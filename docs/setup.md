@@ -25,13 +25,14 @@ You will need one 18650 Li-Ion battery cell (not included). Please only use repu
 
 3. Keep the back cover off for now. You will install it when mounting *Home Buttons* to the wall.
 
-> If the device doesn't turn on by itself, please briefly connect it to an USB-C charger to wake it up.
-
 ## Set Up Wi-Fi Connection
 
-After inserting the battery cell, *Home Buttons* will turn on automatically and start Wi-Fi setup procedure.
-If you don't complete the setup in 10 minutes, *Home Buttons* will turn off again to save battery.
-Press any button to wake up and start again.
+After inserting the battery, press any button to wake the device and start Wi-Fi setup procedure.
+
+> If the device doesn't wake when pressing a button, please briefly connect it to an USB-C charger
+
+> If you don't complete the setup in 10 minutes, *Home Buttons* will turn off again to save battery.
+Press any button to wake the device and start again.
 
 1. *Home Buttons* establishes a Wi-Fi hotspot for configuration.
 Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
@@ -43,13 +44,13 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 
     ![Wi-Fi Setup Page](assets/wifi_setup_page_1.png){width="200"}
 
-3. Click on *"Configure WiFi"* and wait a few seconds for a list of networks to appear.
+3. Click on `Configure WiFi` and wait a few seconds for a list of networks to appear.
 
-4. Select your network, enter the password and click *"Save"*.
+4. Select your network, enter the password and click `Save`.
 
-*Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. *"Wi-Fi CONNECTED"* will appear on display.
+*Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. `Wi-Fi CONNECTED` will appear on display.
 
-> If connection is not successful, *"Wi-Fi error"* will be displayed and *Home Buttons* will return to welcome screen.
+> If connection is not successful, `Wi-Fi error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
 ## Set Up MQTT & Button Labels
@@ -61,7 +62,7 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
     ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page](assets/setup_page.jpeg){width="250"}
 
-2. Click *"Setup"*
+2. Click `Setup`
 
 3. Enter the connection parameters:
 
@@ -87,9 +88,9 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
     > *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
     Labels over **7** letters will be clipped. Choose what you want to display wisely :)
     
-5. Confirm by clicking *"Save"*. Device will exit the setup and display button labels.
+5. Confirm by clicking `Save`. Device will exit the setup and display button labels.
 
-> If MQTT connection is not successful, *"MQTT error"* will be displayed and *Home Buttons* will return to welcome screen.
+> If MQTT connection is not successful, `MQTT error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.
 
 ## Set Up Home Assistant

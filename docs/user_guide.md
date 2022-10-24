@@ -29,11 +29,11 @@ Begin setup by pressing any button for 10 seconds. *Home Buttons* will display i
 
 ### Change Wi-Fi settings
 
-Click *"Configure WiFi"* to change Wi-Fi connection settings. Select a network, enter the password and click save. Wait a few seconds and then press any button to exit setup. *Home Buttons* will connect to the newly selected Wi-Fi network.
+Click `Configure WiFi` to change Wi-Fi connection settings. Select a network, enter the password and click save. Wait a few seconds and then press any button to exit setup. *Home Buttons* will connect to the newly selected Wi-Fi network.
 
 ### Change MQTT settings & Button labels
 
-Click *"Setup"* to change MQTT settings or button labels. A page with the following parameters will open:
+Click `Setup` to change MQTT settings or button labels. A page with the following parameters will open:
 
 - `Device Name` - Name of your device as it will appear in *Home Assistant*.
 
@@ -57,9 +57,9 @@ Labels over **7** letters will be clipped. Choose what you want to display wisel
 
 > ![Label Text Size Comparison](assets/text_sizes.png){width="125"}
 
-When **done**, click *"Save"*. Device will exit the setup and display button labels.
+When **done**, click `Save`. Device will exit the setup and display button labels.
 
-> If MQTT connection is not successful, *"MQTT error"* will be displayed and *Home Buttons* will return to welcome screen.
+> If MQTT connection is not successful, `MQTT error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.
 
 ## Wi-Fi Setup {#wifi_setup}
@@ -78,17 +78,17 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 
     ![Wi-Fi Setup Page](assets/wifi_setup_page_1.png){width="200"}
 
-3. Click on *"Configure WiFi"* and wait a few seconds for a list of networks to appear.
+3. Click `Configure WiFi` and wait a few seconds for a list of networks to appear.
 
-4. Select your network, enter the password and click *"Save"*.
+4. Select your network, enter the password and click `Save`.
 
-*Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. *"Wi-Fi CONNECTED"* will appear on display.
+*Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. `Wi-Fi CONNECTED` will appear on display.
 
-> If connection is not successful, *"Wi-Fi error"* will be displayed and *Home Buttons* will return to welcome screen.
+> If connection is not successful, `Wi-Fi error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
 ## Factory Reset {#factory_reset}
 
 Factory reset deletes all user settings and returns the device to its initial state.
 
-Perform the factory reset by pressing any button for 30 seconds. After few seconds *"Factory RESET complete"* will appear on screen and *Home Buttons* will restart to Wi-Fi setup. If you don't wish to complete Wi-Fi setup at this time, leave the device as is. It will automatically return to welcome screen and enter power saving state in 10 minutes.
+Perform the factory reset by pressing any button for 30 seconds. After few seconds `Factory RESET complete` will appear on screen and *Home Buttons* will restart to Wi-Fi setup. If you don't wish to complete Wi-Fi setup at this time, leave the device as is. It will automatically return to welcome screen and enter power saving state in 10 minutes.

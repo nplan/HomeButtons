@@ -12,8 +12,9 @@ Works seamlessly with *Home Assistant*.
 - 2.9" e-paper display
 - 6 trigger buttons
 - Wi-Fi connectivity
+- < 1 second reaction time
 - Temperature & humidity sensor
-- Battery powered with >1 year battery life (rechargeable via USB-C)
+- Battery powered with > 1 year battery life (rechargeable via USB-C)
 - Compact size: 87 x 87 x 23 mm
 
 ---
@@ -42,5 +43,5 @@ Click [here](setup.md) for the **Quick Setup** quide.
 
 ## License
 
-- The software is open source and licensed under the GNU GPLv3.  
-- The hardware is closed source.
+- The software is **open source** and licensed under the GNU GPLv3.  
+- The hardware is **open source** and licensed under the CERN-OHL-S-2.0.

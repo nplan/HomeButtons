@@ -8,6 +8,7 @@ nav:
   - Quick Setup: setup.md
   - User Guide: user_guide.md
   - Tech Specs: specs.md
+  - Firmware Update: update.md
   - About: about.md
 
 theme:
