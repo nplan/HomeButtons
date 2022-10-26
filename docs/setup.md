@@ -15,7 +15,7 @@ You will need:
 
 You will need one 18650 Li-Ion battery cell (not included). Please only use reputable brands.
 
-1. Open the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it.
+1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull it off.
 
     ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
 

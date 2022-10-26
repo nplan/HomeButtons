@@ -92,3 +92,18 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 Factory reset deletes all user settings and returns the device to its initial state.
 
 Perform the factory reset by pressing any button for 30 seconds. After few seconds `Factory RESET complete` will appear on screen and *Home Buttons* will restart to Wi-Fi setup. If you don't wish to complete Wi-Fi setup at this time, leave the device as is. It will automatically return to welcome screen and enter power saving state in 10 minutes.
+
+## Opening the case {#opening_case}
+
+If you need to remove or replace the battery, or perform a manual firmware upgrade, you have to open the case. The back cover can stay mounted to the wall during the procedure.
+
+1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it.
+
+    ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
+
+2. Pull off the front of device. You may need to use some force.
+Hold device in the corners, where the case is strongest.
+
+3. When you're done, reposition the front of device and push firmly until it's flush with the wall.
+
+    ![Mount To Wall](assets/mount_2_wall_2.jpeg){width="300"}

@@ -1,7 +1,7 @@
 # Home Buttons
 
 
-**A simple device for controlling you smart home.**
+**An open source device for controlling you smart home.**
 
 Works seamlessly with *Home Assistant*.
 
@@ -37,7 +37,7 @@ The labels can be easily changed using a web interface. You define what happens 
 
 ## Getting started
 
-Click [here](setup.md) for the **Quick Setup** quide. 
+Click [here](setup.md) for the **Quick Setup** guide. 
 
 ---
 
