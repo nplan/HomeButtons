@@ -1,6 +1,5 @@
 # Home Buttons
 
-
 **An open source device for controlling your smart home.**
 
 Works seamlessly with *Home Assistant*.
@@ -20,7 +19,7 @@ Works seamlessly with *Home Assistant*.
 
 ---
 
-## How it works
+## How It Works
 
 **Always forgetting which button triggers which automation?**
 
@@ -36,9 +35,17 @@ The labels can be easily changed using a web interface. You define what happens 
 
 ---
 
-## Getting started
+## Where To Get
 
-Click [here](setup.md) for the **Quick Setup** guide. 
+You can buy *Home Buttons* on [*Tindie*](https://www.tindie.com/products/plab/home-buttons/){:target="_blank"}.
+
+<a href="https://www.tindie.com/stores/plab/home-buttons/?ref=offsite_badges&utm_source=sellers_nplan&utm_medium=badges&utm_campaign=badge_medium"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-mediums.png" alt="I sell on Tindie" width="150" height="78"></a>
+
+---
+
+## Getting Started
+
+Set up you device with the help of [Quick Setup Guide](setup.md).
 
 ---
 

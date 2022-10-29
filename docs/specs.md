@@ -10,7 +10,7 @@
 * Weight: 140 g (incl. battery)
 * Casing material: PETG (3D printed)
 
-## User interface
+## User Interface
 
 * E-paper display
 * Six tactile buttons with LED illumination
@@ -41,7 +41,7 @@
 * Native USB for firmware update and debug
 * Advanced security features
 
-## Environmental sensor
+## Environmental Sensor
 
 * Sensirion SHTC3 high accuracy Temperature and Relative Humidity sensor
 * Temperature accuracy: ±0.2°C *(0°C to 60°C)*
