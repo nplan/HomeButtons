@@ -1,11 +1,11 @@
 # Home Buttons
 
 
-**An open source device for controlling you smart home.**
+**An open source device for controlling your smart home.**
 
 Works seamlessly with *Home Assistant*.
 
-<img src="docs/assets/home_buttons_front.jpg" width="325">
+<img src="docs/assets/promo_1.jpeg" width="325">
 
 **Features:**
 

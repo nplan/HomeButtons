@@ -1,20 +1,21 @@
 # Home Buttons
 
 
-**An open source device for controlling you smart home.**
+**An open source device for controlling your smart home.**
 
 Works seamlessly with *Home Assistant*.
 
-![Home Buttons](assets/home_buttons_front.jpg){width="325"} 
+![Home Buttons](assets/promo_1.jpeg){width="325"} 
 
 **Features:**
 
 - 2.9" e-paper display
 - 6 trigger buttons
 - Wi-Fi connectivity
-- < 1 second reaction time
+- less than 1 second reaction time
 - Temperature & humidity sensor
-- Battery powered with > 1 year battery life (rechargeable via USB-C)
+- Battery powered, at least 1 year battery life
+- USB-C charging
 - Compact size: 87 x 87 x 23 mm
 
 ---
@@ -23,7 +24,7 @@ Works seamlessly with *Home Assistant*.
 
 **Always forgetting which button triggers which automation?**
 
-![How It Works](assets/button_press.gif){width="325"}
+![How It Works](assets/promo_6.gif){width="325"}
 
 With *Home Buttons* you can assign a short label to each button.
 

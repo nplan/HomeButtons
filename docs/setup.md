@@ -4,7 +4,7 @@
 
 You will need:
 
-- One 18650 battery cell (not included)
+- One 18650 Li-Ion battery cell (not included)
 - A flat headed screwdriver
 - 2x mounting screws with anchors suitable for your walls ***or*** double sided tape (must stick to plastic well)
 - A Wi-Fi network
@@ -13,7 +13,8 @@ You will need:
 
 ## Insert The Battery
 
-You will need one 18650 Li-Ion battery cell (not included). Please only use reputable brands.
+You will need one 18650 Li-Ion battery cell (**not included**). Please use a 
+high quality cell with greater than 3000 mAh capacity.
 
 1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull it off.
 
