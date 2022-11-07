@@ -8,7 +8,7 @@ You will need:
 - A flat headed screwdriver
 - 2x mounting screws with anchors suitable for your walls ***or*** double sided tape (must stick to plastic well)
 - A Wi-Fi network
-- An MQTT broker (usually installed as *Home Assistant* add-on)
+- An MQTT broker
 - *Home Assistant* (optional - can work only through MQTT)
 
 ## Insert The Battery
@@ -54,7 +54,12 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 > If connection is not successful, `Wi-Fi error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
-## Set Up MQTT & Button Labels
+## Set Up MQTT Broker
+
+*Home Buttons* requires an MQTT broker. If you don't already use it, you should install one now.
+See this [page](https://www.home-assistant.io/integrations/mqtt/){:target="_blank"} for more information.
+Usually, the simplest way is to install *Mosquitto MQTT* as a *Home Assistant* add-on.
+## Set Up MQTT connection & Button Labels
 
 When connected to your Wi-Fi network, *Home Buttons* can be configured using any device on your local network.
 
