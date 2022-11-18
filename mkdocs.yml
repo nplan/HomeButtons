@@ -10,6 +10,7 @@ nav:
   - Tech Specs: specs.md
   - Firmware Update: update.md
   - Help: help.md
+  - Hardware Hacks: hardware_hacks.md
 
 theme:
   name: material
