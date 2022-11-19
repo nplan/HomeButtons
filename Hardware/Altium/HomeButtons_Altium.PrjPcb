@@ -32,7 +32,7 @@ ReportSuppressedErrorsInMessages=0
 FSMCodingStyle=eFMSDropDownList_OneProcess
 FSMEncodingStyle=eFMSDropDownList_OneHot
 IsProjectConflictPreventionWarningsEnabled=0
-OutputPath=
+OutputPath=Project Outputs for HomeButtons_Altium
 LogFolderPath=
 ManagedProjectGUID=
 IncludeDesignInRelease=0
@@ -116,58 +116,7 @@ GenerateClassCluster=0
 DocumentUniqueId=DDUOLWAD
 
 [Document5]
-DocumentPath=..\..\Altium planinsekLib\planinsekLib_pcb.PcbLib
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=VNTHFCNL
-
-[Document6]
-DocumentPath=..\..\Altium planinsekLib\planinsekLib_sch.SchLib
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=HKTJNZSR
-
-[Document7]
-DocumentPath=PCB_B1.PcbDoc
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=MDGQBLYL
-
-[Document8]
-DocumentPath=Schematic_V2_1.SchDoc
+DocumentPath=Schematic.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -183,25 +132,8 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=HBYIXOFK
 
-[Document9]
-DocumentPath=PCB_rev2_test.PcbDoc
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=-1
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=UCEROJGY
-
-[Document10]
-DocumentPath=PCB_V2_1.PcbDoc
+[Document6]
+DocumentPath=PCB.PcbDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -217,8 +149,8 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=JNSBBCWC
 
-[Document11]
-DocumentPath=Job1.OutJob
+[Document7]
+DocumentPath=OutputFilesGenerator.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
@@ -235,247 +167,75 @@ GenerateClassCluster=0
 DocumentUniqueId=
 
 [GeneratedDocument1]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\BOM\Bill of Materials-PCB_V2.csv
+DocumentPath=Project Outputs for HomeButtons_Altium\BOM\Bill of Materials-PCB.csv
 DItemRevisionGUID=
 
 [GeneratedDocument2]
-DocumentPath=Project Outputs for HomeButtons_Altium\Design Rule Check - PCB_B1.html
+DocumentPath=Project Outputs for HomeButtons_Altium\NC Drill\PCB-RoundHoles.TXT
 DItemRevisionGUID=
 
 [GeneratedDocument3]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2_1\Design Rule Check - PCB_V2_1.html
+DocumentPath=Project Outputs for HomeButtons_Altium\NC Drill\PCB-SlotHoles.TXT
 DItemRevisionGUID=
 
 [GeneratedDocument4]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1-RoundHoles.TXT
+DocumentPath=Project Outputs for HomeButtons_Altium\NC Drill\PCB.DRR
 DItemRevisionGUID=
 
 [GeneratedDocument5]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1-SlotHoles.TXT
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.EXTREP
 DItemRevisionGUID=
 
 [GeneratedDocument6]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.DRR
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GBL
 DItemRevisionGUID=
 
 [GeneratedDocument7]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.EXTREP
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GBO
 DItemRevisionGUID=
 
 [GeneratedDocument8]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GBL
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GBP
 DItemRevisionGUID=
 
 [GeneratedDocument9]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GBO
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GBS
 DItemRevisionGUID=
 
 [GeneratedDocument10]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GBP
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GM26
 DItemRevisionGUID=
 
 [GeneratedDocument11]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GBS
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GTL
 DItemRevisionGUID=
 
 [GeneratedDocument12]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GM3
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GTO
 DItemRevisionGUID=
 
 [GeneratedDocument13]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GTL
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GTP
 DItemRevisionGUID=
 
 [GeneratedDocument14]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GTO
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.GTS
 DItemRevisionGUID=
 
 [GeneratedDocument15]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GTP
+DocumentPath=Project Outputs for HomeButtons_Altium\NC Drill\PCB.LDP
 DItemRevisionGUID=
 
 [GeneratedDocument16]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.GTS
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.REP
 DItemRevisionGUID=
 
 [GeneratedDocument17]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.LDP
+DocumentPath=Project Outputs for HomeButtons_Altium\Gerber\PCB.RUL
 DItemRevisionGUID=
 
 [GeneratedDocument18]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.REP
-DItemRevisionGUID=
-
-[GeneratedDocument19]
-DocumentPath=Project Outputs for HomeButtons_Altium\PCB_B1.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument20]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_rev2-RoundHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument21]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_rev2-SlotHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument22]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_rev2.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument23]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_rev2.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument24]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_rev2.LDP
-DItemRevisionGUID=
-
-[GeneratedDocument25]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_rev2.REP
-DItemRevisionGUID=
-
-[GeneratedDocument26]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_rev2.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument27]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_V2-RoundHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument28]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\NC Drill\PCB_V2-RoundHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument29]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_V2-SlotHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument30]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\NC Drill\PCB_V2-SlotHoles.TXT
-DItemRevisionGUID=
-
-[GeneratedDocument31]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_V2.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument32]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\NC Drill\PCB_V2.DRR
-DItemRevisionGUID=
-
-[GeneratedDocument33]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument34]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.EXTREP
-DItemRevisionGUID=
-
-[GeneratedDocument35]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GBL
-DItemRevisionGUID=
-
-[GeneratedDocument36]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GBL
-DItemRevisionGUID=
-
-[GeneratedDocument37]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GBO
-DItemRevisionGUID=
-
-[GeneratedDocument38]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GBO
-DItemRevisionGUID=
-
-[GeneratedDocument39]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GBP
-DItemRevisionGUID=
-
-[GeneratedDocument40]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GBP
-DItemRevisionGUID=
-
-[GeneratedDocument41]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GBS
-DItemRevisionGUID=
-
-[GeneratedDocument42]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GBS
-DItemRevisionGUID=
-
-[GeneratedDocument43]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GM26
-DItemRevisionGUID=
-
-[GeneratedDocument44]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GM26
-DItemRevisionGUID=
-
-[GeneratedDocument45]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GTL
-DItemRevisionGUID=
-
-[GeneratedDocument46]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GTL
-DItemRevisionGUID=
-
-[GeneratedDocument47]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GTO
-DItemRevisionGUID=
-
-[GeneratedDocument48]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GTO
-DItemRevisionGUID=
-
-[GeneratedDocument49]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument50]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GTP
-DItemRevisionGUID=
-
-[GeneratedDocument51]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.GTS
-DItemRevisionGUID=
-
-[GeneratedDocument52]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.GTS
-DItemRevisionGUID=
-
-[GeneratedDocument53]
-DocumentPath=Project Outputs for Free Documents\NC Drill\PCB_V2.LDP
-DItemRevisionGUID=
-
-[GeneratedDocument54]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\NC Drill\PCB_V2.LDP
-DItemRevisionGUID=
-
-[GeneratedDocument55]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.REP
-DItemRevisionGUID=
-
-[GeneratedDocument56]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.REP
-DItemRevisionGUID=
-
-[GeneratedDocument57]
-DocumentPath=Project Outputs for Free Documents\Gerber\PCB_V2.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument58]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Gerber\PCB_V2.RUL
-DItemRevisionGUID=
-
-[GeneratedDocument59]
-DocumentPath=Project Outputs for Free Documents\Pick Place\Pick Place for PCB_rev2.txt
-DItemRevisionGUID=
-
-[GeneratedDocument60]
-DocumentPath=Project Outputs for Free Documents\Pick Place\Pick Place for PCB_V2.csv
-DItemRevisionGUID=
-
-[GeneratedDocument61]
-DocumentPath=Project Outputs for HomeButtons_Altium_rev2\Pick Place\Pick Place for PCB_V2.csv
+DocumentPath=Project Outputs for HomeButtons_Altium\Pick Place\Pick Place for PCB.csv
 DItemRevisionGUID=
 
 [Configuration1]
@@ -487,6 +247,9 @@ Variant=[No Variations]
 OutputJobsCount=0
 ContentTypeGUID=CB6F2064-E317-11DF-B822-12313F0024A2
 ConfigurationType=Source
+
+[Generic_EDE]
+OutputDir=Project Outputs for HomeButtons_Altium
 
 [OutputGroup1]
 Name=Netlist Outputs
