@@ -4,9 +4,9 @@ C:\Users\matej\Documents\Projects\HomeButtons\Hardware\Altium\Project Outputs fo
 ========================================================================================================================
 File Design Information:
 
-Date:       19/11/22
-Time:       15:01
-Revision:   Not in VersionControl
+Date:       20/11/22
+Time:       20:50
+Revision:   bf169f0522bf7a1fa6905f60ce3f23554f60f591
 Variant:    No variations
 Units used: mm
 
@@ -44,6 +44,9 @@ Units used: mm
 "D5","LXES15AAA1-133","TopLayer","FP-LXES15-IPC_A","-22.4500","-30.6500","180","TVS DIODE 15V 1005","C191267"
 "D6","LXES15AAA1-133","TopLayer","FP-LXES15-IPC_A","-17.5000","-32.3000","225","TVS DIODE 15V 1005","C191267"
 "D7","LXES15AAA1-133","TopLayer","FP-LXES15-IPC_A","-19.0811","34.8189","45","TVS DIODE 15V 1005","C191267"
+"D8","MBR0530","TopLayer","FP-425-04-IPC_B","26.9750","-5.9750","225","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
+"D9","MBR0530","TopLayer","FP-425-04-IPC_B","24.7000","-0.7250","315","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
+"D10","MBR0530","TopLayer","FP-425-04-IPC_B","25.5500","-4.5000","225","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
 "J1","XFCN F0501-T-24-20T-R","TopLayer","XFCN_F0501-T-24-20T-R","-0.6000","-29.7944","0","XFCN F0501-T-24-20T-R 0.5mm fpc top contacts, slide retentioner","C840496"
 "J2","SolderJumper","TopLayer","SolderJumper_1mm","-31.1750","-17.2500","270","",""
 "J3","DEBUG","TopLayer","muselab_cmsis-dap_frictionfit","1.7980","26.1730","225","",""
@@ -51,6 +54,7 @@ Units used: mm
 "J5","SolderJumper","TopLayer","SolderJumper_1mm","32.7316","-26.6816","315","",""
 "J6","SolderJumper","TopLayer","SolderJumper_1mm","9.5566","18.4816","45","",""
 "J7","SolderJumper","TopLayer","SolderJumper_1mm","-3.6816","20.0434","45","",""
+"J8","2060-452/998-404","TopLayer","WAGO-2060-452_V","7.9485","-8.9232","315","Terminal Block, Pitch 4 mm, 1 x 2 Position, Height 4.5 mm, -60 to 105 degC, RoHS, Tape and Reel",""
 "L1","CMI322513J680MT","TopLayer","FP-DFE322512C-IPC_B","-1.8750","-17.8500","180","CMI322513J680MT 1210 chip SMD inductor 68uH","C401470"
 "LED1","Everlight Elec 23-21B/T1D-CP2Q2TY/2A","TopLayer","Everlight_Elec_23-21B/T1D-CP2Q2TY/2A","35.0000","26.5500","90","reverse mount SMD led, cool white","C414638"
 "LED2","Everlight Elec 23-21B/T1D-CP2Q2TY/2A","TopLayer","Everlight_Elec_23-21B/T1D-CP2Q2TY/2A","35.0000","4.2500","90","reverse mount SMD led, cool white","C414638"
@@ -59,6 +63,7 @@ Units used: mm
 "LED5","Everlight Elec 23-21B/T1D-CP2Q2TY/2A","TopLayer","Everlight_Elec_23-21B/T1D-CP2Q2TY/2A","-35.0000","4.2500","90","reverse mount SMD led, cool white","C414638"
 "LED6","Everlight Elec 23-21B/T1D-CP2Q2TY/2A","TopLayer","Everlight_Elec_23-21B/T1D-CP2Q2TY/2A","-35.0000","26.5500","90","reverse mount SMD led, cool white","C414638"
 "Q1","BM3402","TopLayer","FP-SOT23-IPC_B","-15.9891","34.0109","225","BORN BM3402 MOSFET N-CH 30V 5.1A SOT23","C431498"
+"Q2","AO3401A","TopLayer","AO-SOT-23-3L_V","23.0109","-2.5391","225","P-Channel MOSFET, 30 V, 4 A, -55 to 150 degC, 3-Pin SOT-23-3L, RoHS, Tape and Reel","C15127"
 "Q3","BM3402","TopLayer","FP-SOT23-IPC_B","-1.8500","-21.1000","0","BORN BM3402 MOSFET N-CH 30V 5.1A SOT23","C431498"
 "R1","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","-19.4500","-30.9500","180","","C23186"
 "R2","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","-27.6500","-30.9500","0","","C23186"
@@ -69,6 +74,9 @@ Units used: mm
 "R7","0603WAF7502T5E","TopLayer","RESC1608X55X30NL15T15","18.7750","10.1000","270","","C23242"
 "R8","0603WAF1501T5E","TopLayer","RESC1608X55X30NL15T15","20.1000","11.2500","270","","C22843"
 "R9","0603WAF1501T5E","TopLayer","RESC1608X55X30NL15T15","-10.7000","26.8750","225","","C22843"
+"R10","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","29.2750","-8.0500","225","","C23186"
+"R11","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","28.3250","-7.0750","45","","C22935"
+"R12","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","9.6000","-31.0000","270","","C23186"
 "R14","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","6.4977","11.5727","225","","C22935"
 "R15","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","7.4000","10.6250","45","","C22935"
 "R17","0603WAF1501T5E","TopLayer","RESC1608X55X30NL15T15","-28.6000","-24.7750","90","","C22843"
@@ -81,13 +89,13 @@ Units used: mm
 "R24","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","26.6500","4.2250","270","","C22935"
 "R25","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","31.9250","4.2750","0","","C22859"
 "R26","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","28.2250","-12.1250","0","","C22935"
-"R27","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","32.6000","-16.4500","0","","C22859"
+"R27","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","31.9750","-10.2250","315","","C22859"
 "R28","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","-29.5000","-20.9250","180","","C22935"
 "R29","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","-32.7000","-17.7000","90","","C22859"
 "R30","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","-26.5500","5.0250","270","","C22935"
 "R31","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","-31.9250","4.2750","180","","C22859"
 "R32","0603WAF1004T5E","TopLayer","RESC1608X55X30NL15T15","-33.5273","23.6227","225","","C22935"
-"R33","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","-33.7750","29.6500","180","","C22859"
+"R33","0603WAF100JT5E","TopLayer","RESC1608X55X30NL15T15","-33.8250","31.8500","225","","C22859"
 "R34","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","27.9750","26.5250","270","","C23186"
 "R35","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","27.9750","4.2250","270","","C23186"
 "R36","0603WAF5101T5E","TopLayer","RESC1608X55X30NL15T15","29.3250","-13.5000","0","","C23186"
