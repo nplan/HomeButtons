@@ -4,9 +4,9 @@ C:\Users\matej\Documents\Projects\HomeButtons\Hardware\Altium\Project Outputs fo
 ========================================================================================================================
 File Design Information:
 
-Date:       20/11/22
-Time:       20:50
-Revision:   bf169f0522bf7a1fa6905f60ce3f23554f60f591
+Date:       22/11/22
+Time:       21:33
+Revision:   a39f0cda1df173d778f9152e0417cee6cfab0f12
 Variant:    No variations
 Units used: mm
 
@@ -129,7 +129,7 @@ Units used: mm
 "TP18","test point 1.5mm","TopLayer","TP1_FULL","-29.9250","-32.8500","90","Test point ,1.5mm diameter, no hole",""
 "TP19","test point 1.5mm","TopLayer","TP1_FULL","-12.9250","-24.3750","90","Test point ,1.5mm diameter, no hole",""
 "U2","TP4056","TopLayer","Generic_SOP8-PP","26.7000","-37.6000","0","1s Lithium linear battery charger, 1A output","C16581"
-"U3","ESP32-S2-MINI-1","TopLayer","XCVR_ESP32-S2-MINI-1","-21.1368","-9.6284","45","WiFi 802.11b/g/n Transceiver Module 2.412GHz ~ 2.484GHz Antenna Not Included Surface Mount","C2847294"
+"U3","ESP32-S2-MINI-2-N4","TopLayer","XCVR_ESP32-S2-MINI-1","-21.1368","-9.6284","45","WiFi 802.11b/g/n Transceiver Module 2.412GHz ~ 2.484GHz Antenna Not Included Surface Mount","C3013906"
 "U7","SHTC3","TopLayer","FP-SHTC3-MFG","-33.1000","-38.9250","270","SENSOR HUMI/TEMP I2C 2% SMD","C2880044"
 "U8","AP7365","TopLayer","Diodes_Inc_SOT25","16.3250","7.3750","90","Diodes Inc AP7365 LDO, fast transient, 600mA",""
 "U9","XB8608AF","TopLayer","generic_sop8","-10.5241","32.3779","225","XYSEMI 1s Li-Ion integrated protection IC","C2681922"

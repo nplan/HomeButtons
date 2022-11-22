@@ -26,7 +26,7 @@ Comment,Description,Designator,Footprint,LibRef,Quantity,LCSC
 "TS-1187A-B-A-B","XKB TS-1187A-B-A-B C318884","SW7, SW8","ESWI-TL3342F160QG_V","CMP-1696-00003-1","2","C318884"
 "test point 1.5mm","Test point ,1.5mm diameter, no hole","TP1, TP2, TP3, TP4, TP5, TP8, TP9, TP10, TP11, TP12, TP13, TP14, TP15, TP16, TP17, TP18, TP19","TP1_FULL","Test Point","17",""
 "TP4056","1s Lithium linear battery charger, 1A output","U2","Generic SOP8-PP","TP4056","1","C16581"
-"ESP32-S2-MINI-1","WiFi 802.11b/g/n Transceiver Module 2.412GHz ~ 2.484GHz Antenna Not Included Surface Mount","U3","XCVR_ESP32-S2-MINI-1","ESP32-S2-MINI-1","1","C2847294"
+"ESP32-S2-MINI-2-N4","WiFi 802.11b/g/n Transceiver Module 2.412GHz ~ 2.484GHz Antenna Not Included Surface Mount","U3","XCVR_ESP32-S2-MINI-1","ESP32-S2-MINI-1","1","C3013906"
 "SHTC3","SENSOR HUMI/TEMP I2C 2% SMD","U7","FP-SHTC3-MFG","CMP-144040-000003-1","1","C2880044"
 "AP7365","Diodes Inc AP7365 LDO, fast transient, 600mA","U8","Diodes Inc SOT25","AP7365","1",""
 "XB8608AF","XYSEMI 1s Li-Ion integrated protection IC","U9","generic sop8","XB8608AF","1","C2681922"
