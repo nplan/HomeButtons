@@ -32,7 +32,7 @@ ReportSuppressedErrorsInMessages=0
 FSMCodingStyle=eFMSDropDownList_OneProcess
 FSMEncodingStyle=eFMSDropDownList_OneHot
 IsProjectConflictPreventionWarningsEnabled=0
-OutputPath=
+OutputPath=Project Outputs for HomeButtons_Altium
 LogFolderPath=
 ManagedProjectGUID=
 IncludeDesignInRelease=0
@@ -283,7 +283,7 @@ ContentTypeGUID=CB6F2064-E317-11DF-B822-12313F0024A2
 ConfigurationType=Source
 
 [Generic_EDE]
-OutputDir=
+OutputDir=Project Outputs for HomeButtons_Altium
 
 [OutputGroup1]
 Name=Netlist Outputs

@@ -2,6 +2,37 @@
 FileName = PCB.GBR
 AutoAperture = True
 *************************************************************
+Generating : Bottom Overlay
+      File : PCB.GBO
+
+    Adding Layer      : Bottom Overlay
+
+
+Used DCodes :
+    D10
+    D14
+    D149
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : PCB.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+*************************************************************
+
+*************************************************************
 Generating : Bottom Solder
       File : PCB.GBS
 
@@ -34,10 +65,10 @@ Generating : Top Solder
 
 
 Used DCodes :
-    D28
     D29
-    D31
+    D30
     D32
+    D33
     D37
     D38
     D39
@@ -96,71 +127,6 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : Board Outline
-      File : PCB.GM26
-
-    Adding Layer      : Board Outline
-
-
-Used DCodes :
-    D150
-*************************************************************
-
-*************************************************************
-Generating : Bottom Overlay
-      File : PCB.GBO
-
-    Adding Layer      : Bottom Overlay
-
-
-Used DCodes :
-    D11
-    D14
-    D149
-*************************************************************
-
-*************************************************************
-Generating : Top Overlay
-      File : PCB.GTO
-
-    Adding Layer      : Top Overlay
-
-
-Used DCodes :
-    D10
-    D11
-    D12
-    D13
-    D14
-    D15
-    D16
-    D17
-*************************************************************
-
-*************************************************************
-Generating : Bottom Layer
-      File : PCB.GBL
-
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
-
-
-Used DCodes :
-    D11
-    D12
-    D16
-    D137
-    D140
-    D141
-    D142
-    D143
-    D144
-    D145
-    D146
-*************************************************************
-
-*************************************************************
 Generating : Top Layer
       File : PCB.GTL
 
@@ -170,14 +136,14 @@ Generating : Top Layer
 
 
 Used DCodes :
-    D11
+    D10
     D12
     D15
     D16
-    D28
     D29
-    D31
+    D30
     D32
+    D33
     D37
     D38
     D39
@@ -316,5 +282,39 @@ Used DCodes :
     D66
     D67
     D68
+*************************************************************
+
+*************************************************************
+Generating : Board Outline
+      File : PCB.GM26
+
+    Adding Layer      : Board Outline
+
+
+Used DCodes :
+    D150
+*************************************************************
+
+*************************************************************
+Generating : Bottom Layer
+      File : PCB.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D10
+    D12
+    D16
+    D136
+    D140
+    D141
+    D142
+    D143
+    D144
+    D145
+    D146
 *************************************************************
 
