@@ -30,6 +30,7 @@ void send_autodiscovery_msg() {
   device1["model"] = factory_s.model_name;
   device1["name"] = user_s.device_name;
   device1["sw_version"] = SW_VERSION;
+  device1["hw_version"] = factory_s.hw_version;
   device1["manufacturer"] = MANUFACTURER;
 
   DynamicJsonDocument btn_2_conf(2048);

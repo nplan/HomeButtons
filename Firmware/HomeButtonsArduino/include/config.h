@@ -4,8 +4,8 @@
 #include <Arduino.h>
 
 // ------ device ------
-const char MANUFACTURER[] = "Planinsek Industries";
-const char SW_VERSION[] = "v1.0.0";
+const char MANUFACTURER[] = "PLab";
+const char SW_VERSION[] = "v1.1.0";
 const char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
 
 // ------ wifi AP ------
