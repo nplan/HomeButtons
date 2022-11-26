@@ -11,29 +11,29 @@ bool connect_wifi() {
   WiFi.persistent(true);
 
   // Try to connect with settings stored by ESP32
-  WiFi.begin();
-  wifi_start_time = millis();
-  while (true) {
-    delay(50);
-    if (WiFi.status() == WL_CONNECTED) {
-      if (persisted_s.wifi_quick_connect) {
+  // Must not use quick connect on first try after new Wi-Fi settings,
+  // because BSSID and channel will not be saved
+  if (persisted_s.wifi_quick_connect) {
+    WiFi.begin();
+    wifi_start_time = millis();
+    while (true) {
+      delay(50);
+      if (WiFi.status() == WL_CONNECTED) {
         return true;
-      } else {
-        break;
+      } else if (millis() - wifi_start_time > QUICK_WIFI_TIMEOUT) {
+        break;  // proceed with normal connection retry
       }
-    } else if (millis() - wifi_start_time > QUICK_WIFI_TIMEOUT) {
-      break;  // proceed with normal connection retry
     }
   }
 
-  // If not successful connect only with SSID and password, and then save new
+  // If not successful, connect only with SSID and password, and then save new
   // channel & BSSID info
-  String ssid =
-      WiFi.SSID();  // returns empty string if WiFi.begin() is not called prior!
+  WiFi.begin(); // must be called before WiFi.SSID() otherwise returns empty
+  delay(500); // does not work without this delay
+  String ssid = WiFi.SSID();
   String psk = WiFi.psk();
   WiFi.begin(ssid.c_str(), psk.c_str());
   wifi_start_time = millis();
-  delay(2000);
   while (true) {
     delay(50);
     if (WiFi.status() == WL_CONNECTED) {

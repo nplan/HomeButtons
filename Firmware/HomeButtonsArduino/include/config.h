@@ -29,7 +29,7 @@ const char BTN_6_TXT_DFLT[] = "B6";
 
 // ----- timing ------
 const uint32_t QUICK_WIFI_TIMEOUT = 5000L;
-const uint32_t WIFI_TIMEOUT = 10000L;
+const uint32_t WIFI_TIMEOUT = 15000L;
 const uint32_t MQTT_TIMEOUT = 10000L;
 const uint32_t SHORT_PRESS_TIME = 100;
 const uint32_t MEDIUM_PRESS_TIME = 2000L;
@@ -37,8 +37,8 @@ const uint32_t LONG_PRESS_TIME = 10000L;
 const uint32_t EXTRA_LONG_PRESS_TIME = 20000L;
 const uint32_t ULTRA_LONG_PRESS_TIME = 30000L;
 const uint32_t CONFIG_TIMEOUT = 600;  // s
-const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000;
+const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
 const uint32_t INFO_SCREEN_DISP_TIME = 30000L;  // ms
-const uint32_t SENSOR_PUBLISH_TIME = 600000;    // ms
+const uint32_t SENSOR_PUBLISH_TIME = 600000L;    // ms
 
 #endif
