@@ -383,8 +383,7 @@ void setup() {
       wifi_manager.setShowInfoUpdate(true);
 
       // Parameters
-      device_name_param.setValue(
-          (user_s.device_name + " " + factory_s.random_id).c_str(), 20);
+      device_name_param.setValue(user_s.device_name.c_str(), 20);
       mqtt_server_param.setValue(user_s.mqtt_server.c_str(), 50);
       mqtt_port_param.setValue(String(user_s.mqtt_port).c_str(), 6);
       mqtt_user_param.setValue(user_s.mqtt_user.c_str(), 50);

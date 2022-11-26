@@ -59,7 +59,7 @@ void save_user_settings(UserSettings settings) {
 UserSettings read_user_settings() {
   UserSettings settings;
   preferences.begin("user", true);
-  settings.device_name = preferences.getString("device_name", DEVICE_NAME_DFLT);
+  settings.device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + factory_s.random_id);
   settings.mqtt_server = preferences.getString("mqtt_srv", "");
   settings.mqtt_port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
   settings.mqtt_user = preferences.getString("mqtt_user", "");
