@@ -1,0 +1,162 @@
+substitutions:
+  devicename: home-buttons
+
+globals:
+#  initialize variables
+  # which pin caused wakeup
+  - id: wakeup_pin
+    type: int
+    restore_value: no
+    initial_value: '0'
+  # is the device allowed to sleep?
+  - id: can_sleep
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+esp32:
+  board: esp32-s2-saola-1
+  variant: esp32s2
+  framework:
+    type: esp-idf
+    version: recommended
+
+esphome:
+  name: $devicename
+  on_boot:
+    priority: 900
+    then:
+      #  Don't sleep, until specifically told to do so
+      - deep_sleep.prevent
+      # Determine what caused wakeup
+      - lambda: |-
+          int GPIO_reason = esp_sleep_get_ext1_wakeup_status();
+          if (GPIO_reason != 0)
+          // Some pin caused wakeup
+          {
+            id(wakeup_pin) = int( log(esp_sleep_get_ext1_wakeup_status())/log(2) );
+          }
+          else
+          {
+            // Timer caused wakeup
+            id(wakeup_pin) = 0;
+          }
+      # Wait for mqtt to be connected
+      - while:
+          condition:
+            not:
+              mqtt.connected:
+          then:
+            - delay: 0.500s
+      # Update temperature & humidity
+      - component.update: my_shtcx
+      # Wait untill sleep is allowed
+      - while:
+          condition:
+            lambda: 'return !id(can_sleep);'
+          then:
+            - logger.log: "Sleep not allowed."
+            - delay: 1s
+      - deep_sleep.enter
+
+logger:
+  level: DEBUG
+  baud_rate: 115200
+  hardware_uart: USB_CDC
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Fallback Hotspot"
+
+ota:
+
+mqtt:
+  broker: !secret mqtt_broker
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  birth_message:
+  will_message:
+  on_message:
+    - topic: homeassistant/ota_mode
+      payload: 'OFF'
+      then:
+        - logger.log: "Sleep allowed by MQTT message."
+        - globals.set:
+            id: can_sleep
+            value: 'true'
+
+deep_sleep:
+  id: my_deep_sleep
+  run_duration: 30s
+  sleep_duration: 10min
+  esp32_ext1_wakeup:
+    pins: 
+      - 5
+      - 6
+    mode: ANY_HIGH
+
+i2c:
+  sda: 10
+  scl: 11
+  scan: True
+
+spi:
+  clk_pin: 36
+  mosi_pin: 35
+
+display:
+  - platform: waveshare_epaper
+    id: my_display
+    cs_pin: 34
+    dc_pin: 8
+    busy_pin: 7
+    reset_pin: 9
+    model: 2.90inV2
+    reset_duration: 2ms
+    update_interval: never
+    full_update_every: 0
+    lambda: |-
+      it.print(0, 0, id(roboto_bold_20), "Home Buttons");
+      it.print(0, 25, id(roboto_bold_20), "ESPHome");
+      it.printf(0, 55, id(roboto_bold_13), "T: %.1f°C, H: %.1f%%", id(my_temp).state, id(my_hum).state);
+
+font:
+  - file: "Fonts/Roboto-Bold.ttf"
+    id: roboto_bold_20
+    size: 20
+  - file: "Fonts/Roboto-Bold.ttf"
+    id: roboto_bold_13
+    size: 13
+
+sensor:
+  # read temp & humidity
+  - platform: shtcx
+    id: my_shtcx
+    temperature:
+      name: $devicename Temperature
+      id: my_temp
+      on_value:
+        then:
+          - component.update: my_display
+    humidity:
+      name: $devicename Humidity
+      id: my_hum
+    # address: 0x70
+    update_interval: never
+
+  ## battery voltage adc ######### DOES NOT WORK BECAUSE PIN 14 #########
+  # - platform: adc
+  #   pin: GPIO14
+  #   name: $devicename Battery Voltage
+  #   id: batt_volt
+  #   update_interval: 10s
+  #   attenuation: 11db
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 5
+    name: "${devicename} button state"
+    id: button_1
