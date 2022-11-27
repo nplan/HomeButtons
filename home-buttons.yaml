@@ -137,9 +137,9 @@ sensor:
     temperature:
       name: $devicename Temperature
       id: my_temp
-      # on_value:
-      #   then:
-      #     - component.update: my_display
+      on_value:
+        then:
+          - component.update: my_display
     humidity:
       name: $devicename Humidity
       id: my_hum
