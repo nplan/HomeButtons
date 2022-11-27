@@ -2,6 +2,8 @@
 
 This branch contains experimental ESPHome config.
 
+# ATTENTION : at this point in time, there seems to be no path back to original Home Buttons firmware !!!
+
 ## Prerequisites
 
 - add your passwords to ESPHome secrets
