@@ -2,6 +2,18 @@
 
 This branch contains experimental ESPHome config.
 
+# Warning
+
+Always backup the stock firmware before flashing with ESPHome:
+
+`python -m esptool -p PORT read_flash 0 0x400000 backup.bin`
+
+Restore stock firmware from backup with:
+
+`python -m esptool -p PORT write_flash 0x0 backup.bin`
+
+This will also backup your Wi-Fi / MQTT settings and button labels.
+
 ## Prerequisites
 
 - add your passwords to ESPHome secrets
