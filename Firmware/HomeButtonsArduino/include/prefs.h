@@ -38,6 +38,7 @@ struct UserSettings {
   String button_4_text = "";
   String button_5_text = "";
   String button_6_text = "";
+  uint16_t sensor_interval = 0;
 };
 
 struct PersistedVars {
@@ -60,6 +61,8 @@ struct Topics {
   String temperature = "";
   String humidity = "";
   String battery = "";
+  String sensor_interval_cmd = "";
+  String sensor_interval_state = "";
 };
 
 // ------ settings ------

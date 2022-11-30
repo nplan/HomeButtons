@@ -17,6 +17,7 @@ void send_autodiscovery_msg() {
   String temperature_config_topic = sensor_topic_common + "/temperature/config";
   String humidity_config_topic = sensor_topic_common + "/humidity/config";
   String battery_config_topic = sensor_topic_common + "/battery/config";
+  String sensor_interval_config_topic = user_s.discovery_prefix + "/number/" + factory_s.unique_id + "/sensor_interval/config";
 
   // Construct autodiscovery config json
   DynamicJsonDocument btn_1_conf(2048);
@@ -108,34 +109,51 @@ void send_autodiscovery_msg() {
   JsonObject device9 = battery_conf.createNestedObject("device");
   device9["identifiers"][0] = factory_s.unique_id;
 
+  DynamicJsonDocument sensor_interval_conf(2048);
+  sensor_interval_conf["name"] = user_s.device_name + " Sensor Interval";
+  sensor_interval_conf["unique_id"] = factory_s.unique_id + "_sensor_interval";
+  sensor_interval_conf["command_topic"] = topic_s.sensor_interval_cmd;
+  sensor_interval_conf["state_topic"] = topic_s.sensor_interval_state;
+  sensor_interval_conf["unit_of_measurement"] = "min";
+  sensor_interval_conf["min"] = SEN_INTERVAL_MIN;
+  sensor_interval_conf["max"] = SEN_INTERVAL_MAX;
+  sensor_interval_conf["mode"] = "slider";
+  sensor_interval_conf["icon"] = "mdi:timer-sand";
+  sensor_interval_conf["retain"] = "true";
+  JsonObject device10 = sensor_interval_conf.createNestedObject("device");
+  device10["identifiers"][0] = factory_s.unique_id;
+
   // send mqtt msg
   size_t n;
   char buffer[2048];
   // 1
   n = serializeJson(btn_1_conf, buffer);
-  client.publish(button_1_config_topic.c_str(), buffer, n);
+  client.publish(button_1_config_topic.c_str(), buffer, true);
   // 2
   n = serializeJson(btn_2_conf, buffer);
-  client.publish(button_2_config_topic.c_str(), buffer, n);
+  client.publish(button_2_config_topic.c_str(), buffer, true);
   // 3
   n = serializeJson(btn_3_conf, buffer);
-  client.publish(button_3_config_topic.c_str(), buffer, n);
+  client.publish(button_3_config_topic.c_str(), buffer, true);
   // 4
   n = serializeJson(btn_4_conf, buffer);
-  client.publish(button_4_config_topic.c_str(), buffer, n);
+  client.publish(button_4_config_topic.c_str(), buffer, true);
   // 5
   n = serializeJson(btn_5_conf, buffer);
-  client.publish(button_5_config_topic.c_str(), buffer, n);
+  client.publish(button_5_config_topic.c_str(), buffer, true);
   // 6
   n = serializeJson(btn_6_conf, buffer);
-  client.publish(button_6_config_topic.c_str(), buffer, n);
+  client.publish(button_6_config_topic.c_str(), buffer, true);
   // temp
   n = serializeJson(temp_conf, buffer);
-  client.publish(temperature_config_topic.c_str(), buffer, n);
+  client.publish(temperature_config_topic.c_str(), buffer, true);
   // humidity
   n = serializeJson(humidity_conf, buffer);
-  client.publish(humidity_config_topic.c_str(), buffer, n);
+  client.publish(humidity_config_topic.c_str(), buffer, true);
   // battery
   n = serializeJson(battery_conf, buffer);
-  client.publish(battery_config_topic.c_str(), buffer, n);
+  client.publish(battery_config_topic.c_str(), buffer, true);
+  // sensor interval
+  n = serializeJson(sensor_interval_conf, buffer);
+  client.publish(sensor_interval_config_topic.c_str(), buffer, true);
 }

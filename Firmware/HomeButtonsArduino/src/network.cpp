@@ -62,6 +62,32 @@ bool connect_wifi() {
   }
 }
 
+void callback(const char* topic, uint8_t* payload, uint32_t length) {
+  char buff[length+1]; 
+  memcpy(buff, payload, (size_t)length);
+  buff[length] = '\0'; // required so it can be converted to String
+  String topic_str = topic;
+  String payload_str = (char*)buff;
+  log_i("MQTT Callback on topic: %s, payload %s", topic_str.c_str(), payload_str.c_str());
+
+  if (length < 1) {
+    return;
+  }
+
+  if (topic_str == topic_s.sensor_interval_cmd) {
+    uint16_t mins = payload_str.toInt();
+    if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
+      user_s.sensor_interval = mins;
+      log_i("Setting sensor interval to %d minutes.", mins);
+      client.publish(topic_s.sensor_interval_state.c_str(), String(user_s.sensor_interval).c_str(), true);
+    }
+    else {
+      log_i("cmd sensor_interval out of range");
+    }
+    client.publish(topic_s.sensor_interval_cmd.c_str(), nullptr, true);
+  }
+}
+
 bool connect_mqtt() {
   client.setServer(user_s.mqtt_server.c_str(), user_s.mqtt_port);
   client.setBufferSize(2048);
@@ -78,6 +104,12 @@ bool connect_mqtt() {
       return false;
     }
   }
+
+  // subscribe
+  log_i("sub to: %s", topic_s.sensor_interval_cmd.c_str());
+  client.subscribe(topic_s.sensor_interval_cmd.c_str());
+  client.setCallback(callback);
+
   return true;
 }
 

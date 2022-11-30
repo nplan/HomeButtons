@@ -67,17 +67,22 @@ WakeupButton wakeup_button = NO_BTN;
 int16_t wakeup_pin = -1;
 
 void set_topics() {
-  String button_topic_common =
+  String topic_common =
       user_s.base_topic + "/" + user_s.device_name + "/";
-  topic_s.button_1_press = button_topic_common + "button_1";
-  topic_s.button_2_press = button_topic_common + "button_2";
-  topic_s.button_3_press = button_topic_common + "button_3";
-  topic_s.button_4_press = button_topic_common + "button_4";
-  topic_s.button_5_press = button_topic_common + "button_5";
-  topic_s.button_6_press = button_topic_common + "button_6";
-  topic_s.temperature = button_topic_common + "temperature";
-  topic_s.humidity = button_topic_common + "humidity";
-  topic_s.battery = button_topic_common + "battery";
+  topic_s.button_1_press = topic_common + "button_1";
+  topic_s.button_2_press = topic_common + "button_2";
+  topic_s.button_3_press = topic_common + "button_3";
+  topic_s.button_4_press = topic_common + "button_4";
+  topic_s.button_5_press = topic_common + "button_5";
+  topic_s.button_6_press = topic_common + "button_6";
+  topic_s.temperature = topic_common + "temperature";
+  topic_s.humidity = topic_common + "humidity";
+  topic_s.battery = topic_common + "battery";
+
+  topic_s.sensor_interval_state = topic_common + "sensor_interval";
+
+  String topic_cmd = topic_common + "cmd/";
+  topic_s.sensor_interval_cmd = topic_cmd + "sensor_interval";
 }
 
 void save_params_clbk() {
@@ -111,7 +116,7 @@ void start_esp_sleep() {
     if (persisted_s.info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
     } else {
-      esp_sleep_enable_timer_wakeup(SENSOR_PUBLISH_TIME * 1000UL);
+      esp_sleep_enable_timer_wakeup(user_s.sensor_interval * 60000000UL);
     }
   }
   log_i("starting deep sleep");
@@ -429,11 +434,17 @@ void setup() {
         delay(3000);
         eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
         break;
-      } else {
-        set_topics();
-        send_autodiscovery_msg();
-        save_topics(topic_s);
       }
+      set_topics();
+      send_autodiscovery_msg();
+      save_topics(topic_s);
+
+      client.publish(topic_s.temperature.c_str(),
+                     String(temperature_meas).c_str());
+      client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
+      client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
+      client.publish(topic_s.sensor_interval_state.c_str(), String(user_s.sensor_interval).c_str());
+
       persisted_s.setup_done = true;
       eink::display_setup_complete_screen();
       delay(3000);

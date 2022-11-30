@@ -27,6 +27,11 @@ const char BTN_4_TXT_DFLT[] = "B4";
 const char BTN_5_TXT_DFLT[] = "B5";
 const char BTN_6_TXT_DFLT[] = "B6";
 
+// ------ sensors ------
+const uint16_t SEN_INTERVAL_DFLT = 10; // min
+const uint16_t SEN_INTERVAL_MIN = 1; // min
+const uint16_t SEN_INTERVAL_MAX = 30; // min
+
 // ----- timing ------
 const uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 const uint32_t WIFI_TIMEOUT = 15000L;
@@ -39,6 +44,5 @@ const uint32_t ULTRA_LONG_PRESS_TIME = 30000L;
 const uint32_t CONFIG_TIMEOUT = 600;  // s
 const uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
 const uint32_t INFO_SCREEN_DISP_TIME = 30000L;  // ms
-const uint32_t SENSOR_PUBLISH_TIME = 600000L;    // ms
 
 #endif
