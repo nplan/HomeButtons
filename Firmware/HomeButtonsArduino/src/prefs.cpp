@@ -117,48 +117,7 @@ void clear_persisted_vars() {
   preferences.end();
 }
 
-void save_topics(Topics topic_s) {
-  preferences.begin("topics", false);
-  preferences.putString("btn1_p", topic_s.button_1_press);
-  preferences.putString("btn2_p", topic_s.button_2_press);
-  preferences.putString("btn3_p", topic_s.button_3_press);
-  preferences.putString("btn4_p", topic_s.button_4_press);
-  preferences.putString("btn5_p", topic_s.button_5_press);
-  preferences.putString("btn6_p", topic_s.button_6_press);
-  preferences.putString("tmp", topic_s.temperature);
-  preferences.putString("humd", topic_s.humidity);
-  preferences.putString("batt", topic_s.battery);
-  preferences.putString("sen_it_cmd", topic_s.sensor_interval_cmd);
-  preferences.putString("sen_it_sta", topic_s.sensor_interval_state);
-  preferences.end();
-}
-
-Topics read_topics() {
-  Topics topic_s;
-  preferences.begin("topics", true);
-  topic_s.button_1_press = preferences.getString("btn1_p", "");
-  topic_s.button_2_press = preferences.getString("btn2_p", "");
-  topic_s.button_3_press = preferences.getString("btn3_p", "");
-  topic_s.button_4_press = preferences.getString("btn4_p", "");
-  topic_s.button_5_press = preferences.getString("btn5_p", "");
-  topic_s.button_6_press = preferences.getString("btn6_p", "");
-  topic_s.temperature = preferences.getString("tmp", "");
-  topic_s.humidity = preferences.getString("humd", "");
-  topic_s.battery = preferences.getString("batt", "");
-  topic_s.sensor_interval_cmd = preferences.getString("sen_it_cmd", "");
-  topic_s.sensor_interval_state = preferences.getString("sen_it_sta", "");
-  preferences.end();
-  return topic_s;
-}
-
-void clear_topics() {
-  preferences.begin("topics", false);
-  preferences.clear();
-  preferences.end();
-}
-
 void clear_all_preferences() {
   clear_user_settings();
   clear_persisted_vars();
-  clear_topics();
 }

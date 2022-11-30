@@ -136,7 +136,7 @@ void setup() {
   factory_s = read_factory_settings();
   user_s = read_user_settings();
   persisted_s = read_persisted_vars();
-  topic_s = read_topics();
+  set_topics();
 
   // ------ factory mode ------
   if (factory_s.serial_number.length() < 1) {
@@ -437,7 +437,6 @@ void setup() {
       }
       set_topics();
       send_autodiscovery_msg();
-      save_topics(topic_s);
 
       client.publish(topic_s.temperature.c_str(),
                      String(temperature_meas).c_str());

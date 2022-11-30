@@ -83,10 +83,6 @@ void save_persisted_vars(PersistedVars vars);
 PersistedVars read_persisted_vars();
 void clear_persisted_vars();
 
-void save_topics(Topics topic_s);
-Topics read_topics();
-void clear_topics();
-
 void clear_all_preferences();
 
 #endif
