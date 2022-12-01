@@ -47,12 +47,12 @@ void save_user_settings(UserSettings settings) {
   preferences.putString("mqtt_pass", settings.mqtt_password);
   preferences.putString("base_topic", settings.base_topic);
   preferences.putString("disc_prefix", settings.discovery_prefix);
-  preferences.putString("btn1_txt", settings.button_1_text);
-  preferences.putString("btn2_txt", settings.button_2_text);
-  preferences.putString("btn3_txt", settings.button_3_text);
-  preferences.putString("btn4_txt", settings.button_4_text);
-  preferences.putString("btn5_txt", settings.button_5_text);
-  preferences.putString("btn6_txt", settings.button_6_text);
+  preferences.putString("btn1_txt", settings.btn_1_label);
+  preferences.putString("btn2_txt", settings.btn_2_label);
+  preferences.putString("btn3_txt", settings.btn_3_label);
+  preferences.putString("btn4_txt", settings.btn_4_label);
+  preferences.putString("btn5_txt", settings.btn_5_label);
+  preferences.putString("btn6_txt", settings.btn_6_label);
   preferences.putUInt("sen_itv", settings.sensor_interval);
   preferences.end();
 }
@@ -68,12 +68,12 @@ UserSettings read_user_settings() {
   settings.base_topic = preferences.getString("base_topic", BASE_TOPIC_DFLT);
   settings.discovery_prefix =
       preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
-  settings.button_1_text = preferences.getString("btn1_txt", BTN_1_TXT_DFLT);
-  settings.button_2_text = preferences.getString("btn2_txt", BTN_2_TXT_DFLT);
-  settings.button_3_text = preferences.getString("btn3_txt", BTN_3_TXT_DFLT);
-  settings.button_4_text = preferences.getString("btn4_txt", BTN_4_TXT_DFLT);
-  settings.button_5_text = preferences.getString("btn5_txt", BTN_5_TXT_DFLT);
-  settings.button_6_text = preferences.getString("btn6_txt", BTN_6_TXT_DFLT);
+  settings.btn_1_label = preferences.getString("btn1_txt", BTN_1_LABEL_DFLT);
+  settings.btn_2_label = preferences.getString("btn2_txt", BTN_2_LABEL_DFLT);
+  settings.btn_3_label = preferences.getString("btn3_txt", BTN_3_LABEL_DFLT);
+  settings.btn_4_label = preferences.getString("btn4_txt", BTN_4_LABEL_DFLT);
+  settings.btn_5_label = preferences.getString("btn5_txt", BTN_5_LABEL_DFLT);
+  settings.btn_6_label = preferences.getString("btn6_txt", BTN_6_LABEL_DFLT);
   settings.sensor_interval = preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   preferences.end();
   return settings;

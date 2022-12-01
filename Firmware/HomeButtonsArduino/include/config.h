@@ -20,12 +20,12 @@ const char DEVICE_NAME_DFLT[] = "Home Buttons";
 const uint16_t MQTT_PORT_DFLT = 1883;
 const char BASE_TOPIC_DFLT[] = "homebuttons";
 const char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
-const char BTN_1_TXT_DFLT[] = "B1";
-const char BTN_2_TXT_DFLT[] = "B2";
-const char BTN_3_TXT_DFLT[] = "B3";
-const char BTN_4_TXT_DFLT[] = "B4";
-const char BTN_5_TXT_DFLT[] = "B5";
-const char BTN_6_TXT_DFLT[] = "B6";
+const char BTN_1_LABEL_DFLT[] = "B1";
+const char BTN_2_LABEL_DFLT[] = "B2";
+const char BTN_3_LABEL_DFLT[] = "B3";
+const char BTN_4_LABEL_DFLT[] = "B4";
+const char BTN_5_LABEL_DFLT[] = "B5";
+const char BTN_6_LABEL_DFLT[] = "B6";
 
 // ------ sensors ------
 const uint16_t SEN_INTERVAL_DFLT = 10; // min

@@ -31,12 +31,12 @@ WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "",
 WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "", 50);
 WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix",
                                             "", 50);
-WiFiManagerParameter btn1_txt_param("btn1_txt", "Button 1 Label", "", 10);
-WiFiManagerParameter btn2_txt_param("btn2_txt", "Button 2 Label", "", 10);
-WiFiManagerParameter btn3_txt_param("btn3_txt", "Button 3 Label", "", 10);
-WiFiManagerParameter btn4_txt_param("btn4_txt", "Button 4 Label", "", 10);
-WiFiManagerParameter btn5_txt_param("btn5_txt", "Button 5 Label", "", 10);
-WiFiManagerParameter btn6_txt_param("btn6_txt", "Button 6 Label", "", 10);
+WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "", 10);
+WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "", 10);
+WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "", 10);
+WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "", 10);
+WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "", 10);
+WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "", 10);
 
 enum BootReason {
   NO_REASON,
@@ -93,20 +93,20 @@ void save_params_clbk() {
   user_s.mqtt_password = mqtt_password_param.getValue();
   user_s.base_topic = base_topic_param.getValue();
   user_s.discovery_prefix = discovery_prefix_param.getValue();
-  user_s.button_1_text = btn1_txt_param.getValue();
-  user_s.button_2_text = btn2_txt_param.getValue();
-  user_s.button_3_text = btn3_txt_param.getValue();
-  user_s.button_4_text = btn4_txt_param.getValue();
-  user_s.button_5_text = btn5_txt_param.getValue();
-  user_s.button_6_text = btn6_txt_param.getValue();
+  user_s.btn_1_label = btn1_label_param.getValue();
+  user_s.btn_2_label = btn2_label_param.getValue();
+  user_s.btn_3_label = btn3_label_param.getValue();
+  user_s.btn_4_label = btn4_label_param.getValue();
+  user_s.btn_5_label = btn5_label_param.getValue();
+  user_s.btn_6_label = btn6_label_param.getValue();
   save_user_settings(user_s);
   web_portal_saved = true;
 }
 
 void display_buttons() {
-  eink::display_buttons(user_s.button_1_text, user_s.button_2_text,
-                        user_s.button_3_text, user_s.button_4_text,
-                        user_s.button_5_text, user_s.button_6_text);
+  eink::display_buttons(user_s.btn_1_label, user_s.btn_2_label,
+                        user_s.btn_3_label, user_s.btn_4_label,
+                        user_s.btn_5_label, user_s.btn_6_label);
 }
 
 void start_esp_sleep() {
@@ -395,12 +395,12 @@ void setup() {
       mqtt_password_param.setValue(user_s.mqtt_password.c_str(), 50);
       base_topic_param.setValue(user_s.base_topic.c_str(), 50);
       discovery_prefix_param.setValue(user_s.discovery_prefix.c_str(), 50);
-      btn1_txt_param.setValue(user_s.button_1_text.c_str(), 20);
-      btn2_txt_param.setValue(user_s.button_2_text.c_str(), 20);
-      btn3_txt_param.setValue(user_s.button_3_text.c_str(), 20);
-      btn4_txt_param.setValue(user_s.button_4_text.c_str(), 20);
-      btn5_txt_param.setValue(user_s.button_5_text.c_str(), 20);
-      btn6_txt_param.setValue(user_s.button_6_text.c_str(), 20);
+      btn1_label_param.setValue(user_s.btn_1_label.c_str(), 20);
+      btn2_label_param.setValue(user_s.btn_2_label.c_str(), 20);
+      btn3_label_param.setValue(user_s.btn_3_label.c_str(), 20);
+      btn4_label_param.setValue(user_s.btn_4_label.c_str(), 20);
+      btn5_label_param.setValue(user_s.btn_5_label.c_str(), 20);
+      btn6_label_param.setValue(user_s.btn_6_label.c_str(), 20);
       wifi_manager.addParameter(&device_name_param);
       wifi_manager.addParameter(&mqtt_server_param);
       wifi_manager.addParameter(&mqtt_port_param);
@@ -408,12 +408,12 @@ void setup() {
       wifi_manager.addParameter(&mqtt_password_param);
       wifi_manager.addParameter(&base_topic_param);
       wifi_manager.addParameter(&discovery_prefix_param);
-      wifi_manager.addParameter(&btn1_txt_param);
-      wifi_manager.addParameter(&btn2_txt_param);
-      wifi_manager.addParameter(&btn3_txt_param);
-      wifi_manager.addParameter(&btn4_txt_param);
-      wifi_manager.addParameter(&btn5_txt_param);
-      wifi_manager.addParameter(&btn6_txt_param);
+      wifi_manager.addParameter(&btn1_label_param);
+      wifi_manager.addParameter(&btn2_label_param);
+      wifi_manager.addParameter(&btn3_label_param);
+      wifi_manager.addParameter(&btn4_label_param);
+      wifi_manager.addParameter(&btn5_label_param);
+      wifi_manager.addParameter(&btn6_label_param);
 
       web_portal_saved =
           false;  // set to true in web portal save button callback

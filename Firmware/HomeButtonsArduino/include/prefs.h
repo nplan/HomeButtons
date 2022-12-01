@@ -32,12 +32,12 @@ struct UserSettings {
   String mqtt_password = "";
   String base_topic = "";
   String discovery_prefix = "";
-  String button_1_text = "";
-  String button_2_text = "";
-  String button_3_text = "";
-  String button_4_text = "";
-  String button_5_text = "";
-  String button_6_text = "";
+  String btn_1_label = "";
+  String btn_2_label = "";
+  String btn_3_label = "";
+  String btn_4_label = "";
+  String btn_5_label = "";
+  String btn_6_label = "";
   uint16_t sensor_interval = 0;
 };
 

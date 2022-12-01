@@ -28,12 +28,12 @@ namespace eink
 
   void display_error(String string);
 
-  void display_buttons(String button_1_text,
-                       String button_2_text,
-                       String button_3_text,
-                       String button_4_text,
-                       String button_5_text,
-                       String button_6_text);
+  void display_buttons(String btn_1_label,
+                       String btn_2_label,
+                       String btn_3_label,
+                       String btn_4_label,
+                       String btn_5_label,
+                       String btn_6_label);
 
   void display_ap_config_screen(String ssid, String password);
 
