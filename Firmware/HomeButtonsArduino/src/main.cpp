@@ -11,6 +11,7 @@
 #include "hw_tests.h"
 #include "network.h"
 #include "prefs.h"
+#include "utils.h"
 
 // ------ global variables ------
 WiFiManager wifi_manager;
@@ -31,12 +32,12 @@ WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "",
 WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "", 50);
 WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix",
                                             "", 50);
-WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "", 10);
-WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "", 10);
-WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "", 10);
-WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "", 10);
-WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "", 10);
-WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "", 10);
+WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "", BTN_LABEL_MAXLEN);
+WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "", BTN_LABEL_MAXLEN);
+WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "", BTN_LABEL_MAXLEN);
+WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "", BTN_LABEL_MAXLEN);
+WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "", BTN_LABEL_MAXLEN);
+WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "", BTN_LABEL_MAXLEN);
 
 enum BootReason {
   NO_REASON,
@@ -79,10 +80,24 @@ void set_topics() {
   topic_s.humidity = topic_common + "humidity";
   topic_s.battery = topic_common + "battery";
 
+  // state topics
   topic_s.sensor_interval_state = topic_common + "sensor_interval";
+  topic_s.btn_1_label_state = topic_common + "btn_1_label";
+  topic_s.btn_2_label_state = topic_common + "btn_2_label";
+  topic_s.btn_3_label_state = topic_common + "btn_3_label";
+  topic_s.btn_4_label_state = topic_common + "btn_4_label";
+  topic_s.btn_5_label_state = topic_common + "btn_5_label";
+  topic_s.btn_6_label_state = topic_common + "btn_6_label";
 
+  // command topics
   String topic_cmd = topic_common + "cmd/";
   topic_s.sensor_interval_cmd = topic_cmd + "sensor_interval";
+  topic_s.btn_1_label_cmd = topic_cmd + "btn_1_label";
+  topic_s.btn_2_label_cmd = topic_cmd + "btn_2_label";
+  topic_s.btn_3_label_cmd = topic_cmd + "btn_3_label";
+  topic_s.btn_4_label_cmd = topic_cmd + "btn_4_label";
+  topic_s.btn_5_label_cmd = topic_cmd + "btn_5_label";
+  topic_s.btn_6_label_cmd = topic_cmd + "btn_6_label";
 }
 
 void save_params_clbk() {
@@ -93,12 +108,12 @@ void save_params_clbk() {
   user_s.mqtt_password = mqtt_password_param.getValue();
   user_s.base_topic = base_topic_param.getValue();
   user_s.discovery_prefix = discovery_prefix_param.getValue();
-  user_s.btn_1_label = btn1_label_param.getValue();
-  user_s.btn_2_label = btn2_label_param.getValue();
-  user_s.btn_3_label = btn3_label_param.getValue();
-  user_s.btn_4_label = btn4_label_param.getValue();
-  user_s.btn_5_label = btn5_label_param.getValue();
-  user_s.btn_6_label = btn6_label_param.getValue();
+  user_s.btn_1_label = check_button_label(btn1_label_param.getValue());
+  user_s.btn_2_label = check_button_label(btn2_label_param.getValue());
+  user_s.btn_3_label = check_button_label(btn3_label_param.getValue());
+  user_s.btn_4_label = check_button_label(btn4_label_param.getValue());
+  user_s.btn_5_label = check_button_label(btn5_label_param.getValue());
+  user_s.btn_6_label = check_button_label(btn6_label_param.getValue());
   save_user_settings(user_s);
   web_portal_saved = true;
 }
@@ -444,6 +459,13 @@ void setup() {
       client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
       client.publish(topic_s.sensor_interval_state.c_str(), String(user_s.sensor_interval).c_str());
 
+      client.publish(topic_s.btn_1_label_state.c_str(), user_s.btn_1_label.c_str(), true);
+      client.publish(topic_s.btn_2_label_state.c_str(), user_s.btn_2_label.c_str(), true);
+      client.publish(topic_s.btn_3_label_state.c_str(), user_s.btn_3_label.c_str(), true);
+      client.publish(topic_s.btn_4_label_state.c_str(), user_s.btn_4_label.c_str(), true);
+      client.publish(topic_s.btn_5_label_state.c_str(), user_s.btn_5_label.c_str(), true);
+      client.publish(topic_s.btn_6_label_state.c_str(), user_s.btn_6_label.c_str(), true);
+
       persisted_s.setup_done = true;
       eink::display_setup_complete_screen();
       delay(3000);
@@ -590,8 +612,14 @@ void setup() {
       break;
     }
   }
-  save_persisted_vars(persisted_s);
+  
   disconnect_mqtt();
+  save_persisted_vars(persisted_s);
+  save_user_settings(user_s);
+  if (flags_s.buttons_redraw) {
+    flags_s.buttons_redraw = false;
+    display_buttons();
+  }
   go_to_sleep();
 }
 

@@ -63,6 +63,22 @@ struct Topics {
   String battery = "";
   String sensor_interval_cmd = "";
   String sensor_interval_state = "";
+  String btn_1_label_state = "";
+  String btn_1_label_cmd = "";
+  String btn_2_label_state = "";
+  String btn_2_label_cmd = "";
+  String btn_3_label_state = "";
+  String btn_3_label_cmd = "";
+  String btn_4_label_state = "";
+  String btn_4_label_cmd = "";
+  String btn_5_label_state = "";
+  String btn_5_label_cmd = "";
+  String btn_6_label_state = "";
+  String btn_6_label_cmd = "";
+};
+
+struct Flags {
+  bool buttons_redraw = false;
 };
 
 // ------ settings ------
@@ -70,6 +86,7 @@ extern FactorySettings factory_s;
 extern UserSettings user_s;
 extern PersistedVars persisted_s;
 extern Topics topic_s;
+extern Flags flags_s;
 
 void save_factory_settings(FactorySettings settings);
 FactorySettings read_factory_settings();

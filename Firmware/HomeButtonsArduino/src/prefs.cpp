@@ -5,6 +5,7 @@ FactorySettings factory_s = {};
 UserSettings user_s = {};
 PersistedVars persisted_s = {};
 Topics topic_s = {};
+Flags flags_s = {};
 
 Preferences preferences;
 

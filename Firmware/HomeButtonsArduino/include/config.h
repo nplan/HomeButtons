@@ -14,6 +14,7 @@ const char AP_PASSWORD[] = "password123";
 
 // ------ constants ------
 const char BTN_PRESS_PAYLOAD[] = "PRESS";
+const uint8_t BTN_LABEL_MAXLEN = 15;
 
 // ------ defaults ------
 const char DEVICE_NAME_DFLT[] = "Home Buttons";
