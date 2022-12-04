@@ -119,9 +119,9 @@ void save_params_clbk() {
 }
 
 void display_buttons() {
-  eink::display_buttons(user_s.btn_1_label, user_s.btn_2_label,
-                        user_s.btn_3_label, user_s.btn_4_label,
-                        user_s.btn_5_label, user_s.btn_6_label);
+  eink::display_buttons_UTF8(user_s.btn_1_label, user_s.btn_2_label,
+                             user_s.btn_3_label, user_s.btn_4_label,
+                             user_s.btn_5_label, user_s.btn_6_label);
 }
 
 void start_esp_sleep() {

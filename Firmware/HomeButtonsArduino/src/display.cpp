@@ -33,6 +33,8 @@ const uint16_t min_btn_clearance = 14;
 GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>*
     display;
 
+U8G2_FOR_ADAFRUIT_GFX u8g2;
+
 namespace eink {
 
 void begin() {
@@ -41,6 +43,7 @@ void begin() {
       GxEPD2_DRIVER_CLASS(/*CS=*/HW.EINK_CS, /*DC=*/HW.EINK_DC,
                           /*RST=*/HW.EINK_RST, /*BUSY=*/HW.EINK_BUSY));
   display->init();
+  u8g2.begin(*display);
 }
 
 void hibernate() { display->hibernate(); }
@@ -131,6 +134,65 @@ void display_buttons(String btn_1_label, String btn_2_label, String btn_3_label,
       h_pos = heights[i] - y - h / 2;
       display->setCursor(w_pos, h_pos);
       display->print(t);
+    }
+  } while (display->nextPage());
+}
+
+void display_buttons_UTF8(String btn_1_label, String btn_2_label, String btn_3_label,
+                     String btn_4_label, String btn_5_label,
+                     String btn_6_label) {
+  String labels[] = {btn_1_label, btn_2_label, btn_3_label,
+                     btn_4_label, btn_5_label, btn_6_label};
+
+  display->setRotation(0);
+  display->setTextColor(GxEPD_BLACK);
+  display->setTextWrap(false);
+  display->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(GxEPD_BLACK);
+  u8g2.setBackgroundColor(GxEPD_WHITE);
+
+  display->firstPage();
+  do {
+    display->fillScreen(GxEPD_WHITE);
+
+    // int16_t x, y;
+    uint16_t w, h;
+
+    // Loop through buttons
+    for (uint16_t i = 0; i < num_buttons; i++) {
+      String t = labels[i];
+
+      u8g2.setFont(u8g2_font_helvB24_te);
+      w = u8g2.getUTF8Width(t.c_str());
+      h = u8g2.getFontAscent();
+      if (w >= WIDTH - min_btn_clearance) {
+        u8g2.setFont(u8g2_font_helvB18_te);
+        w = u8g2.getUTF8Width(t.c_str());
+        h = u8g2.getFontAscent();
+        if (w >= WIDTH - min_btn_clearance) {
+          t = t.substring(0, t.length() - 1) + ".";
+          while (1) {
+            w = u8g2.getUTF8Width(t.c_str());
+            h = u8g2.getFontAscent();
+            if (w >= WIDTH - min_btn_clearance) {
+              t = t.substring(0, t.length() - 2) + ".";
+            } else {
+              break;
+            }
+          }
+        }
+      }
+      int16_t w_pos, h_pos;
+      if (i % 2 == 0) {
+        w_pos = h_padding;
+      } else {
+        w_pos = WIDTH - w - h_padding;
+      }
+      h_pos = heights[i] + h / 2;
+      u8g2.setCursor(w_pos, h_pos);
+      u8g2.print(t);
     }
   } while (display->nextPage());
 }
@@ -587,6 +649,16 @@ void display_check_connection_screen() {
         "connection "
         "settings.");
   } while (display->nextPage());
+}
+
+void font_demo() {
+  display_buttons_UTF8(
+    "ÆÅØ",
+    "ČŠŽĆĐ",
+    "ÄÖÜß",
+    "ĄĆĘŃÓŻ",
+    "ĂÂÎȘȚ",
+    "#$€£@");
 }
 
 }  // namespace eink

@@ -16,6 +16,7 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeMono9pt7b.h>
+#include <U8g2_for_Adafruit_GFX.h>
 
 namespace eink
 {
@@ -29,6 +30,13 @@ namespace eink
   void display_error(String string);
 
   void display_buttons(String btn_1_label,
+                       String btn_2_label,
+                       String btn_3_label,
+                       String btn_4_label,
+                       String btn_5_label,
+                       String btn_6_label);
+
+  void display_buttons_UTF8(String btn_1_label,
                        String btn_2_label,
                        String btn_3_label,
                        String btn_4_label,
@@ -60,6 +68,8 @@ namespace eink
   void display_fully_charged_screen();
 
   void display_check_connection_screen();
+
+  void font_demo();
 
 } //namespace
 
