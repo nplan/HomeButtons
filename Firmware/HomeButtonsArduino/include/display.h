@@ -59,6 +59,8 @@ namespace eink
 
   void display_fully_charged_screen();
 
+  void display_check_connection_screen();
+
 } //namespace
 
 #endif

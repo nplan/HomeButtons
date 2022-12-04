@@ -127,7 +127,7 @@ void display_buttons() {
 void start_esp_sleep() {
   esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
   if (persisted_s.wifi_done && persisted_s.setup_done &&
-      !persisted_s.low_batt_mode) {
+      !persisted_s.low_batt_mode && !persisted_s.check_connection) {
     if (persisted_s.info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
     } else {
@@ -333,6 +333,7 @@ void setup() {
       log_i("control flow: wifi setup");
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
+      persisted_s.check_connection = false;
       delay(50);  // debounce
       eink::display_string("Starting\nWi-Fi setup...");
       persisted_s.wifi_quick_connect = false;
@@ -376,6 +377,7 @@ void setup() {
       log_i("control flow: setup");
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
+      persisted_s.check_connection = false;
       delay(50);  // debounce
       eink::display_string("Starting\nsetup...");
       bool wifi_connected = connect_wifi();
@@ -480,11 +482,18 @@ void setup() {
         display_buttons();
         break;
       }
-      if (persisted_s.charge_complete_showing) {
+      else if (persisted_s.charge_complete_showing) {
         persisted_s.charge_complete_showing = false;
         display_buttons();
         break;
       }
+      else if (persisted_s.check_connection) {
+        persisted_s.check_connection = false;
+        persisted_s.failed_connections = 0;
+        display_buttons();
+        break;
+      }
+
 
       if (wakeup_pin == HW.BTN1_PIN) {
         wakeup_button = BTN1;
@@ -561,6 +570,7 @@ void setup() {
       eink::display_string("Device RESET");
       persisted_s.info_screen_showing = false;
       persisted_s.charge_complete_showing = false;
+      persisted_s.check_connection = false;
       if (persisted_s.wifi_done && persisted_s.setup_done)
         display_buttons();
       else
@@ -590,12 +600,26 @@ void setup() {
         eink::display_fully_charged_screen();
       }
 
+      if (persisted_s.check_connection) {
+        break;
+      }
+
       bool wifi_connected = connect_wifi();
       if (!wifi_connected) {
+        persisted_s.failed_connections ++;
+        if (persisted_s.failed_connections >= MAX_FAILED_CONNECTIONS) {
+          persisted_s.check_connection = true;
+          eink::display_check_connection_screen();
+        }
         break;
       }
       bool mqtt_connected = connect_mqtt();
       if (!mqtt_connected) {
+        persisted_s.failed_connections ++;
+        if (persisted_s.failed_connections >= MAX_FAILED_CONNECTIONS) {
+          persisted_s.check_connection = true;
+          eink::display_check_connection_screen();
+        }
         break;
       }
       client.publish(topic_s.temperature.c_str(),

@@ -95,6 +95,8 @@ void save_persisted_vars(PersistedVars vars) {
   preferences.putBool("info_shwn", vars.info_screen_showing);
   preferences.putBool("chg_cpt_shwn", vars.charge_complete_showing);
   preferences.putBool("rst_to_stp", vars.reset_to_setup);
+  preferences.putUInt("faild_cons", vars.failed_connections);
+  preferences.putBool("chk_conn", vars.check_connection);
   preferences.end();
 }
 
@@ -108,6 +110,8 @@ PersistedVars read_persisted_vars() {
   vars.info_screen_showing = preferences.getBool("info_shwn", false);
   vars.charge_complete_showing = preferences.getBool("chg_cpt_shwn", false);
   vars.reset_to_setup = preferences.getBool("rst_to_stp", false);
+  vars.failed_connections = preferences.getUInt("faild_cons", 0);
+  vars.check_connection = preferences.getBool("chk_conn", false);
   preferences.end();
   return vars;
 }

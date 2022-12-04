@@ -83,11 +83,11 @@ void display_error(String string) {
   } while (display->nextPage());
 }
 
-void display_buttons(String btn_1_label, String btn_2_label,
-                     String btn_3_label, String btn_4_label,
-                     String btn_5_label, String btn_6_label) {
+void display_buttons(String btn_1_label, String btn_2_label, String btn_3_label,
+                     String btn_4_label, String btn_5_label,
+                     String btn_6_label) {
   String labels[] = {btn_1_label, btn_2_label, btn_3_label,
-                    btn_4_label, btn_5_label, btn_6_label};
+                     btn_4_label, btn_5_label, btn_6_label};
 
   display->setRotation(0);
   display->setTextColor(GxEPD_BLACK);
@@ -425,7 +425,8 @@ void display_welcome_screen(const char* uid, FactorySettings fac) {
     display->print(sw_ver);
 
     display->setCursor(0, 275);
-    String model_info = String("Model: ") + fac.model_id + " rev " + fac.hw_version;
+    String model_info =
+        String("Model: ") + fac.model_id + " rev " + fac.hw_version;
     display->print(model_info);
 
     display->setCursor(0, 285);
@@ -549,6 +550,42 @@ void display_fully_charged_screen() {
     display->getTextBounds(":)", 0, 0, &x, &y, &w, &h);
     display->setCursor(WIDTH / 2 - w / 2, 180);
     display->print(":)");
+  } while (display->nextPage());
+}
+
+void display_check_connection_screen() {
+  display->setRotation(0);
+  display->setTextColor(GxEPD_BLACK);
+  display->setTextWrap(true);
+  display->setFont(&FreeSansBold9pt7b);
+  display->setFullWindow();
+
+  display->firstPage();
+  do {
+    display->setCursor(0, 0);
+    display->fillScreen(GxEPD_WHITE);
+
+    int16_t x, y;
+    uint16_t w, h;
+    display->getTextBounds("CHECK", 0, 0, &x, &y, &w, &h);
+    display->setCursor(WIDTH / 2 - w / 2, 120);
+    display->print("CHECK");
+
+    display->getTextBounds("CONNECTION", 0, 0, &x, &y, &w, &h);
+    display->setCursor(WIDTH / 2 - w / 2, 150);
+    display->print("CONNECTION");
+
+    display->getTextBounds(":(", 0, 0, &x, &y, &w, &h);
+    display->setCursor(WIDTH / 2 - w / 2, 180);
+    display->print(":(");
+
+    display->setFont();
+    display->setTextSize(1);
+    display->setCursor(0, 260);
+    display->print(
+        "Wi-Fi or MQTT connection failed multiple times. Please check your "
+        "connection "
+        "settings.");
   } while (display->nextPage());
 }
 
