@@ -58,7 +58,8 @@ enum ControlFlow {
   BTN_PRESS,
   FAC_RESET,
   TIMER,
-  SHOW_INFO
+  SHOW_INFO,
+  AFTER_UPDATE
 };
 ControlFlow control_flow = NO_FLOW;
 uint32_t btn_press_time = 0;
@@ -281,6 +282,8 @@ void setup() {
         control_flow = SETUP;
         persisted_s.reset_to_setup = false;
         save_persisted_vars(persisted_s);
+      } else if (persisted_s.last_sw_ver != SW_VERSION) {
+        control_flow = AFTER_UPDATE;
       } else {
         control_flow = RESET;
       }
@@ -575,6 +578,32 @@ void setup() {
         display_buttons();
       else
         eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
+      break;
+    }
+    case AFTER_UPDATE: {
+      log_i("control flow: after update");
+      eink::display_string(String("Firmware\nupdated to\n") + SW_VERSION);
+      persisted_s.last_sw_ver = SW_VERSION;
+      if (persisted_s.wifi_done && persisted_s.setup_done) {
+        bool wifi_connected = connect_wifi();
+        if (!wifi_connected) {
+          eink::display_error("Wi-Fi\nerror");
+          delay(3000);
+          display_buttons();
+        }
+        bool mqtt_connected = connect_mqtt();
+        if (!mqtt_connected) {
+          eink::display_error("MQTT\nerror");
+          delay(3000);
+          display_buttons();
+        }
+        if (wifi_connected && mqtt_connected) {
+          send_autodiscovery_msg();
+          disconnect_mqtt();
+        }
+      }
+      save_persisted_vars(persisted_s);
+      ESP.restart();
       break;
     }
     case FAC_RESET: {

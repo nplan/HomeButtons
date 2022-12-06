@@ -51,6 +51,7 @@ struct PersistedVars {
   bool reset_to_setup = false;
   uint8_t failed_connections = 0;
   bool check_connection = false;
+  String last_sw_ver = "";
 };
 
 struct Topics {

@@ -97,6 +97,7 @@ void save_persisted_vars(PersistedVars vars) {
   preferences.putBool("rst_to_stp", vars.reset_to_setup);
   preferences.putUInt("faild_cons", vars.failed_connections);
   preferences.putBool("chk_conn", vars.check_connection);
+  preferences.putString("last_sw", vars.last_sw_ver);
   preferences.end();
 }
 
@@ -112,6 +113,7 @@ PersistedVars read_persisted_vars() {
   vars.reset_to_setup = preferences.getBool("rst_to_stp", false);
   vars.failed_connections = preferences.getUInt("faild_cons", 0);
   vars.check_connection = preferences.getBool("chk_conn", false);
+  vars.last_sw_ver = preferences.getString("last_sw", "");
   preferences.end();
   return vars;
 }
