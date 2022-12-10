@@ -6,78 +6,61 @@ void send_autodiscovery_msg() {
   // Construct topics
   String trigger_topic_common =
       user_s.discovery_prefix + "/device_automation/" + factory_s.unique_id;
-  String button_1_config_topic = trigger_topic_common + "/button1/config";
-  String button_2_config_topic = trigger_topic_common + "/button2/config";
-  String button_3_config_topic = trigger_topic_common + "/button3/config";
-  String button_4_config_topic = trigger_topic_common + "/button4/config";
-  String button_5_config_topic = trigger_topic_common + "/button5/config";
-  String button_6_config_topic = trigger_topic_common + "/button6/config";
+
+  // button press config topics
+  String button_press_config_topics[NUM_BUTTONS];
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    button_press_config_topics[i] =
+        trigger_topic_common + "/button_" + String(i + 1) + "/config";
+  }
+
+  // sensor config topics
   String sensor_topic_common =
       user_s.discovery_prefix + "/sensor/" + factory_s.unique_id;
   String temperature_config_topic = sensor_topic_common + "/temperature/config";
   String humidity_config_topic = sensor_topic_common + "/humidity/config";
   String battery_config_topic = sensor_topic_common + "/battery/config";
-  String sensor_interval_config_topic = user_s.discovery_prefix + "/number/" + factory_s.unique_id + "/sensor_interval/config";
 
-  // Construct autodiscovery config json
-  DynamicJsonDocument btn_1_conf(2048);
-  btn_1_conf["automation_type"] = "trigger";
-  btn_1_conf["topic"] = topic_s.button_1_press;
-  btn_1_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_1_conf["type"] = "button_short_press";
-  btn_1_conf["subtype"] = "button_1";
-  JsonObject device1 = btn_1_conf.createNestedObject("device");
-  device1["identifiers"][0] = factory_s.unique_id;
-  device1["model"] = factory_s.model_name;
-  device1["name"] = user_s.device_name;
-  device1["sw_version"] = SW_VERSION;
-  device1["hw_version"] = factory_s.hw_version;
-  device1["manufacturer"] = MANUFACTURER;
+  // command config topics
+  String sensor_interval_config_topic = user_s.discovery_prefix + "/number/" +
+                                        factory_s.unique_id +
+                                        "/sensor_interval/config";
+  String button_label_config_topics[NUM_BUTTONS];
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    button_label_config_topics[i] = user_s.discovery_prefix + "/text/" +
+                                    factory_s.unique_id + "/button_" +
+                                    String(i + 1) + "_label/config";
+  }
 
-  DynamicJsonDocument btn_2_conf(2048);
-  btn_2_conf["automation_type"] = "trigger";
-  btn_2_conf["topic"] = topic_s.button_2_press;
-  btn_2_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_2_conf["type"] = "button_short_press";
-  btn_2_conf["subtype"] = "button_2";
-  JsonObject device2 = btn_2_conf.createNestedObject("device");
-  device2["identifiers"][0] = factory_s.unique_id;
+  // device objects
+  StaticJsonDocument<256> device_full;
+  device_full["identifiers"][0] = factory_s.unique_id;
+  device_full["model"] = factory_s.model_name;
+  device_full["name"] = user_s.device_name;
+  device_full["sw_version"] = SW_VERSION;
+  device_full["hw_version"] = factory_s.hw_version;
+  device_full["manufacturer"] = MANUFACTURER;
 
-  DynamicJsonDocument btn_3_conf(2048);
-  btn_3_conf["automation_type"] = "trigger";
-  btn_3_conf["topic"] = topic_s.button_3_press;
-  btn_3_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_3_conf["type"] = "button_short_press";
-  btn_3_conf["subtype"] = "button_3";
-  JsonObject device3 = btn_3_conf.createNestedObject("device");
-  device3["identifiers"][0] = factory_s.unique_id;
+  StaticJsonDocument<128> device_short;
+  device_short["identifiers"][0] = factory_s.unique_id;
+  
 
-  DynamicJsonDocument btn_4_conf(2048);
-  btn_4_conf["automation_type"] = "trigger";
-  btn_4_conf["topic"] = topic_s.button_4_press;
-  btn_4_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_4_conf["type"] = "button_short_press";
-  btn_4_conf["subtype"] = "button_4";
-  JsonObject device4 = btn_4_conf.createNestedObject("device");
-  device4["identifiers"][0] = factory_s.unique_id;
-
-  DynamicJsonDocument btn_5_conf(2048);
-  btn_5_conf["automation_type"] = "trigger";
-  btn_5_conf["topic"] = topic_s.button_5_press;
-  btn_5_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_5_conf["type"] = "button_short_press";
-  btn_5_conf["subtype"] = "button_5";
-  JsonObject device5 = btn_5_conf.createNestedObject("device");
-  device5["identifiers"][0] = factory_s.unique_id;
-
-  DynamicJsonDocument btn_6_conf(2048);
-  btn_6_conf["automation_type"] = "trigger";
-  btn_6_conf["topic"] = topic_s.button_6_press;
-  btn_6_conf["payload"] = BTN_PRESS_PAYLOAD;
-  btn_6_conf["type"] = "button_short_press";
-  btn_6_conf["subtype"] = "button_6";
-  JsonObject device6 = btn_6_conf.createNestedObject("device");
-  device6["identifiers"][0] = factory_s.unique_id;
+  // button press
+  DynamicJsonDocument *btn_press_configs[NUM_BUTTONS];
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    btn_press_configs[i] = new DynamicJsonDocument(2048);
+    DynamicJsonDocument *conf = btn_press_configs[i];
+    (*conf)["automation_type"] = "trigger";
+    (*conf)["topic"] = topic_s.btn_press[i];
+    (*conf)["payload"] = BTN_PRESS_PAYLOAD;
+    (*conf)["type"] = "button_short_press";
+    (*conf)["subtype"] = "button_" + String(i + 1);
+    if (i == 0) {
+      (*conf)["device"] = device_full;
+    } else {
+      (*conf)["device"] = device_short;
+    }
+  }
 
   DynamicJsonDocument temp_conf(2048);
   temp_conf["name"] = user_s.device_name + " Temperature";
@@ -86,8 +69,7 @@ void send_autodiscovery_msg() {
   temp_conf["device_class"] = "temperature";
   temp_conf["unit_of_measurement"] = "°C";
   temp_conf["expire_after"] = "660";
-  JsonObject device7 = temp_conf.createNestedObject("device");
-  device7["identifiers"][0] = factory_s.unique_id;
+  temp_conf["device"] = device_short;
 
   DynamicJsonDocument humidity_conf(2048);
   humidity_conf["name"] = user_s.device_name + " Humidity";
@@ -96,8 +78,7 @@ void send_autodiscovery_msg() {
   humidity_conf["device_class"] = "humidity";
   humidity_conf["unit_of_measurement"] = "%";
   humidity_conf["expire_after"] = "660";
-  JsonObject device8 = humidity_conf.createNestedObject("device");
-  device8["identifiers"][0] = factory_s.unique_id;
+  humidity_conf["device"] = device_short;
 
   DynamicJsonDocument battery_conf(2048);
   battery_conf["name"] = user_s.device_name + " Battery";
@@ -106,8 +87,7 @@ void send_autodiscovery_msg() {
   battery_conf["device_class"] = "battery";
   battery_conf["unit_of_measurement"] = "%";
   battery_conf["expire_after"] = "660";
-  JsonObject device9 = battery_conf.createNestedObject("device");
-  device9["identifiers"][0] = factory_s.unique_id;
+  battery_conf["device"] = device_short;
 
   DynamicJsonDocument sensor_interval_conf(2048);
   sensor_interval_conf["name"] = user_s.device_name + " Sensor Interval";
@@ -120,30 +100,36 @@ void send_autodiscovery_msg() {
   sensor_interval_conf["mode"] = "slider";
   sensor_interval_conf["icon"] = "mdi:timer-sand";
   sensor_interval_conf["retain"] = "true";
-  JsonObject device10 = sensor_interval_conf.createNestedObject("device");
-  device10["identifiers"][0] = factory_s.unique_id;
+  sensor_interval_conf["device"] = device_short;
+
+  DynamicJsonDocument *btn_label_configs[NUM_BUTTONS];
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    btn_label_configs[i] = new DynamicJsonDocument(2048);
+    DynamicJsonDocument *conf = btn_label_configs[i];
+    (*conf)["name"] =
+        user_s.device_name + " Button " + String(i + 1) + " Label";
+    (*conf)["unique_id"] =
+        factory_s.unique_id + "_button_" + String(i + 1) + "_label";
+    (*conf)["command_topic"] = topic_s.btn_label_cmd[i];
+    (*conf)["state_topic"] = topic_s.btn_label_state[i];
+    (*conf)["max"] = BTN_LABEL_MAXLEN;
+    (*conf)["icon"] = String("mdi:numeric-") +  String(i + 1) + "-box";
+    (*conf)["retain"] = "true";
+    (*conf)["device"] = device_short;
+    btn_label_configs[i] = conf;
+  }
 
   // send mqtt msg
   size_t n;
   char buffer[2048];
-  // 1
-  n = serializeJson(btn_1_conf, buffer);
-  client.publish(button_1_config_topic.c_str(), buffer, true);
-  // 2
-  n = serializeJson(btn_2_conf, buffer);
-  client.publish(button_2_config_topic.c_str(), buffer, true);
-  // 3
-  n = serializeJson(btn_3_conf, buffer);
-  client.publish(button_3_config_topic.c_str(), buffer, true);
-  // 4
-  n = serializeJson(btn_4_conf, buffer);
-  client.publish(button_4_config_topic.c_str(), buffer, true);
-  // 5
-  n = serializeJson(btn_5_conf, buffer);
-  client.publish(button_5_config_topic.c_str(), buffer, true);
-  // 6
-  n = serializeJson(btn_6_conf, buffer);
-  client.publish(button_6_config_topic.c_str(), buffer, true);
+
+  // button presses
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    n = serializeJson(*btn_press_configs[i], buffer);
+    delete btn_press_configs[i];
+    client.publish(button_press_config_topics[i].c_str(), buffer, true);
+  }
+
   // temp
   n = serializeJson(temp_conf, buffer);
   client.publish(temperature_config_topic.c_str(), buffer, true);
@@ -156,4 +142,11 @@ void send_autodiscovery_msg() {
   // sensor interval
   n = serializeJson(sensor_interval_conf, buffer);
   client.publish(sensor_interval_config_topic.c_str(), buffer, true);
+
+  // button labels
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    n = serializeJson(*btn_label_configs[i], buffer);
+    delete btn_label_configs[i];
+    client.publish(button_label_config_topics[i].c_str(), buffer, true);
+  }
 }

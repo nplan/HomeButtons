@@ -39,6 +39,46 @@ struct UserSettings {
   String btn_5_label = "";
   String btn_6_label = "";
   uint16_t sensor_interval = 0;
+  String get_btn_label(uint8_t i) {
+    switch (i) {
+      case 0:
+        return btn_1_label;
+      case 1:
+        return btn_2_label;
+      case 2:
+        return btn_3_label;
+      case 3:
+        return btn_4_label;
+      case 4:
+        return btn_5_label;
+      case 5:
+        return btn_6_label;
+      default:
+        return "";
+    }
+  }
+  void set_btn_label(uint8_t i, String label) {
+    switch (i) {
+      case 0:
+        btn_1_label = label;
+        break;
+      case 1:
+        btn_2_label = label;
+        break;
+      case 2:
+        btn_3_label = label;
+        break;
+      case 3:
+        btn_4_label = label;
+        break;
+      case 4:
+        btn_5_label = label;
+        break;
+      case 5:
+        btn_6_label = label;
+        break;
+    }
+  }
 };
 
 struct PersistedVars {
@@ -55,29 +95,14 @@ struct PersistedVars {
 };
 
 struct Topics {
-  String button_1_press = "";
-  String button_2_press = "";
-  String button_3_press = "";
-  String button_4_press = "";
-  String button_5_press = "";
-  String button_6_press = "";
+  String btn_press[6];
   String temperature = "";
   String humidity = "";
   String battery = "";
   String sensor_interval_cmd = "";
   String sensor_interval_state = "";
-  String btn_1_label_state = "";
-  String btn_1_label_cmd = "";
-  String btn_2_label_state = "";
-  String btn_2_label_cmd = "";
-  String btn_3_label_state = "";
-  String btn_3_label_cmd = "";
-  String btn_4_label_state = "";
-  String btn_4_label_cmd = "";
-  String btn_5_label_state = "";
-  String btn_5_label_cmd = "";
-  String btn_6_label_state = "";
-  String btn_6_label_cmd = "";
+  String btn_label_state[6];
+  String btn_label_cmd[6];
 };
 
 struct Flags {

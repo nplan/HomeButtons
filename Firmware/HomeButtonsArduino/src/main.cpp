@@ -69,36 +69,29 @@ WakeupButton wakeup_button = NO_BTN;
 int16_t wakeup_pin = -1;
 
 void set_topics() {
-  String topic_common =
-      user_s.base_topic + "/" + user_s.device_name + "/";
-  topic_s.button_1_press = topic_common + "button_1";
-  topic_s.button_2_press = topic_common + "button_2";
-  topic_s.button_3_press = topic_common + "button_3";
-  topic_s.button_4_press = topic_common + "button_4";
-  topic_s.button_5_press = topic_common + "button_5";
-  topic_s.button_6_press = topic_common + "button_6";
+  String topic_common = user_s.base_topic + "/" + user_s.device_name + "/";
+  String topic_cmd = topic_common + "cmd/";
+
+  // button press topics
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    topic_s.btn_press[i] = topic_common + "button_" + String(i + 1);
+  }
+
+  // sensors
   topic_s.temperature = topic_common + "temperature";
   topic_s.humidity = topic_common + "humidity";
   topic_s.battery = topic_common + "battery";
 
-  // state topics
+  // sensor interval
   topic_s.sensor_interval_state = topic_common + "sensor_interval";
-  topic_s.btn_1_label_state = topic_common + "btn_1_label";
-  topic_s.btn_2_label_state = topic_common + "btn_2_label";
-  topic_s.btn_3_label_state = topic_common + "btn_3_label";
-  topic_s.btn_4_label_state = topic_common + "btn_4_label";
-  topic_s.btn_5_label_state = topic_common + "btn_5_label";
-  topic_s.btn_6_label_state = topic_common + "btn_6_label";
-
-  // command topics
-  String topic_cmd = topic_common + "cmd/";
   topic_s.sensor_interval_cmd = topic_cmd + "sensor_interval";
-  topic_s.btn_1_label_cmd = topic_cmd + "btn_1_label";
-  topic_s.btn_2_label_cmd = topic_cmd + "btn_2_label";
-  topic_s.btn_3_label_cmd = topic_cmd + "btn_3_label";
-  topic_s.btn_4_label_cmd = topic_cmd + "btn_4_label";
-  topic_s.btn_5_label_cmd = topic_cmd + "btn_5_label";
-  topic_s.btn_6_label_cmd = topic_cmd + "btn_6_label";
+
+  // button label state & cmd
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    topic_s.btn_label_state[i] =
+        topic_common + "btn_" + String(i + 1) + "_label";
+    topic_s.btn_label_cmd[i] = topic_cmd + "btn_" + String(i + 1) + "_label";
+  }
 }
 
 void save_params_clbk() {
@@ -462,14 +455,13 @@ void setup() {
                      String(temperature_meas).c_str());
       client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
       client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
-      client.publish(topic_s.sensor_interval_state.c_str(), String(user_s.sensor_interval).c_str());
+      client.publish(topic_s.sensor_interval_state.c_str(),
+                     String(user_s.sensor_interval).c_str());
 
-      client.publish(topic_s.btn_1_label_state.c_str(), user_s.btn_1_label.c_str(), true);
-      client.publish(topic_s.btn_2_label_state.c_str(), user_s.btn_2_label.c_str(), true);
-      client.publish(topic_s.btn_3_label_state.c_str(), user_s.btn_3_label.c_str(), true);
-      client.publish(topic_s.btn_4_label_state.c_str(), user_s.btn_4_label.c_str(), true);
-      client.publish(topic_s.btn_5_label_state.c_str(), user_s.btn_5_label.c_str(), true);
-      client.publish(topic_s.btn_6_label_state.c_str(), user_s.btn_6_label.c_str(), true);
+      for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+        client.publish(topic_s.btn_label_state[i].c_str(),
+                       user_s.get_btn_label(i).c_str(), true);
+      }
 
       persisted_s.setup_done = true;
       eink::display_setup_complete_screen();
@@ -484,19 +476,16 @@ void setup() {
         persisted_s.info_screen_showing = false;
         display_buttons();
         break;
-      }
-      else if (persisted_s.charge_complete_showing) {
+      } else if (persisted_s.charge_complete_showing) {
         persisted_s.charge_complete_showing = false;
         display_buttons();
         break;
-      }
-      else if (persisted_s.check_connection) {
+      } else if (persisted_s.check_connection) {
         persisted_s.check_connection = false;
         persisted_s.failed_connections = 0;
         display_buttons();
         break;
       }
-
 
       if (wakeup_pin == HW.BTN1_PIN) {
         wakeup_button = BTN1;
@@ -534,22 +523,22 @@ void setup() {
       }
       switch (wakeup_button) {
         case BTN1:
-          client.publish(topic_s.button_1_press.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.btn_press[0].c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN2:
-          client.publish(topic_s.button_2_press.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.btn_press[1].c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN3:
-          client.publish(topic_s.button_3_press.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.btn_press[2].c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN4:
-          client.publish(topic_s.button_4_press.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.btn_press[3].c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN5:
-          client.publish(topic_s.button_5_press.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.btn_press[4].c_str(), BTN_PRESS_PAYLOAD);
           break;
         case BTN6:
-          client.publish(topic_s.button_6_press.c_str(), BTN_PRESS_PAYLOAD);
+          client.publish(topic_s.btn_press[5].c_str(), BTN_PRESS_PAYLOAD);
           break;
       }
       client.publish(topic_s.temperature.c_str(),
@@ -599,6 +588,13 @@ void setup() {
         }
         if (wifi_connected && mqtt_connected) {
           send_autodiscovery_msg();
+          // publish retained states
+          client.publish(topic_s.sensor_interval_state.c_str(),
+                         String(user_s.sensor_interval).c_str(), true);
+          for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+            client.publish(topic_s.btn_label_state[i].c_str(),
+                           user_s.get_btn_label(i).c_str(), true);
+          }
           disconnect_mqtt();
         }
       }
@@ -665,7 +661,7 @@ void setup() {
       break;
     }
   }
-  
+
   disconnect_mqtt();
   save_persisted_vars(persisted_s);
   save_user_settings(user_s);

@@ -88,54 +88,17 @@ void callback(const char* topic, uint8_t* payload, uint32_t length) {
     client.publish(topic_s.sensor_interval_cmd.c_str(), nullptr, true);
   }
 
-  else if (topic_str == topic_s.btn_1_label_cmd) {
-    user_s.btn_1_label = check_button_label(payload_str);
-    log_i("button 1 label changed to: %s", user_s.btn_1_label.c_str());
-    client.publish(topic_s.btn_1_label_state.c_str(), user_s.btn_1_label.c_str(), true);
-    client.publish(topic_s.btn_1_label_cmd.c_str(), nullptr, true);
-    flags_s.buttons_redraw = true;
+  // button label commands
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++)
+  {
+    if (topic_str == topic_s.btn_label_cmd[i]) {
+      user_s.set_btn_label(i, check_button_label(payload_str));
+      log_i("button %d label changed to: %s", i + 1, user_s.get_btn_label(i).c_str());
+      client.publish(topic_s.btn_label_state[i].c_str(), user_s.get_btn_label(i).c_str(), true);
+      client.publish(topic_s.btn_label_cmd[i].c_str(), nullptr, true);
+      flags_s.buttons_redraw = true;
+    }
   }
-
-  else if (topic_str == topic_s.btn_2_label_cmd) {
-    user_s.btn_2_label = check_button_label(payload_str);
-    log_i("button 2 label changed to: %s",  user_s.btn_2_label.c_str());
-    client.publish(topic_s.btn_2_label_state.c_str(), payload_str.c_str(), true);
-    client.publish(topic_s.btn_2_label_cmd.c_str(), nullptr, true);
-    flags_s.buttons_redraw = true;
-  }
-
-  else if (topic_str == topic_s.btn_3_label_cmd) {
-    user_s.btn_3_label = check_button_label(payload_str);
-    log_i("button 3 label changed to: %s", user_s.btn_3_label.c_str());
-    client.publish(topic_s.btn_3_label_state.c_str(), user_s.btn_3_label.c_str(), true);
-    client.publish(topic_s.btn_3_label_cmd.c_str(), nullptr, true);
-    flags_s.buttons_redraw = true;
-  }
-
-  else if (topic_str == topic_s.btn_4_label_cmd) {
-    user_s.btn_4_label = check_button_label(payload_str);
-    log_i("button 4 label changed to: %s", user_s.btn_4_label.c_str());
-    client.publish(topic_s.btn_4_label_state.c_str(), user_s.btn_4_label.c_str(), true);
-    client.publish(topic_s.btn_4_label_cmd.c_str(), nullptr, true);
-    flags_s.buttons_redraw = true;
-  }
-
-  else if (topic_str == topic_s.btn_5_label_cmd) {
-    user_s.btn_5_label = check_button_label(payload_str);
-    log_i("button 5 label changed to: %s", user_s.btn_5_label.c_str());
-    client.publish(topic_s.btn_5_label_state.c_str(), user_s.btn_5_label.c_str(), true);
-    client.publish(topic_s.btn_5_label_cmd.c_str(), nullptr, true);
-    flags_s.buttons_redraw = true;
-  }
-
-  else if (topic_str == topic_s.btn_6_label_cmd) {
-    user_s.btn_6_label = check_button_label(payload_str);
-    log_i("button 6 label changed to: %s", user_s.btn_6_label.c_str());
-    client.publish(topic_s.btn_6_label_state.c_str(), user_s.btn_6_label.c_str(), true);
-    client.publish(topic_s.btn_6_label_cmd.c_str(), nullptr, true);
-    flags_s.buttons_redraw = true;
-  }
-
 }
 
 bool connect_mqtt() {
@@ -158,12 +121,10 @@ bool connect_mqtt() {
   // subscribe
   log_i("sub to: %s", topic_s.sensor_interval_cmd.c_str());
   client.subscribe(topic_s.sensor_interval_cmd.c_str());
-  client.subscribe(topic_s.btn_1_label_cmd.c_str());
-  client.subscribe(topic_s.btn_2_label_cmd.c_str());
-  client.subscribe(topic_s.btn_3_label_cmd.c_str());
-  client.subscribe(topic_s.btn_4_label_cmd.c_str());
-  client.subscribe(topic_s.btn_5_label_cmd.c_str());
-  client.subscribe(topic_s.btn_6_label_cmd.c_str());
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++)
+  {
+    client.subscribe(topic_s.btn_label_cmd[i].c_str());
+  }
   client.setCallback(callback);
 
   return true;
