@@ -1,4 +1,4 @@
-# Quick Setup
+# Getting Started
 
 **Setup up your *Home Buttons* in a few simple steps!**
 
@@ -16,7 +16,7 @@ You will need:
 You will need one 18650 Li-Ion battery cell (**not included**). Please use a 
 high quality cell with greater than 3000 mAh capacity.
 
-1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull it off.
+1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull the cover off.
 
     ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
 
@@ -30,7 +30,7 @@ high quality cell with greater than 3000 mAh capacity.
 
 After inserting the battery, press any button to wake the device and start Wi-Fi setup procedure.
 
-> If the device doesn't wake when pressing a button, please briefly connect it to an USB-C charger
+> If the device doesn't wake when pressing a button, briefly connect it to an USB-C charger
 
 > If you don't complete the setup in 10 minutes, *Home Buttons* will turn off again to save battery.
 Press any button to wake the device and start again.
@@ -59,9 +59,9 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 *Home Buttons* requires an MQTT broker. If you don't already use it, you should install one now.
 See this [page](https://www.home-assistant.io/integrations/mqtt/){:target="_blank"} for more information.
 Usually, the simplest way is to install *Mosquitto MQTT* as a *Home Assistant* add-on.
-## Set Up MQTT connection & Button Labels
+## Set Up MQTT connection
 
-When connected to your Wi-Fi network, *Home Buttons* can be configured using any device on your local network.
+When connected to the Wi-Fi, *Home Buttons* can be configured using any device on your local network.
 
 1. Scan the QR code or enter the local IP into a web browser. The setup page will load:
 
@@ -89,10 +89,9 @@ When connected to your Wi-Fi network, *Home Buttons* can be configured using any
 
 4. Enter button labels
 
-    - `Button 1 Label` - `Button 6 Label` - Label that will be displayed next to each button. The order is from top to bottom.
+    > This step is not necessary, you can do it later directly in *Home Assistant*.
 
-    > *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
-    Labels over **7** letters will be clipped. Choose what you want to display wisely :)
+    - `Button {1-6} Label` - Label that will be displayed next to each button. The order is from top to bottom.
     
 5. Confirm by clicking `Save`. Device will exit the setup and display button labels.
 
@@ -101,14 +100,31 @@ You can start the setup again by pressing any button. Please make sure to enter 
 
 ## Set Up Home Assistant
 
-*Home Buttons* uses *MQTT Discovery* and will appear in *Home Assistant*'s device list automatically.
-There you can see device information, sensor readings, battery state and set up button actions.
+*Home Buttons* uses *MQTT Discovery* and will appear in *Home Assistant* automatically.
 
-![Home Assistant Device Page](assets/home_assistant_device.png){width="300"}
+To get to the device's page in *Home Assistant*, click settings in the left side bar, then open *Devices & Services*, move to the *Devices* tab and click on the name you gave your *Home Buttons* in the previous step.
 
-To set up button actions, click "+" on *Automations* card, select one of the buttons and set up an automation with *Home Assistant*'s editor.
+![Home Assistant Device Page](assets/home_assistant_device.png){width="500"}
+
+Here you can see **device info**, **sensor readings** and **battery level**. You can also configure **button labels**,  **button actions** and **sensor publish interval**.
+
+
+### Configure Button Labels
+
+In the *Controls* card, enter the button labels that you want to be shown on the e-paper display. The buttons are ordered from top to bottom. Labels will be updated next time you press a button or on the next sensor update interval.
+
+> *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
+Labels over **7** letters will be clipped. Choose what you want to display wisely :)
+
+> Labels support UTF-8 with special characters. If a character is not available in the display font, it will be skipped.
+
+### Configure Button Actions
+
+To configure button actions, click "+" on the *Automations* card, select one of the buttons and set up an automation with *Home Assistant*'s editor.
 
 ![Home Assistant Triggers](assets/home_assistant_triggers.png){width="350"}
+
+> The expected delay from a button being pressed to the automation being triggered is around 1 second.
 
 ## Mount To The Wall
 
@@ -140,19 +156,19 @@ When the back cover is securely mounted, you can clip on the front of the device
 The expected battery life is > 1.5 years with a high quality 18650 cell.
 When the battery is getting low, *Home Buttons* will remind you to charge after pressing a button.
 If the battery gets critically low, the device will turn off.
-The display will show: `TURNED OFF PLEASE RECHARGE BATTERY`. You can see the remaining batter percentage as a sensor in *Home Assistant*.
+The display will show: `TURNED OFF PLEASE RECHARGE BATTERY`. You can see the remaining battery percentage as a sensor in *Home Assistant*.
 
 Plug in any USB-C charger to charge the battery. The expected full charge time is 4 hours.
 There is no state of charge indication during charging. When the battery is fully charged, the display will show `FULLY CHARGED`.
 
 ### Temperature & Humidity
 
-*Home Buttons* includes a high precision temperature and humidity sensor. The readings are taken every 10 minutes and on every button press.
+*Home Buttons* includes a high precision temperature and humidity sensor. The readings are taken every few minutes (configurable) and on every button press.
 The values are displayed as sensors in *Home Assistant*. 
 
-> You can bring up a display of current temperature, humidity & battery charge percentage by pressing any button for 2 seconds.
+> You can bring up a display of current temperature, humidity & battery level by pressing any button for 2 seconds.
 The device will automatically revert to showing button labels in 30 seconds. Or do that manually by pressing any button again.
 
 ## What's next?
 
-See [User Guide](user_guide.md) for further information about using and re-configuring the device.
+See [User Guide](user_guide.md) for further information.

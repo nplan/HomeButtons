@@ -8,20 +8,20 @@ Works seamlessly with *Home Assistant*.
 <img src="docs/assets/promo_1.jpeg" width="325">
 
 **Features:**
-
 - 2.9" e-paper display
 - 6 trigger buttons
 - Wi-Fi connectivity
-- < 1 second reaction time
+- Less than 1 second from button press to triggered action
 - Temperature & humidity sensor
-- Battery powered with > 1 year battery life (rechargeable via USB-C)
+- Battery powered, greater than 1 year battery life
+- USB-C charging
 - Compact size: 87 x 87 x 23 mm
 
 ---
 
 ## Getting started
 
-Click [here](https://docs.home-buttons.com/setup) for the **Quick Setup** guide. 
+Click [here](https://docs.home-buttons.com/setup) for the **Getting Started** guide. 
 
 ## Documentation
 

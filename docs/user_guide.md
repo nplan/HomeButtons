@@ -10,6 +10,37 @@ Press any button for:
 - 20 s - [Wi-Fi Setup](#wifi_setup)
 - 30 s - [Factory Reset](#factory_reset)
 
+## Home Assistant
+
+You can configure most of the devices settings directly in *Home Assistant*.
+
+> To get to the device's page in *Home Assistant*, click settings in the left side bar, then open *Devices & Services*, move to the *Devices* tab and click on the name you gave your *Home Buttons* during setup.
+
+![Home Assistant Device Page](assets/home_assistant_device.png){width="500"}
+
+### Configure Button Labels
+
+In the *Controls* card, enter the button labels that you want to be shown on the e-paper display. The buttons are ordered from top to bottom. Labels will be updated next time you press a button or on the next sensor update interval.
+
+> *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
+Labels over **7** letters will be clipped. Choose what you want to display wisely :)
+
+> Labels support UTF-8 with special characters. If a character is not available in the display font, it will be skipped.
+
+### Configure Button Actions
+
+To configure button actions, click "+" on the *Automations* card, select one of the buttons and set up an automation with *Home Assistant*'s editor.
+
+![Home Assistant Triggers](assets/home_assistant_triggers.png){width="350"}
+
+> The expected delay from a button being pressed to the automation being triggered is around 1 second.
+
+### Configure Sensor Publish Interval
+
+The device uses deep sleep to preserve battery. It wakes up every few minutes to measure temperature and humidity and publish the data to MQTT topics. You can set the publishing interval with a slider on the *Controls* card. The range is from 1 to 30 minutes. The default is 10 minutes.
+
+> Be aware, that this setting greatly impacts the battery life. The advertised battery life of > 1.5 year is achievable with the interval set to 10 minutes (the default) or greater.
+
 ## Info Screen {#info_screen}
 
 Info screen displays current temperature, humidity and battery charge percentage.
@@ -50,21 +81,21 @@ Click `Setup` to change MQTT settings or button labels. A page with the followin
 - `Discovery Prefix` - *Home Assistant* parameter for MQTT discovery. The default is `homeassistant`.
 Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
-- `Button 1 Label` - `Button 6 Label` - Label that will be displayed next to each button. The order is from top to bottom.
+- `Button {1-6} Label` - Label that will be displayed next to each button. The order is from top to bottom.
 
 > *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
 Labels over **7** letters will be clipped. Choose what you want to display wisely :)
 
 > ![Label Text Size Comparison](assets/text_sizes.png){width="125"}
 
-When **done**, click `Save`. Device will exit the setup and display button labels.
+When done, click `Save`. Device will exit the setup and display button labels.
 
 > If MQTT connection is not successful, `MQTT error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.
 
 ## Wi-Fi Setup {#wifi_setup}
 
-If *Home Buttons* becomes inaccessible on the local network due to changed Wi-Fi settings you can restart the Wi-Fi setup at any time.
+If *Home Buttons* becomes inaccessible on the local network due to changed Wi-Fi settings, you can restart the Wi-Fi setup at any time.
 
 Press any button for 20 seconds.
 
@@ -91,7 +122,7 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 
 Factory reset deletes all user settings and returns the device to its initial state.
 
-Perform the factory reset by pressing any button for 30 seconds. After few seconds `Factory RESET complete` will appear on screen and *Home Buttons* will restart to Wi-Fi setup. If you don't wish to complete Wi-Fi setup at this time, leave the device as is. It will automatically return to welcome screen and enter power saving state in 10 minutes.
+Perform the factory reset by pressing any button for 30 seconds. After a few seconds `Factory RESET complete` will appear on the display and *Home Buttons* will restart to Wi-Fi setup. If you don't wish to complete Wi-Fi setup at this time, leave the device as is. It will automatically return to welcome screen and enter power saving state in 10 minutes.
 
 ## Opening the case {#opening_case}
 

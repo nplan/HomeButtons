@@ -11,9 +11,9 @@ Works seamlessly with *Home Assistant*.
 - 2.9" e-paper display
 - 6 trigger buttons
 - Wi-Fi connectivity
-- less than 1 second reaction time
+- Less than 1 second from button press to triggered action
 - Temperature & humidity sensor
-- Battery powered, at least 1 year battery life
+- Battery powered, greater than 1 year battery life
 - USB-C charging
 - Compact size: 87 x 87 x 23 mm
 
@@ -29,9 +29,14 @@ With *Home Buttons* you can assign a short label to each button.
 
 The device uses an e-paper display, which enables the labels to be shown permanently, without consuming any power.
 
-The labels can be easily changed using a web interface. You define what happens when a button is pressed directly in *Home Assistant*.
+The labels can be changed directly in *Home Assistant*. You also define what happens when a button is pressed in *Home Assistant*.
 
 *Home Buttons* communicates with *Home Assistant* via the MQTT protocol on a local network. No cloud required.
+
+Device's page in *Home Assistant*:
+
+![Home Assistant Device Page](assets/home_assistant_device.png){width="500"}
+
 
 ---
 
@@ -45,7 +50,7 @@ You can buy *Home Buttons* on [*Tindie*](https://www.tindie.com/products/plab/ho
 
 ## Getting Started
 
-Set up you device with the help of [Quick Setup Guide](setup.md).
+Set up you device with the help of [Getting Started](setup.md) guide.
 
 ---
 

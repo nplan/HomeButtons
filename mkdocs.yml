@@ -5,12 +5,13 @@ repo_name: nplan/HomeButtons
 
 nav:
   - Home: index.md
-  - Quick Setup: setup.md
+  - Getting Started: setup.md
   - User Guide: user_guide.md
   - Tech Specs: specs.md
   - Firmware Update: update.md
-  - Help: help.md
+  - MQTT Topics: mqtt_topics.md
   - Hardware Hacks: hardware_hacks.md
+  - Help: help.md
 
 theme:
   name: material
@@ -18,6 +19,7 @@ theme:
   favicon: assets/home_buttons_logo.svg
   features:
     - content.code.annotate 
+    - navigation.indexes
   
     # Palette toggle for light mode
   palette:

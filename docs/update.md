@@ -88,7 +88,7 @@ Scan the QR code or enter the local IP into a web browser.
     ```
 
     Substitute `PORT` with port that you determined in previous step.
-    Substitute BIN_FILE_PATH with the path of downloaded firmware *.bin* file.
+    Substitute `BIN_FILE_PATH` with the path of downloaded firmware *.bin* file.
 
 8. Wait a few seconds for firmware to flash. When done, you will see a confirmation in *Terminal* or *Command Prompt* window.
 
