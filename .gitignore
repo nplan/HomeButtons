@@ -281,8 +281,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,macos,windows,visualstudiocode,python
+
 ### Project specific ###
-/Firmware/build/
-/junk/
-/Case/3D Print Files
-/promo/
