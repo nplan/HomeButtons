@@ -62,13 +62,15 @@ void send_autodiscovery_msg() {
     }
   }
 
+  uint16_t expire_after = user_s.sensor_interval * 60 + 60; // seconds
+
   DynamicJsonDocument temp_conf(2048);
   temp_conf["name"] = user_s.device_name + " Temperature";
   temp_conf["unique_id"] = factory_s.unique_id + "_temperature";
   temp_conf["state_topic"] = topic_s.temperature;
   temp_conf["device_class"] = "temperature";
   temp_conf["unit_of_measurement"] = "°C";
-  temp_conf["expire_after"] = "660";
+  temp_conf["expire_after"] = expire_after;
   temp_conf["device"] = device_short;
 
   DynamicJsonDocument humidity_conf(2048);
@@ -77,7 +79,7 @@ void send_autodiscovery_msg() {
   humidity_conf["state_topic"] = topic_s.humidity;
   humidity_conf["device_class"] = "humidity";
   humidity_conf["unit_of_measurement"] = "%";
-  humidity_conf["expire_after"] = "660";
+  humidity_conf["expire_after"] = expire_after;
   humidity_conf["device"] = device_short;
 
   DynamicJsonDocument battery_conf(2048);
@@ -86,7 +88,7 @@ void send_autodiscovery_msg() {
   battery_conf["state_topic"] = topic_s.battery;
   battery_conf["device_class"] = "battery";
   battery_conf["unit_of_measurement"] = "%";
-  battery_conf["expire_after"] = "660";
+  battery_conf["expire_after"] = expire_after;
   battery_conf["device"] = device_short;
 
   DynamicJsonDocument sensor_interval_conf(2048);

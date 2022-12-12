@@ -5,7 +5,7 @@
 
 // ------ device ------
 const char MANUFACTURER[] = "PLab";
-const char SW_VERSION[] = "v1.1.0";
+const char SW_VERSION[] = "v1.1.1";
 const char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
 
 // ------ wifi AP ------
