@@ -200,6 +200,40 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=KVBINTJM
 
+[Document10]
+DocumentPath=Libraries\Alps.SchLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=RGYZGZVU
+
+[Document11]
+DocumentPath=Libraries\ALPS\Alps.PcbLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=EOVEOXBU
+
 [GeneratedDocument1]
 DocumentPath=Project Outputs for HomeButtons_Altium\BOM\Bill of Materials-PCB.csv
 DItemRevisionGUID=
@@ -1254,8 +1288,8 @@ UpdateToLatestRevision=1
 PartTypes=0
 ComponentLibIdentifierKind0=Library Name And Type
 ComponentLibraryIdentifier0=planinsekLib_sch.SchLib
-ComponentDesignItemID0=18650 Li-Ion Battery
-ComponentSymbolReference0=18650 Li-Ion Battery
+ComponentDesignItemID0=Alps SKRB
+ComponentSymbolReference0=Alps SKRB
 ComponentUpdate0=1
 ComponentIsDeviceSheet0=0
 FullReplace=1
@@ -1275,14 +1309,22 @@ ParameterName0=Comment
 ParameterUpdate0=1
 ParameterName1=Component Kind
 ParameterUpdate1=1
-ParameterName2=Description
+ParameterName2=ComponentLink1Description
 ParameterUpdate2=1
-ParameterName3=Library Reference
+ParameterName3=ComponentLink1URL
 ParameterUpdate3=1
+ParameterName4=Description
+ParameterUpdate4=1
+ParameterName5=LCSC
+ParameterUpdate5=1
+ParameterName6=Library Reference
+ParameterUpdate6=1
+ParameterName7=Variant
+ParameterUpdate7=1
 ModelTypeGroup0=PCBLIB
 ModelTypeUpdate0=1
 ModelType0=PCBLIB
-ModelName0=18650 SMD holder
+ModelName0=Alps SKRB
 ModelUpdate0=1
 
 [DatabaseUpdateOptions]
