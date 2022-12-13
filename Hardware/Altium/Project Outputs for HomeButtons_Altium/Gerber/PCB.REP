@@ -2,58 +2,6 @@
 FileName = PCB.GBR
 AutoAperture = True
 *************************************************************
-Generating : Bottom Overlay
-      File : PCB.GBO
-
-    Adding Layer      : Bottom Overlay
-
-
-Used DCodes :
-    D10
-    D14
-    D149
-*************************************************************
-
-*************************************************************
-Generating : Top Overlay
-      File : PCB.GTO
-
-    Adding Layer      : Top Overlay
-
-
-Used DCodes :
-    D10
-    D11
-    D12
-    D13
-    D14
-    D15
-    D16
-    D17
-*************************************************************
-
-*************************************************************
-Generating : Bottom Solder
-      File : PCB.GBS
-
-    Adding Layer      : Bottom Solder
-
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
-
-
-Used DCodes :
-    D100
-    D101
-    D102
-    D103
-    D104
-    D105
-    D147
-*************************************************************
-
-*************************************************************
 Generating : Top Solder
       File : PCB.GTS
 
@@ -65,10 +13,10 @@ Generating : Top Solder
 
 
 Used DCodes :
-    D29
-    D30
+    D21
+    D22
+    D31
     D32
-    D33
     D37
     D38
     D39
@@ -136,14 +84,14 @@ Generating : Top Layer
 
 
 Used DCodes :
-    D10
+    D11
     D12
     D15
     D16
-    D29
-    D30
+    D21
+    D22
+    D31
     D32
-    D33
     D37
     D38
     D39
@@ -205,18 +153,34 @@ Used DCodes :
 *************************************************************
 
 *************************************************************
-Generating : Bottom Paste
-      File : PCB.GBP
+Generating : Bottom Overlay
+      File : PCB.GBO
 
-    Adding Layer      : Bottom Paste
-
-    Adding Layer      : Bottom Layer
-
-    Adding Layer      : Multi-Layer
+    Adding Layer      : Bottom Overlay
 
 
 Used DCodes :
-    D148
+    D11
+    D14
+    D149
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : PCB.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
 *************************************************************
 
 *************************************************************
@@ -305,9 +269,9 @@ Generating : Bottom Layer
 
 
 Used DCodes :
-    D10
+    D11
     D12
-    D16
+    D15
     D136
     D140
     D141
@@ -316,5 +280,41 @@ Used DCodes :
     D144
     D145
     D146
+*************************************************************
+
+*************************************************************
+Generating : Bottom Solder
+      File : PCB.GBS
+
+    Adding Layer      : Bottom Solder
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D100
+    D101
+    D102
+    D103
+    D104
+    D105
+    D147
+*************************************************************
+
+*************************************************************
+Generating : Bottom Paste
+      File : PCB.GBP
+
+    Adding Layer      : Bottom Paste
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D148
 *************************************************************
 

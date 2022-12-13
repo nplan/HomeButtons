@@ -4,9 +4,9 @@ C:\Users\matej\Documents\Projects\HomeButtons\Hardware\Altium\Project Outputs fo
 ========================================================================================================================
 File Design Information:
 
-Date:       24/11/22
-Time:       19:02
-Revision:   b76e0bd9de39a64b312268e8c6888af87dc0da19
+Date:       13/12/22
+Time:       17:38
+Revision:   6937b9a37fe1b5f383d8fc981677167dff1fe58f
 Variant:    No variations
 Units used: mm
 
@@ -47,6 +47,7 @@ Units used: mm
 "D8","MBR0530","TopLayer","FP-425-04-IPC_B","26.9750","-5.9750","225","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
 "D9","MBR0530","TopLayer","FP-425-04-IPC_B","24.7000","-0.7250","315","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
 "D10","MBR0530","TopLayer","FP-425-04-IPC_B","25.5500","-4.5000","225","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
+"D11","MBR0530","TopLayer","FP-425-04-IPC_B","20.7750","-0.6000","225","DIODE SCHOTTKY 30V 500MA SOD123","C77336"
 "J1","XFCN F0501-T-24-20T-R","TopLayer","XFCN_F0501-T-24-20T-R","-0.6000","-29.7944","0","XFCN F0501-T-24-20T-R 0.5mm fpc top contacts, slide retentioner","C840496"
 "J2","SolderJumper","TopLayer","SolderJumper_1mm","-31.1750","-17.2500","270","",""
 "J3","DEBUG","TopLayer","muselab_cmsis-dap_frictionfit","1.7980","26.1730","225","",""
