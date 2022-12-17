@@ -2,6 +2,9 @@
 #define HARDWARE_H
 
 #include <Arduino.h>
+#include <Wire.h>
+
+#include "Adafruit_SHTC3.h"
 
 struct HardwareDefinition {
   // ------ PIN definitions ------
@@ -175,6 +178,8 @@ void set_all_leds(uint8_t brightness);
 float read_battery_voltage();
 
 uint8_t batt_volt2percent(float volt);
+
+void read_temp_hmd(float &tempe, float &hmd);
 
 bool is_charger_in_standby();
 

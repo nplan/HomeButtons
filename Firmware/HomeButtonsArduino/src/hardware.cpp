@@ -3,6 +3,10 @@
 // Struct containing current hardware configuration
 HardwareDefinition HW;
 
+// Temperature & humidity sensor
+TwoWire shtc3_wire = TwoWire(0);
+Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
+
 void init_hardware(String hw_version) {
   if (hw_version == "1.0") {
     HW = hw_rev_1_0;
@@ -84,6 +88,18 @@ uint8_t batt_volt2percent(float volt) {
   else if (pct > 100.0)
     pct = 100;
   return (uint8_t)round(pct);
+}
+
+bool is_charger_in_standby() { return !digitalRead(HW.CHARGER_STDBY); }void read_temp_hmd(float &temp, float &hmd) {
+  shtc3_wire.begin(
+      (int)HW.SDA,
+      (int)HW.SCL);  // must be cast to int otherwise wrong begin() is called
+  shtc3.begin(&shtc3_wire);
+  sensors_event_t humidity_event, temp_event;
+  shtc3.getEvent(&humidity_event, &temp_event);
+  shtc3.sleep(true);
+  temp = temp_event.temperature;
+  hmd = humidity_event.relative_humidity;
 }
 
 bool is_charger_in_standby() { return !digitalRead(HW.CHARGER_STDBY); }

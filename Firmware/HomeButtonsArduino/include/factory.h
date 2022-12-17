@@ -6,6 +6,11 @@
 #include "prefs.h"
 #include "network.h"
 
+struct TestSettings {
+  float target_temp;
+  float target_humidity;
+};
+
 void test_leds() {
   set_all_leds(255);
   delay(250);
@@ -86,7 +91,28 @@ void test_wifi(NetworkSettings settings, FactorySettings factory) {
   log_i("WiFi disconnected");
 }
 
-bool run_tests() {
+bool test_sensors(TestSettings settings) {
+  if (settings.target_temp == 0. && settings.target_humidity == 0.) {
+    log_e("target values not set");
+    return false;
+  }
+
+  float temp_val;
+  float hmd_val;
+  read_temp_hmd(temp_val, hmd_val);
+
+  if (temp_val <= settings.target_temp - 5.0 || temp_val >= settings.target_temp + 5.0) {
+    log_i("Temp test fail. Measured: %f deg C.", temp_val);
+    return false;
+  }
+  if (hmd_val <= settings.target_humidity - 10.0 || temp_val >= settings.target_humidity + 10.0) {
+    log_i("Humidity test fail. Measured: %f %.", hmd_val);
+    return false;
+  }
+  return true;
+}
+
+bool run_tests(TestSettings settings) {
   if (digitalReadAny()) {
     log_e("button pressed at start of test");
     return false;
@@ -95,6 +121,9 @@ bool run_tests() {
     test_leds();
   }
   test_buttons();
+  if (!test_sensors(settings)) {
+    return false;
+  }
   test_display();
   return true;
 }
@@ -105,11 +134,11 @@ void sendFAIL() { Serial.println("FAIL"); }
 
 bool factory_mode() {
   NetworkSettings networkSettings = {};
+  FactorySettings settings = {};
+  TestSettings test_settings = {};
 
   Serial.begin(115200);
   delay(1000);
-
-  FactorySettings settings = {};
 
   log_i("factory mode active");
 
@@ -128,7 +157,7 @@ bool factory_mode() {
           eink::begin();
           begin_hardware();
           log_i("starting hw test...");
-          if (run_tests()) {
+          if (run_tests(test_settings)) {
             log_i("test complete");
             sendOK();
           } else {
@@ -247,7 +276,24 @@ bool factory_mode() {
           log_w("set serial number before wifi test");
           sendFAIL();
         }
-
+      } else if (cmd == "TT") {
+        if (pld.length() > 0) {
+          test_settings.target_temp = pld.toFloat();
+          log_i("target temp set to: %f C", test_settings.target_temp);
+          sendOK();
+        } else {
+          log_w("incorrect target temp");
+          sendFAIL();
+        }
+      } else if (cmd == "TH") {
+        if (pld.length() > 0) {
+          test_settings.target_humidity = pld.toFloat();
+          log_i("target humidity set to: %f C", test_settings.target_humidity);
+          sendOK();
+        } else {
+          log_w("incorrect target humidity");
+          sendFAIL();
+        }
       } else if (cmd == "OK") {
         if (settings.serial_number.length() > 0 &&
             settings.random_id.length() > 0 &&
@@ -279,13 +325,6 @@ bool factory_mode() {
       }
     }
   }
-
-  // ------ test LEDs ------
-  while (1) {
-    test_buttons();
-  }
-
-  return false;
 }
 
 #endif

@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
-#include <Wire.h>
 
-#include "Adafruit_SHTC3.h"
 #include "autodiscovery.h"
 #include "config.h"
 #include "display.h"
@@ -18,10 +16,6 @@ WiFiManager wifi_manager;
 uint32_t info_screen_start_time = 0;
 
 bool web_portal_saved = false;
-
-// temp & humidity sensor
-TwoWire shtc3_wire = TwoWire(0);
-Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
 WiFiManagerParameter device_name_param("device_name", "Device Name", "", 20);
 WiFiManagerParameter mqtt_server_param("mqtt_server", "MQTT Server", "", 50);
@@ -191,15 +185,9 @@ void setup() {
   }
 
   // ------ read temp & humidity ------
-  shtc3_wire.begin(
-      (int)HW.SDA,
-      (int)HW.SCL);  // must be cast to int otherwise wrong begin() is called
-  shtc3.begin(&shtc3_wire);
-  sensors_event_t humidity_event, temp_event;
-  shtc3.getEvent(&humidity_event, &temp_event);
-  shtc3.sleep(true);
-  float temperature_meas = temp_event.temperature;
-  float humidity_meas = humidity_event.relative_humidity;
+  float temperature_meas;
+  float humidity_meas;
+  read_temp_hmd(temperature_meas, humidity_meas);
 
   // ------ boot reason ------
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1) {

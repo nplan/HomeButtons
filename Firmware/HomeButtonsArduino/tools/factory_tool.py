@@ -38,6 +38,10 @@ class NetworkSettings:
     mqtt_password: str = ""
     mqtt_port: int = 0
 
+@dataclass
+class SensorTargets:
+    temperature: float = 0.0
+    humidity: float = 0.0
 
 class FactoryHandler:
 
@@ -224,10 +228,37 @@ class FactoryHandler:
         client.loop_stop()
         print("OK")
         return True
+    
+    def set_temperature_target(self, target: float) -> bool:
+        print("Setting temperature sensor target...", end="", flush=True)
+        self.serial.write(b"TT-" + str(target).encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
 
-    def run_factory_setup(self, settings: FactorySettings, network_settings: NetworkSettings=None):
+    def set_humidity_target(self, target: float) -> bool:
+        print("Setting humidity sensor target...", end="", flush=True)
+        self.serial.write(b"TH-" + str(target).encode("ascii") + b"\r")
+        ret = self.serial.readline().decode().strip()
+        if ret == "OK":
+            print("OK")
+            return True
+        else:
+            print("FAIL")
+            return False
+
+    def run_factory_setup(self, settings: FactorySettings, sensor_targets: SensorTargets,
+                          network_settings: NetworkSettings=None):
         with Serial(port, baudrate=baud) as self.serial:
             if not self.set_hw_version(settings.hw_version):
+                return
+            if not self.set_temperature_target(sensor_targets.temperature):
+                return
+            if not self.set_humidity_target(sensor_targets.humidity):
                 return
             if not self.run_hw_test():
                 return
@@ -289,6 +320,9 @@ if __name__ == "__main__":
     required.add_argument("--mqtt_password", type=str, required=True)
     required.add_argument("--mqtt_port", type=int, required=True)
 
+    required.add_argument("--temperature", type=float, required=True)
+    required.add_argument("--humidity", type=float, required=True)
+
     args = parser.parse_args()
 
     settings = FactorySettings(
@@ -309,5 +343,10 @@ if __name__ == "__main__":
         mqtt_port=args.mqtt_port
     )
 
+    sensor_targets = SensorTargets(
+        temperature=args.temperature,
+        humidity=args.humidity
+    )
+
     factory = FactoryHandler()
-    factory.run_factory_setup(settings, network_settings)
+    factory.run_factory_setup(settings, sensor_targets, network_settings)
