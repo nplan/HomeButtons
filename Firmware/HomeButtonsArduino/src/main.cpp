@@ -158,31 +158,66 @@ void setup() {
   eink::begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   begin_hardware();
 
-  // ------ check battery voltage first thing ------
+  // ------ handle charging -----
+  if (HW.version >= semver::version{2, 2, 0}) {
+    if (is_dc_connected() && is_battery_present()) {
+      enable_charger(true);
+      // block until disconnected
+      eink::display_string("Charging...");
+      while (1) {
+        delay(500);
+        if (!is_dc_connected()) {
+          enable_charger(false);
+          ESP.restart();
+        } else if (is_charger_in_standby()) {
+          eink::display_string("Fully charged.\n\nPlease\ndisconnect\ncable.");
+          while(1) {
+            delay(500);
+            if(!is_dc_connected()) {
+              enable_charger(false);
+              ESP.restart();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // ------ check battery voltage ------
   float batt_volt = read_battery_voltage();
-  uint8_t batt_pct = batt_volt2percent(batt_volt);
-  if (persisted_s.low_batt_mode) {
+  uint8_t batt_pct;
+  if (!is_dc_connected()) {
+    batt_pct = batt_volt2percent(batt_volt);
+  } else {
+    batt_pct = 100;
+  }
+
+  if (!persisted_s.low_batt_mode) {
+    if (!is_dc_connected()) {
+      if (batt_volt < HW.MIN_BATT_VOLT) {
+        // delay and check again
+        delay(1000);
+        batt_volt = read_battery_voltage();
+        if (batt_volt < HW.MIN_BATT_VOLT) {
+          eink::display_turned_off_please_recharge_screen();
+          persisted_s.low_batt_mode = true;
+          log_w("low batt mode enabled. voltage: %f", batt_volt);
+          save_persisted_vars(persisted_s);
+          go_to_sleep();
+        }
+      }
+    }
+  } else {
     if (batt_volt > HW.BATT_HISTERESIS_VOLT) {
       persisted_s.low_batt_mode = false;
       log_i("low batt mode disabled");
       display_buttons();
     } else {
+      log_w("low batt mode enabled. voltage: %f", batt_volt);
       go_to_sleep();
     }
-  } else {
-    if (batt_volt < HW.MIN_BATT_VOLT) {
-      // delay and check again
-      delay(1000);
-      batt_volt = read_battery_voltage();
-      if (batt_volt < HW.MIN_BATT_VOLT) {
-        eink::display_turned_off_please_recharge_screen();
-        persisted_s.low_batt_mode = true;
-        log_w("low batt mode enabled. voltage: %f", batt_volt);
-        save_persisted_vars(persisted_s);
-        go_to_sleep();
-      }
-    }
   }
+
 
   // ------ read temp & humidity ------
   float temperature_meas;
@@ -204,8 +239,7 @@ void setup() {
             boot_reason = BTN;
             ctrl = -1;
           } else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
-            eink::display_info_screen(temperature_meas, humidity_meas,
-                                      batt_volt2percent(batt_volt));
+            eink::display_info_screen(temperature_meas, humidity_meas, batt_pct);
             ctrl = 1;
           }
           break;
@@ -533,7 +567,7 @@ void setup() {
                      String(temperature_meas).c_str());
       client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
       client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
-      if (batt_volt < HW.WARN_BATT_VOLT) {
+      if (batt_volt < HW.WARN_BATT_VOLT && !is_dc_connected()) {
         eink::display_please_recharge_soon_screen();
         delay(2000);
         display_buttons();

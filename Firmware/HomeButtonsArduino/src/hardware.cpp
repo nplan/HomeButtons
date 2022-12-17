@@ -17,6 +17,12 @@ void init_hardware(String hw_version) {
   } else if (hw_version == "2.1") {
     HW = hw_rev_2_0;
     log_i("configured for hw version: 2.1");
+  } else if (hw_version == "2.2") {
+    HW = hw_rev_2_2;
+    log_i("configured for hw version: 2.2");
+  } else if (hw_version == "2.3") {
+    HW = hw_rev_2_3;
+    log_i("configured for hw version: 2.3");
   } else {
     log_e("HW rev %s not supported", hw_version);
   }
@@ -31,6 +37,11 @@ void begin_hardware() {
   pinMode(HW.BTN6_PIN, INPUT);
 
   pinMode(HW.CHARGER_STDBY, INPUT_PULLUP);
+
+  if (HW.version >= semver::version{2, 2, 0}) {
+    pinMode(HW.DC_IN_DETECT, INPUT);
+    pinMode(HW.CHG_ENABLE, OUTPUT);
+  }
 
   ledcSetup(HW.LED1_CH, HW.LED_FREQ, HW.LED_RES);
   ledcAttachPin(HW.LED1_PIN, HW.LED1_CH);
@@ -53,9 +64,6 @@ void begin_hardware() {
   // battery voltage adc
   analogReadResolution(HW.BAT_RES_BITS);
   analogSetPinAttenuation(HW.VBAT_ADC, ADC_11db);
-
-  // ------ delay ------
-  delay(100);  // wait for peripherals to boot up
 }
 
 bool digitalReadAny() {
@@ -90,7 +98,7 @@ uint8_t batt_volt2percent(float volt) {
   return (uint8_t)round(pct);
 }
 
-bool is_charger_in_standby() { return !digitalRead(HW.CHARGER_STDBY); }void read_temp_hmd(float &temp, float &hmd) {
+void read_temp_hmd(float &temp, float &hmd) {
   shtc3_wire.begin(
       (int)HW.SDA,
       (int)HW.SCL);  // must be cast to int otherwise wrong begin() is called
@@ -103,3 +111,25 @@ bool is_charger_in_standby() { return !digitalRead(HW.CHARGER_STDBY); }void read
 }
 
 bool is_charger_in_standby() { return !digitalRead(HW.CHARGER_STDBY); }
+
+bool is_dc_connected() {
+  if (HW.version >= semver::version{2, 2, 0}) {
+    return digitalRead(HW.DC_IN_DETECT);
+  } else {
+    return false;
+  }
+}
+
+void enable_charger(bool enable) {
+  if (HW.version >= semver::version{2, 2, 0}) {
+    digitalWrite(HW.CHG_ENABLE, enable);
+  }
+}
+
+bool is_battery_present() {
+  if (HW.version >= semver::version{2, 2, 0}) {
+    return read_battery_voltage() >= HW.BATT_PRESENT_VOLT;
+  } else {
+    return false;
+  }
+}
