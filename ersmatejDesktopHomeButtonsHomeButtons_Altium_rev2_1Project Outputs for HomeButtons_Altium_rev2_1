@@ -1,0 +1,245 @@
+[33mcommit 632ce70e540a14859abbc2b8032062dacf1716b6[m[33m ([m[1;36mHEAD -> [m[1;32mhw2.2_hwdev[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Fri Nov 18 19:35:35 2022 +0100
+
+    docs - added usb power hack
+
+[33mcommit b813ab9e9b4fb19b08d89d00d1a783123e22b912[m
+Author: Matej Planinšek <matej.planinsek@gmail.com>
+Date:   Tue Nov 15 18:51:17 2022 +0100
+
+    Added hardware modifications documentation to docs
+
+[33mcommit 10441d0317b09f856339f46b3f7ec80bb5d80cb5[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Mon Nov 7 21:25:38 2022 +0100
+
+    docs
+
+[33mcommit 7270a4f20d131350c39357945a8d6379fc157fc9[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Fri Nov 4 19:01:31 2022 +0100
+
+    added analytics
+
+[33mcommit bfb119fe9b138e7beee90c22808cdb5cfca82ea6[m[33m ([m[1;33mtag: v1.0.0[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Oct 30 17:22:36 2022 +0100
+
+    added case files
+
+[33mcommit d15215edcde18de016f7130449c47bd9aa87fe2b[m
+Author: Matej Planinšek <matej.planinsek@gmail.com>
+Date:   Sun Oct 30 11:25:03 2022 +0100
+
+    Added HW licence file
+
+[33mcommit 549ba01619b2ffa8dbdce25ecf8b478dd5a87918[m
+Author: Matej Planinšek <matej.planinsek@gmail.com>
+Date:   Sat Oct 29 21:21:17 2022 +0200
+
+    HW design files update
+
+[33mcommit 9e884057dfc25d642a17084bffbf2a09cc6b9669[m
+Author: Matej Planinšek <matej.planinsek@gmail.com>
+Date:   Sat Oct 29 21:19:59 2022 +0200
+
+    Added Altium PCB design project
+
+[33mcommit 330d8fd4f70dbc72374977645d7cf8a4d6d32dc6[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sat Oct 29 20:47:35 2022 +0200
+
+    docs
+
+[33mcommit aa6a2131daeda65d383ec3b25c97916cb6d5e1e6[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sat Oct 29 18:31:47 2022 +0200
+
+    docs
+
+[33mcommit b9c29d0bee2c362b88c134d80ea8fd2d2a02d0a7[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Wed Oct 26 19:51:50 2022 +0200
+
+    docs
+
+[33mcommit 31c76978ca8e49f328e56789aad913adf0dd3dba[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Mon Oct 24 21:22:19 2022 +0200
+
+    docs
+
+[33mcommit e97b02e5d49f9a232eb18d2729b4e1550d15d476[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Oct 23 18:41:35 2022 +0200
+
+    added sw and hw info to welcome screen
+
+[33mcommit 8962db13f480cc34dde51c336a4f5f42264a8e8d[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Oct 23 18:18:52 2022 +0200
+
+    fixed reset behaviour when setup not complete
+
+[33mcommit 63db4cc9c99e5edc9ef76f4e4dad9b554e824306[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Fri Oct 14 19:34:17 2022 +0200
+
+    docs
+
+[33mcommit d22bdb3575eadc7d820f240223f60bed0db0f009[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Fri Oct 14 17:08:21 2022 +0200
+
+    naming fixes
+
+[33mcommit 919ddb7cb6a15ac6d35cded724e3fd142f049d09[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu Oct 13 22:22:46 2022 +0200
+
+    docs
+
+[33mcommit f710d0f2d25be98b3c96b7ff2cf8eb544ed7d210[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Mon Oct 10 21:04:02 2022 +0200
+
+    docs
+
+[33mcommit 0429794d26e3aad27e3ca3fc1307298076b71234[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Oct 9 18:22:16 2022 +0200
+
+    display improvements
+
+[33mcommit 1cc1b1f91800f73fc622e7c1719ddea184b61403[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu Oct 6 22:32:05 2022 +0200
+
+    /
+
+[33mcommit 3af55a872c539eecba6deeda18e6535bdf5c0103[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu Oct 6 21:59:42 2022 +0200
+
+    docs - quick setup
+
+[33mcommit e278fc018d9e393733062491df050777b4025aff[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Wed Oct 5 20:59:02 2022 +0200
+
+    start of documentation
+
+[33mcommit 49496975581b7e526fed14bf17b4c3aaac3d87b1[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Wed Oct 5 19:30:03 2022 +0200
+
+    cleanup
+
+[33mcommit 0a6d19ddbced08db35f4a7d54eacd4101897a70a[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Oct 2 20:35:58 2022 +0200
+
+    fixed welcome screen
+
+[33mcommit 96357cf7baf86bf9c99dcaf875fc4640233febdf[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Oct 2 14:42:21 2022 +0200
+
+    added wifi test to factory mode
+
+[33mcommit e968dc4a667aefe6ee8b0314d46a531ba1e66a43[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu Sep 29 19:22:34 2022 +0200
+
+    formatting
+
+[33mcommit a54fffd31ef482e5e0d692dc911c7da304ecf1ad[m[33m ([m[1;33mtag: v0.4.2[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Mon Sep 26 20:32:27 2022 +0200
+
+    fixed some display stuff
+
+[33mcommit dfc8225758167da57a7789df95fb89b239962eb1[m[33m ([m[1;33mtag: v0.4.1[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Sep 25 17:13:01 2022 +0200
+
+    added fully charged screen
+
+[33mcommit 35f18e4e51e58a01009c28ccc3163a064540479e[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Sep 25 16:04:49 2022 +0200
+
+    added hw_test functions
+
+[33mcommit 0c566c1f77b86f35482cad8de1f5a7b13b98b958[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Sep 25 16:02:36 2022 +0200
+
+    fixed info screen so device sleeps while showing
+
+[33mcommit 707dc8083f95ec71530a0dcfd3d19f372c7aa2bc[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Sep 25 13:06:27 2022 +0200
+
+    added support for HW rev 2.1
+
+[33mcommit 64fd2d83c8c9f0c36ddd7a5efd086cda7595e874[m[33m ([m[1;33mtag: v0.4.0[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Wed Aug 3 20:08:24 2022 +0200
+
+    added factory mode, reorganized preferences, split code to multiple files
+
+[33mcommit 567336a8b8550b46b04de9d503b38b49f0066479[m[33m ([m[1;33mtag: v0.3.1[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sat Jul 30 13:27:45 2022 +0200
+
+    added support for HW rev 2.0
+
+[33mcommit a0c6a4aba917af083603eb6f264e9cb73e692516[m[33m ([m[1;33mtag: v0.3.0[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Mon Jul 18 20:36:15 2022 +0200
+
+    Ported project to PlatformIO
+
+[33mcommit 58ea66db92151f06ca98d2beab2583cd60260640[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun Jul 17 17:53:29 2022 +0200
+
+    fixed info screen battery display
+
+[33mcommit c1fc773802322d1e674b58108a865034ed69acf7[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu Jun 16 21:54:58 2022 +0200
+
+    added info screen
+
+[33mcommit b23cadbc12cecf9f5bba64be4af95e66b8f21831[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu Jun 16 18:18:48 2022 +0200
+
+    fixed button 6 LED, v0.2.2
+
+[33mcommit f8abcd50a262600a6d0b2ca396f0291efeb4ad9a[m[33m ([m[1;33mtag: v0.2.1[m[33m)[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Thu May 26 16:42:07 2022 +0200
+
+    fixed mqtt user & password bug, added factory prefs save for future compatibility, bumped version to v0.2.1
+
+[33mcommit 1bdb4c3c97b9ef93626310e1d9306970dca57ec0[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sun May 22 14:52:58 2022 +0200
+
+    release v0.2.0. fully working MVP
+
+[33mcommit cc3105258da882c8307b459a8dc26baf2cae57a1[m
+Author: Nejc Planinsek <planinseknejc@gmail.com>
+Date:   Sat Apr 23 13:44:58 2022 +0200
+
+    functional hw1 proto code
+
+[33mcommit 605b1d2b463c7feb54c581a410a366422aec25be[m
+Author: Nejc Planinšek <planinseknejc@gmail.com>
+Date:   Wed Feb 23 20:10:11 2022 +0100
+
+    initial commit

@@ -1,0 +1,13 @@
+Board Information Report
+Filename     : C:\Users\matej\Documents\Projects\HomeButtons\Hardware\Altium\PCB.PcbDoc
+Date         : 11/22/2022
+Time         : 9:24:50 PM
+Time Elapsed : 00:00:00
+
+Pad Solder Mask, Count
+    -1000mm, 4
+    0mm, 78
+    0.05mm, 70
+    0.1016mm, 247
+    0.148mm, 3
+count : 5
