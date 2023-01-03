@@ -1,5 +1,6 @@
 #include "network.h"
 #include "utils.h"
+#include "autodiscovery.h"
 
 // ------ global variables ------
 WiFiClient wifi_client;
@@ -81,6 +82,7 @@ void callback(const char* topic, uint8_t* payload, uint32_t length) {
       user_s.sensor_interval = mins;
       log_i("Setting sensor interval to %d minutes.", mins);
       client.publish(topic_s.sensor_interval_state.c_str(), String(user_s.sensor_interval).c_str(), true);
+      send_autodiscovery_msg();
     }
     else {
       log_i("cmd sensor_interval out of range");

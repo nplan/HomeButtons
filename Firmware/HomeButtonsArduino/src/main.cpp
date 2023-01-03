@@ -477,6 +477,7 @@ void setup() {
       }
       set_topics();
       send_autodiscovery_msg();
+      delay(2000); // wait for HomeAssistant to register device
 
       client.publish(topic_s.temperature.c_str(),
                      String(temperature_meas).c_str());
