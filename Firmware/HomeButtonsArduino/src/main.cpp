@@ -298,7 +298,12 @@ void setup() {
         persisted_s.reset_to_setup = false;
         save_persisted_vars(persisted_s);
       } else if (persisted_s.last_sw_ver != SW_VERSION) {
-        control_flow = AFTER_UPDATE;
+        if (persisted_s.last_sw_ver.length() > 0) {
+          control_flow = AFTER_UPDATE;
+        } else { // first boot after factory flash
+          persisted_s.last_sw_ver = SW_VERSION;
+          control_flow = RESET;
+        }
       } else {
         control_flow = RESET;
       }
