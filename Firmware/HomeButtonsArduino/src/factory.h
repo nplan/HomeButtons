@@ -1,68 +1,80 @@
-#ifndef FACTORY_H
-#define FACTORY_H
+#ifndef BBE745C5_ECEF_46D0_8788_273E5DD42EF6
+#define BBE745C5_ECEF_46D0_8788_273E5DD42EF6
+
+#include <PubSubClient.h>
+#include <WiFi.h>
 
 #include "display.h"
 #include "hardware.h"
-#include "prefs.h"
-#include "network.h"
 
 struct TestSettings {
   float target_temp;
   float target_humidity;
 };
 
+struct NetworkSettings {
+  String wifi_ssid = "";
+  String wifi_password = "";
+  String mqtt_server = "";
+  String mqtt_user = "";
+  String mqtt_password = "";
+  int32_t mqtt_port = 0;
+};
+
 void test_leds() {
-  set_all_leds(255);
+  HW.set_all_leds(255);
   delay(250);
-  set_all_leds(0);
+  HW.set_all_leds(0);
   delay(250);
 }
 
 void test_buttons() {
-  set_led(HW.LED1_CH, 255);
+  HW.set_led(HW.LED1_CH, 255);
   while (!digitalRead(HW.BTN1_PIN)) {
   }
-  set_led(HW.LED1_CH, 0);
+  HW.set_led(HW.LED1_CH, 0);
 
-  set_led(HW.LED2_CH, 255);
+  HW.set_led(HW.LED2_CH, 255);
   while (!digitalRead(HW.BTN2_PIN)) {
   }
-  set_led(HW.LED2_CH, 0);
+  HW.set_led(HW.LED2_CH, 0);
 
-  set_led(HW.LED3_CH, 255);
+  HW.set_led(HW.LED3_CH, 255);
   while (!digitalRead(HW.BTN3_PIN)) {
   }
-  set_led(HW.LED3_CH, 0);
+  HW.set_led(HW.LED3_CH, 0);
 
-  set_led(HW.LED4_CH, 255);
+  HW.set_led(HW.LED4_CH, 255);
   while (!digitalRead(HW.BTN4_PIN)) {
   }
-  set_led(HW.LED4_CH, 0);
+  HW.set_led(HW.LED4_CH, 0);
 
-  set_led(HW.LED5_CH, 255);
+  HW.set_led(HW.LED5_CH, 255);
   while (!digitalRead(HW.BTN5_PIN)) {
   }
-  set_led(HW.LED5_CH, 0);
+  HW.set_led(HW.LED5_CH, 0);
 
-  set_led(HW.LED6_CH, 255);
+  HW.set_led(HW.LED6_CH, 255);
   while (!digitalRead(HW.BTN6_PIN)) {
   }
-  set_led(HW.LED6_CH, 0);
+  HW.set_led(HW.LED6_CH, 0);
 }
 
 void test_display() {
-  eink::display_test_screen();
-  while (!digitalReadAny()) {
+  display.disp_test(false);
+  display.update();
+  while (!HW.digitalReadAny()) {
   }
-  eink::display_black_screen();
-  while (!digitalReadAny()) {
-  }
-  eink::display_white_screen();
-  while (!digitalReadAny()) {
+  display.disp_test(true);
+  display.update();
+  while (!HW.digitalReadAny()) {
   }
 }
 
-void test_wifi(NetworkSettings settings, FactorySettings factory) {
+void test_wifi(NetworkSettings settings) {
+  WiFiClient wifi_client;
+  PubSubClient mqtt_client(wifi_client);
+
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
 
@@ -76,16 +88,28 @@ void test_wifi(NetworkSettings settings, FactorySettings factory) {
   }
   log_i("WiFi connected. IP: %S", WiFi.localIP().toString());
   log_i("Connecting to MQTT...");
-  client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
-  String client_id = "HBTNS-" + factory.serial_number + "-factory";
-  while (!client.connected()) {
-    client.connect(client_id.c_str(), settings.mqtt_user.c_str(), settings.mqtt_password.c_str());
+  mqtt_client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
+  String client_id = "HBTNS-" + device_state.serial_number + "-factory";
+  while (!mqtt_client.connected()) {
+    mqtt_client.connect(client_id.c_str(), settings.mqtt_user.c_str(), settings.mqtt_password.c_str());
     delay(100);
   }
   log_i("MWTT connected");
-  client.publish("homebuttons-factory/test", "OK");
+  mqtt_client.publish("homebuttons-factory/test", "OK");
   log_i("MQTT payload 'OK' sent to topic: homebuttons-factory/test");
-  disconnect_mqtt();
+  // disconnect
+  unsigned long tm = millis();
+  while (millis() - tm < MQTT_DISCONNECT_TIMEOUT) {
+    mqtt_client.loop();
+  }
+  // disconnect and wait until closed
+  mqtt_client.disconnect();
+  wifi_client.flush();
+  // wait until connection is closed completely
+  while (mqtt_client.state() != -1) {
+    mqtt_client.loop();
+    delay(10);
+  }
   log_i("MQTT disconnected");
   WiFi.disconnect(true, true);
   log_i("WiFi disconnected");
@@ -99,7 +123,7 @@ bool test_sensors(TestSettings settings) {
 
   float temp_val;
   float hmd_val;
-  read_temp_hmd(temp_val, hmd_val);
+  HW.read_temp_hmd(temp_val, hmd_val);
 
   if (temp_val <= settings.target_temp - 5.0 || temp_val >= settings.target_temp + 5.0) {
     log_i("Temp test fail. Measured: %f deg C.", temp_val);
@@ -113,11 +137,11 @@ bool test_sensors(TestSettings settings) {
 }
 
 bool run_tests(TestSettings settings) {
-  if (digitalReadAny()) {
+  if (HW.digitalReadAny()) {
     log_e("button pressed at start of test");
     return false;
   }
-  while (!digitalReadAny()) {
+  while (!HW.digitalReadAny()) {
     test_leds();
   }
   test_buttons();
@@ -134,7 +158,6 @@ void sendFAIL() { Serial.println("FAIL"); }
 
 bool factory_mode() {
   NetworkSettings networkSettings = {};
-  FactorySettings settings = {};
   TestSettings test_settings = {};
 
   Serial.begin(115200);
@@ -152,10 +175,10 @@ bool factory_mode() {
       log_i("received cmd: %s, pld: %s", cmd.c_str(), pld.c_str());
 
       if (cmd == "ST") {
-        if (settings.hw_version.length() > 0) {
-          init_hardware(settings.hw_version);
-          eink::begin();
-          begin_hardware();
+        if (device_state.hw_version.length() > 0) {
+          HW.init(device_state.hw_version);
+          display.begin();
+          HW.begin();
           log_i("starting hw test...");
           if (run_tests(test_settings)) {
             log_i("test complete");
@@ -168,8 +191,8 @@ bool factory_mode() {
         }
       } else if (cmd == "SN") {
         if (pld.length() == 8) {
-          settings.serial_number = pld;
-          log_i("setting serial number to: %s", settings.serial_number.c_str());
+          device_state.serial_number = pld;
+          log_i("setting serial number to: %s", device_state.serial_number.c_str());
           sendOK();
         } else {
           log_w("incorrect serial number: %s", pld.c_str());
@@ -177,8 +200,8 @@ bool factory_mode() {
         }
       } else if (cmd == "RI") {
         if (pld.length() == 6) {
-          settings.random_id = pld;
-          log_i("setting random id to: %s", settings.random_id.c_str());
+          device_state.random_id = pld;
+          log_i("setting random id to: %s", device_state.random_id.c_str());
           sendOK();
         } else {
           log_w("incorrect random id: %s", pld.c_str());
@@ -186,8 +209,8 @@ bool factory_mode() {
         }
       } else if (cmd == "MN") {
         if (pld.length() > 0 && pld.length() <= 20) {
-          settings.model_name = pld;
-          log_i("setting model name to: %s", settings.model_name.c_str());
+          device_state.model_name = pld;
+          log_i("setting model name to: %s", device_state.model_name.c_str());
           sendOK();
         } else {
           log_w("incorrect model name: %s", pld.c_str());
@@ -195,8 +218,8 @@ bool factory_mode() {
         }
       } else if (cmd == "MI") {
         if (pld.length() == 2) {
-          settings.model_id = pld;
-          log_i("setting model id to: %s", settings.model_id);
+          device_state.model_id = pld;
+          log_i("setting model id to: %s", device_state.model_id);
           sendOK();
         } else {
           log_w("incorrect model id: %s", pld.c_str());
@@ -204,8 +227,8 @@ bool factory_mode() {
         }
       } else if (cmd == "HV") {
         if (pld.length() == 3) {
-          settings.hw_version = pld;
-          log_i("setting hw version to: %s", settings.hw_version);
+          device_state.hw_version = pld;
+          log_i("setting hw version to: %s", device_state.hw_version);
           sendOK();
         } else {
           log_w("incorrect hw version: %s", pld.c_str());
@@ -267,9 +290,9 @@ bool factory_mode() {
           sendFAIL();
         }
       } else if (cmd == "TW") {
-        if (settings.serial_number.length() > 0) {
+        if (device_state.serial_number.length() > 0) {
           log_i("starting wifi test...");
-          test_wifi(networkSettings, settings);
+          test_wifi(networkSettings);
           sendOK();
         }
         else {
@@ -295,13 +318,13 @@ bool factory_mode() {
           sendFAIL();
         }
       } else if (cmd == "OK") {
-        if (settings.serial_number.length() > 0 &&
-            settings.random_id.length() > 0 &&
-            settings.model_name.length() > 0 &&
-            settings.model_id.length() > 0 &&
-            settings.hw_version.length() > 0) {
-          settings.unique_id = String("HBTNS-") + settings.serial_number + "-" +
-                               settings.random_id;
+        if (device_state.serial_number.length() > 0 &&
+            device_state.random_id.length() > 0 &&
+            device_state.model_name.length() > 0 &&
+            device_state.model_id.length() > 0 &&
+            device_state.hw_version.length() > 0) {
+            device_state.unique_id = String("HBTNS-") + device_state.serial_number + "-" +
+                               device_state.random_id;
 
           log_i("settings confirmed. saving to memory");
           log_i(
@@ -312,11 +335,13 @@ bool factory_mode() {
                            device model id: %s\n\
                            hw version: %s\n\
                            unique_id: %s\n",
-              settings.serial_number.c_str(), settings.random_id.c_str(),
-              settings.model_name.c_str(), settings.model_id,
-              settings.hw_version, settings.unique_id);
+              device_state.serial_number.c_str(), device_state.random_id.c_str(),
+              device_state.model_name.c_str(), device_state.model_id.c_str(),
+              device_state.hw_version.c_str(), device_state.unique_id.c_str());
           sendOK();
-          save_factory_settings(settings);
+          device_state.save_factory();
+          display.end();
+          display.update();
           return true;
         } else {
           log_w("settings missing or incorrect");
@@ -327,4 +352,4 @@ bool factory_mode() {
   }
 }
 
-#endif
+#endif /* BBE745C5_ECEF_46D0_8788_273E5DD42EF6 */

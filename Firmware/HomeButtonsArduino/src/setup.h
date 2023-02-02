@@ -1,0 +1,7 @@
+#ifndef F4292A73_0DCD_4A5F_B96D_ACFBB26BCAC6
+#define F4292A73_0DCD_4A5F_B96D_ACFBB26BCAC6
+
+void start_wifi_setup();
+void start_setup();
+
+#endif /* F4292A73_0DCD_4A5F_B96D_ACFBB26BCAC6 */

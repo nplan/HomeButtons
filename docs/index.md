@@ -9,11 +9,12 @@ Works seamlessly with *Home Assistant*.
 **Features:**
 
 - 2.9" e-paper display
-- 6 trigger buttons
+- 6 trigger buttons, multiple press support
 - Wi-Fi connectivity
 - Less than 1 second from button press to triggered action
 - Temperature & humidity sensor
-- Battery powered, greater than 1 year battery life
+- Power options: Battery, USB-C, 5V DC
+- Greater than 1 year battery life
 - USB-C charging
 - Compact size: 87 x 87 x 23 mm
 

@@ -10,6 +10,7 @@ nav:
   - Tech Specs: specs.md
   - Firmware Update: update.md
   - MQTT Topics: mqtt_topics.md
+  - Soldering: soldering.md
   - Hardware Hacks: hardware_hacks.md
   - Help: help.md
 

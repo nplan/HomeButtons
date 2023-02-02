@@ -1,705 +1,945 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
+#include <esp_task_wdt.h>
 
 #include "autodiscovery.h"
+#include "buttons.h"
 #include "config.h"
 #include "display.h"
 #include "factory.h"
 #include "hardware.h"
 #include "hw_tests.h"
+#include "leds.h"
 #include "network.h"
-#include "prefs.h"
+#include "setup.h"
+#include "state.h"
 #include "utils.h"
 
-// ------ global variables ------
-WiFiManager wifi_manager;
-uint32_t info_screen_start_time = 0;
+enum class BootCause { RESET, TIMER, BUTTON };
 
-bool web_portal_saved = false;
+const uint8_t num_buttons = 6;
+Button btn_1, btn_2, btn_3, btn_4, btn_5, btn_6;
+Button *buttons[] = {&btn_1, &btn_2, &btn_3, &btn_4, &btn_5, &btn_6};
 
-WiFiManagerParameter device_name_param("device_name", "Device Name", "", 20);
-WiFiManagerParameter mqtt_server_param("mqtt_server", "MQTT Server", "", 50);
-WiFiManagerParameter mqtt_port_param("mqtt_port", "MQTT Port", "", 6);
-WiFiManagerParameter mqtt_user_param("mqtt_user", "MQTT User", "", 50);
-WiFiManagerParameter mqtt_password_param("mqtt_password", "MQTT Password", "",
-                                         50);
-WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "", 50);
-WiFiManagerParameter discovery_prefix_param("disc_prefix", "Discovery Prefix",
-                                            "", 50);
-WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "", BTN_LABEL_MAXLEN);
-WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "", BTN_LABEL_MAXLEN);
-WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "", BTN_LABEL_MAXLEN);
-WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "", BTN_LABEL_MAXLEN);
-WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "", BTN_LABEL_MAXLEN);
-WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "", BTN_LABEL_MAXLEN);
-
-enum BootReason {
-  NO_REASON,
-  TMR,
-  RST,
-  BTN,
-  BTN_MEDIUM,
-  BTN_LONG,
-  BTN_EXTRA_LONG,
-  BTN_ULTRA_LONG
+enum class StateMachineState {
+  AWAIT_NET_CONNECT,
+  AWAIT_USER_INPUT_START,
+  AWAIT_USER_INPUT_FINISH,
+  CMD_SHUTDOWN,
+  AWAIT_NET_DISCONNECT,
+  AWAIT_SHUTDOWN,
+  AWAIT_FACTORY_RESET,
 };
-BootReason boot_reason = NO_REASON;
-enum ControlFlow {
-  NO_FLOW,
-  WIFI_SETUP,
-  SETUP,
-  RESET,
-  BTN_PRESS,
-  FAC_RESET,
-  TIMER,
-  SHOW_INFO,
-  AFTER_UPDATE
-};
-ControlFlow control_flow = NO_FLOW;
-uint32_t btn_press_time = 0;
-uint32_t config_start_time = 0;
-enum WakeupButton { NO_BTN, BTN1, BTN2, BTN3, BTN4, BTN5, BTN6 };
-WakeupButton wakeup_button = NO_BTN;
-int16_t wakeup_pin = -1;
+StateMachineState sm_state;
 
-void set_topics() {
-  String topic_common = user_s.base_topic + "/" + user_s.device_name + "/";
-  String topic_cmd = topic_common + "cmd/";
-
-  // button press topics
-  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    topic_s.btn_press[i] = topic_common + "button_" + String(i + 1);
-  }
-
-  // sensors
-  topic_s.temperature = topic_common + "temperature";
-  topic_s.humidity = topic_common + "humidity";
-  topic_s.battery = topic_common + "battery";
-
-  // sensor interval
-  topic_s.sensor_interval_state = topic_common + "sensor_interval";
-  topic_s.sensor_interval_cmd = topic_cmd + "sensor_interval";
-
-  // button label state & cmd
-  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    topic_s.btn_label_state[i] =
-        topic_common + "btn_" + String(i + 1) + "_label";
-    topic_s.btn_label_cmd[i] = topic_cmd + "btn_" + String(i + 1) + "_label";
-  }
-}
-
-void save_params_clbk() {
-  user_s.device_name = device_name_param.getValue();
-  user_s.mqtt_server = mqtt_server_param.getValue();
-  user_s.mqtt_port = String(mqtt_port_param.getValue()).toInt();
-  user_s.mqtt_user = mqtt_user_param.getValue();
-  user_s.mqtt_password = mqtt_password_param.getValue();
-  user_s.base_topic = base_topic_param.getValue();
-  user_s.discovery_prefix = discovery_prefix_param.getValue();
-  user_s.btn_1_label = check_button_label(btn1_label_param.getValue());
-  user_s.btn_2_label = check_button_label(btn2_label_param.getValue());
-  user_s.btn_3_label = check_button_label(btn3_label_param.getValue());
-  user_s.btn_4_label = check_button_label(btn4_label_param.getValue());
-  user_s.btn_5_label = check_button_label(btn5_label_param.getValue());
-  user_s.btn_6_label = check_button_label(btn6_label_param.getValue());
-  save_user_settings(user_s);
-  web_portal_saved = true;
-}
-
-void display_buttons() {
-  eink::display_buttons_UTF8(user_s.btn_1_label, user_s.btn_2_label,
-                             user_s.btn_3_label, user_s.btn_4_label,
-                             user_s.btn_5_label, user_s.btn_6_label);
-}
+TaskHandle_t button_task_h = nullptr;
+TaskHandle_t display_task_h = nullptr;
+TaskHandle_t network_task_h = nullptr;
+TaskHandle_t leds_task_h = nullptr;
+TaskHandle_t main_task_h = nullptr;
 
 void start_esp_sleep() {
   esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
-  if (persisted_s.wifi_done && persisted_s.setup_done &&
-      !persisted_s.low_batt_mode && !persisted_s.check_connection) {
-    if (persisted_s.info_screen_showing) {
+  if (device_state.wifi_done && device_state.setup_done &&
+      !device_state.low_batt_mode && !device_state.check_connection) {
+    if (device_state.info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
     } else {
-      esp_sleep_enable_timer_wakeup(user_s.sensor_interval * 60000000UL);
+      esp_sleep_enable_timer_wakeup(device_state.sensor_interval * 60000000UL);
     }
   }
-  log_i("starting deep sleep");
+  log_i("[DEVICE] deep sleep... z z z");
   esp_deep_sleep_start();
 }
 
 void go_to_sleep() {
-  eink::hibernate();
-  set_all_leds(0);
+  device_state.save_all();
+  HW.set_all_leds(0);
   start_esp_sleep();
 }
 
-void setup() {
-  log_i("woke up");
+void begin_buttons() {
+  btn_1.begin(HW.BTN1_PIN, 1);
+  btn_2.begin(HW.BTN6_PIN, 2);
+  btn_3.begin(HW.BTN2_PIN, 3);
+  btn_4.begin(HW.BTN5_PIN, 4);
+  btn_5.begin(HW.BTN3_PIN, 5);
+  btn_6.begin(HW.BTN4_PIN, 6);
+}
 
-  // ------ read preferences ------
-  factory_s = read_factory_settings();
-  user_s = read_user_settings();
-  persisted_s = read_persisted_vars();
-  set_topics();
+void end_buttons() {
+  btn_1.end();
+  btn_2.end();
+  btn_3.end();
+  btn_4.end();
+  btn_5.end();
+  btn_6.end();
+}
+
+void publish_sensors() {
+  network.publish(device_state.t_temperature.c_str(),
+                  String(device_state.temperature).c_str());
+  network.publish(device_state.t_humidity.c_str(),
+                  String(device_state.humidity).c_str());
+  network.publish(device_state.t_battery.c_str(),
+                  String(device_state.battery_pct).c_str());
+}
+
+void publish_awake_mode_avlb() {
+  if (HW.is_dc_connected()) {
+    network.publish(device_state.t_awake_mode_avlb.c_str(), "online", true);
+  } else {
+    network.publish(device_state.t_awake_mode_avlb.c_str(), "offline", true);
+  }
+}
+
+void mqtt_callback(String topic, String payload) {
+  if (topic == device_state.t_sensor_interval_cmd) {
+    uint16_t mins = payload.toInt();
+    if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
+      device_state.sensor_interval = mins;
+      device_state.save_all();
+      network.publish(device_state.t_sensor_interval_state.c_str(),
+                      String(device_state.sensor_interval).c_str(), true);
+      update_discovery_config();
+      log_d("[DEVICE] sensor interval set to %d minutes", mins);
+      publish_sensors();
+    }
+    network.publish(device_state.t_sensor_interval_cmd.c_str(), nullptr, true);
+  }
+
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    if (topic == device_state.t_btn_label_cmd[i]) {
+      device_state.set_btn_label(i, check_button_label(payload));
+      log_d("[DEVICE] button %d label changed to: %s", i + 1,
+            device_state.get_btn_label(i).c_str());
+      network.publish(device_state.t_btn_label_state[i].c_str(),
+                      device_state.get_btn_label(i).c_str(), true);
+      network.publish(device_state.t_btn_label_cmd[i].c_str(), nullptr, true);
+      device_state.display_redraw = true;
+    }
+  }
+
+  if (topic == device_state.t_awake_mode_cmd) {
+    if (payload == "ON") {
+      device_state.user_awake_mode = true;
+      device_state.awake_mode = true;
+      device_state.save_all();
+      network.publish(device_state.t_awake_mode_state.c_str(), "ON", true);
+      log_d("[DEVICE] user awake mode set to: ON");
+      log_d("[DEVICE] resetting to awake mode...");
+    } else if (payload == "OFF") {
+      device_state.user_awake_mode = false;
+      device_state.save_all();
+      network.publish(device_state.t_awake_mode_state.c_str(), "OFF", true);
+      log_d("[DEVICE] user awake mode set to: OFF");
+    }
+    network.publish(device_state.t_awake_mode_cmd.c_str(), nullptr, true);
+  }
+}
+
+void net_on_connect() {
+  network.subscribe(device_state.t_cmd + "#");
+  delay(100);
+  publish_awake_mode_avlb();
+  network.publish(device_state.t_sensor_interval_state.c_str(),
+                  String(device_state.sensor_interval).c_str(), true);
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    auto t = device_state.t_btn_label_state[i];
+    network.publish(t.c_str(), device_state.get_btn_label(i).c_str(), true);
+  }
+  network.publish(device_state.t_awake_mode_state.c_str(),
+                (device_state.user_awake_mode) ? "ON" : "OFF", true);
+
+  if (device_state.send_discovery_config) {
+    device_state.send_discovery_config = false;
+    send_discovery_config();
+  }
+}
+
+void button_task(void *param) {
+  while (true) {
+    for (auto b : buttons) {
+      b->update();
+    }
+    delay(20);
+  }
+}
+
+void start_button_task() {
+  if (button_task_h != nullptr) return;
+  log_d("[DEVICE] button task started.");
+  xTaskCreate(button_task,    // Function that should be called
+              "BUTTON",       // Name of the task (for debugging)
+              2000,           // Stack size (bytes)
+              NULL,           // Parameter to pass
+              23,             // Task priority
+              &button_task_h  // Task handle
+  );
+}
+
+void display_task(void *param) {
+  while (true) {
+    display.update();
+    delay(50);
+  }
+}
+
+void start_display_task() {
+  if (display_task_h != nullptr) return;
+  log_d("[DEVICE] display task started.");
+  xTaskCreate(display_task,    // Function that should be called
+              "DISPLAY",       // Name of the task (for debugging)
+              5000,            // Stack size (bytes)
+              NULL,            // Parameter to pass
+              5,               // Task priority
+              &display_task_h  // Task handle
+  );
+}
+
+void network_task(void *param) {
+  while (true) {
+    network.update();
+    delay(10);
+  }
+}
+
+void start_network_task() {
+  if (network_task_h != nullptr) return;
+  log_d("[DEVICE] network task started.");
+  xTaskCreate(network_task,    // Function that should be called
+              "NETWORK",       // Name of the task (for debugging)
+              10000,           // Stack size (bytes)
+              NULL,            // Parameter to pass
+              10,              // Task priority
+              &network_task_h  // Task handle
+  );
+}
+
+void leds_task(void *param) {
+  while (true) {
+    leds.update();
+    delay(100);
+  }
+}
+
+void start_leds_task() {
+  if (leds_task_h != nullptr) return;
+  log_d("[DEVICE] leds task started.");
+  xTaskCreate(leds_task,    // Function that should be called
+              "LEDS",       // Name of the task (for debugging)
+              2000,         // Stack size (bytes)
+              NULL,         // Parameter to pass
+              23,           // Task priority
+              &leds_task_h  // Task handle
+  );
+}
+
+void main_task(void *param) {
+  log_i("[DEVICE] woke up.");
+  device_state.load_all();
 
   // ------ factory mode ------
-  if (factory_s.serial_number.length() < 1) {
-    log_i("first boot, starting factory mode...");
+  if (device_state.serial_number.length() < 1) {
+    log_i("[DEVICE] first boot, starting factory mode...");
     if (factory_mode()) {
-      factory_s = read_factory_settings();
-      log_i("factory settings complete. going to sleep");
-      eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
-      go_to_sleep();
+      display.begin();
+      display.disp_welcome();
+      display.update();
+      display.end();
+      log_i("[DEVICE] factory settings complete. Going to sleep.");
+      start_esp_sleep();
+    } else {
+      // factory_mode() never returns false
     }
   }
 
   // ------ init hardware ------
-  log_i("hardware version: %s", factory_s.hw_version);
-  init_hardware(factory_s.hw_version);
-  eink::begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
-  begin_hardware();
+  log_i("[HW] version: %s", device_state.hw_version.c_str());
+  HW.init(device_state.hw_version);
+  display.begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+  HW.begin();
 
-  // ------ handle charging -----
-  if (HW.version >= semver::version{2, 2, 0}) {
-    if (is_dc_connected() && is_battery_present()) {
-      enable_charger(true);
-      // block until disconnected
-      eink::display_string("Charging...");
-      while (1) {
-        delay(500);
-        if (!is_dc_connected()) {
-          enable_charger(false);
-          ESP.restart();
-        } else if (is_charger_in_standby()) {
-          eink::display_string("Fully charged.\n\nPlease\ndisconnect\ncable.");
-          while(1) {
-            delay(500);
-            if(!is_dc_connected()) {
-              enable_charger(false);
-              ESP.restart();
-            }
-          }
-        }
-      }
+  // ------ after update handler ------
+  if (device_state.last_sw_ver != SW_VERSION) {
+    if (device_state.last_sw_ver.length() > 0) {
+      log_i("[DEVICE] firmware updated from %s to %s",
+            device_state.last_sw_ver.c_str(), SW_VERSION);
+      device_state.last_sw_ver = SW_VERSION;
+      device_state.send_discovery_config = true;
+      device_state.save_all();
+      display.disp_message(String("Firmware\nupdated to\n") + SW_VERSION);
+      display.update();
+      ESP.restart();
+    } else {  // first boot after factory flash
+      device_state.last_sw_ver = SW_VERSION;
     }
   }
 
-  // ------ check battery voltage ------
-  float batt_volt = read_battery_voltage();
-  uint8_t batt_pct;
-  if (!is_dc_connected()) {
-    batt_pct = batt_volt2percent(batt_volt);
-  } else {
-    batt_pct = 100;
-  }
+  // ------ determine power mode ------
+  device_state.battery_present = HW.is_battery_present();
+  device_state.dc_connected = HW.is_dc_connected();
+  log_i("[DEVICE] batt present: %d, DC connected: %d",
+        device_state.battery_present, device_state.dc_connected);
 
-  if (!persisted_s.low_batt_mode) {
-    if (!is_dc_connected()) {
-      if (batt_volt < HW.MIN_BATT_VOLT) {
-        // delay and check again
-        delay(1000);
-        batt_volt = read_battery_voltage();
-        if (batt_volt < HW.MIN_BATT_VOLT) {
-          eink::display_turned_off_please_recharge_screen();
-          persisted_s.low_batt_mode = true;
-          log_w("low batt mode enabled. voltage: %f", batt_volt);
-          save_persisted_vars(persisted_s);
+  if (device_state.battery_present) {
+    float batt_voltage = HW.read_battery_voltage();
+    log_i("[DEVICE] batt volts: %f", batt_voltage);
+    if (device_state.dc_connected) {
+      // charging
+      if (batt_voltage < HW.CHARGE_HYSTERESIS_VOLT) {
+        device_state.charging = true;
+        HW.enable_charger(true);
+        device_state.awake_mode = true;
+      } else {
+        device_state.awake_mode = device_state.user_awake_mode;
+      }
+      device_state.low_batt_mode = false;
+    } else {  // dc_connected == false
+      if (device_state.low_batt_mode) {
+        if (batt_voltage >= HW.BATT_HYSTERESIS_VOLT) {
+          device_state.low_batt_mode = false;
+          device_state.save_all();
+          log_i("[DEVICE] low batt mode disabled");
+          ESP.restart();  // to handle display update
+        } else {
+          log_i("[DEVICE] in low batt mode...");
           go_to_sleep();
         }
+      } else {  // low_batt_mode == false
+        if (batt_voltage < HW.MIN_BATT_VOLT) {
+          // check again
+          delay(1000);
+          batt_voltage = HW.read_battery_voltage();
+          if (batt_voltage < HW.MIN_BATT_VOLT) {
+            device_state.low_batt_mode = true;
+            log_w("[DEVICE] batt voltage too low, low bat mode enabled");
+            display.disp_message_large(
+                "Turned\nOFF\n\nPlease\nrecharge\nbattery!");
+            display.update();
+            go_to_sleep();
+          }
+        } else if (batt_voltage <= HW.WARN_BATT_VOLT) {
+          device_state.battery_low = true;
+        }
+        device_state.awake_mode = false;
       }
     }
-  } else {
-    if (batt_volt > HW.BATT_HISTERESIS_VOLT) {
-      persisted_s.low_batt_mode = false;
-      log_i("low batt mode disabled");
-      display_buttons();
+  } else {  // battery_present == false
+    if (device_state.dc_connected) {
+      device_state.low_batt_mode = false;
+      // choose power mode based on user setting
+      device_state.awake_mode = device_state.user_awake_mode;
     } else {
-      log_w("low batt mode enabled. voltage: %f", batt_volt);
+      // should never happen
       go_to_sleep();
     }
   }
+  log_i("[DEVICE] usr awake mode: %d, awake mode: %d",
+        device_state.user_awake_mode, device_state.awake_mode);
 
+  // ------ read sensors ------
+  HW.read_temp_hmd(device_state.temperature, device_state.humidity);
+  device_state.battery_pct = HW.read_battery_percent();
 
-  // ------ read temp & humidity ------
-  float temperature_meas;
-  float humidity_meas;
-  read_temp_hmd(temperature_meas, humidity_meas);
-
-  // ------ boot reason ------
-  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1) {
-    btn_press_time = millis();
-    uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
-    wakeup_pin = (log(GPIO_reason)) / log(2);
-    log_i("wakeup pin: %d", wakeup_pin);
-    int16_t ctrl = 0;
-    bool break_loop = false;
-    while (!break_loop) {
-      switch (ctrl) {
-        case 0:
-          if (!digitalRead(wakeup_pin)) {
-            boot_reason = BTN;
-            ctrl = -1;
-          } else if (millis() - btn_press_time > MEDIUM_PRESS_TIME) {
-            eink::display_info_screen(temperature_meas, humidity_meas, batt_pct);
-            ctrl = 1;
-          }
-          break;
-        case 1:
-          if (!digitalRead(wakeup_pin)) {
-            delay(100);  // debounce
-            boot_reason = BTN_MEDIUM;
-            ctrl = -1;
-          } else if (millis() - btn_press_time > LONG_PRESS_TIME) {
-            eink::display_string(
-                "Release\nfor\nSETUP\n\nKeep holding\nfor\nWi-Fi SETUP");
-            ctrl = 3;
-          }
-          break;
-        case 3:
-          if (!digitalRead(wakeup_pin)) {
-            boot_reason = BTN_LONG;
-            ctrl = -1;
-          } else if (millis() - btn_press_time > EXTRA_LONG_PRESS_TIME) {
-            ctrl = 4;
-            eink::display_string(
-                "Release\nfor\nWi-Fi SETUP\n\nKeep "
-                "holding\nfor\nFACTORY\nRESET");
-          }
-          break;
-        case 4:
-          if (!digitalRead(wakeup_pin)) {
-            boot_reason = BTN_EXTRA_LONG;
-            ctrl = -1;
-          } else if (millis() - btn_press_time > ULTRA_LONG_PRESS_TIME) {
-            boot_reason = BTN_ULTRA_LONG;
-            ctrl = -1;
-          }
-          break;
-        case -1:
-          ctrl = 0;
-          break_loop = true;
-          break;
+  // ------ boot cause ------
+  BootCause boot_cause;
+  int16_t wakeup_pin;
+  Button *active_button = nullptr;
+  switch (esp_sleep_get_wakeup_cause()) {
+    case ESP_SLEEP_WAKEUP_EXT1: {
+      uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
+      wakeup_pin = (log(GPIO_reason)) / log(2);
+      log_i("[DEVICE] wakeup cause: PIN %d", wakeup_pin);
+      if (wakeup_pin == HW.BTN1_PIN || wakeup_pin == HW.BTN2_PIN ||
+          wakeup_pin == HW.BTN3_PIN || wakeup_pin == HW.BTN4_PIN ||
+          wakeup_pin == HW.BTN5_PIN || wakeup_pin == HW.BTN6_PIN) {
+        boot_cause = BootCause::BUTTON;
+      } else {
+        boot_cause = BootCause::RESET;
       }
-    }
-  } else if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
-    boot_reason = TMR;
-  } else {
-    boot_reason = RST;
+    } break;
+    case ESP_SLEEP_WAKEUP_TIMER:
+      log_i("[DEVICE] wakeup cause: TIMER");
+      boot_cause = BootCause::TIMER;
+      break;
+    default:
+      log_i("[DEVICE] wakeup cause: RESET");
+      boot_cause = BootCause::RESET;
+      break;
   }
 
-  switch (boot_reason) {
-    case NO_REASON:
-      log_i("boot reason: no reason");
-      control_flow = NO_FLOW;
+  // ------ handle boot cause ------
+  switch (boot_cause) {
+    case BootCause::RESET: {
+      if (!device_state.silent_restart) {
+        display.disp_message("RESTART...", 0);
+        display.update();
+      }
+
+      if (device_state.restart_to_wifi_setup) {
+        device_state.clear_persisted_flags();
+        log_i("[DEVICE] staring Wi-Fi setup...");
+        start_wifi_setup();  // resets ESP when done
+      } else if (device_state.restart_to_setup) {
+        device_state.clear_persisted_flags();
+        log_i("[DEVICE] staring setup...");
+        start_setup();  // resets ESP when done
+      }
+
+      device_state.clear_persisted_flags();
+
+      if (!device_state.wifi_done || !device_state.setup_done) {
+        display.disp_welcome();
+        display.update();
+        display.end();
+        display.update();
+        go_to_sleep();
+      } else {
+        display.disp_main();
+        display.update();
+      }
+      if (device_state.awake_mode) {
+        // proceed with awake mode
+        sm_state = StateMachineState::AWAIT_NET_CONNECT;
+      } else {
+        display.end();
+        display.update();
+        go_to_sleep();
+      }
       break;
-    case RST:
-      log_i("boot reason: reset");
-      if (persisted_s.reset_to_setup) {
-        control_flow = SETUP;
-        persisted_s.reset_to_setup = false;
-        save_persisted_vars(persisted_s);
-      } else if (persisted_s.last_sw_ver != SW_VERSION) {
-        if (persisted_s.last_sw_ver.length() > 0) {
-          control_flow = AFTER_UPDATE;
-        } else { // first boot after factory flash
-          persisted_s.last_sw_ver = SW_VERSION;
-          control_flow = RESET;
+    }
+    case BootCause::TIMER: {
+      if (device_state.awake_mode) {
+        // proceed with awake mode
+        sm_state = StateMachineState::AWAIT_NET_CONNECT;
+      } else {
+        if (device_state.info_screen_showing) {
+          device_state.info_screen_showing = false;
+          display.disp_main();
+        }
+        if (HW.is_charger_in_standby()) {  // hw <= 2.1 doesn't have awake
+                                           // mode when charging
+          if (!device_state.charge_complete_showing) {
+            device_state.charge_complete_showing = true;
+            display.disp_message_large("Fully\ncharged!");
+          }
+        }
+        // proceed with sensor publish
+        sm_state = StateMachineState::AWAIT_NET_CONNECT;
+      }
+      break;
+    }
+    case BootCause::BUTTON: {
+      if (!device_state.wifi_done) {
+        start_wifi_setup();
+      } else if (!device_state.setup_done) {
+        start_setup();
+      }
+
+      if (!device_state.awake_mode) {
+        if (device_state.info_screen_showing) {
+          device_state.info_screen_showing = false;
+          display.disp_main();
+          display.update();
+          display.end();
+          display.update();
+          go_to_sleep();
+        } else if (device_state.charge_complete_showing) {
+          device_state.charge_complete_showing = false;
+          display.disp_main();
+          display.update();
+          display.end();
+          display.update();
+          go_to_sleep();
+        } else if (device_state.check_connection) {
+          device_state.check_connection = false;
+          display.disp_main();
+          display.update();
+          display.end();
+          display.update();
+          go_to_sleep();
+        } else {
+          begin_buttons();
+          for (auto b : buttons) {
+            if (b->get_pin() == wakeup_pin) {
+              active_button = b;
+              b->init_press();
+            }
+          }
+          if (active_button != nullptr) {
+            start_button_task();
+            leds.begin();
+            start_leds_task();
+            sm_state = StateMachineState::AWAIT_USER_INPUT_FINISH;
+          } else {
+            go_to_sleep();
+          }
         }
       } else {
-        control_flow = RESET;
+        // proceed with awake mode
+        sm_state = StateMachineState::AWAIT_NET_CONNECT;
       }
       break;
-    case TMR:
-      log_i("boot reason: timer");
-      if (!persisted_s.wifi_done && !persisted_s.setup_done)
-        control_flow = NO_FLOW;
-      else
-        control_flow = TIMER;
-      break;
-    case BTN:
-      log_i("boot reason: btn");
-      if (!persisted_s.wifi_done)
-        control_flow = WIFI_SETUP;
-      else if (!persisted_s.setup_done)
-        control_flow = SETUP;
-      else
-        control_flow = BTN_PRESS;
-      break;
-    case BTN_MEDIUM:
-      log_i("boot reason: btn med");
-      if (!persisted_s.wifi_done)
-        control_flow = WIFI_SETUP;
-      else if (!persisted_s.setup_done)
-        control_flow = SETUP;
-      else
-        control_flow = SHOW_INFO;
-      break;
-    case BTN_LONG:
-      log_i("boot reason: btn long");
-      if (!persisted_s.wifi_done)
-        control_flow = WIFI_SETUP;
-      else
-        control_flow = SETUP;
-      break;
-    case BTN_EXTRA_LONG:
-      log_i("boot reason: btn extra long");
-      control_flow = WIFI_SETUP;
-      break;
-    case BTN_ULTRA_LONG:
-      log_i("boot_reason: btn ultra long");
-      control_flow = FAC_RESET;
-      break;
+    }
   }
 
-  // ------ main logic switch ------
-  switch (control_flow) {
-    case WIFI_SETUP: {
-      log_i("control flow: wifi setup");
-      persisted_s.info_screen_showing = false;
-      persisted_s.charge_complete_showing = false;
-      persisted_s.check_connection = false;
-      delay(50);  // debounce
-      eink::display_string("Starting\nWi-Fi setup...");
-      persisted_s.wifi_quick_connect = false;
-      config_start_time = millis();
-      // start wifi manager
-      String ap_name = String("HB-") + factory_s.random_id;
-      eink::display_ap_config_screen(ap_name, AP_PASSWORD);
+  display.init_ui_state(UIState{.page = DisplayPage::MAIN});
+  network.set_callback(mqtt_callback);
+  network.set_on_connect(net_on_connect);
 
-      WiFi.mode(WIFI_STA);
-      wifi_manager.setConfigPortalTimeout(CONFIG_TIMEOUT);
-      wifi_manager.resetSettings();
-      wifi_manager.setTitle(WIFI_MANAGER_TITLE);
-      wifi_manager.setBreakAfterConfig(true);
-      wifi_manager.setDarkMode(true);
-      wifi_manager.setShowInfoUpdate(false);
-
-      bool wifi_connected =
-          wifi_manager.startConfigPortal(ap_name.c_str(), AP_PASSWORD);
-      bool wifi_connected_2 = connect_wifi();
-
-      if (!wifi_connected &&
-          !wifi_connected_2) {  // double check that wifi can not be connected
-                                // with connect_wifi() function
-        persisted_s.wifi_done = false;
-        eink::display_error("Wi-Fi\nerror");
-        delay(5000);
-        eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
-        break;
-      }
-
-      persisted_s.wifi_done = true;
-      persisted_s.reset_to_setup = true;
-      save_persisted_vars(persisted_s);  // save now because restarting before
-                                         // end of setup function
-      eink::display_wifi_connected_screen();
-      delay(3000);
-      ESP.restart();
-      break;
-    }
-    case SETUP: {
-      log_i("control flow: setup");
-      persisted_s.info_screen_showing = false;
-      persisted_s.charge_complete_showing = false;
-      persisted_s.check_connection = false;
-      delay(50);  // debounce
-      eink::display_string("Starting\nsetup...");
-      bool wifi_connected = connect_wifi();
-      if (!wifi_connected) {
-        eink::display_error("Wi-Fi\nerror");
-        delay(3000);
-        if (persisted_s.setup_done) {
-          display_buttons();
-        } else {
-          eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
-        }
-        break;
-      }
-      persisted_s.wifi_quick_connect =
-          false;  // maybe user changed wifi settings
-      eink::display_web_config_screen(WiFi.localIP().toString());
-      config_start_time = millis();
-
-      wifi_manager.setTitle(WIFI_MANAGER_TITLE);
-      wifi_manager.setSaveParamsCallback(save_params_clbk);
-      wifi_manager.setBreakAfterConfig(true);
-      wifi_manager.setShowPassword(true);
-      wifi_manager.setParamsPage(true);
-      wifi_manager.setDarkMode(true);
-      wifi_manager.setShowInfoUpdate(true);
-
-      // Parameters
-      device_name_param.setValue(user_s.device_name.c_str(), 20);
-      mqtt_server_param.setValue(user_s.mqtt_server.c_str(), 50);
-      mqtt_port_param.setValue(String(user_s.mqtt_port).c_str(), 6);
-      mqtt_user_param.setValue(user_s.mqtt_user.c_str(), 50);
-      mqtt_password_param.setValue(user_s.mqtt_password.c_str(), 50);
-      base_topic_param.setValue(user_s.base_topic.c_str(), 50);
-      discovery_prefix_param.setValue(user_s.discovery_prefix.c_str(), 50);
-      btn1_label_param.setValue(user_s.btn_1_label.c_str(), 20);
-      btn2_label_param.setValue(user_s.btn_2_label.c_str(), 20);
-      btn3_label_param.setValue(user_s.btn_3_label.c_str(), 20);
-      btn4_label_param.setValue(user_s.btn_4_label.c_str(), 20);
-      btn5_label_param.setValue(user_s.btn_5_label.c_str(), 20);
-      btn6_label_param.setValue(user_s.btn_6_label.c_str(), 20);
-      wifi_manager.addParameter(&device_name_param);
-      wifi_manager.addParameter(&mqtt_server_param);
-      wifi_manager.addParameter(&mqtt_port_param);
-      wifi_manager.addParameter(&mqtt_user_param);
-      wifi_manager.addParameter(&mqtt_password_param);
-      wifi_manager.addParameter(&base_topic_param);
-      wifi_manager.addParameter(&discovery_prefix_param);
-      wifi_manager.addParameter(&btn1_label_param);
-      wifi_manager.addParameter(&btn2_label_param);
-      wifi_manager.addParameter(&btn3_label_param);
-      wifi_manager.addParameter(&btn4_label_param);
-      wifi_manager.addParameter(&btn5_label_param);
-      wifi_manager.addParameter(&btn6_label_param);
-
-      web_portal_saved =
-          false;  // set to true in web portal save button callback
-      wifi_manager.startWebPortal();
-      while (millis() - config_start_time < CONFIG_TIMEOUT * 1000L) {
-        wifi_manager.process();
-        if (digitalReadAny() || web_portal_saved) {
-          break;
-        }
-      }
-      wifi_manager.stopWebPortal();
-      eink::display_string("Exiting setup...");
-
-      bool mqtt_connected = connect_mqtt();
-      if (!mqtt_connected) {
-        persisted_s.setup_done = false;
-        eink::display_error("MQTT\nerror");
-        delay(3000);
-        eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
-        break;
-      }
-      set_topics();
-      send_autodiscovery_msg();
-      delay(2000); // wait for HomeAssistant to register device
-
-      client.publish(topic_s.temperature.c_str(),
-                     String(temperature_meas).c_str());
-      client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
-      client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
-      client.publish(topic_s.sensor_interval_state.c_str(),
-                     String(user_s.sensor_interval).c_str());
-
-      for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-        client.publish(topic_s.btn_label_state[i].c_str(),
-                       user_s.get_btn_label(i).c_str(), true);
-      }
-
-      persisted_s.setup_done = true;
-      eink::display_setup_complete_screen();
-      delay(3000);
-      display_buttons();
-      break;
-    }
-    case BTN_PRESS: {
-      log_i("control flow: btn press");
-
-      if (persisted_s.info_screen_showing) {
-        persisted_s.info_screen_showing = false;
-        display_buttons();
-        break;
-      } else if (persisted_s.charge_complete_showing) {
-        persisted_s.charge_complete_showing = false;
-        display_buttons();
-        break;
-      } else if (persisted_s.check_connection) {
-        persisted_s.check_connection = false;
-        persisted_s.failed_connections = 0;
-        display_buttons();
-        break;
-      }
-
-      if (wakeup_pin == HW.BTN1_PIN) {
-        wakeup_button = BTN1;
-        set_led(HW.LED1_CH, HW.LED_BRIGHT_DFLT);
-      } else if (wakeup_pin == HW.BTN2_PIN) {
-        wakeup_button = BTN3;
-        set_led(HW.LED2_CH, HW.LED_BRIGHT_DFLT);
-      } else if (wakeup_pin == HW.BTN3_PIN) {
-        wakeup_button = BTN5;
-        set_led(HW.LED3_CH, HW.LED_BRIGHT_DFLT);
-      } else if (wakeup_pin == HW.BTN4_PIN) {
-        wakeup_button = BTN6;
-        set_led(HW.LED4_CH, HW.LED_BRIGHT_DFLT);
-      } else if (wakeup_pin == HW.BTN5_PIN) {
-        wakeup_button = BTN4;
-        set_led(HW.LED5_CH, HW.LED_BRIGHT_DFLT);
-      } else if (wakeup_pin == HW.BTN6_PIN) {
-        wakeup_button = BTN2;
-        set_led(HW.LED6_CH, HW.LED_BRIGHT_DFLT);
-      }
-
-      bool wifi_connected = connect_wifi();
-      if (!wifi_connected) {
-        eink::display_error("Wi-Fi\nerror");
-        delay(3000);
-        display_buttons();
-        break;
-      }
-      bool mqtt_connected = connect_mqtt();
-      if (!mqtt_connected) {
-        eink::display_error("MQTT\nerror");
-        delay(3000);
-        display_buttons();
-        break;
-      }
-      switch (wakeup_button) {
-        case BTN1:
-          client.publish(topic_s.btn_press[0].c_str(), BTN_PRESS_PAYLOAD);
-          break;
-        case BTN2:
-          client.publish(topic_s.btn_press[1].c_str(), BTN_PRESS_PAYLOAD);
-          break;
-        case BTN3:
-          client.publish(topic_s.btn_press[2].c_str(), BTN_PRESS_PAYLOAD);
-          break;
-        case BTN4:
-          client.publish(topic_s.btn_press[3].c_str(), BTN_PRESS_PAYLOAD);
-          break;
-        case BTN5:
-          client.publish(topic_s.btn_press[4].c_str(), BTN_PRESS_PAYLOAD);
-          break;
-        case BTN6:
-          client.publish(topic_s.btn_press[5].c_str(), BTN_PRESS_PAYLOAD);
-          break;
-      }
-      client.publish(topic_s.temperature.c_str(),
-                     String(temperature_meas).c_str());
-      client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
-      client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
-      if (batt_volt < HW.WARN_BATT_VOLT && !is_dc_connected()) {
-        eink::display_please_recharge_soon_screen();
-        delay(2000);
-        display_buttons();
-      }
-      break;
-    }
-    case SHOW_INFO: {
-      log_i("control flow: show info");
-      persisted_s.info_screen_showing = true;
-      break;
-    }
-    case RESET: {
-      log_i("control flow: reset");
-      eink::display_string("Device RESET");
-      persisted_s.info_screen_showing = false;
-      persisted_s.charge_complete_showing = false;
-      persisted_s.check_connection = false;
-      if (persisted_s.wifi_done && persisted_s.setup_done)
-        display_buttons();
-      else
-        eink::display_welcome_screen(factory_s.unique_id.c_str(), factory_s);
-      break;
-    }
-    case AFTER_UPDATE: {
-      log_i("control flow: after update");
-      eink::display_string(String("Firmware\nupdated to\n") + SW_VERSION);
-      persisted_s.last_sw_ver = SW_VERSION;
-      if (persisted_s.wifi_done && persisted_s.setup_done) {
-        bool wifi_connected = connect_wifi();
-        if (!wifi_connected) {
-          eink::display_error("Wi-Fi\nerror");
-          delay(3000);
-          display_buttons();
-        }
-        bool mqtt_connected = connect_mqtt();
-        if (!mqtt_connected) {
-          eink::display_error("MQTT\nerror");
-          delay(3000);
-          display_buttons();
-        }
-        if (wifi_connected && mqtt_connected) {
-          send_autodiscovery_msg();
-          // publish retained states
-          client.publish(topic_s.sensor_interval_state.c_str(),
-                         String(user_s.sensor_interval).c_str(), true);
-          for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-            client.publish(topic_s.btn_label_state[i].c_str(),
-                           user_s.get_btn_label(i).c_str(), true);
+  if (!device_state.awake_mode) {
+    // ######## SLEEP MODE state machine ########
+    esp_task_wdt_init(WDT_TIMEOUT_SLEEP, true);
+    esp_task_wdt_add(NULL);
+    Button::ButtonAction btn_action = Button::IDLE;
+    Button::ButtonAction prev_action = Button::IDLE;
+    start_display_task();
+    start_network_task();
+    network.connect();
+    while (true) {
+      switch (sm_state) {
+        case StateMachineState::AWAIT_USER_INPUT_FINISH: {
+          if (active_button == nullptr) {
+            log_e("[DEVICE] active button = null");
+            sm_state = StateMachineState::CMD_SHUTDOWN;
+          } else if (active_button->is_press_finished()) {
+            btn_action = active_button->get_action();
+            log_d("[DEVICE] BTN_%d pressed - state %s", active_button->get_id(),
+                  active_button->get_action_name(btn_action).c_str());
+            switch (btn_action) {
+              case Button::SINGLE:
+              case Button::DOUBLE:
+              case Button::TRIPLE:
+              case Button::QUAD:
+                btn_action = btn_action;
+                leds.blink(active_button->get_id(),
+                           Button::get_action_multi_count(btn_action), true);
+                if (device_state.battery_low) {
+                  display.disp_message_large(
+                      "Battery\nLOW\n\nPlease\nrecharge\nsoon!", 3000);
+                }
+                sm_state = StateMachineState::AWAIT_NET_CONNECT;
+                break;
+              case Button::LONG_1:
+                // info screen - already displayed by transient action handler
+                device_state.info_screen_showing = true;
+                log_d("[DEVICE] displayed info screen");
+                sm_state = StateMachineState::CMD_SHUTDOWN;
+                break;
+              case Button::LONG_2:
+                device_state.restart_to_setup = true;
+                device_state.save_all();
+                ESP.restart();
+                break;
+              case Button::LONG_3:
+                device_state.restart_to_wifi_setup = true;
+                device_state.save_all();
+                ESP.restart();
+                break;
+              case Button::LONG_4:
+                // factory reset
+                display.disp_message("Factory\nRESET...");
+                network.disconnect(true);  // erase login data
+                display.end();
+                end_buttons();
+                sm_state = StateMachineState::AWAIT_FACTORY_RESET;
+                break;
+              default:
+                sm_state = StateMachineState::CMD_SHUTDOWN;
+                break;
+            }
+            for (auto b : buttons) {
+              b->clear();
+            }
+          } else {
+            Button::ButtonAction new_action = active_button->get_action();
+            if (new_action != prev_action) {
+              switch (new_action) {
+                case Button::LONG_1:
+                  // info screen
+                  display.disp_info();
+                  break;
+                case Button::LONG_2:
+                  display.disp_message(
+                      "Release\nfor\nSETUP\n\nKeep\nholding\nfor\nWi-Fi "
+                      "SETUP");
+                  break;
+                case Button::LONG_3:
+                  display.disp_message(
+                      "Release\nfor\nWi-Fi SETUP\n\nKeep\n"
+                      "holding\nfor\nFACTORY\nRESET");
+                  break;
+                case Button::LONG_4:
+                  display.disp_message("Release\nfor\nFACTORY\nRESET");
+                  break;
+              }
+              prev_action = new_action;
+            }
           }
-          disconnect_mqtt();
+          break;
         }
-      }
-      save_persisted_vars(persisted_s);
-      ESP.restart();
-      break;
-    }
-    case FAC_RESET: {
-      log_i("control flow: fac reset");
-      eink::display_string("Starting\nFactory\nRESET...");
-      clear_all_preferences();
-      wifi_manager.resetSettings();
-      delay(3000);
-      eink::display_string("Factory\nRESET\ncomplete");
-      ESP.restart();
-      break;
-    }
-    case TIMER: {
-      log_i("control flow: timer");
-      if (persisted_s.info_screen_showing) {
-        persisted_s.info_screen_showing = false;
-        display_buttons();
-        break;
-      }
-
-      if (is_charger_in_standby() && !persisted_s.charge_complete_showing) {
-        persisted_s.charge_complete_showing = true;
-        eink::display_fully_charged_screen();
-      }
-
-      if (persisted_s.check_connection) {
-        break;
-      }
-
-      bool wifi_connected = connect_wifi();
-      if (!wifi_connected) {
-        persisted_s.failed_connections ++;
-        if (persisted_s.failed_connections >= MAX_FAILED_CONNECTIONS) {
-          persisted_s.check_connection = true;
-          eink::display_check_connection_screen();
+        case StateMachineState::AWAIT_NET_CONNECT: {
+          if (network.get_state() == Network::State::M_CONNECTED) {
+            // net_on_connect();
+            if (active_button != nullptr && btn_action != Button::IDLE) {
+              network.publish(
+                  device_state
+                      .get_button_topic(active_button->get_id(), btn_action)
+                      .c_str(),
+                  BTN_PRESS_PAYLOAD);
+            }
+            HW.read_temp_hmd(device_state.temperature, device_state.humidity);
+            device_state.battery_pct = HW.read_battery_percent();
+            publish_sensors();
+            device_state.failed_connections = 0;
+            sm_state = StateMachineState::CMD_SHUTDOWN;
+          } else if (millis() - network.get_cmd_connect_time() >=
+                     NET_CONNECT_TIMEOUT) {
+            log_d("[DEVICE] network connect timeout.");
+            if (boot_cause == BootCause::BUTTON) {
+              display.disp_error("Network\nconnection\nnot\nsuccessful", 3000);
+              delay(100);
+            } else if (boot_cause == BootCause::TIMER) {
+              device_state.failed_connections++;
+              if (device_state.failed_connections >= MAX_FAILED_CONNECTIONS) {
+                device_state.failed_connections = 0;
+                device_state.check_connection = true;
+                display.disp_error("Check\nconnection!");
+                delay(100);
+              }
+            }
+            sm_state = StateMachineState::CMD_SHUTDOWN;
+          }
+          break;
         }
-        break;
-      }
-      bool mqtt_connected = connect_mqtt();
-      if (!mqtt_connected) {
-        persisted_s.failed_connections ++;
-        if (persisted_s.failed_connections >= MAX_FAILED_CONNECTIONS) {
-          persisted_s.check_connection = true;
-          eink::display_check_connection_screen();
+        case StateMachineState::CMD_SHUTDOWN: {
+          end_buttons();
+          leds.end();
+          network.disconnect();
+          sm_state = StateMachineState::AWAIT_NET_DISCONNECT;
+          break;
         }
-        break;
+        case StateMachineState::AWAIT_NET_DISCONNECT: {
+          if (network.get_state() == Network::State::DISCONNECTED) {
+            if (device_state.display_redraw) {
+              device_state.display_redraw = false;
+              display.disp_main();
+              delay(100);
+            }
+            display.end();
+            sm_state = StateMachineState::AWAIT_SHUTDOWN;
+          }
+          break;
+        }
+        case StateMachineState::AWAIT_SHUTDOWN: {
+          if (display.get_state() == Display::State::IDLE &&
+              leds.get_state() == LEDs::State::IDLE) {
+            uint32_t btns_free = uxTaskGetStackHighWaterMark(button_task_h);
+            uint32_t disp_free = uxTaskGetStackHighWaterMark(display_task_h);
+            uint32_t net_free = uxTaskGetStackHighWaterMark(network_task_h);
+            uint32_t leds_free = uxTaskGetStackHighWaterMark(leds_task_h);
+            uint32_t main_free = uxTaskGetStackHighWaterMark(main_task_h);
+            uint32_t num_tasks = uxTaskGetNumberOfTasks();
+            log_d(
+                "[DEVICE] free stack: btns %d, disp %d, net %d, leds %d, main "
+                "%d, num tasks %d",
+                btns_free, disp_free, net_free, leds_free, main_free,
+                num_tasks);
+            uint32_t esp_free_heap = ESP.getFreeHeap();
+            uint32_t esp_min_free_heap = ESP.getMinFreeHeap();
+            uint32_t rtos_free_heap = xPortGetFreeHeapSize();
+            log_d("[DEVICE] free heap: esp %d, esp min %d, rtos %d",
+                  esp_free_heap, esp_min_free_heap, rtos_free_heap);
+            if (device_state.awake_mode) {
+              device_state.silent_restart = true;
+              device_state.save_all();
+              ESP.restart();
+            } else {
+              go_to_sleep();
+            }
+          }
+          break;
+        }
+        case StateMachineState::AWAIT_FACTORY_RESET: {
+          if (network.get_state() == Network::State::DISCONNECTED &&
+              display.get_state() == Display::State::IDLE) {
+            device_state.clear_all();
+            log_i("[DEVICE] factory reset complete.");
+            ESP.restart();
+          }
+          break;
+        }
+      }  // end switch()
+      delay(10);
+    }  // end while()
+  } else {
+    // ######## AWAKE MODE state machine ########
+    esp_task_wdt_init(WDT_TIMEOUT_AWAKE, true);
+    esp_task_wdt_add(NULL);
+    Button::ButtonAction prev_action = Button::IDLE;
+    uint32_t last_sensor_publish = 0;
+    uint32_t last_display_redraw = 0;
+    uint32_t info_screen_start_time = 0;
+    device_state.info_screen_showing = false;
+    device_state.check_connection = false;
+    device_state.charge_complete_showing = false;
+    display.disp_main();
+    begin_buttons();
+    start_button_task();
+    leds.begin();
+    start_leds_task();
+    start_display_task();
+    start_network_task();
+    network.connect();
+    while (true) {
+      switch (sm_state) {
+        case StateMachineState::AWAIT_NET_CONNECT: {
+          if (network.get_state() == Network::State::M_CONNECTED) {
+            for (auto b : buttons) {
+              b->clear();
+            }
+            HW.read_temp_hmd(device_state.temperature, device_state.humidity);
+            device_state.battery_pct = HW.read_battery_percent();
+            publish_sensors();
+            sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+          } else if (!HW.is_dc_connected()) {
+            device_state.charging = false;
+            device_state.info_screen_showing = false;
+            display.disp_main();
+            delay(100);
+            sm_state = StateMachineState::CMD_SHUTDOWN;
+          }
+          break;
+        }
+        case StateMachineState::AWAIT_USER_INPUT_START: {
+          for (auto b : buttons) {
+            if (b->get_action() != Button::IDLE) {
+              active_button = b;
+              break;  // for
+            }
+          }
+          if (active_button != nullptr) {
+            sm_state = StateMachineState::AWAIT_USER_INPUT_FINISH;
+          } else if (millis() - last_sensor_publish >= AWAKE_SENSOR_INTERVAL) {
+            HW.read_temp_hmd(device_state.temperature, device_state.humidity);
+            device_state.battery_pct = HW.read_battery_percent();
+            publish_sensors();
+            last_sensor_publish = millis();
+            // log stack status
+            uint32_t btns_free = uxTaskGetStackHighWaterMark(button_task_h);
+            uint32_t disp_free = uxTaskGetStackHighWaterMark(display_task_h);
+            uint32_t net_free = uxTaskGetStackHighWaterMark(network_task_h);
+            uint32_t leds_free = uxTaskGetStackHighWaterMark(leds_task_h);
+            uint32_t main_free = uxTaskGetStackHighWaterMark(main_task_h);
+            uint32_t num_tasks = uxTaskGetNumberOfTasks();
+            log_d(
+                "[DEVICE] free stack: btns %d, disp %d, net %d, leds %d, main "
+                "%d, num tasks %d",
+                btns_free, disp_free, net_free, leds_free, main_free,
+                num_tasks);
+            uint32_t esp_free_heap = ESP.getFreeHeap();
+            uint32_t esp_min_free_heap = ESP.getMinFreeHeap();
+            uint32_t rtos_free_heap = xPortGetFreeHeapSize();
+            log_d("[DEVICE] free heap: esp %d, esp min %d, rtos %d",
+                  esp_free_heap, esp_min_free_heap, rtos_free_heap);
+          } else if (millis() - last_display_redraw >= AWAKE_REDRAW_INTERVAL) {
+            if (device_state.display_redraw) {
+              device_state.display_redraw = false;
+              if (device_state.info_screen_showing) {
+                display.disp_info();
+              } else {
+                display.disp_main();
+              }
+            }
+            last_display_redraw = millis();
+          } else if (device_state.info_screen_showing &&
+                     millis() - info_screen_start_time >=
+                         INFO_SCREEN_DISP_TIME) {
+            display.disp_main();
+            device_state.info_screen_showing = false;
+          } else if (!HW.is_dc_connected()) {
+            publish_awake_mode_avlb();
+            device_state.charging = false;
+            display.disp_main();
+            delay(100);
+            sm_state = StateMachineState::CMD_SHUTDOWN;
+          }
+          if (device_state.charging) {
+            if (HW.is_charger_in_standby()) {
+              device_state.charging = false;
+              display.disp_main();
+              if (!device_state.user_awake_mode) {
+                delay(100);
+                sm_state = StateMachineState::CMD_SHUTDOWN;
+              }
+            }
+          } else {
+            if (!device_state.user_awake_mode) {
+              display.disp_main();
+              delay(100);
+              sm_state = StateMachineState::CMD_SHUTDOWN;
+            }
+          }
+          break;
+        }
+        case StateMachineState::AWAIT_USER_INPUT_FINISH: {
+          if (active_button == nullptr) {
+            for (auto b : buttons) {
+              b->clear();
+            }
+            sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+          } else if (active_button->is_press_finished()) {
+            auto btn_action = active_button->get_action();
+            log_d("[DEVICE] BTN_%d pressed - state %s", active_button->get_id(),
+                  active_button->get_action_name(btn_action).c_str());
+            switch (btn_action) {
+              case Button::SINGLE:
+              case Button::DOUBLE:
+              case Button::TRIPLE:
+              case Button::QUAD:
+                if (device_state.info_screen_showing) {
+                  display.disp_main();
+                  device_state.info_screen_showing = false;
+                  sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+                  break;
+                }
+                leds.blink(active_button->get_id(),
+                           Button::get_action_multi_count(btn_action));
+                network.publish(
+                    device_state
+                        .get_button_topic(active_button->get_id(), btn_action)
+                        .c_str(),
+                    BTN_PRESS_PAYLOAD);
+                sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+                break;
+              case Button::LONG_1:
+                if (device_state.info_screen_showing) {
+                  display.disp_main();
+                  device_state.info_screen_showing = false;
+                  sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+                  break;
+                }
+                // info screen - already displayed by transient action handler
+                device_state.info_screen_showing = true;
+                info_screen_start_time = millis();
+                log_d("[DEVICE] displayed info screen");
+                sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+                break;
+              case Button::LONG_2:
+                device_state.restart_to_setup = true;
+                device_state.save_all();
+                ESP.restart();
+                break;
+              case Button::LONG_3:
+                device_state.restart_to_wifi_setup = true;
+                device_state.save_all();
+                ESP.restart();
+                break;
+              case Button::LONG_4:
+                // factory reset
+                display.disp_message("Factory\nRESET...");
+                network.disconnect(true);  // erase login data
+                display.end();
+                end_buttons();
+                sm_state = StateMachineState::AWAIT_FACTORY_RESET;
+                break;
+              default:
+                sm_state = StateMachineState::AWAIT_USER_INPUT_START;
+                break;
+            }
+            for (auto b : buttons) {
+              b->clear();
+            }
+            active_button = nullptr;
+          } else {
+            auto new_action = active_button->get_action();
+            if (new_action != prev_action) {
+              switch (new_action) {
+                case Button::LONG_1:
+                  // info screen
+                  display.disp_info();
+                  break;
+                case Button::LONG_2:
+                  display.disp_message(
+                      "Release\nfor\nSETUP\n\nKeep\nholding\nfor\nWi-Fi "
+                      "SETUP");
+                  break;
+                case Button::LONG_3:
+                  display.disp_message(
+                      "Release\nfor\nWi-Fi SETUP\n\nKeep\n"
+                      "holding\nfor\nFACTORY\nRESET");
+                  break;
+                case Button::LONG_4:
+                  display.disp_message("Release\nfor\nFACTORY\nRESET");
+                  break;
+              }
+              prev_action = new_action;
+            }
+          }
+          break;
+        }
+        case StateMachineState::CMD_SHUTDOWN: {
+          device_state.info_screen_showing = false;
+          end_buttons();
+          leds.end();
+          network.disconnect();
+          sm_state = StateMachineState::AWAIT_NET_DISCONNECT;
+          break;
+        }
+        case StateMachineState::AWAIT_NET_DISCONNECT: {
+          if (network.get_state() == Network::State::DISCONNECTED) {
+            if (device_state.display_redraw) {
+              device_state.display_redraw = false;
+              display.disp_main();
+              delay(100);
+            }
+            display.end();
+            sm_state = StateMachineState::AWAIT_SHUTDOWN;
+          }
+          break;
+        }
+        case StateMachineState::AWAIT_SHUTDOWN: {
+          if (display.get_state() == Display::State::IDLE &&
+              leds.get_state() == LEDs::State::IDLE) {
+            go_to_sleep();
+          }
+          break;
+        }
+        case StateMachineState::AWAIT_FACTORY_RESET: {
+          if (network.get_state() == Network::State::DISCONNECTED &&
+              display.get_state() == Display::State::IDLE) {
+            device_state.clear_all();
+            log_i("[DEVICE] factory reset complete.");
+            ESP.restart();
+          }
+          break;
+        }
+      }  // end switch()
+      if (ESP.getMinFreeHeap() < MIN_FREE_HEAP) {
+        log_w("[DEVICE] free heap low, restarting...");
+        device_state.silent_restart = true;
+        device_state.save_all();
+        ESP.restart();
       }
-      client.publish(topic_s.temperature.c_str(),
-                     String(temperature_meas).c_str());
-      client.publish(topic_s.humidity.c_str(), String(humidity_meas).c_str());
-      client.publish(topic_s.battery.c_str(), String(batt_pct).c_str());
-      break;
-    }
-    case NO_FLOW: {
-      // do nothing
-      break;
-    }
-    default: {
-      break;
-    }
-  }
-
-  disconnect_mqtt();
-  save_persisted_vars(persisted_s);
-  save_user_settings(user_s);
-  if (flags_s.buttons_redraw) {
-    flags_s.buttons_redraw = false;
-    display_buttons();
-  }
-  go_to_sleep();
+      esp_task_wdt_reset();
+      delay(10);
+    }  // end while()
+  }    // end else
 }
 
-void loop() {
-  // will never get here :)
-}
+void setup() {
+  xTaskCreate(main_task,    // Function that should be called
+              "MAIN",       // Name of the task (for debugging)
+              20000,        // Stack size (bytes)
+              NULL,         // Parameter to pass
+              1,            // Task priority
+              &main_task_h  // Task handle
+  );
+  log_d("[DEVICE] main task started.");
+
+  vTaskDelete(NULL);
+
+}  // end setup()
+
+void loop() {}

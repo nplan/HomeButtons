@@ -4,7 +4,8 @@
 > We recomend that you use *Home Buttons* as is. Do not do any of the modifications, unless you have experience soldering and working with electronics and know exactly what you are doing. Modifying battery powered devices is *dangerous* and can result in equipment damage, **injury** and **fire**.
 
 ## USB power without battery
-*Home Buttons* **HW rev 2.1** (visible on the PCB under the *Home Buttons* text) is designed to be used only when the battery is inserted. We have received some feedback that operation on USB power alone would be nice to have. This will be addressed in future HW revisions, but for **HW rev 2.1**, a simple hardware hack can be made.
+*Home Buttons* **hardware revision 2.1** (visible on the PCB under the *Home Buttons* text) is designed to only be powered by a battery cell. Later revisions also support USB-C or 5V DC input.
+To enable USB-C power on this revision, you can perform this modification.
 
 **After doing this modification, battery use will no longer be possible!**
 

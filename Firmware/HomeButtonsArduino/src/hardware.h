@@ -1,12 +1,11 @@
-#ifndef HARDWARE_H
-#define HARDWARE_H
+#ifndef B41198A9_C146_4403_8CDC_F69620A8FB1B
+#define B41198A9_C146_4403_8CDC_F69620A8FB1B
 
 #include <Arduino.h>
-#include <Wire.h>
 
 #include <semver.hpp>
 
-#include "Adafruit_SHTC3.h"
+#include "config.h"
 
 struct HardwareDefinition {
   semver::version version;
@@ -56,14 +55,46 @@ struct HardwareDefinition {
   float BATT_DIVIDER;
   float BATT_ADC_REF_VOLT;
   float MIN_BATT_VOLT;
-  float BATT_HISTERESIS_VOLT;
+  float BATT_HYSTERESIS_VOLT;
   float WARN_BATT_VOLT;
   float BATT_FULL_VOLT;
   float BATT_EMPTY_VOLT;
   float BATT_PRESENT_VOLT;
+  float DC_DETECT_VOLT;
+  float CHARGE_HYSTERESIS_VOLT;
 
   // ------ wakeup ------
   uint64_t WAKE_BITMASK;
+
+  // ------ functions ------
+  void init(String hw_version);
+
+  void begin();
+
+  bool digitalReadAny();
+
+  void set_led(uint8_t ch, uint8_t brightness);
+
+  void set_led_num(uint8_t num, uint8_t brightness);
+
+  void set_all_leds(uint8_t brightness);
+
+  void blink_led(uint8_t num, uint8_t num_blinks,
+                 uint8_t brightness = LED_DFLT_BRIGHT);
+
+  float read_battery_voltage();
+
+  uint8_t read_battery_percent();
+
+  void read_temp_hmd(float &tempe, float &hmd);
+
+  bool is_charger_in_standby();
+
+  bool is_dc_connected();
+
+  void enable_charger(bool enable);
+
+  bool is_battery_present();
 };
 
 const HardwareDefinition hw_rev_1_0{// ------ PIN definitions ------
@@ -110,10 +141,13 @@ const HardwareDefinition hw_rev_1_0{// ------ PIN definitions ------
                                     .BATT_DIVIDER = 0.5,
                                     .BATT_ADC_REF_VOLT = 2.6,
                                     .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HISTERESIS_VOLT = 3.5,
+                                    .BATT_HYSTERESIS_VOLT = 3.5,
                                     .WARN_BATT_VOLT = 3.5,
                                     .BATT_FULL_VOLT = 4.2,
                                     .BATT_EMPTY_VOLT = 3.3,
+                                    .BATT_PRESENT_VOLT = 2.7,
+                                    .DC_DETECT_VOLT = 4.5,
+                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
 
                                     // ------ wakeup ------
                                     .WAKE_BITMASK = 0x7E};
@@ -162,10 +196,13 @@ const HardwareDefinition hw_rev_2_0{// ------ PIN definitions ------
                                     .BATT_DIVIDER = 0.5,
                                     .BATT_ADC_REF_VOLT = 2.6,
                                     .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HISTERESIS_VOLT = 3.4,
+                                    .BATT_HYSTERESIS_VOLT = 3.4,
                                     .WARN_BATT_VOLT = 3.5,
                                     .BATT_FULL_VOLT = 4.2,
                                     .BATT_EMPTY_VOLT = 3.3,
+                                    .BATT_PRESENT_VOLT = 2.7,
+                                    .DC_DETECT_VOLT = 4.5,
+                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
 
                                     // ------ wakeup ------
                                     .WAKE_BITMASK = 0x20007A};
@@ -216,11 +253,13 @@ const HardwareDefinition hw_rev_2_2{// ------ PIN definitions ------
                                     .BATT_DIVIDER = 0.5,
                                     .BATT_ADC_REF_VOLT = 2.6,
                                     .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HISTERESIS_VOLT = 3.4,
+                                    .BATT_HYSTERESIS_VOLT = 3.4,
                                     .WARN_BATT_VOLT = 3.5,
                                     .BATT_FULL_VOLT = 4.2,
                                     .BATT_EMPTY_VOLT = 3.3,
-                                    .BATT_PRESENT_VOLT = 2.0,
+                                    .BATT_PRESENT_VOLT = 2.7,
+                                    .DC_DETECT_VOLT = 4.5,
+                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
 
                                     // ------ wakeup ------
                                     .WAKE_BITMASK = 0x20007A};
@@ -271,11 +310,13 @@ const HardwareDefinition hw_rev_2_3{// ------ PIN definitions ------
                                     .BATT_DIVIDER = 0.5,
                                     .BATT_ADC_REF_VOLT = 2.6,
                                     .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HISTERESIS_VOLT = 3.4,
+                                    .BATT_HYSTERESIS_VOLT = 3.4,
                                     .WARN_BATT_VOLT = 3.5,
                                     .BATT_FULL_VOLT = 4.2,
                                     .BATT_EMPTY_VOLT = 3.3,
-                                    .BATT_PRESENT_VOLT = 2.0,
+                                    .BATT_PRESENT_VOLT = 2.7,
+                                    .DC_DETECT_VOLT = 4.5,
+                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
 
                                     // ------ wakeup ------
                                     .WAKE_BITMASK = 0x204072};
@@ -283,29 +324,4 @@ const HardwareDefinition hw_rev_2_3{// ------ PIN definitions ------
 // Struct containing current hardware configuration
 extern HardwareDefinition HW;
 
-// ------ functions ------
-void init_hardware(String hw_version);
-
-void begin_hardware();
-
-bool digitalReadAny();
-
-void set_led(uint8_t ch, uint8_t brightness);
-
-void set_all_leds(uint8_t brightness);
-
-float read_battery_voltage();
-
-uint8_t batt_volt2percent(float volt);
-
-void read_temp_hmd(float &tempe, float &hmd);
-
-bool is_charger_in_standby();
-
-bool is_dc_connected();
-
-void enable_charger(bool enable);
-
-bool is_battery_present();
-
-#endif
+#endif /* B41198A9_C146_4403_8CDC_F69620A8FB1B */

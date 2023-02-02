@@ -1,26 +1,23 @@
 #include "display.h"
 
+#include <GxEPD2_BW.h>
+#include <Fonts/FreeMono9pt7b.h>
+#include <Fonts/FreeMonoBold12pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeSansBold12pt7b.h>
+#include <Fonts/FreeSansBold18pt7b.h>
+#include <Fonts/FreeSansBold24pt7b.h>
+#include <Fonts/FreeSansBold9pt7b.h>
+#include <U8g2_for_Adafruit_GFX.h>
+#include <qrcode.h>
+
+#include "bitmaps.h"
+#include "config.h"
+#include "hardware.h"
+
 const int WIDTH = 128;
 const int HEIGHT = 296;
-
-const uint16_t W = WIDTH / 2;
-
-const uint16_t H1 = round(HEIGHT / 12.);
-const uint16_t H2 = round(HEIGHT / 12. + HEIGHT / 6.);
-const uint16_t H3 = round(HEIGHT / 12. + 2 * HEIGHT / 6.);
-const uint16_t H4 = round(HEIGHT / 12. + 3 * HEIGHT / 6.);
-const uint16_t H5 = round(HEIGHT / 12. + 4 * HEIGHT / 6.);
-const uint16_t H6 = round(HEIGHT / 12. + 5 * HEIGHT / 6.);
-
-const uint16_t num_fonts = 4;
-const GFXfont* fonts[] = {&FreeSansBold24pt7b, &FreeSansBold18pt7b,
-                          &FreeSansBold12pt7b, &FreeSansBold9pt7b};
-const uint16_t num_buttons = 6;
-const uint16_t heights[] = {H1, H2, H3, H4, H5, H6};
-
-const uint16_t h_padding = 5;
-
-const uint16_t min_btn_clearance = 14;
 
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
@@ -30,635 +27,596 @@ const uint16_t min_btn_clearance = 14;
        ? EPD::HEIGHT                                         \
        : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
 
-GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>*
-    display;
+static GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
+                            MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>* disp;
 
-U8G2_FOR_ADAFRUIT_GFX u8g2;
+static U8G2_FOR_ADAFRUIT_GFX u8g2;
 
-namespace eink {
+Display display = {};
 
-void begin() {
-  display = new GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
+void Display::begin() {
+  if (state != State::IDLE) return;
+  disp = new GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
                                      MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
       GxEPD2_DRIVER_CLASS(/*CS=*/HW.EINK_CS, /*DC=*/HW.EINK_DC,
                           /*RST=*/HW.EINK_RST, /*BUSY=*/HW.EINK_BUSY));
-  display->init();
-  u8g2.begin(*display);
+  disp->init();
+  u8g2.begin(*disp);
+  current_ui_state = {};
+  cmd_ui_state = {};
+  draw_ui_state = {};
+  pre_disappear_ui_state = {};
+  state = State::ACTIVE;
+  log_i("[DISP] begin");
 }
 
-void hibernate() { display->hibernate(); }
-
-void display_string(String string) {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSans9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 30);
-    display->fillScreen(GxEPD_WHITE);
-    display->print(string);
-  } while (display->nextPage());
+void Display::end() {
+  if (state != State::ACTIVE) return;
+  state = State::CMD_END;
+  log_d("[DISP] cmd end");
 }
 
-void display_error(String string) {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
+void Display::update() {
+  if (state == State::IDLE) return;
 
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("ERROR", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 20);
-    display->print("ERROR");
-
-    display->setFont(&FreeSans9pt7b);
-    display->setTextWrap(true);
-    display->setCursor(0, 60);
-    display->print(string);
-  } while (display->nextPage());
-}
-
-void display_buttons(String btn_1_label, String btn_2_label, String btn_3_label,
-                     String btn_4_label, String btn_5_label,
-                     String btn_6_label) {
-  String labels[] = {btn_1_label, btn_2_label, btn_3_label,
-                     btn_4_label, btn_5_label, btn_6_label};
-
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-
-    // Loop through buttons
-    for (uint16_t i = 0; i < num_buttons; i++) {
-      String t = labels[i];
-
-      display->setFont(&FreeSansBold18pt7b);
-      display->getTextBounds(t, 0, 0, &x, &y, &w, &h);
-      if (w >= WIDTH - min_btn_clearance) {
-        display->setFont(&FreeSansBold12pt7b);
-        display->getTextBounds(t, 0, 0, &x, &y, &w, &h);
-        if (w >= WIDTH - min_btn_clearance) {
-          t = t.substring(0, t.length() - 1) + ".";
-          while (1) {
-            display->getTextBounds(t, 0, 0, &x, &y, &w, &h);
-            if (w >= WIDTH - min_btn_clearance) {
-              t = t.substring(0, t.length() - 2) + ".";
-            } else {
-              break;
-            }
-          }
-        }
-      }
-      int16_t w_pos, h_pos;
-      if (i % 2 == 0) {
-        w_pos = -x + h_padding;
-      } else {
-        w_pos = WIDTH - w - x - h_padding;
-      }
-      h_pos = heights[i] - y - h / 2;
-      display->setCursor(w_pos, h_pos);
-      display->print(t);
+  if (state == State::CMD_END) {
+    state = State::ENDING;
+    if (current_ui_state.disappearing) {
+      draw_ui_state = pre_disappear_ui_state;
+    } else {
+      disp->hibernate();
+      state = State::IDLE;
+      log_i("[DISP] ended.");
+      return;
     }
-  } while (display->nextPage());
+  } else if (current_ui_state.disappearing) {
+    if (millis() - current_ui_state.appear_time >=
+        current_ui_state.disappear_timeout) {
+      if (new_ui_cmd) {
+        draw_ui_state = cmd_ui_state;
+        cmd_ui_state = {};
+        new_ui_cmd = false;
+      } else {
+        draw_ui_state = pre_disappear_ui_state;
+        pre_disappear_ui_state = {};
+      }
+    } else {
+      return;
+    }
+  } else if (new_ui_cmd) {
+    if (cmd_ui_state.disappearing) {
+      pre_disappear_ui_state = current_ui_state;
+    }
+    draw_ui_state = cmd_ui_state;
+    cmd_ui_state = {};
+    new_ui_cmd = false;
+  } else {
+    return;
+  }
+
+  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s", draw_ui_state.page,
+        draw_ui_state.disappearing, draw_ui_state.message.c_str());
+
+  redraw_in_progress = true;
+  switch (draw_ui_state.page) {
+    case DisplayPage::EMPTY:
+      draw_white();
+      break;
+    case DisplayPage::MAIN:
+      draw_main();
+      break;
+    case DisplayPage::INFO:
+      draw_info();
+      break;
+    case DisplayPage::MESSAGE:
+      draw_message(draw_ui_state.message);
+      break;
+    case DisplayPage::MESSAGE_LARGE:
+      draw_message(draw_ui_state.message, false, true);
+      break;
+    case DisplayPage::ERROR:
+      draw_message(draw_ui_state.message, true, false);
+      break;
+    case DisplayPage::WELCOME:
+      draw_welcome();
+      break;
+    case DisplayPage::AP_CONFIG:
+      draw_ap_config();
+      break;
+    case DisplayPage::WEB_CONFIG:
+      draw_web_config();
+      break;
+    case DisplayPage::TEST:
+      draw_test();
+      break;
+    case DisplayPage::TEST_INV:
+      draw_test(true);
+      break;
+  }
+  current_ui_state = draw_ui_state;
+  current_ui_state.appear_time = millis();
+  draw_ui_state = {};
+  redraw_in_progress = false;
+
+  if (state == State::ENDING) {
+    disp->hibernate();
+    state = State::IDLE;
+    log_i("[DISP] ended.");
+  }
 }
 
-void display_buttons_UTF8(String btn_1_label, String btn_2_label, String btn_3_label,
-                     String btn_4_label, String btn_5_label,
-                     String btn_6_label) {
-  String labels[] = {btn_1_label, btn_2_label, btn_3_label,
-                     btn_4_label, btn_5_label, btn_6_label};
+void Display::disp_message(String message, uint32_t duration) {
+  UIState new_cmd_state{.page = DisplayPage::MESSAGE, .message = message};
+  if (duration > 0) {
+    new_cmd_state.disappearing = true;
+    new_cmd_state.disappear_timeout = duration;
+  }
+  set_cmd_state(new_cmd_state);
+}
 
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFullWindow();
+void Display::disp_message_large(String message, uint32_t duration) {
+  UIState new_cmd_state{.page = DisplayPage::MESSAGE_LARGE,
+                             .message = message};
+  if (duration > 0) {
+    new_cmd_state.disappearing = true;
+    new_cmd_state.disappear_timeout = duration;
+  }
+  set_cmd_state(new_cmd_state);
+}
+void Display::disp_error(String message, uint32_t duration) {
+  UIState new_cmd_state{.page = DisplayPage::ERROR, .message = message};
+  if (duration > 0) {
+    new_cmd_state.disappearing = true;
+    new_cmd_state.disappear_timeout = duration;
+  }
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_main() {
+  UIState new_cmd_state{.page = DisplayPage::MAIN};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_info() {
+  UIState new_cmd_state{.page = DisplayPage::INFO};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_welcome() {
+  UIState new_cmd_state{.page = DisplayPage::WELCOME};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_ap_config() {
+  UIState new_cmd_state{.page = DisplayPage::AP_CONFIG};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_web_config() {
+  UIState new_cmd_state{.page = DisplayPage::WEB_CONFIG};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_test(bool invert) {
+UIState new_cmd_state{};
+if (!invert) {
+  new_cmd_state.page = DisplayPage::TEST;
+} else {
+  new_cmd_state.page = DisplayPage::TEST_INV;
+}
+set_cmd_state(new_cmd_state);
+}
+
+UIState Display::get_ui_state() { return current_ui_state; }
+
+void Display::init_ui_state(UIState ui_state) {
+  current_ui_state = ui_state;
+}
+
+Display::State Display::get_state() { return state; }
+
+void Display::set_cmd_state(UIState cmd) {
+  cmd_ui_state = cmd;
+  new_ui_cmd = true;
+}
+
+void Display::draw_message(String message, bool error, bool large) {
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(true);
+  disp->setFont(&FreeMono9pt7b);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+
+  if (!error) {
+    if (!large) {
+      disp->setFont(&FreeMono9pt7b);
+      disp->setCursor(0, 20);
+    } else {
+      disp->setFont(&FreeMonoBold12pt7b);
+      disp->setCursor(0, 30);
+    }
+    disp->print(message);
+  } else {
+    disp->setFont(&FreeMonoBold12pt7b);
+    disp->setCursor(0, 0);
+    int16_t x, y;
+    uint16_t w, h;
+    String text = "ERROR";
+    disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+    disp->setCursor(WIDTH / 2 - w / 2, 20);
+    disp->print(text);
+    disp->setFont(&FreeMono9pt7b);
+    disp->setCursor(0, 60);
+    disp->print(message);
+  }
+  disp->display();
+}
+
+void Display::draw_main() {
+  const uint8_t num_buttons = 6;
+  const uint16_t min_btn_clearance = 14;
+  const uint16_t h_padding = 5;
+  const uint16_t W = WIDTH / 2;
+  const uint16_t heights[] = {
+      static_cast<uint16_t>(round(HEIGHT / 12.)),
+      static_cast<uint16_t>(round(HEIGHT / 12. + HEIGHT / 6.)),
+      static_cast<uint16_t>(round(HEIGHT / 12. + 2 * HEIGHT / 6.)),
+      static_cast<uint16_t>(round(HEIGHT / 12. + 3 * HEIGHT / 6.)),
+      static_cast<uint16_t>(round(HEIGHT / 12. + 4 * HEIGHT / 6.)),
+      static_cast<uint16_t>(round(HEIGHT / 12. + 5 * HEIGHT / 6.))};
+
+  uint16_t w, h;
+
+  disp->setRotation(0);
+  disp->setFullWindow();
 
   u8g2.setFontMode(1);
-  u8g2.setForegroundColor(GxEPD_BLACK);
-  u8g2.setBackgroundColor(GxEPD_WHITE);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
-  display->firstPage();
-  do {
-    display->fillScreen(GxEPD_WHITE);
+  disp->fillScreen(bg_color);
 
-    // int16_t x, y;
-    uint16_t w, h;
+  // charging line
+  if(device_state.charging) {
+    disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
+  }
 
-    // Loop through buttons
-    for (uint16_t i = 0; i < num_buttons; i++) {
-      String t = labels[i];
+  // Loop through buttons
+  for (uint16_t i = 0; i < num_buttons; i++) {
+    String t = device_state.get_btn_label(i);
 
-      u8g2.setFont(u8g2_font_helvB24_te);
+    u8g2.setFont(u8g2_font_helvB24_te);
+    w = u8g2.getUTF8Width(t.c_str());
+    h = u8g2.getFontAscent();
+    if (w >= WIDTH - min_btn_clearance) {
+      u8g2.setFont(u8g2_font_helvB18_te);
       w = u8g2.getUTF8Width(t.c_str());
       h = u8g2.getFontAscent();
       if (w >= WIDTH - min_btn_clearance) {
-        u8g2.setFont(u8g2_font_helvB18_te);
-        w = u8g2.getUTF8Width(t.c_str());
-        h = u8g2.getFontAscent();
-        if (w >= WIDTH - min_btn_clearance) {
-          t = t.substring(0, t.length() - 1) + ".";
-          while (1) {
-            w = u8g2.getUTF8Width(t.c_str());
-            h = u8g2.getFontAscent();
-            if (w >= WIDTH - min_btn_clearance) {
-              t = t.substring(0, t.length() - 2) + ".";
-            } else {
-              break;
-            }
+        t = t.substring(0, t.length() - 1) + ".";
+        while (1) {
+          w = u8g2.getUTF8Width(t.c_str());
+          h = u8g2.getFontAscent();
+          if (w >= WIDTH - min_btn_clearance) {
+            t = t.substring(0, t.length() - 2) + ".";
+          } else {
+            break;
           }
         }
       }
-      int16_t w_pos, h_pos;
-      if (i % 2 == 0) {
-        w_pos = h_padding;
-      } else {
-        w_pos = WIDTH - w - h_padding;
-      }
-      h_pos = heights[i] + h / 2;
-      u8g2.setCursor(w_pos, h_pos);
-      u8g2.print(t);
     }
-  } while (display->nextPage());
+    int16_t w_pos, h_pos;
+    if (i % 2 == 0) {
+      w_pos = h_padding;
+    } else {
+      w_pos = WIDTH - w - h_padding;
+    }
+    h_pos = heights[i] + h / 2;
+    u8g2.setCursor(w_pos, h_pos);
+    u8g2.print(t);
+  }
+  disp->display();
 }
 
-void display_ap_config_screen(String ssid, String password) {
-  String contents = String("WIFI:T:WPA;S:") + ssid + ";P:" + password + ";;";
+void Display::draw_info() {
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(false);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+  disp->setCursor(0, 0);
+
+  int16_t x, y;
+  uint16_t w, h;
+  String text;
+
+  text = "- Temp -";
+  disp->setFont(&FreeMono9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 30);
+  disp->print(text);
+
+  text = String(device_state.temperature, 1) + String(" C");
+  disp->setFont(&FreeSansBold18pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
+  disp->print(text);
+
+  text = "- Humd -";
+  disp->setFont(&FreeMono9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 129);
+  disp->print(text);
+
+  text = String(device_state.humidity, 0) + String(" %");
+  disp->setFont(&FreeSansBold18pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
+  disp->print(text);
+
+  text = "- Batt -";
+  disp->setFont(&FreeMono9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 228);
+  disp->print(text);
+
+  if (device_state.battery_present) {
+    text = String(device_state.battery_pct) + String(" %");
+  } else {
+    text = "-";
+  }
+  disp->setFont(&FreeSansBold18pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2 - 2, 268);
+  disp->print(text);
+
+  // device name
+  disp->setFont();
+  disp->setTextSize(1);
+  disp->setCursor(0, 288);
+  disp->print(device_state.device_name);
+
+  disp->display();
+}
+
+void Display::draw_welcome() {
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(false);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+  disp->setCursor(0, 0);
+
+  int16_t x, y;
+  uint16_t w, h;
+  String text;
+
+  text = "Home Buttons";
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 40);
+  disp->print(text);
+
+  disp->drawBitmap(54, 52, hb_logo_20x21px, 20, 21, GxEPD_BLACK);
+
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->getTextBounds("--------------------", 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 102);
+  disp->print("--------------------");
+
+  uint8_t version = 6;  // 41x41px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
+
+  text = "Setup guide:";
+  disp->setFont(&FreeSans9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 145);
+  disp->print(text);
+
+  uint16_t qr_x = 23;
+  uint16_t qr_y = 165;
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    // Each horizontal module
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x, y)) {
+        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      }
+    }
+  }
+
+  disp->setFont();
+  disp->setTextSize(1);
+
+  disp->setCursor(0, 265);
+  String sw_ver = String("Software: ") + SW_VERSION;
+  disp->print(sw_ver);
+
+  disp->setCursor(0, 275);
+  String model_info =
+      String("Model: ") + device_state.model_id + " rev " + device_state.hw_version;
+  disp->print(model_info);
+
+  disp->setCursor(0, 285);
+  disp->print(device_state.unique_id);
+
+  disp->display();
+}
+
+void Display::draw_ap_config() {
+  String contents = String("WIFI:T:WPA;S:") + device_state.ap_ssid +
+                    ";P:" + device_state.ap_password + ";;";
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
   uint8_t qrcodeData[qrcode_getBufferSize(version)];
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFont(&FreeSans9pt7b);
-  display->setFullWindow();
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(false);
+  disp->setFont(&FreeSans9pt7b);
+  disp->setFullWindow();
 
-  display->firstPage();
-  do {
-    display->fillScreen(GxEPD_WHITE);
+  disp->fillScreen(bg_color);
 
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("Scan:", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 20);
-    display->print("Scan:");
+  int16_t x, y;
+  uint16_t w, h;
+  String text;
 
-    uint16_t qr_x = 23;
-    uint16_t qr_y = 35;
-    for (uint8_t y = 0; y < qrcode.size; y++) {
-      // Each horizontal module
-      for (uint8_t x = 0; x < qrcode.size; x++) {
-        // Display each module
-        if (qrcode_getModule(&qrcode, x, y)) {
-          display->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
-        }
+  text = "Scan:";
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 20);
+  disp->print(text);
+
+  uint16_t qr_x = 23;
+  uint16_t qr_y = 35;
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    // Each horizontal module
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x, y)) {
+        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
       }
     }
-    display->setFont(&FreeSansBold9pt7b);
-    display->getTextBounds("------ or ------", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 153);
-    display->print("------ or ------");
+  }
+  text = "------ or ------";
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 153);
+  disp->print(text);
 
-    display->setFont(&FreeSans9pt7b);
-    display->getTextBounds("Connect to:", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 190);
-    display->print("Connect to:");
+  text = "Connect to:";
+  disp->setFont(&FreeSans9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 190);
+  disp->print(text);
 
-    display->setCursor(0, 220);
-    display->print("Wi-Fi:");
-    display->setFont(&FreeSansBold9pt7b);
-    display->setCursor(0, 235);
-    display->print(ssid.c_str());
+  disp->setCursor(0, 220);
+  disp->print("Wi-Fi:");
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->setCursor(0, 235);
+  disp->print(device_state.ap_ssid.c_str());
 
-    display->setFont(&FreeSans9pt7b);
-    display->setCursor(0, 260);
-    display->print("Password:");
-    display->setFont(&FreeSansBold9pt7b);
-    display->setCursor(0, 275);
-    display->print(password.c_str());
+  disp->setFont(&FreeSans9pt7b);
+  disp->setCursor(0, 260);
+  disp->print("Password:");
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->setCursor(0, 275);
+  disp->print(device_state.ap_password.c_str());
 
-  } while (display->nextPage());
+  disp->display();
 }
 
-void display_web_config_screen(String ip) {
-  String contents = String("http://") + ip;
+void Display::draw_web_config() {
+  String contents = String("http://") + device_state.ip;
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
   uint8_t qrcodeData[qrcode_getBufferSize(version)];
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFont(&FreeSans9pt7b);
-  display->setFullWindow();
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(false);
+  disp->setFont(&FreeSans9pt7b);
+  disp->setFullWindow();
 
-  display->firstPage();
-  do {
-    display->fillScreen(GxEPD_WHITE);
+  disp->fillScreen(bg_color);
 
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("Scan:", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 20);
-    display->print("Scan:");
+  int16_t x, y;
+  uint16_t w, h;
+  String text;
 
-    uint16_t qr_x = 23;
-    uint16_t qr_y = 35;
-    for (uint8_t y = 0; y < qrcode.size; y++) {
-      // Each horizontal module
-      for (uint8_t x = 0; x < qrcode.size; x++) {
-        // Display each module
-        if (qrcode_getModule(&qrcode, x, y)) {
-          display->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
-        }
+  text = "Scan:";
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 20);
+  disp->print(text);
+
+  uint16_t qr_x = 23;
+  uint16_t qr_y = 35;
+
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    // Each horizontal module
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x, y)) {
+        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
       }
     }
-    display->setFont(&FreeSansBold9pt7b);
-    display->getTextBounds("------ or ------", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 153);
-    display->print("------ or ------");
+  }
+  text = "------ or ------";
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 153);
+  disp->print(text);
 
-    display->setFont(&FreeSans9pt7b);
-    display->getTextBounds("Go to:", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 200);
-    display->print("Go to:");
+  text = "Go to:";
+  disp->setFont(&FreeSans9pt7b);
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->setCursor(WIDTH / 2 - w / 2, 200);
+  disp->print(text);
 
-    display->setFont(&FreeSansBold9pt7b);
-    display->setCursor(0, 240);
-    display->print("http://");
-    display->setCursor(0, 260);
-    display->print(ip.c_str());
+  disp->setFont(&FreeSansBold9pt7b);
+  disp->setCursor(0, 240);
+  disp->print("http://");
+  disp->setCursor(0, 260);
+  disp->print(device_state.ip.c_str());
 
-  } while (display->nextPage());
+  disp->display();
 }
 
-void display_wifi_connected_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
+void Display::draw_test(bool invert) {
+  uint16_t fg, bg;
+  if (!invert) {
+    fg = GxEPD_BLACK;
+    bg = GxEPD_WHITE;
+  } else {
+    fg = GxEPD_WHITE;
+    bg = GxEPD_BLACK;
+  }
 
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
+  disp->setRotation(0);
+  disp->setTextColor(fg);
+  disp->setTextWrap(true);
+  disp->setFont(&FreeSansBold24pt7b);
+  disp->setFullWindow();
 
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("Wi-Fi", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("Wi-Fi");
+  disp->fillScreen(bg);
 
-    display->getTextBounds("CONNECTED", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 150);
-    display->print("CONNECTED");
+  int16_t x, y;
+  uint16_t w, h;
+  String text;
 
-    display->getTextBounds(":)", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 180);
-    display->print(":)");
-  } while (display->nextPage());
+  text = "TEST";
+  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+
+  disp->setCursor(WIDTH / 2 - w / 2, 90);
+  disp->print(text);
+
+  disp->setCursor(WIDTH / 2 - w / 2, 170);
+  disp->print(text);
+
+  disp->setCursor(WIDTH / 2 - w / 2, 250);
+  disp->print(text);
+
+  disp->display();
 }
 
-void display_setup_complete_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("SETUP", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("SETUP");
-
-    display->getTextBounds("COMPLETE", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 150);
-    display->print("COMPLETE");
-
-    display->getTextBounds(":)", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 180);
-    display->print(":)");
-  } while (display->nextPage());
+void Display::draw_white() {
+  disp->setFullWindow();
+  disp->fillScreen(GxEPD_WHITE);
+  disp->display();
 }
 
-void display_please_recharge_soon_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("PLEASE", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 90);
-    display->print("PLEASE");
-
-    display->getTextBounds("RECHARGE", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("RECHARGE");
-
-    display->getTextBounds("BATTERY", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 150);
-    display->print("BATTERY");
-
-    display->getTextBounds("SOON", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 180);
-    display->print("SOON");
-  } while (display->nextPage());
+void Display::draw_black() {
+  disp->setFullWindow();
+  disp->fillScreen(GxEPD_BLACK);
+  disp->display();
 }
-
-void display_turned_off_please_recharge_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("TURNED OFF", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 60);
-    display->print("TURNED OFF");
-
-    display->getTextBounds("PLEASE", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("PLEASE");
-
-    display->getTextBounds("RECHARGE", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 150);
-    display->print("RECHARGE");
-
-    display->getTextBounds("BATTERY", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 180);
-    display->print("BATTERY");
-  } while (display->nextPage());
-}
-
-void display_welcome_screen(const char* uid, FactorySettings fac) {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->setFont(&FreeSansBold9pt7b);
-    display->getTextBounds("Home Buttons", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 40);
-    display->print("Home Buttons");
-
-    display->drawBitmap(54, 52, hb_logo_20x21px, 20, 21, GxEPD_BLACK);
-
-    display->setFont(&FreeSansBold9pt7b);
-    display->getTextBounds("--------------------", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 102);
-    display->print("--------------------");
-
-    uint8_t version = 6;  // 41x41px
-    QRCode qrcode;
-    uint8_t qrcodeData[qrcode_getBufferSize(version)];
-    qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
-
-    display->setFont(&FreeSans9pt7b);
-    display->getTextBounds("Setup guide:", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 145);
-    display->print("Setup guide:");
-
-    uint16_t qr_x = 23;
-    uint16_t qr_y = 165;
-    for (uint8_t y = 0; y < qrcode.size; y++) {
-      // Each horizontal module
-      for (uint8_t x = 0; x < qrcode.size; x++) {
-        // Display each module
-        if (qrcode_getModule(&qrcode, x, y)) {
-          display->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
-        }
-      }
-    }
-
-    display->setFont();
-    display->setTextSize(1);
-
-    display->setCursor(0, 265);
-    String sw_ver = String("Software: ") + SW_VERSION;
-    display->print(sw_ver);
-
-    display->setCursor(0, 275);
-    String model_info =
-        String("Model: ") + fac.model_id + " rev " + fac.hw_version;
-    display->print(model_info);
-
-    display->setCursor(0, 285);
-    display->print(uid);
-  } while (display->nextPage());
-}
-
-void display_info_screen(float temp, float humid, uint8_t batt) {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(false);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    String text;
-
-    text = "-- T --";
-    text = "- Temp -";
-    display->setFont(&FreeMono9pt7b);
-    display->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 30);
-    display->print(text);
-
-    text = String(temp, 1) + String(" C");
-    display->setFont(&FreeSansBold18pt7b);
-    display->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2 - 2, 70);
-    display->print(text);
-
-    text = "-- H --";
-    text = "- Humd -";
-    display->setFont(&FreeMono9pt7b);
-    display->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 129);
-    display->print(text);
-
-    text = String(humid, 0) + String(" %");
-    display->setFont(&FreeSansBold18pt7b);
-    display->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2 - 2, 169);
-    display->print(text);
-
-    text = "-- B --";
-    text = "- Batt -";
-    display->setFont(&FreeMono9pt7b);
-    display->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 228);
-    display->print(text);
-
-    text = String(batt) + String(" %");
-    display->setFont(&FreeSansBold18pt7b);
-    display->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2 - 2, 268);
-    display->print(text);
-
-  } while (display->nextPage());
-}
-
-void display_test_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSans9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 20);
-    display->fillScreen(GxEPD_WHITE);
-    display->print(R"(TESTESTESTESTESTESTESTESTESTESTESTEST
-                            ESTESTESTESTESTESTESTESTESTESTESTEST
-                            ESTESTESTESTESTESTESTESTESTESTESTEST
-                            ESTESTESTESTESTESTESTESTESTESTESTEST)");
-  } while (display->nextPage());
-}
-
-void display_white_screen() {
-  display->setFullWindow();
-  display->firstPage();
-  do {
-    display->fillScreen(GxEPD_WHITE);
-  } while (display->nextPage());
-}
-
-void display_black_screen() {
-  display->setFullWindow();
-  display->firstPage();
-  do {
-    display->fillScreen(GxEPD_BLACK);
-  } while (display->nextPage());
-}
-
-void display_fully_charged_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("FULLY", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("FULLY");
-
-    display->getTextBounds("CHARGED", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 150);
-    display->print("CHARGED");
-
-    display->getTextBounds(":)", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 180);
-    display->print(":)");
-  } while (display->nextPage());
-}
-
-void display_check_connection_screen() {
-  display->setRotation(0);
-  display->setTextColor(GxEPD_BLACK);
-  display->setTextWrap(true);
-  display->setFont(&FreeSansBold9pt7b);
-  display->setFullWindow();
-
-  display->firstPage();
-  do {
-    display->setCursor(0, 0);
-    display->fillScreen(GxEPD_WHITE);
-
-    int16_t x, y;
-    uint16_t w, h;
-    display->getTextBounds("CHECK", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 120);
-    display->print("CHECK");
-
-    display->getTextBounds("CONNECTION", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 150);
-    display->print("CONNECTION");
-
-    display->getTextBounds(":(", 0, 0, &x, &y, &w, &h);
-    display->setCursor(WIDTH / 2 - w / 2, 180);
-    display->print(":(");
-
-    display->setFont();
-    display->setTextSize(1);
-    display->setCursor(0, 260);
-    display->print(
-        "Wi-Fi or MQTT connection failed multiple times. Please check your "
-        "connection "
-        "settings.");
-  } while (display->nextPage());
-}
-
-void font_demo() {
-  display_buttons_UTF8(
-    "ÆÅØ",
-    "ČŠŽĆĐ",
-    "ÄÖÜß",
-    "ĄĆĘŃÓŻ",
-    "ĂÂÎȘȚ",
-    "#$€£@");
-}
-
-}  // namespace eink

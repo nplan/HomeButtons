@@ -1,5 +1,9 @@
 #include "hardware.h"
 
+#include <Wire.h>
+
+#include "Adafruit_SHTC3.h"
+
 // Struct containing current hardware configuration
 HardwareDefinition HW;
 
@@ -7,7 +11,7 @@ HardwareDefinition HW;
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
-void init_hardware(String hw_version) {
+void HardwareDefinition::init(String hw_version) {
   if (hw_version == "1.0") {
     HW = hw_rev_1_0;
     log_i("configured for hw version: 1.0");
@@ -28,7 +32,7 @@ void init_hardware(String hw_version) {
   }
 }
 
-void begin_hardware() {
+void HardwareDefinition::begin() {
   pinMode(HW.BTN1_PIN, INPUT);
   pinMode(HW.BTN2_PIN, INPUT);
   pinMode(HW.BTN3_PIN, INPUT);
@@ -66,15 +70,44 @@ void begin_hardware() {
   analogSetPinAttenuation(HW.VBAT_ADC, ADC_11db);
 }
 
-bool digitalReadAny() {
+bool HardwareDefinition::digitalReadAny() {
   return digitalRead(HW.BTN1_PIN) || digitalRead(HW.BTN2_PIN) ||
          digitalRead(HW.BTN3_PIN) || digitalRead(HW.BTN4_PIN) ||
          digitalRead(HW.BTN5_PIN) || digitalRead(HW.BTN6_PIN);
 }
 
-void set_led(uint8_t ch, uint8_t brightness) { ledcWrite(ch, brightness); }
+void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
+  ledcWrite(ch, brightness);
+}
 
-void set_all_leds(uint8_t brightness) {
+void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
+  uint8_t ch;
+  switch (num) {
+    case 1:
+      ch = HW.LED1_CH;
+      break;
+    case 2:
+      ch = HW.LED6_CH;
+      break;
+    case 3:
+      ch = HW.LED2_CH;
+      break;
+    case 4:
+      ch = HW.LED5_CH;
+      break;
+    case 5:
+      ch = HW.LED3_CH;
+      break;
+    case 6:
+      ch = HW.LED4_CH;
+      break;
+    default:
+      return;
+  }
+  set_led(ch, brightness);
+}
+
+void HardwareDefinition::set_all_leds(uint8_t brightness) {
   set_led(HW.LED1_CH, brightness);
   set_led(HW.LED2_CH, brightness);
   set_led(HW.LED3_CH, brightness);
@@ -83,13 +116,53 @@ void set_all_leds(uint8_t brightness) {
   set_led(HW.LED6_CH, brightness);
 }
 
-float read_battery_voltage() {
+void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
+                                   uint8_t brightness) {
+  if (num_blinks < 1)
+    num_blinks = 1;
+  else if (num_blinks > 4)
+    num_blinks = 4;
+
+  uint16_t on, off;
+  switch (num_blinks) {
+    case 1:
+      on = 800;
+      off = 0;
+      break;
+    case 2:
+      on = 100;
+      off = 300;
+      break;
+    case 3:
+      on = 67;
+      off = 200;
+      break;
+    case 4:
+      on = 50;
+      off = 150;
+      break;
+    default:
+      on = 50;
+      off = 150;
+      break;
+  }
+
+  for (uint8_t i = 0; i < num_blinks; i++) {
+    set_led_num(led, brightness);
+    delay(on);
+    set_led_num(led, 0);
+    delay(off);
+  }
+}
+
+float HardwareDefinition::read_battery_voltage() {
   return analogRead(HW.VBAT_ADC) / 4095.0 * HW.BATT_ADC_REF_VOLT /
          HW.BATT_DIVIDER;
 }
 
-uint8_t batt_volt2percent(float volt) {
-  float pct = 100 * (volt - HW.BATT_EMPTY_VOLT) /
+uint8_t HardwareDefinition::read_battery_percent() {
+  if (!is_battery_present()) return 0;
+  float pct = 100 * (read_battery_voltage() - HW.BATT_EMPTY_VOLT) /
               (HW.BATT_FULL_VOLT - HW.BATT_EMPTY_VOLT);
   if (pct < 0.0)
     pct = 0;
@@ -98,7 +171,7 @@ uint8_t batt_volt2percent(float volt) {
   return (uint8_t)round(pct);
 }
 
-void read_temp_hmd(float &temp, float &hmd) {
+void HardwareDefinition::read_temp_hmd(float &temp, float &hmd) {
   shtc3_wire.begin(
       (int)HW.SDA,
       (int)HW.SCL);  // must be cast to int otherwise wrong begin() is called
@@ -110,26 +183,34 @@ void read_temp_hmd(float &temp, float &hmd) {
   hmd = humidity_event.relative_humidity;
 }
 
-bool is_charger_in_standby() { return !digitalRead(HW.CHARGER_STDBY); }
+bool HardwareDefinition::is_charger_in_standby() {
+  return !digitalRead(HW.CHARGER_STDBY);
+}
 
-bool is_dc_connected() {
+bool HardwareDefinition::is_dc_connected() {
   if (HW.version >= semver::version{2, 2, 0}) {
     return digitalRead(HW.DC_IN_DETECT);
   } else {
-    return false;
+    // hardware hack for powering v2.1 with USB-C
+    return HardwareDefinition::read_battery_voltage() >= HW.DC_DETECT_VOLT;
   }
 }
 
-void enable_charger(bool enable) {
+void HardwareDefinition::enable_charger(bool enable) {
   if (HW.version >= semver::version{2, 2, 0}) {
     digitalWrite(HW.CHG_ENABLE, enable);
+    log_d("[HW] charger enabled: %d", enable);
+  } else {
+    log_d("[HW] this HW version doesn't support charger control.");
   }
 }
 
-bool is_battery_present() {
+bool HardwareDefinition::is_battery_present() {
+  float volt = read_battery_voltage();
   if (HW.version >= semver::version{2, 2, 0}) {
-    return read_battery_voltage() >= HW.BATT_PRESENT_VOLT;
+    return volt >= HW.BATT_PRESENT_VOLT;
   } else {
-    return false;
+    // hardware hack for powering v2.1 with USB-C
+    return volt >= HW.BATT_PRESENT_VOLT && volt < HW.DC_DETECT_VOLT;
   }
 }

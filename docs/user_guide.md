@@ -35,11 +35,31 @@ To configure button actions, click "+" on the *Automations* card, select one of 
 
 > The expected delay from a button being pressed to the automation being triggered is around 1 second.
 
-### Configure Sensor Publish Interval
+### Configure Sensor Publish Interval {#sensor_interval}
 
-The device uses deep sleep to preserve battery. It wakes up every few minutes to measure temperature and humidity and publish the data to MQTT topics. You can set the publishing interval with a slider on the *Controls* card. The range is from 1 to 30 minutes. The default is 10 minutes.
+The device uses deep sleep to preserve battery. It wakes up every few minutes to measure temperature and humidity and publish the data to MQTT topics. You can set the publishing interval with a slider on the *Controls* card.
+The range is from 1 to 30 minutes. The default is 10 minutes.
 
 > Be aware, that this setting greatly impacts the battery life. The advertised battery life of > 1.5 year is achievable with the interval set to 10 minutes (the default) or greater.
+
+> `Sensor Interval` parameter will only be used in *Sleep Mode*. In *Awake Mode* the sensor publish interval is 60 seconds.
+
+### Awake Mode
+
+*Home Buttons* supports two modes of operation:
+
+1. **Sleep Mode** 
+
+    The default. *Home Buttons* will spend most of the time in deep sleep. It will wake up and connect to network only when a button is pressed or every few minutes as specified by the [`Sensor Interval`](#sensor_interval) option.
+    When changing button labels, the display will only be updated at the next wake up.
+
+2. **Awake Mode**
+
+    Available only when USB-C is connected or if device is powered by the 5 V DC input. In this mode the device is always on and connected to network. Changing button labels will update the display instantly.
+    The sensor publish interval is fixed at 60 seconds. The disadvantage of this mode is that the temperature sensor reading will be a few degrees too high, since the Wi-Fi modem is generating heat.
+
+> *Awake Mode* is only available on *Home Buttons* hardware revision >= 2.2 by default. If you wish to enable it on earlier revisions, you must perform a [hardware hack](hardware_hacks.md#usb-power-without-battery).
+
 
 ## Info Screen {#info_screen}
 
@@ -122,7 +142,8 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 
 Factory reset deletes all user settings and returns the device to its initial state.
 
-Perform the factory reset by pressing any button for 30 seconds. After a few seconds `Factory RESET complete` will appear on the display and *Home Buttons* will restart to Wi-Fi setup. If you don't wish to complete Wi-Fi setup at this time, leave the device as is. It will automatically return to welcome screen and enter power saving state in 10 minutes.
+Perform the factory reset by pressing any button for 30 seconds. `Factory RESET...` will appear on the display and *Home Buttons* will restart and display welcome screen.
+You can complete the setup again by following the [Getting Started](setup.md) guide. 
 
 ## Opening the case {#opening_case}
 

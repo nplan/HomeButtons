@@ -2,18 +2,36 @@
 
 **Setup up your *Home Buttons* in a few simple steps!**
 
+> **Important!**
+
+> There is a network connection bug in firmware v2.0.0. If your device came with that version you must perform an update to v2.0.2 or later.
+Please check the firmware version of your device after unboxing it. It is shown at the bottom of the display.
+You can update the firmware after setting up the Wi-Fi connection and before setting up the MQTT parameters.
+Just follow this guide and look for a note.
+
 You will need:
 
-- One 18650 Li-Ion battery cell (not included)
-- A flat headed screwdriver
-- 2x mounting screws with anchors suitable for your walls ***or*** double sided tape (must stick to plastic well)
-- A Wi-Fi network
-- An MQTT broker
-- *Home Assistant* (optional - can work only through MQTT)
+1. Depending on the desired power source (one out of):
+    1. 18650 Li-Ion battery cell (not included)
+    1. USB-C power brick
+    1. 5V DC power supply
+1. A flat headed screwdriver
+1. 2x mounting screws with anchors suitable for your walls ***or*** double sided tape (must stick to plastic well)
+1. A Wi-Fi network
+1. An MQTT broker
+1. *Home Assistant* (optional - can work only through MQTT)
 
-## Insert The Battery
+## Solder battery holder or DC terminal
 
-You will need one 18650 Li-Ion battery cell (**not included**). Please use a 
+If you purchased a version of *Home Buttons* that requires soldering, see [here](soldering.md) for instructions.
+
+You can skip this step if you purchased a fully soldered device.
+
+## Insert Battery Cell
+
+> Skip this step if you will power the device by USB-C or 5V DC input.
+
+You need one 18650 Li-Ion battery cell (**not included**). Please use a 
 high quality cell with greater than 3000 mAh capacity.
 
 1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull the cover off.
@@ -41,7 +59,7 @@ Connect to it by scanning the QR code on the display or manually connecting to W
     ![Wi-Fi Setup Screen](assets/wifi_setup_screen.png){width="125"}
 
 2. After connecting to *Home Buttons* Wi-Fi with your device, a **captive portal** will pop up automatically.
-If it doesn't, open the web browser and navigate to any web page. You will be redirected to the captive portal.
+If it doesn't, open the web browser and navigate to http://192.168.4.1.
 
     ![Wi-Fi Setup Page](assets/wifi_setup_page_1.png){width="200"}
 
@@ -49,9 +67,9 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 
 4. Select your network, enter the password and click `Save`.
 
-*Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. `Wi-Fi CONNECTED` will appear on display.
+*Home Buttons* will disable the hotspot and connect to your Wi-Fi network in a few seconds. `Wi-Fi connected` will appear on display.
 
-> If connection is not successful, `Wi-Fi error` will be displayed and *Home Buttons* will return to welcome screen.
+> If connection is not successful, `Wi-Fi connection error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
 ## Set Up MQTT Broker
@@ -67,6 +85,8 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
 
     ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page](assets/setup_page.jpeg){width="250"}
+
+1. Perform the **firmware update** now if required. Use [this](update.md#OTA) guide, but **skip step 2**, since you are already in the right menu.
 
 2. Click `Setup`
 
@@ -159,7 +179,10 @@ If the battery gets critically low, the device will turn off.
 The display will show: `TURNED OFF PLEASE RECHARGE BATTERY`. You can see the remaining battery percentage as a sensor in *Home Assistant*.
 
 Plug in any USB-C charger to charge the battery. The expected full charge time is 4 hours.
-There is no state of charge indication during charging. When the battery is fully charged, the display will show `FULLY CHARGED`.
+
+When the device is charging, there is a solid line displayed at the bottom of the screen. When charging is done, the line disappears.
+
+> For hardware revision <= 2.1 there is no charging indicator. When the battery is fully charged, the display will show `FULLY CHARGED`.
 
 ### Temperature & Humidity
 
