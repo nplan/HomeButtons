@@ -36,9 +36,6 @@ class Network {
     State state = State::DISCONNECTED;
     CMDState cmd_state = CMDState::NONE;
 
-    String wifi_ssid = "";
-    String wifi_psk = "";
-
     uint32_t wifi_start_time = 0;
     uint32_t mqtt_start_time = 0;
     uint32_t last_conn_check_time = 0;
@@ -50,8 +47,8 @@ class Network {
     enum StateMachineState {
       NONE,
       IDLE,
-      DELAY_AFTER_WIFI_NORMAL_BEGIN,
       AWAIT_QUICK_WIFI_CONNECTION,
+      BEGIN_WIFI_NORMAL_CONNECTION,
       AWAIT_NORMAL_WIFI_CONNECTION,
       AWAIT_CONFIRM_QUICK_WIFI_SETTINGS,
       AWAIT_MQTT_CONNECTION,
