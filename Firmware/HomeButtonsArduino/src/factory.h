@@ -323,8 +323,8 @@ bool factory_mode() {
             device_state.factory().model_name.length() > 0 &&
             device_state.factory().model_id.length() > 0 &&
             device_state.factory().hw_version.length() > 0) {
-            device_state.factory().unique_id == String("HBTNS-") + device_state.factory().serial_number + "-" +
-                               device_state.factory().random_id;
+          device_state.set_unique_id(String("HBTNS-") + device_state.factory().serial_number + "-" +
+                               device_state.factory().random_id);
 
           log_i("settings confirmed. saving to memory");
           log_i(
