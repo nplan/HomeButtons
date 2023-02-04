@@ -12,9 +12,9 @@ Just follow this guide and look for a note.
 You will need:
 
 1. Depending on the desired power source (one out of):
-    1. 18650 Li-Ion battery cell (not included)
-    1. USB-C power brick
-    1. 5V DC power supply
+   1. 18650 Li-Ion battery cell (not included). **WARNING**: only flat top batteries will properly fit
+   1. USB-C power brick
+   1. 5V DC power supply
 1. A flat headed screwdriver
 1. 2x mounting screws with anchors suitable for your walls ***or*** double sided tape (must stick to plastic well)
 1. A Wi-Fi network
@@ -31,8 +31,7 @@ You can skip this step if you purchased a fully soldered device.
 
 > Skip this step if you will power the device by USB-C or 5V DC input.
 
-You need one 18650 Li-Ion battery cell (**not included**). Please use a 
-high quality cell with greater than 3000 mAh capacity.
+You need one 18650 Li-Ion battery cell with **flat top** (**not included**). Button top batteries might not fit properly. Please use a high quality cell with greater than 3000 mAh capacity.
 
 1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull the cover off.
 
