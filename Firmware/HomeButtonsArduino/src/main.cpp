@@ -237,6 +237,7 @@ void start_leds_task() {
 
 void main_task(void *param) {
   log_i("[DEVICE] woke up.");
+  log_i("[DEVICE] SW version: %s", SW_VERSION);
   device_state.load_all();
 
   // ------ factory mode ------

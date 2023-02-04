@@ -50,7 +50,7 @@
 ## Battery
 
 * **3.7 V Lithium-Ion 18650** battery cell (non-protected) is required
-* **WARNING** only flat top batteries will properly fit
+* **WARNING** some button top batteries will not fit properly: maximum length is 65.0mm
 * Expected battery life: **18 months**
     * *Assuming Panasonic NCR18650B 3400mAh or equivalent*
 * Battery safety features:

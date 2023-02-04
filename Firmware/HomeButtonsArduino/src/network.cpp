@@ -2,6 +2,7 @@
 
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 
 #include "config.h"
 #include "state.h"
@@ -10,6 +11,18 @@ static WiFiClient wifi_client;
 static PubSubClient mqtt_client(wifi_client);
 
 Network network = {};
+
+String mac2String(uint8_t ar[]) {
+  String s;
+  for (uint8_t i = 0; i < 6; ++i) {
+    char buf[3];
+    sprintf(buf, "%02X", ar[i]);  // J-M-L: slight modification, added the 0 in
+                                  // the format for padding
+    s += buf;
+    if (i < 5) s += ':';
+  }
+  return s;
+}
 
 void Network::connect() {
   cmd_state = CMDState::CONNECT;
@@ -43,24 +56,14 @@ void Network::update() {
                       std::placeholders::_2, std::placeholders::_3));
         WiFi.mode(WIFI_STA);
         WiFi.persistent(true);
-        WiFi.begin();
         wifi_start_time = millis();
         if (device_state.wifi_quick_connect) {
           log_i("[NET] connecting Wi-Fi (quick mode)...");
+          WiFi.begin();
           sm_state = AWAIT_QUICK_WIFI_CONNECTION;
         } else {
-          log_i("[NET] connecting Wi-Fi (normal mode)...");
-          sm_state = DELAY_AFTER_WIFI_NORMAL_BEGIN;
+          sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
         }
-      }
-      break;
-    case DELAY_AFTER_WIFI_NORMAL_BEGIN:
-      if (millis() - wifi_start_time > 500) {
-        wifi_ssid = WiFi.SSID();
-        wifi_psk = WiFi.psk();
-        WiFi.begin(wifi_ssid.c_str(), wifi_psk.c_str());
-        wifi_start_time = millis();
-        sm_state = AWAIT_NORMAL_WIFI_CONNECTION;
       }
       break;
     case AWAIT_QUICK_WIFI_CONNECTION:
@@ -75,6 +78,12 @@ void Network::update() {
         state = State::W_CONNECTED;
         device_state.ip = WiFi.localIP().toString();
         log_i("[NET] Wi-Fi connected (quick mode).");
+        String ssid = WiFi.SSID();
+        device_state.save_all();
+        uint8_t* bssid = WiFi.BSSID();
+        int32_t ch = WiFi.channel();
+        log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
+              mac2String(bssid).c_str(), ch);
         // proceed with MQTT connection
         log_i("[NET] connecting MQTT....");
         connect_mqtt();
@@ -86,11 +95,25 @@ void Network::update() {
             "[NET] Wi-Fi connect failed (quick mode). Retrying with normal "
             "mode...");
         device_state.wifi_quick_connect = false;
-        WiFi.begin();
-        wifi_start_time = millis();
-        sm_state = DELAY_AFTER_WIFI_NORMAL_BEGIN;
+        WiFi.disconnect();
+        delay(500);
+        sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
       }
       break;
+    case BEGIN_WIFI_NORMAL_CONNECTION: {
+      WiFi.begin();
+      delay(500);
+      // get ssid from esp32 saved config
+      wifi_config_t conf;
+      esp_wifi_get_config(WIFI_IF_STA, &conf);
+      String ssid = reinterpret_cast<const char*>(conf.sta.ssid);
+      String psk = WiFi.psk();
+      log_i("[NET] connecting Wi-Fi (normal mode): SSID: %s", ssid.c_str());
+      WiFi.begin(ssid.c_str(), psk.c_str());
+      wifi_start_time = millis();
+      sm_state = AWAIT_NORMAL_WIFI_CONNECTION;
+      break;
+    }
     case AWAIT_NORMAL_WIFI_CONNECTION:
       if (cmd_state == CMDState::DISCONNECT) {
         cmd_state = CMDState::NONE;
@@ -105,20 +128,24 @@ void Network::update() {
         log_i(
             "[NET] Wi-Fi connected (normal mode). Saving settings for "
             "quick mode...");
+        String ssid = WiFi.SSID();
+        String psk = WiFi.psk();
+        device_state.save_all();
         uint8_t* bssid = WiFi.BSSID();
         int32_t ch = WiFi.channel();
+        log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
+              mac2String(bssid).c_str(), ch);
         WiFi.disconnect();
-        WiFi.begin(wifi_ssid.c_str(), wifi_psk.c_str(), ch, bssid, true);
+        WiFi.begin(ssid.c_str(), psk.c_str(), ch, bssid, true);
         wifi_start_time = millis();
         sm_state = AWAIT_CONFIRM_QUICK_WIFI_SETTINGS;
       } else if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
         log_w("[NET] Wi-Fi connect failed (normal mode). Retrying...");
-          WiFi.disconnect(true);
-          delay(500);
-          WiFi.mode(WIFI_STA);
-          WiFi.persistent(true);
-          WiFi.begin();
-          wifi_start_time = millis();
+        WiFi.disconnect(true);
+        delay(500);
+        WiFi.mode(WIFI_STA);
+        WiFi.persistent(true);
+        sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
       }
       break;
     case AWAIT_CONFIRM_QUICK_WIFI_SETTINGS:
@@ -142,9 +169,7 @@ void Network::update() {
       } else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
         device_state.wifi_quick_connect = false;
         log_i("[NET] Wi-Fi quick mode save settings failed. Retrying...");
-        WiFi.begin();
-        wifi_start_time = millis();
-        sm_state = DELAY_AFTER_WIFI_NORMAL_BEGIN;
+        sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
       }
       break;
     case AWAIT_MQTT_CONNECTION:
@@ -180,10 +205,7 @@ void Network::update() {
           delay(500);
           WiFi.mode(WIFI_STA);
           WiFi.persistent(true);
-          WiFi.begin();
-          wifi_start_time = millis();
-          log_i("[NET] connecting Wi-Fi (normal mode)...");
-          sm_state = DELAY_AFTER_WIFI_NORMAL_BEGIN;
+          sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
         }
       }
       break;
@@ -201,15 +223,7 @@ void Network::update() {
           delay(500);
           WiFi.mode(WIFI_STA);
           WiFi.persistent(true);
-          WiFi.begin();
-          wifi_start_time = millis();
-          if (device_state.wifi_quick_connect) {
-            log_i("[NET] connecting Wi-Fi (quick mode)...");
-            sm_state = AWAIT_QUICK_WIFI_CONNECTION;
-          } else {
-            log_i("[NET] connecting Wi-Fi (normal mode)...");
-            sm_state = DELAY_AFTER_WIFI_NORMAL_BEGIN;
-          }
+          sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
         } else if (!mqtt_client.connected()) {
           state = State::W_CONNECTED;
           log_w("[NET] MQTT connection interrupted. Reconnecting...");
@@ -300,8 +314,8 @@ void Network::callback(const char* topic, uint8_t* payload, uint32_t length) {
   buff[length] = '\0';  // required so it can be converted to String
   String topic_str = topic;
   String payload_str = (char*)buff;
-  log_d("[NET] msg on topic: %s, len: %d, payload: %s", 
-        topic_str.c_str(), length, payload_str.c_str());
+  log_d("[NET] msg on topic: %s, len: %d, payload: %s", topic_str.c_str(),
+        length, payload_str.c_str());
   if (length < 1) {
     return;
   }
