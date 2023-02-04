@@ -1,7 +1,6 @@
-#ifndef C5681014_D62A_4F74_BF30_7F0BE0597B88
-#define C5681014_D62A_4F74_BF30_7F0BE0597B88
+#ifndef HOMEBUTTONS_DISPLAY_H
+#define HOMEBUTTONS_DISPLAY_H
 
-#include "arduino.h"
 #include "state.h"
 #include <GxEPD2.h>
 
@@ -84,4 +83,4 @@ class Display {
 
 extern Display display;
 
-#endif /* C5681014_D62A_4F74_BF30_7F0BE0597B88 */
+#endif // HOMEBUTTONS_DISPLAY_H

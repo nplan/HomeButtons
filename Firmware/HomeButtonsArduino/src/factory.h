@@ -1,5 +1,5 @@
-#ifndef BBE745C5_ECEF_46D0_8788_273E5DD42EF6
-#define BBE745C5_ECEF_46D0_8788_273E5DD42EF6
+#ifndef HOMEBUTTONS_FACTORY_H
+#define HOMEBUTTONS_FACTORY_H
 
 #include <PubSubClient.h>
 #include <WiFi.h>
@@ -352,4 +352,4 @@ bool factory_mode() {
   }
 }
 
-#endif /* BBE745C5_ECEF_46D0_8788_273E5DD42EF6 */
+#endif // HOMEBUTTONS_FACTORY_H

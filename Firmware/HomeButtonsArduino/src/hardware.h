@@ -1,5 +1,5 @@
-#ifndef B41198A9_C146_4403_8CDC_F69620A8FB1B
-#define B41198A9_C146_4403_8CDC_F69620A8FB1B
+#ifndef HOMEBUTTONS_HARDWARE_H
+#define HOMEBUTTONS_HARDWARE_H
 
 #include <Arduino.h>
 
@@ -324,4 +324,4 @@ const HardwareDefinition hw_rev_2_3{// ------ PIN definitions ------
 // Struct containing current hardware configuration
 extern HardwareDefinition HW;
 
-#endif /* B41198A9_C146_4403_8CDC_F69620A8FB1B */
+#endif // HOMEBUTTONS_HARDWARE_H

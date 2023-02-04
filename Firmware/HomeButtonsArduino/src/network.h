@@ -1,5 +1,5 @@
-#ifndef A07A16C8_5CB9_4A22_B45F_B3A0069C5B9F
-#define A07A16C8_5CB9_4A22_B45F_B3A0069C5B9F
+#ifndef HOMEBUTTONS_NETWORK_H
+#define HOMEBUTTONS_NETWORK_H
 
 #include <Arduino.h>
 
@@ -72,4 +72,4 @@ class Network {
 
 extern Network network;
 
-#endif /* A07A16C8_5CB9_4A22_B45F_B3A0069C5B9F */
+#endif // HOMEBUTTONS_NETWORK_H
