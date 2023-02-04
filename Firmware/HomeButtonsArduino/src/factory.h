@@ -89,7 +89,7 @@ void test_wifi(NetworkSettings settings) {
   log_i("WiFi connected. IP: %S", WiFi.localIP().toString());
   log_i("Connecting to MQTT...");
   mqtt_client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
-  String client_id = "HBTNS-" + device_state.serial_number + "-factory";
+  String client_id = "HBTNS-" + device_state.factory().serial_number + "-factory";
   while (!mqtt_client.connected()) {
     mqtt_client.connect(client_id.c_str(), settings.mqtt_user.c_str(), settings.mqtt_password.c_str());
     delay(100);
@@ -175,8 +175,8 @@ bool factory_mode() {
       log_i("received cmd: %s, pld: %s", cmd.c_str(), pld.c_str());
 
       if (cmd == "ST") {
-        if (device_state.hw_version.length() > 0) {
-          HW.init(device_state.hw_version);
+        if (device_state.factory().hw_version.length() > 0) {
+          HW.init(device_state.factory().hw_version);
           display.begin();
           HW.begin();
           log_i("starting hw test...");
@@ -191,8 +191,8 @@ bool factory_mode() {
         }
       } else if (cmd == "SN") {
         if (pld.length() == 8) {
-          device_state.serial_number = pld;
-          log_i("setting serial number to: %s", device_state.serial_number.c_str());
+          device_state.set_serial_number(pld);
+          log_i("setting serial number to: %s", device_state.factory().serial_number.c_str());
           sendOK();
         } else {
           log_w("incorrect serial number: %s", pld.c_str());
@@ -200,8 +200,8 @@ bool factory_mode() {
         }
       } else if (cmd == "RI") {
         if (pld.length() == 6) {
-          device_state.random_id = pld;
-          log_i("setting random id to: %s", device_state.random_id.c_str());
+          device_state.set_random_id(pld);
+          log_i("setting random id to: %s", device_state.factory().random_id.c_str());
           sendOK();
         } else {
           log_w("incorrect random id: %s", pld.c_str());
@@ -209,8 +209,8 @@ bool factory_mode() {
         }
       } else if (cmd == "MN") {
         if (pld.length() > 0 && pld.length() <= 20) {
-          device_state.model_name = pld;
-          log_i("setting model name to: %s", device_state.model_name.c_str());
+          device_state.set_model_name(pld);
+          log_i("setting model name to: %s", device_state.factory().model_name.c_str());
           sendOK();
         } else {
           log_w("incorrect model name: %s", pld.c_str());
@@ -218,8 +218,8 @@ bool factory_mode() {
         }
       } else if (cmd == "MI") {
         if (pld.length() == 2) {
-          device_state.model_id = pld;
-          log_i("setting model id to: %s", device_state.model_id);
+          device_state.set_model_id(pld);
+          log_i("setting model id to: %s", device_state.factory().model_id);
           sendOK();
         } else {
           log_w("incorrect model id: %s", pld.c_str());
@@ -227,8 +227,8 @@ bool factory_mode() {
         }
       } else if (cmd == "HV") {
         if (pld.length() == 3) {
-          device_state.hw_version = pld;
-          log_i("setting hw version to: %s", device_state.hw_version);
+          device_state.set_hw_version(pld);
+          log_i("setting hw version to: %s", device_state.factory().hw_version);
           sendOK();
         } else {
           log_w("incorrect hw version: %s", pld.c_str());
@@ -290,7 +290,7 @@ bool factory_mode() {
           sendFAIL();
         }
       } else if (cmd == "TW") {
-        if (device_state.serial_number.length() > 0) {
+        if (device_state.factory().serial_number.length() > 0) {
           log_i("starting wifi test...");
           test_wifi(networkSettings);
           sendOK();
@@ -318,13 +318,13 @@ bool factory_mode() {
           sendFAIL();
         }
       } else if (cmd == "OK") {
-        if (device_state.serial_number.length() > 0 &&
-            device_state.random_id.length() > 0 &&
-            device_state.model_name.length() > 0 &&
-            device_state.model_id.length() > 0 &&
-            device_state.hw_version.length() > 0) {
-            device_state.unique_id = String("HBTNS-") + device_state.serial_number + "-" +
-                               device_state.random_id;
+        if (device_state.factory().serial_number.length() > 0 &&
+            device_state.factory().random_id.length() > 0 &&
+            device_state.factory().model_name.length() > 0 &&
+            device_state.factory().model_id.length() > 0 &&
+            device_state.factory().hw_version.length() > 0) {
+            device_state.factory().unique_id == String("HBTNS-") + device_state.factory().serial_number + "-" +
+                               device_state.factory().random_id;
 
           log_i("settings confirmed. saving to memory");
           log_i(
@@ -335,9 +335,9 @@ bool factory_mode() {
                            device model id: %s\n\
                            hw version: %s\n\
                            unique_id: %s\n",
-              device_state.serial_number.c_str(), device_state.random_id.c_str(),
-              device_state.model_name.c_str(), device_state.model_id.c_str(),
-              device_state.hw_version.c_str(), device_state.unique_id.c_str());
+              device_state.factory().serial_number.c_str(), device_state.factory().random_id.c_str(),
+              device_state.factory().model_name.c_str(), device_state.factory().model_id.c_str(),
+              device_state.factory().hw_version.c_str(), device_state.factory().unique_id.c_str());
           sendOK();
           device_state.save_factory();
           display.end();

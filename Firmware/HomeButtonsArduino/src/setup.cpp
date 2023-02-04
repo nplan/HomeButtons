@@ -41,7 +41,7 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 static bool web_portal_saved = false;
 
 void start_wifi_setup() {
-  device_state.ap_ssid = String("HB-") + device_state.random_id;
+  device_state.ap_ssid = String("HB-") + device_state.factory().random_id;
   device_state.ap_password = SETUP_AP_PASSWORD;
   display.disp_ap_config();
   display.update();
@@ -186,11 +186,11 @@ void start_setup() {
   mqtt_client.setServer(device_state.mqtt_server.c_str(), device_state.mqtt_port);
   if (device_state.mqtt_user.length() > 0 &&
       device_state.mqtt_password.length() > 0) {
-    mqtt_client.connect(device_state.unique_id.c_str(),
+    mqtt_client.connect(device_state.factory().unique_id.c_str(),
                                device_state.mqtt_user.c_str(),
                                device_state.mqtt_password.c_str());
   } else {
-    mqtt_client.connect(device_state.unique_id.c_str());
+    mqtt_client.connect(device_state.factory().unique_id.c_str());
   }
 
   display.disp_message("Confirming\nsetup...");

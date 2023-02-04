@@ -286,11 +286,11 @@ uint32_t Network::get_cmd_connect_time() { return cmd_connect_time; }
 bool Network::connect_mqtt() {
   if (device_state.mqtt_user.length() > 0 &&
       device_state.mqtt_password.length() > 0) {
-    return mqtt_client.connect(device_state.unique_id.c_str(),
+    return mqtt_client.connect(device_state.factory().unique_id.c_str(),
                                device_state.mqtt_user.c_str(),
                                device_state.mqtt_password.c_str());
   } else {
-    return mqtt_client.connect(device_state.unique_id.c_str());
+    return mqtt_client.connect(device_state.factory().unique_id.c_str());
   }
 }
 

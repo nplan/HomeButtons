@@ -5,23 +5,23 @@ State device_state = {};
 
 void State::save_factory() {
   preferences.begin("factory", false);
-  preferences.putString("serial_number", serial_number);
-  preferences.putString("random_id", random_id);
-  preferences.putString("model_name", model_name);
-  preferences.putString("model_id", model_id);
-  preferences.putString("hw_version", hw_version);
-  preferences.putString("unique_id", unique_id);
+  preferences.putString("serial_number", m_factory.serial_number);
+  preferences.putString("random_id", m_factory.random_id);
+  preferences.putString("model_name", m_factory.model_name);
+  preferences.putString("model_id", m_factory.model_id);
+  preferences.putString("hw_version", m_factory.hw_version);
+  preferences.putString("unique_id", m_factory.unique_id);
   preferences.end();
 }
 
 void State::load_factory() {
   preferences.begin("factory", true);
-  serial_number = preferences.getString("serial_number", "");
-  random_id = preferences.getString("random_id", "");
-  model_name = preferences.getString("model_name", "");
-  model_id = preferences.getString("model_id", "");
-  hw_version = preferences.getString("hw_version", "");
-  unique_id = preferences.getString("unique_id", "");
+  m_factory.serial_number = preferences.getString("serial_number", "");
+  m_factory.random_id = preferences.getString("random_id", "");
+  m_factory.model_name = preferences.getString("model_name", "");
+  m_factory.model_id = preferences.getString("model_id", "");
+  m_factory.hw_version = preferences.getString("hw_version", "");
+  m_factory.unique_id = preferences.getString("unique_id", "");
   preferences.end();
 }
 
@@ -52,7 +52,7 @@ void State::save_user() {
 
 void State::load_user() {
   preferences.begin("user", true);
-  device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + random_id);
+  device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
   mqtt_server = preferences.getString("mqtt_srv", "");
   mqtt_port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
   mqtt_user = preferences.getString("mqtt_user", "");

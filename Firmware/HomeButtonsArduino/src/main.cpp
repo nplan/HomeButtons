@@ -240,7 +240,7 @@ void main_task(void *param) {
   device_state.load_all();
 
   // ------ factory mode ------
-  if (device_state.serial_number.length() < 1) {
+  if (device_state.factory().serial_number.length() < 1) {
     log_i("[DEVICE] first boot, starting factory mode...");
     if (factory_mode()) {
       display.begin();
@@ -255,8 +255,8 @@ void main_task(void *param) {
   }
 
   // ------ init hardware ------
-  log_i("[HW] version: %s", device_state.hw_version.c_str());
-  HW.init(device_state.hw_version);
+  log_i("[HW] version: %s", device_state.factory().hw_version.c_str());
+  HW.init(device_state.factory().hw_version);
   display.begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   HW.begin();
 

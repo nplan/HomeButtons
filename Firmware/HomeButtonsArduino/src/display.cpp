@@ -440,11 +440,11 @@ void Display::draw_welcome() {
 
   disp->setCursor(0, 275);
   String model_info =
-      String("Model: ") + device_state.model_id + " rev " + device_state.hw_version;
+      String("Model: ") + device_state.factory().model_id + " rev " + device_state.factory().hw_version;
   disp->print(model_info);
 
   disp->setCursor(0, 285);
-  disp->print(device_state.unique_id);
+  disp->print(device_state.factory().unique_id);
 
   disp->display();
 }

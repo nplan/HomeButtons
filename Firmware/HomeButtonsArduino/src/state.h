@@ -5,15 +5,24 @@
 #include "buttons.h"
 
 class State {
-public:
-  // #### FACTORY ####
-  String serial_number = "";  // len = 8
-  String random_id = "";      // len = 6
-  String model_name = "";     // 1 < len < 20
-  String model_id = "";       // len = 2
-  String hw_version = "";     // len = 3
-  String unique_id = "";      // len = 20
+private:
+  struct Factory {
+    String serial_number = "";  // len = 8
+    String random_id = "";      // len = 6
+    String model_name = "";     // 1 < len < 20
+    String model_id = "";       // len = 2
+    String hw_version = "";     // len = 3
+    String unique_id = "";      // len = 20
+  } m_factory;
 
+public:
+  const Factory& factory() const { return m_factory; }
+  void set_serial_number(const String& str) { m_factory.serial_number = str; }
+  void set_random_id(const String& str) { m_factory.random_id = str; }
+  void set_model_name(const String& str) { m_factory.model_name = str; }
+  void set_model_id(const String& str) { m_factory.model_id = str; }
+  void set_hw_version(const String& str) { m_factory.hw_version = str; }
+  void set_unique_id(const String& str) { m_factory.unique_id = str; }
   // #### USER ####
   // network
   String mqtt_server = "";
