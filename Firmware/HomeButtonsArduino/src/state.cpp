@@ -1,10 +1,7 @@
 #include "state.h"
 #include "config.h"
-#include <Preferences.h>
 
 State device_state = {};
-
-static Preferences preferences;
 
 void State::save_factory() {
   preferences.begin("factory", false);

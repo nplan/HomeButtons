@@ -1,10 +1,11 @@
-#ifndef B6D78A60_02AF_4C43_ADDA_53714596C946
-#define B6D78A60_02AF_4C43_ADDA_53714596C946
+#ifndef HOMEBUTTONS_STATE_H
+#define HOMEBUTTONS_STATE_H
 
-#include "arduino.h"
-
+#include <Preferences.h>
 #include "buttons.h"
-struct State {
+
+class State {
+public:
   // #### FACTORY ####
   String serial_number = "";  // len = 8
   String random_id = "";      // len = 6
@@ -111,8 +112,11 @@ struct State {
   void set_btn_label(uint8_t i, String label);
   void set_topics();
   String get_button_topic(uint8_t btn_idx, Button::ButtonAction action);
+
+private:
+  Preferences preferences;
 };
 
 extern State device_state;
 
-#endif /* B6D78A60_02AF_4C43_ADDA_53714596C946 */
+#endif // HOMEBUTTONS_STATE_H
