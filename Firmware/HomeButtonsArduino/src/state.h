@@ -32,7 +32,7 @@ private:
 
   struct Personalization {
     String device_name = "";
-    char btn_labels[NUM_BUTTONS][BTN_LABEL_MAXLEN + 1];
+    char btn_labels[NUM_BUTTONS][BTN_LABEL_MAXLEN + 1] = {};
     uint16_t sensor_interval = 0;  // minutes
   } m_personalization;
 
