@@ -36,6 +36,25 @@ private:
     uint16_t sensor_interval = 0;  // minutes
   } m_personalization;
 
+  struct Topics {
+    String t_common = "";
+    String t_cmd = "";
+    String t_btn_press[NUM_BUTTONS];
+    String t_btn_press_double[NUM_BUTTONS];
+    String t_btn_press_triple[NUM_BUTTONS];
+    String t_btn_press_quad[NUM_BUTTONS];
+    String t_temperature = "";
+    String t_humidity = "";
+    String t_battery = "";
+    String t_sensor_interval_cmd = "";
+    String t_sensor_interval_state = "";
+    String t_btn_label_state[NUM_BUTTONS];
+    String t_btn_label_cmd[NUM_BUTTONS];
+    String t_awake_mode_state = "";
+    String t_awake_mode_cmd = "";
+    String t_awake_mode_avlb = "";
+  } m_topics;
+
 public:
   const Factory& factory() const { return m_factory; }
   void set_serial_number(const String& str) { m_factory.serial_number = str; }
@@ -58,6 +77,8 @@ public:
   String get_btn_label(uint8_t i);
   void set_btn_label(uint8_t i, String label);
 
+  const Topics& topics() const { return m_topics; }
+
 
   // #### PERSISTED VARS ####
   bool low_batt_mode = false;
@@ -77,24 +98,6 @@ public:
   bool send_discovery_config = false;
   bool silent_restart = false;
 
-  // #### NOT SAVED ####
-  // topics
-  String t_common = "";
-  String t_cmd = "";
-  String t_btn_press[NUM_BUTTONS];
-  String t_btn_press_double[NUM_BUTTONS];
-  String t_btn_press_triple[NUM_BUTTONS];
-  String t_btn_press_quad[NUM_BUTTONS];
-  String t_temperature = "";
-  String t_humidity = "";
-  String t_battery = "";
-  String t_sensor_interval_cmd = "";
-  String t_sensor_interval_state = "";
-  String t_btn_label_state[NUM_BUTTONS];
-  String t_btn_label_cmd[NUM_BUTTONS];
-  String t_awake_mode_state = "";
-  String t_awake_mode_cmd = "";
-  String t_awake_mode_avlb = "";
 
   // flags
   bool display_redraw = false;

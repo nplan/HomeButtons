@@ -166,37 +166,37 @@ void State::set_btn_label(uint8_t i, String label) {
 }
 
 void State::set_topics() {
-  t_common = m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
-  t_cmd = t_common + "cmd/";
+  m_topics.t_common = m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
+  m_topics.t_cmd = m_topics.t_common + "cmd/";
 
   // button press topics
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    t_btn_press[i] = t_common + "button_" + String(i + 1);
-    t_btn_press_double[i] = t_common + "button_" + String(i + 1) + "_double";
-    t_btn_press_triple[i] = t_common + "button_" + String(i + 1) + "_triple";
-    t_btn_press_quad[i] = t_common + "button_" + String(i + 1) + "_quad";
+    m_topics.t_btn_press[i] = m_topics.t_common + "button_" + String(i + 1);
+    m_topics.t_btn_press_double[i] = m_topics.t_common + "button_" + String(i + 1) + "_double";
+    m_topics.t_btn_press_triple[i] = m_topics.t_common + "button_" + String(i + 1) + "_triple";
+    m_topics.t_btn_press_quad[i] = m_topics.t_common + "button_" + String(i + 1) + "_quad";
   }
 
   // sensors
-  t_temperature = t_common + "temperature";
-  t_humidity = t_common + "humidity";
-  t_battery = t_common + "battery";
+  m_topics.t_temperature = m_topics.t_common + "temperature";
+  m_topics.t_humidity = m_topics.t_common + "humidity";
+  m_topics.t_battery = m_topics.t_common + "battery";
 
   // sensor interval
-  t_sensor_interval_state = t_common + "sensor_interval";
-  t_sensor_interval_cmd = t_cmd + "sensor_interval";
+  m_topics.t_sensor_interval_state = m_topics.t_common + "sensor_interval";
+  m_topics.t_sensor_interval_cmd = m_topics.t_cmd + "sensor_interval";
 
   // button label state & cmd
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    t_btn_label_state[i] =
-        t_common + "btn_" + String(i + 1) + "_label";
-    t_btn_label_cmd[i] = t_cmd + "btn_" + String(i + 1) + "_label";
+    m_topics.t_btn_label_state[i] =
+        m_topics.t_common + "btn_" + String(i + 1) + "_label";
+    m_topics.t_btn_label_cmd[i] = m_topics.t_cmd + "btn_" + String(i + 1) + "_label";
   }
 
   // awake mode
-  t_awake_mode_state = t_common + "awake_mode";
-  t_awake_mode_cmd = t_cmd + "awake_mode";
-  t_awake_mode_avlb = t_awake_mode_state + "/available";
+  m_topics.t_awake_mode_state = m_topics.t_common + "awake_mode";
+  m_topics.t_awake_mode_cmd = m_topics.t_cmd + "awake_mode";
+  m_topics.t_awake_mode_avlb = m_topics.t_awake_mode_state + "/available";
 
 }
 

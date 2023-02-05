@@ -76,78 +76,78 @@ void end_buttons() {
 }
 
 void publish_sensors() {
-  network.publish(device_state.t_temperature.c_str(),
+  network.publish(device_state.topics().t_temperature.c_str(),
                   String(device_state.temperature).c_str());
-  network.publish(device_state.t_humidity.c_str(),
+  network.publish(device_state.topics().t_humidity.c_str(),
                   String(device_state.humidity).c_str());
-  network.publish(device_state.t_battery.c_str(),
+  network.publish(device_state.topics().t_battery.c_str(),
                   String(device_state.battery_pct).c_str());
 }
 
 void publish_awake_mode_avlb() {
   if (HW.is_dc_connected()) {
-    network.publish(device_state.t_awake_mode_avlb.c_str(), "online", true);
+    network.publish(device_state.topics().t_awake_mode_avlb.c_str(), "online", true);
   } else {
-    network.publish(device_state.t_awake_mode_avlb.c_str(), "offline", true);
+    network.publish(device_state.topics().t_awake_mode_avlb.c_str(), "offline", true);
   }
 }
 
 void mqtt_callback(String topic, String payload) {
-  if (topic == device_state.t_sensor_interval_cmd) {
+  if (topic == device_state.topics().t_sensor_interval_cmd) {
     uint16_t mins = payload.toInt();
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
       device_state.set_sensor_interval(mins);
       device_state.save_all();
-      network.publish(device_state.t_sensor_interval_state.c_str(),
+      network.publish(device_state.topics().t_sensor_interval_state.c_str(),
                       String(device_state.sensor_interval()).c_str(), true);
       update_discovery_config();
       log_d("[DEVICE] sensor interval set to %d minutes", mins);
       publish_sensors();
     }
-    network.publish(device_state.t_sensor_interval_cmd.c_str(), nullptr, true);
+    network.publish(device_state.topics().t_sensor_interval_cmd.c_str(), nullptr, true);
   }
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    if (topic == device_state.t_btn_label_cmd[i]) {
+    if (topic == device_state.topics().t_btn_label_cmd[i]) {
       device_state.set_btn_label(i, payload);
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
             device_state.get_btn_label(i).c_str());
-      network.publish(device_state.t_btn_label_state[i].c_str(),
+      network.publish(device_state.topics().t_btn_label_state[i].c_str(),
                       device_state.get_btn_label(i).c_str(), true);
-      network.publish(device_state.t_btn_label_cmd[i].c_str(), nullptr, true);
+      network.publish(device_state.topics().t_btn_label_cmd[i].c_str(), nullptr, true);
       device_state.display_redraw = true;
     }
   }
 
-  if (topic == device_state.t_awake_mode_cmd) {
+  if (topic == device_state.topics().t_awake_mode_cmd) {
     if (payload == "ON") {
       device_state.user_awake_mode = true;
       device_state.awake_mode = true;
       device_state.save_all();
-      network.publish(device_state.t_awake_mode_state.c_str(), "ON", true);
+      network.publish(device_state.topics().t_awake_mode_state.c_str(), "ON", true);
       log_d("[DEVICE] user awake mode set to: ON");
       log_d("[DEVICE] resetting to awake mode...");
     } else if (payload == "OFF") {
       device_state.user_awake_mode = false;
       device_state.save_all();
-      network.publish(device_state.t_awake_mode_state.c_str(), "OFF", true);
+      network.publish(device_state.topics().t_awake_mode_state.c_str(), "OFF", true);
       log_d("[DEVICE] user awake mode set to: OFF");
     }
-    network.publish(device_state.t_awake_mode_cmd.c_str(), nullptr, true);
+    network.publish(device_state.topics().t_awake_mode_cmd.c_str(), nullptr, true);
   }
 }
 
 void net_on_connect() {
-  network.subscribe(device_state.t_cmd + "#");
+  network.subscribe(device_state.topics().t_cmd + "#");
   delay(100);
   publish_awake_mode_avlb();
-  network.publish(device_state.t_sensor_interval_state.c_str(),
+  network.publish(device_state.topics().t_sensor_interval_state.c_str(),
                   String(device_state.sensor_interval()).c_str(), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    auto t = device_state.t_btn_label_state[i];
+    auto t = device_state.topics().t_btn_label_state[i];
     network.publish(t.c_str(), device_state.get_btn_label(i).c_str(), true);
   }
-  network.publish(device_state.t_awake_mode_state.c_str(),
+  network.publish(device_state.topics().t_awake_mode_state.c_str(),
                 (device_state.user_awake_mode) ? "ON" : "OFF", true);
 
   if (device_state.send_discovery_config) {
