@@ -59,12 +59,12 @@ void State::load_user() {
   m_network.mqtt.password = preferences.getString("mqtt_pass", "");
   m_network.mqtt.base_topic = preferences.getString("base_topic", BASE_TOPIC_DFLT);
   m_network.mqtt.discovery_prefix = preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
-  m_personalization.btn_labels[0] = preferences.getString("btn1_txt", BTN_1_LABEL_DFLT);
-  m_personalization.btn_labels[1] = preferences.getString("btn2_txt", BTN_2_LABEL_DFLT);
-  m_personalization.btn_labels[2] = preferences.getString("btn3_txt", BTN_3_LABEL_DFLT);
-  m_personalization.btn_labels[3] = preferences.getString("btn4_txt", BTN_4_LABEL_DFLT);
-  m_personalization.btn_labels[4] = preferences.getString("btn5_txt", BTN_5_LABEL_DFLT);
-  m_personalization.btn_labels[5] = preferences.getString("btn6_txt", BTN_6_LABEL_DFLT);
+  set_btn_label(0, preferences.getString("btn1_txt", BTN_1_LABEL_DFLT).c_str());
+  set_btn_label(1, preferences.getString("btn2_txt", BTN_2_LABEL_DFLT).c_str());
+  set_btn_label(2, preferences.getString("btn3_txt", BTN_3_LABEL_DFLT).c_str());
+  set_btn_label(3, preferences.getString("btn4_txt", BTN_4_LABEL_DFLT).c_str());
+  set_btn_label(4, preferences.getString("btn5_txt", BTN_5_LABEL_DFLT).c_str());
+  set_btn_label(5, preferences.getString("btn6_txt", BTN_6_LABEL_DFLT).c_str());
   m_personalization.sensor_interval = preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   preferences.end();
 }
@@ -151,7 +151,7 @@ void State::clear_all() {
   clear_persisted();
 }
 
-String State::get_btn_label(uint8_t i) {
+const char* State::get_btn_label(uint8_t i) const {
   if (i < NUM_BUTTONS) {
     return m_personalization.btn_labels[i];
   } else {
@@ -159,9 +159,9 @@ String State::get_btn_label(uint8_t i) {
   }
 }
 
-void State::set_btn_label(uint8_t i, String label) {
+void State::set_btn_label(uint8_t i, const char* label) {
   if (i < NUM_BUTTONS) {
-    m_personalization.btn_labels[i] = label.substring(0, BTN_LABEL_MAXLEN);
+    snprintf(m_personalization.btn_labels[i], sizeof(m_personalization.btn_labels[i]), "%s", label);
   }
 }
 

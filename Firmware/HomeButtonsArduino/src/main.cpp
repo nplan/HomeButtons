@@ -92,7 +92,7 @@ void publish_awake_mode_avlb() {
   }
 }
 
-void mqtt_callback(String topic, String payload) {
+void mqtt_callback(const String& topic, const String& payload) {
   if (topic == device_state.topics().t_sensor_interval_cmd) {
     uint16_t mins = payload.toInt();
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
@@ -109,11 +109,11 @@ void mqtt_callback(String topic, String payload) {
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     if (topic == device_state.topics().t_btn_label_cmd[i]) {
-      device_state.set_btn_label(i, payload);
+      device_state.set_btn_label(i, payload.c_str());
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
-            device_state.get_btn_label(i).c_str());
+            device_state.get_btn_label(i));
       network.publish(device_state.topics().t_btn_label_state[i].c_str(),
-                      device_state.get_btn_label(i).c_str(), true);
+                      device_state.get_btn_label(i), true);
       network.publish(device_state.topics().t_btn_label_cmd[i].c_str(), nullptr, true);
       device_state.display_redraw = true;
     }
@@ -145,7 +145,7 @@ void net_on_connect() {
                   String(device_state.sensor_interval()).c_str(), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     auto t = device_state.topics().t_btn_label_state[i];
-    network.publish(t.c_str(), device_state.get_btn_label(i).c_str(), true);
+    network.publish(t.c_str(), device_state.get_btn_label(i), true);
   }
   network.publish(device_state.topics().t_awake_mode_state.c_str(),
                 (device_state.user_awake_mode) ? "ON" : "OFF", true);

@@ -126,12 +126,12 @@ void start_setup() {
   mqtt_password_param.setValue(device_state.network().mqtt.password.c_str(), 50);
   base_topic_param.setValue(device_state.network().mqtt.base_topic.c_str(), 50);
   discovery_prefix_param.setValue(device_state.network().mqtt.discovery_prefix.c_str(), 50);
-  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
-  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
-  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
-  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(), 20);
-  btn5_label_param.setValue(device_state.get_btn_label(4).c_str(), 20);
-  btn6_label_param.setValue(device_state.get_btn_label(5).c_str(), 20);
+  btn1_label_param.setValue(device_state.get_btn_label(0), 20);
+  btn2_label_param.setValue(device_state.get_btn_label(1), 20);
+  btn3_label_param.setValue(device_state.get_btn_label(2), 20);
+  btn4_label_param.setValue(device_state.get_btn_label(3), 20);
+  btn5_label_param.setValue(device_state.get_btn_label(4), 20);
+  btn6_label_param.setValue(device_state.get_btn_label(5), 20);
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
   wifi_manager.addParameter(&mqtt_port_param);

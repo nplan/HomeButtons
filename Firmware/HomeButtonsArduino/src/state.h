@@ -32,7 +32,7 @@ private:
 
   struct Personalization {
     String device_name = "";
-    String btn_labels[NUM_BUTTONS];
+    char btn_labels[NUM_BUTTONS][BTN_LABEL_MAXLEN + 1];
     uint16_t sensor_interval = 0;  // minutes
   } m_personalization;
 
@@ -74,8 +74,8 @@ public:
   void set_device_name(const String& device_name) { m_personalization.device_name = device_name; }
   uint16_t sensor_interval() const { return m_personalization.sensor_interval; }
   void set_sensor_interval(uint16_t interval_min) { m_personalization.sensor_interval = interval_min; }
-  String get_btn_label(uint8_t i);
-  void set_btn_label(uint8_t i, String label);
+  const char* get_btn_label(uint8_t i) const;
+  void set_btn_label(uint8_t i, const char* label);
 
   const Topics& topics() const { return m_topics; }
 
