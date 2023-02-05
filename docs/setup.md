@@ -12,7 +12,7 @@ Just follow this guide and look for a note.
 You will need:
 
 1. Depending on the desired power source (one out of):
-   1. 18650 Li-Ion battery cell (not included). **WARNING** some button top batteries will not fit properly: maximum length is 65.0mm
+   1. 18650 Li-Ion battery cell (not included). ***WARNING:*** maximum length is 65.5 mm. Button top cells might not fit properly.
    1. USB-C power brick
    1. 5V DC power supply
 1. A flat headed screwdriver
@@ -31,7 +31,8 @@ You can skip this step if you purchased a fully soldered device.
 
 > Skip this step if you will power the device by USB-C or 5V DC input.
 
-You need one 18650 Li-Ion battery cell not exceeding 65.0mm (**not included**). Some button top batteries might not fit properly. Please use a high quality cell with greater than 3000 mAh capacity.
+You need one 18650 Li-Ion battery cell (**not included**). Please use a high quality cell with greater than 3000 mAh capacity.
+The length of the cell must not exceed 65.5 mm. Button top cells might not fit properly. 
 
 1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull the cover off.
 
