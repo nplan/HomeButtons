@@ -34,12 +34,12 @@ void State::clear_factory() {
 void State::save_user() {
   preferences.begin("user", false);
   preferences.putString("device_name", device_name);
-  preferences.putString("mqtt_srv", mqtt_server);
-  preferences.putUInt("mqtt_port", mqtt_port);
-  preferences.putString("mqtt_user", mqtt_user);
-  preferences.putString("mqtt_pass", mqtt_password);
-  preferences.putString("base_topic", base_topic);
-  preferences.putString("disc_prefix", discovery_prefix);
+  preferences.putString("mqtt_srv", m_network.mqtt.server);
+  preferences.putUInt("mqtt_port", m_network.mqtt.port);
+  preferences.putString("mqtt_user", m_network.mqtt.user);
+  preferences.putString("mqtt_pass", m_network.mqtt.password);
+  preferences.putString("base_topic", m_network.mqtt.base_topic);
+  preferences.putString("disc_prefix", m_network.mqtt.discovery_prefix);
   preferences.putString("btn1_txt", btn_1_label);
   preferences.putString("btn2_txt", btn_2_label);
   preferences.putString("btn3_txt", btn_3_label);
@@ -53,12 +53,12 @@ void State::save_user() {
 void State::load_user() {
   preferences.begin("user", true);
   device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
-  mqtt_server = preferences.getString("mqtt_srv", "");
-  mqtt_port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
-  mqtt_user = preferences.getString("mqtt_user", "");
-  mqtt_password = preferences.getString("mqtt_pass", "");
-  base_topic = preferences.getString("base_topic", BASE_TOPIC_DFLT);
-  discovery_prefix = preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
+  m_network.mqtt.server = preferences.getString("mqtt_srv", "");
+  m_network.mqtt.port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
+  m_network.mqtt.user = preferences.getString("mqtt_user", "");
+  m_network.mqtt.password = preferences.getString("mqtt_pass", "");
+  m_network.mqtt.base_topic = preferences.getString("base_topic", BASE_TOPIC_DFLT);
+  m_network.mqtt.discovery_prefix = preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
   btn_1_label = preferences.getString("btn1_txt", BTN_1_LABEL_DFLT);
   btn_2_label = preferences.getString("btn2_txt", BTN_2_LABEL_DFLT);
   btn_3_label = preferences.getString("btn3_txt", BTN_3_LABEL_DFLT);
@@ -194,7 +194,7 @@ void State::set_btn_label(uint8_t i, String label) {
 }
 
 void State::set_topics() {
-  t_common = base_topic + "/" + device_name + "/";
+  t_common = m_network.mqtt.base_topic + "/" + device_name + "/";
   t_cmd = t_common + "cmd/";
 
   // button press topics
@@ -249,6 +249,6 @@ String State::get_button_topic(uint8_t btn_id, Button::ButtonAction action) {
     default:
       return "";
   }
-  String topic_common = base_topic + "/" + device_name + "/";
+  String topic_common = m_network.mqtt.base_topic + "/" + device_name + "/";
   return topic_common + "button_" + String(btn_id) + append;
 }

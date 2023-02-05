@@ -450,8 +450,8 @@ void Display::draw_welcome() {
 }
 
 void Display::draw_ap_config() {
-  String contents = String("WIFI:T:WPA;S:") + device_state.ap_ssid +
-                    ";P:" + device_state.ap_password + ";;";
+  String contents = String("WIFI:T:WPA;S:") + device_state.network().ap_ssid +
+                    ";P:" + device_state.network().ap_password + ";;";
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -502,20 +502,20 @@ void Display::draw_ap_config() {
   disp->print("Wi-Fi:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 235);
-  disp->print(device_state.ap_ssid.c_str());
+  disp->print(device_state.network().ap_ssid.c_str());
 
   disp->setFont(&FreeSans9pt7b);
   disp->setCursor(0, 260);
   disp->print("Password:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 275);
-  disp->print(device_state.ap_password.c_str());
+  disp->print(device_state.network().ap_password.c_str());
 
   disp->display();
 }
 
 void Display::draw_web_config() {
-  String contents = String("http://") + device_state.ip;
+  String contents = String("http://") + device_state.network().ip;
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -567,7 +567,7 @@ void Display::draw_web_config() {
   disp->setCursor(0, 240);
   disp->print("http://");
   disp->setCursor(0, 260);
-  disp->print(device_state.ip.c_str());
+  disp->print(device_state.network().ip.c_str());
 
   disp->display();
 }

@@ -10,7 +10,7 @@
 
 void send_discovery_config() {
   // Construct topics
-  String trigger_topic_common = device_state.discovery_prefix +
+  String trigger_topic_common = device_state.network().mqtt.discovery_prefix +
                                 "/device_automation/" + device_state.factory().unique_id;
 
   // button press config topics
@@ -39,23 +39,23 @@ void send_discovery_config() {
 
   // sensor config topics
   String sensor_topic_common =
-      device_state.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
+      device_state.network().mqtt.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
   String temperature_config_topic = sensor_topic_common + "/temperature/config";
   String humidity_config_topic = sensor_topic_common + "/humidity/config";
   String battery_config_topic = sensor_topic_common + "/battery/config";
 
   // command config topics
-  String sensor_interval_config_topic = device_state.discovery_prefix +
+  String sensor_interval_config_topic = device_state.network().mqtt.discovery_prefix +
                                         "/number/" + device_state.factory().unique_id +
                                         "/sensor_interval/config";
   String button_label_config_topics[NUM_BUTTONS];
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    button_label_config_topics[i] = device_state.discovery_prefix + "/text/" +
+    button_label_config_topics[i] = device_state.network().mqtt.discovery_prefix + "/text/" +
                                     device_state.factory().unique_id + "/button_" +
                                     String(i + 1) + "_label/config";
   }
   String switch_topic_common =
-      device_state.discovery_prefix + "/switch/" + device_state.factory().unique_id;
+      device_state.network().mqtt.discovery_prefix + "/switch/" + device_state.factory().unique_id;
   String awake_mode_config_topic = switch_topic_common + "/awake_mode/config";
 
   // device objects
@@ -223,7 +223,7 @@ void send_discovery_config() {
 void update_discovery_config() {
   // sensor config topics
   String sensor_topic_common =
-      device_state.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
+      device_state.network().mqtt.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
   String temperature_config_topic = sensor_topic_common + "/temperature/config";
   String humidity_config_topic = sensor_topic_common + "/humidity/config";
   String battery_config_topic = sensor_topic_common + "/battery/config";

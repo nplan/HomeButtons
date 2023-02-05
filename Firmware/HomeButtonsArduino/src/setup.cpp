@@ -41,8 +41,7 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 static bool web_portal_saved = false;
 
 void start_wifi_setup() {
-  device_state.ap_ssid = String("HB-") + device_state.factory().random_id;
-  device_state.ap_password = SETUP_AP_PASSWORD;
+  device_state.set_ap_ssid_and_password(String("HB-") + device_state.factory().random_id, SETUP_AP_PASSWORD);
   display.disp_ap_config();
   display.update();
 
@@ -55,7 +54,7 @@ void start_wifi_setup() {
   wifi_manager.setShowInfoUpdate(false);
 
   bool wifi_connected = wifi_manager.startConfigPortal(
-      device_state.ap_ssid.c_str(), SETUP_AP_PASSWORD);
+      device_state.network().ap_ssid.c_str(), device_state.network().ap_password.c_str());
 
   bool wifi_connected_2 = false;
   WiFi.mode(WIFI_STA);
@@ -94,12 +93,13 @@ void start_wifi_setup() {
 
 void save_params_callback() {
   device_state.device_name = device_name_param.getValue();
-  device_state.mqtt_server = mqtt_server_param.getValue();
-  device_state.mqtt_port = String(mqtt_port_param.getValue()).toInt();
-  device_state.mqtt_user = mqtt_user_param.getValue();
-  device_state.mqtt_password = mqtt_password_param.getValue();
-  device_state.base_topic = base_topic_param.getValue();
-  device_state.discovery_prefix = discovery_prefix_param.getValue();
+  device_state.set_mqtt_parameters(
+    mqtt_server_param.getValue(),
+    String(mqtt_port_param.getValue()).toInt(),
+    mqtt_user_param.getValue(),
+    mqtt_password_param.getValue(),
+    base_topic_param.getValue(),
+    discovery_prefix_param.getValue());
   device_state.btn_1_label = check_button_label(btn1_label_param.getValue());
   device_state.btn_2_label = check_button_label(btn2_label_param.getValue());
   device_state.btn_3_label = check_button_label(btn3_label_param.getValue());
@@ -121,12 +121,12 @@ void start_setup() {
 
   // parameters
   device_name_param.setValue(device_state.device_name.c_str(), 20);
-  mqtt_server_param.setValue(device_state.mqtt_server.c_str(), 50);
-  mqtt_port_param.setValue(String(device_state.mqtt_port).c_str(), 6);
-  mqtt_user_param.setValue(device_state.mqtt_user.c_str(), 50);
-  mqtt_password_param.setValue(device_state.mqtt_password.c_str(), 50);
-  base_topic_param.setValue(device_state.base_topic.c_str(), 50);
-  discovery_prefix_param.setValue(device_state.discovery_prefix.c_str(), 50);
+  mqtt_server_param.setValue(device_state.network().mqtt.server.c_str(), 50);
+  mqtt_port_param.setValue(String(device_state.network().mqtt.port).c_str(), 6);
+  mqtt_user_param.setValue(device_state.network().mqtt.user.c_str(), 50);
+  mqtt_password_param.setValue(device_state.network().mqtt.password.c_str(), 50);
+  base_topic_param.setValue(device_state.network().mqtt.base_topic.c_str(), 50);
+  discovery_prefix_param.setValue(device_state.network().mqtt.discovery_prefix.c_str(), 50);
   btn1_label_param.setValue(device_state.btn_1_label.c_str(), 20);
   btn2_label_param.setValue(device_state.btn_2_label.c_str(), 20);
   btn3_label_param.setValue(device_state.btn_3_label.c_str(), 20);
@@ -163,7 +163,7 @@ void start_setup() {
       ESP.restart();
     }
   }
-  device_state.ip = WiFi.localIP().toString();
+  device_state.set_ip(WiFi.localIP().toString());
   display.disp_web_config();
   display.update();
   uint32_t setup_start_time = millis();
@@ -183,12 +183,12 @@ void start_setup() {
   uint32_t mqtt_start_time = millis();
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
-  mqtt_client.setServer(device_state.mqtt_server.c_str(), device_state.mqtt_port);
-  if (device_state.mqtt_user.length() > 0 &&
-      device_state.mqtt_password.length() > 0) {
+  mqtt_client.setServer(device_state.network().mqtt.server.c_str(), device_state.network().mqtt.port);
+  if (device_state.network().mqtt.user.length() > 0 &&
+      device_state.network().mqtt.password.length() > 0) {
     mqtt_client.connect(device_state.factory().unique_id.c_str(),
-                               device_state.mqtt_user.c_str(),
-                               device_state.mqtt_password.c_str());
+                               device_state.network().mqtt.user.c_str(),
+                               device_state.network().mqtt.password.c_str());
   } else {
     mqtt_client.connect(device_state.factory().unique_id.c_str());
   }

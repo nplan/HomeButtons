@@ -15,6 +15,20 @@ private:
     String unique_id = "";      // len = 20
   } m_factory;
 
+  struct Network {
+    String ip = "";
+    String ap_ssid = "";
+    String ap_password = "";
+    struct {
+      String server = "";
+      int32_t port = 0;
+      String user = "";
+      String password = "";
+      String base_topic = "";
+      String discovery_prefix = "";
+    } mqtt;
+  } m_network;
+
 public:
   const Factory& factory() const { return m_factory; }
   void set_serial_number(const String& str) { m_factory.serial_number = str; }
@@ -23,14 +37,13 @@ public:
   void set_model_id(const String& str) { m_factory.model_id = str; }
   void set_hw_version(const String& str) { m_factory.hw_version = str; }
   void set_unique_id(const String& str) { m_factory.unique_id = str; }
-  // #### USER ####
-  // network
-  String mqtt_server = "";
-  String mqtt_user = "";
-  String mqtt_password = "";
-  int32_t mqtt_port = 0;
-  String base_topic = "";
-  String discovery_prefix = "";
+
+  const Network& network() const { return m_network; }
+  void set_ip(const String& str) { m_network.ip = str; }
+  void set_ap_ssid_and_password(const String& ssid, const String& pwd) { m_network.ap_ssid = ssid; m_network.ap_password = pwd; }
+  void set_mqtt_parameters(const String& server, int32_t port, const String& user, const String& password, const String& base_topic, const String& discovery_prefix)
+  { m_network.mqtt = {server, port, user, password, base_topic, discovery_prefix}; }
+
 
   // personalization
   String device_name = "";
@@ -91,11 +104,6 @@ public:
   bool dc_connected = false;
   bool battery_present = false;
   bool battery_low = false;
-
-  // network
-  String ip = "";
-  String ap_ssid = "";
-  String ap_password = "";
 
   // #### END ####
 
