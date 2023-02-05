@@ -13,6 +13,7 @@
 #include "network.h"
 #include "setup.h"
 #include "state.h"
+#include "memory.h"
 
 enum class BootCause { RESET, TIMER, BUTTON };
 
@@ -635,22 +636,7 @@ void main_task(void *param) {
         case StateMachineState::AWAIT_SHUTDOWN: {
           if (display.get_state() == Display::State::IDLE &&
               leds.get_state() == LEDs::State::IDLE) {
-            uint32_t btns_free = uxTaskGetStackHighWaterMark(button_task_h);
-            uint32_t disp_free = uxTaskGetStackHighWaterMark(display_task_h);
-            uint32_t net_free = uxTaskGetStackHighWaterMark(network_task_h);
-            uint32_t leds_free = uxTaskGetStackHighWaterMark(leds_task_h);
-            uint32_t main_free = uxTaskGetStackHighWaterMark(main_task_h);
-            uint32_t num_tasks = uxTaskGetNumberOfTasks();
-            log_d(
-                "[DEVICE] free stack: btns %d, disp %d, net %d, leds %d, main "
-                "%d, num tasks %d",
-                btns_free, disp_free, net_free, leds_free, main_free,
-                num_tasks);
-            uint32_t esp_free_heap = ESP.getFreeHeap();
-            uint32_t esp_min_free_heap = ESP.getMinFreeHeap();
-            uint32_t rtos_free_heap = xPortGetFreeHeapSize();
-            log_d("[DEVICE] free heap: esp %d, esp min %d, rtos %d",
-                  esp_free_heap, esp_min_free_heap, rtos_free_heap);
+            memory::log_stack_status(button_task_h, display_task_h, network_task_h, leds_task_h, main_task_h);
             if (device_state.awake_mode) {
               device_state.silent_restart = true;
               device_state.save_all();
@@ -727,22 +713,7 @@ void main_task(void *param) {
             publish_sensors();
             last_sensor_publish = millis();
             // log stack status
-            uint32_t btns_free = uxTaskGetStackHighWaterMark(button_task_h);
-            uint32_t disp_free = uxTaskGetStackHighWaterMark(display_task_h);
-            uint32_t net_free = uxTaskGetStackHighWaterMark(network_task_h);
-            uint32_t leds_free = uxTaskGetStackHighWaterMark(leds_task_h);
-            uint32_t main_free = uxTaskGetStackHighWaterMark(main_task_h);
-            uint32_t num_tasks = uxTaskGetNumberOfTasks();
-            log_d(
-                "[DEVICE] free stack: btns %d, disp %d, net %d, leds %d, main "
-                "%d, num tasks %d",
-                btns_free, disp_free, net_free, leds_free, main_free,
-                num_tasks);
-            uint32_t esp_free_heap = ESP.getFreeHeap();
-            uint32_t esp_min_free_heap = ESP.getMinFreeHeap();
-            uint32_t rtos_free_heap = xPortGetFreeHeapSize();
-            log_d("[DEVICE] free heap: esp %d, esp min %d, rtos %d",
-                  esp_free_heap, esp_min_free_heap, rtos_free_heap);
+            memory::log_stack_status(button_task_h, display_task_h, network_task_h, leds_task_h, main_task_h);
           } else if (millis() - last_display_redraw >= AWAKE_REDRAW_INTERVAL) {
             if (device_state.display_redraw) {
               device_state.display_redraw = false;
@@ -918,6 +889,7 @@ void main_task(void *param) {
       }  // end switch()
       if (ESP.getMinFreeHeap() < MIN_FREE_HEAP) {
         log_w("[DEVICE] free heap low, restarting...");
+        memory::log_stack_status(button_task_h, display_task_h, network_task_h, leds_task_h, main_task_h);
         device_state.silent_restart = true;
         device_state.save_all();
         ESP.restart();
