@@ -40,9 +40,6 @@ private:
     String t_common = "";
     String t_cmd = "";
     String t_btn_press[NUM_BUTTONS];
-    String t_btn_press_double[NUM_BUTTONS];
-    String t_btn_press_triple[NUM_BUTTONS];
-    String t_btn_press_quad[NUM_BUTTONS];
     String t_temperature = "";
     String t_humidity = "";
     String t_battery = "";

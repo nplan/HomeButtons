@@ -172,9 +172,6 @@ void State::set_topics() {
   // button press topics
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     m_topics.t_btn_press[i] = m_topics.t_common + "button_" + String(i + 1);
-    m_topics.t_btn_press_double[i] = m_topics.t_common + "button_" + String(i + 1) + "_double";
-    m_topics.t_btn_press_triple[i] = m_topics.t_common + "button_" + String(i + 1) + "_triple";
-    m_topics.t_btn_press_quad[i] = m_topics.t_common + "button_" + String(i + 1) + "_quad";
   }
 
   // sensors
