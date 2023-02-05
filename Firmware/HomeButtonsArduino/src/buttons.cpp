@@ -156,38 +156,29 @@ uint8_t Button::get_pin() { return pin; }
 
 uint16_t Button::get_id() { return id; }
 
-String Button::get_action_name(ButtonAction action) {
-  String press;
+const char* Button::get_action_name(ButtonAction action) {
   switch (action) {
     case IDLE:
-      press = "IDLE";
-      break;
+      return "IDLE";
     case SINGLE:
-      press = "SINGLE";
-      break;
+      return "SINGLE";
     case DOUBLE:
-      press = "DOUBLE";
-      break;
+      return "DOUBLE";
     case TRIPLE:
-      press = "TRIPLE";
-      break;
+      return "TRIPLE";
     case QUAD:
-      press = "QUAD";
-      break;
+      return "QUAD";
     case LONG_1:
-      press = "LONG_1";
-      break;
+      return "LONG_1";
     case LONG_2:
-      press = "LONG_2";
-      break;
+      return "LONG_2";
     case LONG_3:
-      press = "LONG_3";
-      break;
+      return "LONG_3";
     case LONG_4:
-      press = "LONG_4";
-      break;
+      return "LONG_4";
+    default:
+      return "";
   }
-  return press;
 }
 
 uint8_t Button::get_action_multi_count(ButtonAction action) {

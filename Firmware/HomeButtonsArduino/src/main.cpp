@@ -506,7 +506,7 @@ void main_task(void *param) {
           } else if (active_button->is_press_finished()) {
             btn_action = active_button->get_action();
             log_d("[DEVICE] BTN_%d pressed - state %s", active_button->get_id(),
-                  active_button->get_action_name(btn_action).c_str());
+                  active_button->get_action_name(btn_action));
             switch (btn_action) {
               case Button::SINGLE:
               case Button::DOUBLE:
@@ -792,7 +792,7 @@ void main_task(void *param) {
           } else if (active_button->is_press_finished()) {
             auto btn_action = active_button->get_action();
             log_d("[DEVICE] BTN_%d pressed - state %s", active_button->get_id(),
-                  active_button->get_action_name(btn_action).c_str());
+                  active_button->get_action_name(btn_action));
             switch (btn_action) {
               case Button::SINGLE:
               case Button::DOUBLE:

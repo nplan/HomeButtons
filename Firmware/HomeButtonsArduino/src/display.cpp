@@ -145,7 +145,7 @@ void Display::update() {
   }
 }
 
-void Display::disp_message(String message, uint32_t duration) {
+void Display::disp_message(const String& message, uint32_t duration) {
   UIState new_cmd_state{.page = DisplayPage::MESSAGE, .message = message};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
@@ -154,7 +154,7 @@ void Display::disp_message(String message, uint32_t duration) {
   set_cmd_state(new_cmd_state);
 }
 
-void Display::disp_message_large(String message, uint32_t duration) {
+void Display::disp_message_large(const String& message, uint32_t duration) {
   UIState new_cmd_state{.page = DisplayPage::MESSAGE_LARGE,
                              .message = message};
   if (duration > 0) {
@@ -163,7 +163,7 @@ void Display::disp_message_large(String message, uint32_t duration) {
   }
   set_cmd_state(new_cmd_state);
 }
-void Display::disp_error(String message, uint32_t duration) {
+void Display::disp_error(const String& message, uint32_t duration) {
   UIState new_cmd_state{.page = DisplayPage::ERROR, .message = message};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
@@ -220,7 +220,7 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
-void Display::draw_message(String message, bool error, bool large) {
+void Display::draw_message(const String& message, bool error, bool large) {
   disp->setRotation(0);
   disp->setTextColor(text_color);
   disp->setTextWrap(true);

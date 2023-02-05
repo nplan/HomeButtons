@@ -40,9 +40,9 @@ class Display {
   void end();
   void update();
 
-  void disp_message(String message, uint32_t duration = 0);
-  void disp_message_large(String message, uint32_t duration = 0);
-  void disp_error(String message, uint32_t duration = 0);
+  void disp_message(const String& message, uint32_t duration = 0);
+  void disp_message_large(const String& message, uint32_t duration = 0);
+  void disp_error(const String& message, uint32_t duration = 0);
   void disp_main();
   void disp_info();
   void disp_welcome();
@@ -70,7 +70,7 @@ class Display {
 
   void set_cmd_state(UIState cmd);
 
-  void draw_message(String message, bool error = false, bool large = false);
+  void draw_message(const String& message, bool error = false, bool large = false);
   void draw_main();
   void draw_info();
   void draw_welcome();

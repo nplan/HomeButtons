@@ -34,7 +34,7 @@ class Button {
   void clear();
   uint8_t get_pin();
   uint16_t get_id();
-  static String get_action_name(ButtonAction action);
+  static const char* get_action_name(ButtonAction action);
   static uint8_t get_action_multi_count(ButtonAction action);
 
  private:

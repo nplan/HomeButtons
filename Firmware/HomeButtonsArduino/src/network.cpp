@@ -271,7 +271,7 @@ bool Network::publish(const char* topic, const char* payload, bool retained) {
   return ret;
 }
 
-bool Network::subscribe(String topic) {
+bool Network::subscribe(const String& topic) {
   if (topic.length() <= 0) {
     log_w("[NET] sub to empty topic blocked", topic.c_str());
     return false;
@@ -287,7 +287,7 @@ bool Network::subscribe(String topic) {
   return ret;
 }
 
-void Network::set_callback(std::function<void(String, String)> callback) {
+void Network::set_callback(std::function<void(const String&, const String&)> callback) {
   usr_callback = callback;
 }
 

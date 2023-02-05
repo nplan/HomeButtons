@@ -26,8 +26,8 @@ class Network {
     State get_state();
 
     bool publish(const char* topic, const char* payload, bool retained = false);
-    bool subscribe(String topic);
-    void set_callback(std::function<void(String, String)> callback);
+    bool subscribe(const String& topic);
+    void set_callback(std::function<void(const String&, const String&)> callback);
     void set_on_connect(std::function<void()> on_connect);
 
     uint32_t get_cmd_connect_time();
@@ -60,7 +60,7 @@ class Network {
     StateMachineState sm_state = IDLE;
     StateMachineState prev_sm_state = IDLE;
 
-    std::function<void(String, String)> usr_callback = NULL;
+    std::function<void(const String&, const String&)> usr_callback = NULL;
     std::function<void()> on_connect = NULL;
 
     bool connect_mqtt();

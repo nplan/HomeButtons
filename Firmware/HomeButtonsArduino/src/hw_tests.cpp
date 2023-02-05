@@ -1,6 +1,6 @@
 #include "hw_tests.h"
 
-void hw_tests::blink_leds(String hw_version) {
+void hw_tests::blink_leds(const String& hw_version) {
   HW.init(hw_version);
   HW.begin();
   while (1) {
@@ -27,7 +27,7 @@ void hw_tests::blink_leds(String hw_version) {
   }
 }
 
-void hw_tests::led_on_button(String hw_version) {
+void hw_tests::led_on_button(const String& hw_version) {
   HW.init(hw_version);
   HW.begin();
   while (1) {
@@ -40,7 +40,7 @@ void hw_tests::led_on_button(String hw_version) {
   }
 }
 
-void hw_tests::wifi_stress(String hw_version) {
+void hw_tests::wifi_stress(const String& hw_version) {
   HW.init(hw_version);
   HW.begin();
   WiFi.mode(WIFI_STA);
