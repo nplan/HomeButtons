@@ -45,7 +45,7 @@ void start_esp_sleep() {
     if (device_state.info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
     } else {
-      esp_sleep_enable_timer_wakeup(device_state.sensor_interval * 60000000UL);
+      esp_sleep_enable_timer_wakeup(device_state.sensor_interval() * 60000000UL);
     }
   }
   log_i("[DEVICE] deep sleep... z z z");
@@ -97,10 +97,10 @@ void mqtt_callback(String topic, String payload) {
   if (topic == device_state.t_sensor_interval_cmd) {
     uint16_t mins = payload.toInt();
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
-      device_state.sensor_interval = mins;
+      device_state.set_sensor_interval(mins);
       device_state.save_all();
       network.publish(device_state.t_sensor_interval_state.c_str(),
-                      String(device_state.sensor_interval).c_str(), true);
+                      String(device_state.sensor_interval()).c_str(), true);
       update_discovery_config();
       log_d("[DEVICE] sensor interval set to %d minutes", mins);
       publish_sensors();
@@ -143,7 +143,7 @@ void net_on_connect() {
   delay(100);
   publish_awake_mode_avlb();
   network.publish(device_state.t_sensor_interval_state.c_str(),
-                  String(device_state.sensor_interval).c_str(), true);
+                  String(device_state.sensor_interval()).c_str(), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     auto t = device_state.t_btn_label_state[i];
     network.publish(t.c_str(), device_state.get_btn_label(i).c_str(), true);

@@ -377,7 +377,7 @@ void Display::draw_info() {
   disp->setFont();
   disp->setTextSize(1);
   disp->setCursor(0, 288);
-  disp->print(device_state.device_name);
+  disp->print(device_state.device_name());
 
   disp->display();
 }

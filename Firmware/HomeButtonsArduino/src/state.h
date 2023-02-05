@@ -3,6 +3,7 @@
 
 #include <Preferences.h>
 #include "buttons.h"
+#include "config.h"
 
 class State {
 private:
@@ -29,6 +30,12 @@ private:
     } mqtt;
   } m_network;
 
+  struct Personalization {
+    String device_name = "";
+    String btn_labels[NUM_BUTTONS];
+    uint16_t sensor_interval = 0;  // minutes
+  } m_personalization;
+
 public:
   const Factory& factory() const { return m_factory; }
   void set_serial_number(const String& str) { m_factory.serial_number = str; }
@@ -44,16 +51,13 @@ public:
   void set_mqtt_parameters(const String& server, int32_t port, const String& user, const String& password, const String& base_topic, const String& discovery_prefix)
   { m_network.mqtt = {server, port, user, password, base_topic, discovery_prefix}; }
 
+  const String& device_name() const { return m_personalization.device_name; }
+  void set_device_name(const String& device_name) { m_personalization.device_name = device_name; }
+  uint16_t sensor_interval() const { return m_personalization.sensor_interval; }
+  void set_sensor_interval(uint16_t interval_min) { m_personalization.sensor_interval = interval_min; }
+  String get_btn_label(uint8_t i);
+  void set_btn_label(uint8_t i, String label);
 
-  // personalization
-  String device_name = "";
-  String btn_1_label = "";
-  String btn_2_label = "";
-  String btn_3_label = "";
-  String btn_4_label = "";
-  String btn_5_label = "";
-  String btn_6_label = "";
-  uint16_t sensor_interval = 0;  // minutes
 
   // #### PERSISTED VARS ####
   bool low_batt_mode = false;
@@ -77,17 +81,17 @@ public:
   // topics
   String t_common = "";
   String t_cmd = "";
-  String t_btn_press[6];
-  String t_btn_press_double[6];
-  String t_btn_press_triple[6];
-  String t_btn_press_quad[6];
+  String t_btn_press[NUM_BUTTONS];
+  String t_btn_press_double[NUM_BUTTONS];
+  String t_btn_press_triple[NUM_BUTTONS];
+  String t_btn_press_quad[NUM_BUTTONS];
   String t_temperature = "";
   String t_humidity = "";
   String t_battery = "";
   String t_sensor_interval_cmd = "";
   String t_sensor_interval_state = "";
-  String t_btn_label_state[6];
-  String t_btn_label_cmd[6];
+  String t_btn_label_state[NUM_BUTTONS];
+  String t_btn_label_cmd[NUM_BUTTONS];
   String t_awake_mode_state = "";
   String t_awake_mode_cmd = "";
   String t_awake_mode_avlb = "";
@@ -125,8 +129,6 @@ public:
   void load_all();
   void clear_all();
 
-  String get_btn_label(uint8_t i);
-  void set_btn_label(uint8_t i, String label);
   void set_topics();
   String get_button_topic(uint8_t btn_idx, Button::ButtonAction action);
 

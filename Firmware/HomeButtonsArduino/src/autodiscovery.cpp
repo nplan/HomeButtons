@@ -62,7 +62,7 @@ void send_discovery_config() {
   StaticJsonDocument<256> device_full;
   device_full["ids"][0] = device_state.factory().unique_id;
   device_full["mdl"] = device_state.factory().model_name;
-  device_full["name"] = device_state.device_name;
+  device_full["name"] = device_state.device_name();
   device_full["sw"] = SW_VERSION;
   device_full["hw"] = device_state.factory().hw_version;
   device_full["mf"] = MANUFACTURER;
@@ -130,11 +130,11 @@ void send_discovery_config() {
     network.publish(button_quad_press_config_topics[i].c_str(), buffer, true);
   }
 
-  uint16_t expire_after = device_state.sensor_interval * 60 + 60;  // seconds
+  uint16_t expire_after = device_state.sensor_interval() * 60 + 60;  // seconds
 
   {
     DynamicJsonDocument temp_conf(MQTT_PYLD_SIZE);
-    temp_conf["name"] = device_state.device_name + " Temperature";
+    temp_conf["name"] = device_state.device_name() + " Temperature";
     temp_conf["uniq_id"] = device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = device_state.t_temperature;
     temp_conf["dev_cla"] = "temperature";
@@ -147,7 +147,7 @@ void send_discovery_config() {
 
   {
     DynamicJsonDocument humidity_conf(MQTT_PYLD_SIZE);
-    humidity_conf["name"] = device_state.device_name + " Humidity";
+    humidity_conf["name"] = device_state.device_name() + " Humidity";
     humidity_conf["uniq_id"] = device_state.factory().unique_id + "_humidity";
     humidity_conf["stat_t"] = device_state.t_humidity;
     humidity_conf["dev_cla"] = "humidity";
@@ -160,7 +160,7 @@ void send_discovery_config() {
 
   {
     DynamicJsonDocument battery_conf(MQTT_PYLD_SIZE);
-    battery_conf["name"] = device_state.device_name + " Battery";
+    battery_conf["name"] = device_state.device_name() + " Battery";
     battery_conf["uniq_id"] = device_state.factory().unique_id + "_battery";
     battery_conf["stat_t"] = device_state.t_battery;
     battery_conf["dev_cla"] = "battery";
@@ -173,7 +173,7 @@ void send_discovery_config() {
 
   {
     DynamicJsonDocument sensor_interval_conf(MQTT_PYLD_SIZE);
-    sensor_interval_conf["name"] = device_state.device_name + " Sensor Interval";
+    sensor_interval_conf["name"] = device_state.device_name() + " Sensor Interval";
     sensor_interval_conf["uniq_id"] =
         device_state.factory().unique_id + "_sensor_interval";
     sensor_interval_conf["cmd_t"] = device_state.t_sensor_interval_cmd;
@@ -192,7 +192,7 @@ void send_discovery_config() {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     DynamicJsonDocument conf(MQTT_PYLD_SIZE);
     conf["name"] =
-        device_state.device_name + " Button " + String(i + 1) + " Label";
+        device_state.device_name() + " Button " + String(i + 1) + " Label";
     conf["uniq_id"] =
         device_state.factory().unique_id + "_button_" + String(i + 1) + "_label";
     conf["cmd_t"] = device_state.t_btn_label_cmd[i];
@@ -207,7 +207,7 @@ void send_discovery_config() {
 
   {
     DynamicJsonDocument awake_mode_conf(MQTT_PYLD_SIZE);
-    awake_mode_conf["name"] = device_state.device_name + " Awake Mode";
+    awake_mode_conf["name"] = device_state.device_name() + " Awake Mode";
     awake_mode_conf["uniq_id"] = device_state.factory().unique_id + "_awake_mode";
     awake_mode_conf["cmd_t"] = device_state.t_awake_mode_cmd;
     awake_mode_conf["stat_t"] = device_state.t_awake_mode_state;
@@ -234,11 +234,11 @@ void update_discovery_config() {
   size_t n;
   char buffer[MQTT_PYLD_SIZE];
 
-  uint16_t expire_after = device_state.sensor_interval * 60 + 60;  // seconds
+  uint16_t expire_after = device_state.sensor_interval() * 60 + 60;  // seconds
 
   {
     DynamicJsonDocument temp_conf(MQTT_PYLD_SIZE);
-    temp_conf["name"] = device_state.device_name + " Temperature";
+    temp_conf["name"] = device_state.device_name() + " Temperature";
     temp_conf["uniq_id"] = device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = device_state.t_temperature;
     temp_conf["dev_cla"] = "temperature";
@@ -251,7 +251,7 @@ void update_discovery_config() {
 
   {
     DynamicJsonDocument humidity_conf(MQTT_PYLD_SIZE);
-    humidity_conf["name"] = device_state.device_name + " Humidity";
+    humidity_conf["name"] = device_state.device_name() + " Humidity";
     humidity_conf["uniq_id"] = device_state.factory().unique_id + "_humidity";
     humidity_conf["stat_t"] = device_state.t_humidity;
     humidity_conf["dev_cla"] = "humidity";
@@ -264,7 +264,7 @@ void update_discovery_config() {
 
   {
     DynamicJsonDocument battery_conf(MQTT_PYLD_SIZE);
-    battery_conf["name"] = device_state.device_name + " Battery";
+    battery_conf["name"] = device_state.device_name() + " Battery";
     battery_conf["uniq_id"] = device_state.factory().unique_id + "_battery";
     battery_conf["stat_t"] = device_state.t_battery;
     battery_conf["dev_cla"] = "battery";

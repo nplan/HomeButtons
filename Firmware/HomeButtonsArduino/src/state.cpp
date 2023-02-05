@@ -33,39 +33,39 @@ void State::clear_factory() {
 
 void State::save_user() {
   preferences.begin("user", false);
-  preferences.putString("device_name", device_name);
+  preferences.putString("device_name", m_personalization.device_name);
   preferences.putString("mqtt_srv", m_network.mqtt.server);
   preferences.putUInt("mqtt_port", m_network.mqtt.port);
   preferences.putString("mqtt_user", m_network.mqtt.user);
   preferences.putString("mqtt_pass", m_network.mqtt.password);
   preferences.putString("base_topic", m_network.mqtt.base_topic);
   preferences.putString("disc_prefix", m_network.mqtt.discovery_prefix);
-  preferences.putString("btn1_txt", btn_1_label);
-  preferences.putString("btn2_txt", btn_2_label);
-  preferences.putString("btn3_txt", btn_3_label);
-  preferences.putString("btn4_txt", btn_4_label);
-  preferences.putString("btn5_txt", btn_5_label);
-  preferences.putString("btn6_txt", btn_6_label);
-  preferences.putUInt("sen_itv", sensor_interval);
+  preferences.putString("btn1_txt", m_personalization.btn_labels[0]);
+  preferences.putString("btn2_txt", m_personalization.btn_labels[1]);
+  preferences.putString("btn3_txt", m_personalization.btn_labels[2]);
+  preferences.putString("btn4_txt", m_personalization.btn_labels[3]);
+  preferences.putString("btn5_txt", m_personalization.btn_labels[4]);
+  preferences.putString("btn6_txt", m_personalization.btn_labels[5]);
+  preferences.putUInt("sen_itv", m_personalization.sensor_interval);
   preferences.end();
 }
 
 void State::load_user() {
   preferences.begin("user", true);
-  device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
+  m_personalization.device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
   m_network.mqtt.server = preferences.getString("mqtt_srv", "");
   m_network.mqtt.port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
   m_network.mqtt.user = preferences.getString("mqtt_user", "");
   m_network.mqtt.password = preferences.getString("mqtt_pass", "");
   m_network.mqtt.base_topic = preferences.getString("base_topic", BASE_TOPIC_DFLT);
   m_network.mqtt.discovery_prefix = preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
-  btn_1_label = preferences.getString("btn1_txt", BTN_1_LABEL_DFLT);
-  btn_2_label = preferences.getString("btn2_txt", BTN_2_LABEL_DFLT);
-  btn_3_label = preferences.getString("btn3_txt", BTN_3_LABEL_DFLT);
-  btn_4_label = preferences.getString("btn4_txt", BTN_4_LABEL_DFLT);
-  btn_5_label = preferences.getString("btn5_txt", BTN_5_LABEL_DFLT);
-  btn_6_label = preferences.getString("btn6_txt", BTN_6_LABEL_DFLT);
-  sensor_interval = preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
+  m_personalization.btn_labels[0] = preferences.getString("btn1_txt", BTN_1_LABEL_DFLT);
+  m_personalization.btn_labels[1] = preferences.getString("btn2_txt", BTN_2_LABEL_DFLT);
+  m_personalization.btn_labels[2] = preferences.getString("btn3_txt", BTN_3_LABEL_DFLT);
+  m_personalization.btn_labels[3] = preferences.getString("btn4_txt", BTN_4_LABEL_DFLT);
+  m_personalization.btn_labels[4] = preferences.getString("btn5_txt", BTN_5_LABEL_DFLT);
+  m_personalization.btn_labels[5] = preferences.getString("btn6_txt", BTN_6_LABEL_DFLT);
+  m_personalization.sensor_interval = preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   preferences.end();
 }
 
@@ -152,49 +152,21 @@ void State::clear_all() {
 }
 
 String State::get_btn_label(uint8_t i) {
-  switch (i) {
-    case 0:
-      return btn_1_label;
-    case 1:
-      return btn_2_label;
-    case 2:
-      return btn_3_label;
-    case 3:
-      return btn_4_label;
-    case 4:
-      return btn_5_label;
-    case 5:
-      return btn_6_label;
-    default:
-      return "";
+  if (i < NUM_BUTTONS) {
+    return m_personalization.btn_labels[i];
+  } else {
+    return "";
   }
 }
 
 void State::set_btn_label(uint8_t i, String label) {
-  switch (i) {
-    case 0:
-      btn_1_label = label;
-      break;
-    case 1:
-      btn_2_label = label;
-      break;
-    case 2:
-      btn_3_label = label;
-      break;
-    case 3:
-      btn_4_label = label;
-      break;
-    case 4:
-      btn_5_label = label;
-      break;
-    case 5:
-      btn_6_label = label;
-      break;
+  if (i < NUM_BUTTONS) {
+    m_personalization.btn_labels[i] = label;
   }
 }
 
 void State::set_topics() {
-  t_common = m_network.mqtt.base_topic + "/" + device_name + "/";
+  t_common = m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
   t_cmd = t_common + "cmd/";
 
   // button press topics
@@ -249,6 +221,6 @@ String State::get_button_topic(uint8_t btn_id, Button::ButtonAction action) {
     default:
       return "";
   }
-  String topic_common = m_network.mqtt.base_topic + "/" + device_name + "/";
+  String topic_common = m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
   return topic_common + "button_" + String(btn_id) + append;
 }
