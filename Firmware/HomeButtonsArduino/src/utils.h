@@ -1,8 +1,8 @@
-#ifndef C8BF06D1_A2D7_435F_B490_D207591EE287
-#define C8BF06D1_A2D7_435F_B490_D207591EE287
+#ifndef HOMEBUTTONS_UTILS_H
+#define HOMEBUTTONS_UTILS_H
 
 #include <Arduino.h>
 
 String check_button_label(String label);
 
-#endif /* C8BF06D1_A2D7_435F_B490_D207591EE287 */
+#endif // HOMEBUTTONS_UTILS_H

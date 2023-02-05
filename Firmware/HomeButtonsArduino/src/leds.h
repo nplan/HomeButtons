@@ -1,5 +1,5 @@
-#ifndef C77B45E9_4260_40BC_A071_406A2B1A3B59
-#define C77B45E9_4260_40BC_A071_406A2B1A3B59
+#ifndef HOMEBUTTONS_LEDS_H
+#define HOMEBUTTONS_LEDS_H
 
 #include "Arduino.h"
 #include "config.h"
@@ -35,4 +35,4 @@ class LEDs {
 
 extern LEDs leds;
 
-#endif /* C77B45E9_4260_40BC_A071_406A2B1A3B59 */
+#endif // HOMEBUTTONS_LEDS_H

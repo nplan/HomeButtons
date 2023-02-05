@@ -1,5 +1,5 @@
-#ifndef D982FD48_23A5_40B7_897F_6EB82FB1ACAB
-#define D982FD48_23A5_40B7_897F_6EB82FB1ACAB
+#ifndef HOMEBUTTONS_BUTTONS_H
+#define HOMEBUTTONS_BUTTONS_H
 
 #include "Arduino.h"
 
@@ -60,4 +60,4 @@ class Button {
   void reset();
 };
 
-#endif /* D982FD48_23A5_40B7_897F_6EB82FB1ACAB */
+#endif // HOMEBUTTONS_BUTTONS_H
