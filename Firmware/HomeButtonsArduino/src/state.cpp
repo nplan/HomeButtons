@@ -161,7 +161,7 @@ String State::get_btn_label(uint8_t i) {
 
 void State::set_btn_label(uint8_t i, String label) {
   if (i < NUM_BUTTONS) {
-    m_personalization.btn_labels[i] = label;
+    m_personalization.btn_labels[i] = label.substring(0, BTN_LABEL_MAXLEN);
   }
 }
 

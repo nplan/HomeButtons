@@ -13,7 +13,6 @@
 #include "network.h"
 #include "setup.h"
 #include "state.h"
-#include "utils.h"
 
 enum class BootCause { RESET, TIMER, BUTTON };
 
@@ -110,7 +109,7 @@ void mqtt_callback(String topic, String payload) {
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     if (topic == device_state.t_btn_label_cmd[i]) {
-      device_state.set_btn_label(i, check_button_label(payload));
+      device_state.set_btn_label(i, payload);
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
             device_state.get_btn_label(i).c_str());
       network.publish(device_state.t_btn_label_state[i].c_str(),

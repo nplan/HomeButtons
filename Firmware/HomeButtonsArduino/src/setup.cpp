@@ -9,7 +9,6 @@
 #include "display.h"
 #include "hardware.h"
 #include "state.h"
-#include "utils.h"
 
 static WiFiManager wifi_manager;
 
@@ -100,12 +99,12 @@ void save_params_callback() {
     mqtt_password_param.getValue(),
     base_topic_param.getValue(),
     discovery_prefix_param.getValue());
-  device_state.set_btn_label(0, check_button_label(btn1_label_param.getValue()));
-  device_state.set_btn_label(1, check_button_label(btn2_label_param.getValue()));
-  device_state.set_btn_label(2, check_button_label(btn3_label_param.getValue()));
-  device_state.set_btn_label(3, check_button_label(btn4_label_param.getValue()));
-  device_state.set_btn_label(4, check_button_label(btn5_label_param.getValue()));
-  device_state.set_btn_label(5, check_button_label(btn6_label_param.getValue()));
+  device_state.set_btn_label(0, btn1_label_param.getValue());
+  device_state.set_btn_label(1, btn2_label_param.getValue());
+  device_state.set_btn_label(2, btn3_label_param.getValue());
+  device_state.set_btn_label(3, btn4_label_param.getValue());
+  device_state.set_btn_label(4, btn5_label_param.getValue());
+  device_state.set_btn_label(5, btn6_label_param.getValue());
   web_portal_saved = true;
 }
 
