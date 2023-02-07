@@ -242,7 +242,7 @@ void main_task(void *param) {
   // ------ factory mode ------
   if (device_state.factory().serial_number.length() < 1) {
     log_i("[DEVICE] first boot, starting factory mode...");
-    if (factory_mode()) {
+    if (factory::factory_mode()) {
       display.begin();
       display.disp_welcome();
       display.update();
