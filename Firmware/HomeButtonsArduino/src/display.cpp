@@ -279,7 +279,7 @@ void Display::draw_main() {
   disp->fillScreen(bg_color);
 
   // charging line
-  if(device_state.charging) {
+  if(device_state.sensors().charging) {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
@@ -339,7 +339,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 30);
   disp->print(text);
 
-  text = String(device_state.temperature, 1) + String(" C");
+  text = String(device_state.sensors().temperature, 1) + String(" C");
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
@@ -351,7 +351,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 129);
   disp->print(text);
 
-  text = String(device_state.humidity, 0) + String(" %");
+  text = String(device_state.sensors().humidity, 0) + String(" %");
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
@@ -363,8 +363,8 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 228);
   disp->print(text);
 
-  if (device_state.battery_present) {
-    text = String(device_state.battery_pct) + String(" %");
+  if (device_state.sensors().battery_present) {
+    text = String(device_state.sensors().battery_pct) + String(" %");
   } else {
     text = "-";
   }

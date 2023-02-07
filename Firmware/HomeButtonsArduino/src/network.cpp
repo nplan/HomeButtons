@@ -57,7 +57,7 @@ void Network::update() {
         WiFi.mode(WIFI_STA);
         WiFi.persistent(true);
         wifi_start_time = millis();
-        if (device_state.wifi_quick_connect) {
+        if (device_state.persisted().wifi_quick_connect) {
           log_i("[NET] connecting Wi-Fi (quick mode)...");
           WiFi.begin();
           sm_state = AWAIT_QUICK_WIFI_CONNECTION;
@@ -94,7 +94,7 @@ void Network::update() {
         log_i(
             "[NET] Wi-Fi connect failed (quick mode). Retrying with normal "
             "mode...");
-        device_state.wifi_quick_connect = false;
+        device_state.persisted().wifi_quick_connect = false;
         WiFi.disconnect();
         delay(500);
         sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
@@ -157,7 +157,7 @@ void Network::update() {
         sm_state = IDLE;
         log_i("[NET] disconnected.");
       } else if (WiFi.status() == WL_CONNECTED) {
-        device_state.wifi_quick_connect = true;
+        device_state.persisted().wifi_quick_connect = true;
         state = State::W_CONNECTED;
         device_state.set_ip(WiFi.localIP().toString());
         log_i("[NET] Wi-Fi connected, quick mode settings saved.");
@@ -167,7 +167,7 @@ void Network::update() {
         mqtt_start_time = millis();
         sm_state = AWAIT_MQTT_CONNECTION;
       } else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
-        device_state.wifi_quick_connect = false;
+        device_state.persisted().wifi_quick_connect = false;
         log_i("[NET] Wi-Fi quick mode save settings failed. Retrying...");
         sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
       }

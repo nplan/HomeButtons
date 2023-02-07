@@ -77,39 +77,39 @@ void State::clear_user() {
 
 void State::save_persisted() {
   preferences.begin("persisted", false);
-  preferences.putBool("lb_mode", low_batt_mode);
-  preferences.putBool("wifi_done", wifi_done);
-  preferences.putBool("setup_done", setup_done);
-  preferences.putString("last_sw", last_sw_ver);
-  preferences.putBool("u_awake", user_awake_mode);
-  preferences.putBool("wifi_qc", wifi_quick_connect);
-  preferences.putBool("chg_cpt_shwn", charge_complete_showing);
-  preferences.putBool("info_shwn", info_screen_showing);
-  preferences.putBool("chk_conn", check_connection);
-  preferences.putUInt("faild_cons", failed_connections);
-  preferences.putBool("rst_to_w_stp", restart_to_wifi_setup);
-  preferences.putBool("rst_to_stp", restart_to_setup);
-  preferences.putBool("send_adisc", send_discovery_config);
-  preferences.putBool("silent_rst", silent_restart);
+  preferences.putBool("lb_mode", m_persisted.low_batt_mode);
+  preferences.putBool("wifi_done", m_persisted.wifi_done);
+  preferences.putBool("setup_done", m_persisted.setup_done);
+  preferences.putString("last_sw", m_persisted.last_sw_ver);
+  preferences.putBool("u_awake", m_persisted.user_awake_mode);
+  preferences.putBool("wifi_qc", m_persisted.wifi_quick_connect);
+  preferences.putBool("chg_cpt_shwn", m_persisted.charge_complete_showing);
+  preferences.putBool("info_shwn", m_persisted.info_screen_showing);
+  preferences.putBool("chk_conn", m_persisted.check_connection);
+  preferences.putUInt("faild_cons", m_persisted.failed_connections);
+  preferences.putBool("rst_to_w_stp", m_persisted.restart_to_wifi_setup);
+  preferences.putBool("rst_to_stp", m_persisted.restart_to_setup);
+  preferences.putBool("send_adisc", m_persisted.send_discovery_config);
+  preferences.putBool("silent_rst", m_persisted.silent_restart);
   preferences.end();
 }
 
 void State::load_persisted() {
   preferences.begin("persisted", false);
-  low_batt_mode = preferences.getBool("lb_mode", false);
-  wifi_done = preferences.getBool("wifi_done", false);
-  setup_done = preferences.getBool("setup_done", false);
-  last_sw_ver = preferences.getString("last_sw", "");
-  user_awake_mode = preferences.getBool("u_awake", false);
-  wifi_quick_connect = preferences.getBool("wifi_qc", false);
-  charge_complete_showing = preferences.getBool("chg_cpt_shwn", false);
-  info_screen_showing = preferences.getBool("info_shwn", false);
-  check_connection = preferences.getBool("chk_conn", false);
-  failed_connections = preferences.getUInt("faild_cons", 0);
-  restart_to_wifi_setup = preferences.getBool("rst_to_w_stp", false);
-  restart_to_setup = preferences.getBool("rst_to_stp", false);
-  send_discovery_config = preferences.getBool("send_adisc", false);
-  silent_restart = preferences.getBool("silent_rst", false);
+  m_persisted.low_batt_mode = preferences.getBool("lb_mode", false);
+  m_persisted.wifi_done = preferences.getBool("wifi_done", false);
+  m_persisted.setup_done = preferences.getBool("setup_done", false);
+  m_persisted.last_sw_ver = preferences.getString("last_sw", "");
+  m_persisted.user_awake_mode = preferences.getBool("u_awake", false);
+  m_persisted.wifi_quick_connect = preferences.getBool("wifi_qc", false);
+  m_persisted.charge_complete_showing = preferences.getBool("chg_cpt_shwn", false);
+  m_persisted.info_screen_showing = preferences.getBool("info_shwn", false);
+  m_persisted.check_connection = preferences.getBool("chk_conn", false);
+  m_persisted.failed_connections = preferences.getUInt("faild_cons", 0);
+  m_persisted.restart_to_wifi_setup = preferences.getBool("rst_to_w_stp", false);
+  m_persisted.restart_to_setup = preferences.getBool("rst_to_stp", false);
+  m_persisted.send_discovery_config = preferences.getBool("send_adisc", false);
+  m_persisted.silent_restart = preferences.getBool("silent_rst", false);
   preferences.end();
 }
 
@@ -120,14 +120,14 @@ void State::clear_persisted() {
 }
 
 void State::clear_persisted_flags() {
-  wifi_quick_connect = false;
-  charge_complete_showing = false;
-  info_screen_showing = false;
-  check_connection = false;
-  failed_connections = 0;
-  restart_to_wifi_setup = false;
-  restart_to_setup = false;
-  silent_restart = false;
+  m_persisted.wifi_quick_connect = false;
+  m_persisted.charge_complete_showing = false;
+  m_persisted.info_screen_showing = false;
+  m_persisted.check_connection = false;
+  m_persisted.failed_connections = 0;
+  m_persisted.restart_to_wifi_setup = false;
+  m_persisted.restart_to_setup = false;
+  m_persisted.silent_restart = false;
   save_all();
 }
 
