@@ -71,8 +71,8 @@ void start_wifi_setup() {
   }
 
   if (wifi_connected_2) {
-    device_state.wifi_done = true;
-    device_state.restart_to_setup = true;
+    device_state.persisted().wifi_done = true;
+    device_state.persisted().restart_to_setup = true;
     device_state.save_all();
     log_i("[W_SETUP] Wi-Fi connected.");
     display.disp_message_large("Wi-Fi\nconnected\n:)");
@@ -80,7 +80,7 @@ void start_wifi_setup() {
     delay(3000);
     ESP.restart();
   } else {
-    device_state.wifi_done = false;
+    device_state.persisted().wifi_done = false;
     device_state.save_all();
     log_w("[W_SETUP] Wi-Fi error.");
     display.disp_error("Wi-Fi\nconnection\nerror");
@@ -153,7 +153,7 @@ void start_setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(100);
     if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
-      device_state.wifi_done = false;
+      device_state.persisted().wifi_done = false;
       device_state.save_all();
       log_w("[SETUP] Wi-Fi error.");
       display.disp_error("Wi-Fi\nerror");
@@ -198,7 +198,7 @@ void start_setup() {
   while (!mqtt_client.connected()) {
     delay(10);
     if (millis() - mqtt_start_time >= MQTT_TIMEOUT) {
-      device_state.setup_done = false;
+      device_state.persisted().setup_done = false;
       device_state.save_all();
       log_w("[SETUP] MQTT error.");
       display.disp_error("MQTT\nerror");
@@ -210,8 +210,8 @@ void start_setup() {
 
   mqtt_client.disconnect();
   WiFi.disconnect(true);
-  device_state.setup_done = true;
-  device_state.send_discovery_config = true;
+  device_state.persisted().setup_done = true;
+  device_state.persisted().send_discovery_config = true;
   device_state.save_all();
 
   log_i("[SETUP] setup successful");

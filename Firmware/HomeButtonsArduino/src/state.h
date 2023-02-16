@@ -52,6 +52,41 @@ private:
     String t_awake_mode_avlb = "";
   } m_topics;
 
+  struct Persisted {
+    // Vars
+    bool low_batt_mode = false;
+    bool wifi_done = false;
+    bool setup_done = false;
+    String last_sw_ver = "";
+    bool user_awake_mode = false;
+
+    //Flags
+    bool wifi_quick_connect = false;
+    bool charge_complete_showing = false;
+    bool info_screen_showing = false;
+    bool check_connection = false;
+    uint8_t failed_connections = 0;
+    bool restart_to_wifi_setup = false;
+    bool restart_to_setup = false;
+    bool send_discovery_config = false;
+    bool silent_restart = false;
+  } m_persisted;
+
+  struct Flags {
+    bool display_redraw = false;
+    bool awake_mode = false;
+  } m_flags;
+
+  struct Sensors {
+    float temperature = 0;
+    float humidity = 0;
+    uint8_t battery_pct = 0;
+    bool charging = false;
+    bool dc_connected = false;
+    bool battery_present = false;
+    bool battery_low = false;
+  } m_sensors;
+
 public:
   const Factory& factory() const { return m_factory; }
   void set_serial_number(const String& str) { m_factory.serial_number = str; }
@@ -76,40 +111,12 @@ public:
 
   const Topics& topics() const { return m_topics; }
 
-
-  // #### PERSISTED VARS ####
-  bool low_batt_mode = false;
-  bool wifi_done = false;
-  bool setup_done = false;
-  String last_sw_ver = "";
-  bool user_awake_mode = false;
-
-  // persisted flags
-  bool wifi_quick_connect = false;
-  bool charge_complete_showing = false;
-  bool info_screen_showing = false;
-  bool check_connection = false;
-  uint8_t failed_connections = 0;
-  bool restart_to_wifi_setup = false;
-  bool restart_to_setup = false;
-  bool send_discovery_config = false;
-  bool silent_restart = false;
-
-
-  // flags
-  bool display_redraw = false;
-  bool awake_mode = false;
-
-  // sensor
-  float temperature = 0;
-  float humidity = 0;
-  uint8_t battery_pct = 0;
-  bool charging = false;
-  bool dc_connected = false;
-  bool battery_present = false;
-  bool battery_low = false;
-
-  // #### END ####
+  const Persisted& persisted() const { return m_persisted; }
+  Persisted& persisted() { return m_persisted; }
+  const Flags& flags() const { return m_flags; }
+  Flags& flags() { return m_flags; }
+  const Sensors& sensors() const { return m_sensors; }
+  Sensors& sensors() { return m_sensors; }
 
   // functions
   void save_factory();

@@ -43,9 +43,13 @@ Device's page in *Home Assistant*:
 
 ## Where To Get
 
-You can buy *Home Buttons* on [*Tindie*](https://www.tindie.com/products/plab/home-buttons/){:target="_blank"}.
+You can buy *Home Buttons* on [*Tindie*](https://www.tindie.com/products/plab/home-buttons/){:target="_blank"} or
+[*Lectronz*](https://lectronz.com/products/home-buttons).
 
 <a href="https://www.tindie.com/stores/plab/home-buttons/?ref=offsite_badges&utm_source=sellers_nplan&utm_medium=badges&utm_campaign=badge_medium"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-mediums.png" alt="I sell on Tindie" width="150" height="78"></a>
+
+<a href="https://lectronz.com/products/home-buttons-smart-home-controller"><img alt="I sell on Lectronz" src="https://lectronz.com/static/badges/i-sell-on-lectronz-medium.png" /></a>
+
 
 ---
 
