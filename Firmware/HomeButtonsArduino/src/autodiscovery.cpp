@@ -11,7 +11,7 @@
 void send_discovery_config() {
   // Construct topics
   char trigger_topic_common[128];
-  snprintf(trigger_topic_common, sizeof(trigger_topic_common), "%s/device_automation/%s", device_state.network().mqtt.discovery_prefix, device_state.factory().unique_id);
+  snprintf(trigger_topic_common, sizeof(trigger_topic_common), "%s/device_automation/%s", device_state.network().mqtt.discovery_prefix.c_str(), device_state.factory().unique_id.c_str());
 
   // sensor config topics
   String sensor_topic_common =
