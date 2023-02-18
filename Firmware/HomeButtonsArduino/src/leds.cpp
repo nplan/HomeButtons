@@ -2,8 +2,6 @@
 
 #include "hardware.h"
 
-LEDs leds = {};
-
 void LEDs::begin() {
   state = State::ACTIVE;
   log_i("[LEDS] begin");
@@ -30,7 +28,7 @@ void LEDs::blink(uint8_t led_num, uint8_t num_blinks, bool hold,
         num_blinks, brightness, hold);
 }
 
-LEDs::State LEDs::get_state() { return state; }
+LEDs::State LEDs::get_state() const { return state; }
 
 void LEDs::update() {
   if (state != State::ACTIVE) {

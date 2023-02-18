@@ -12,7 +12,7 @@ class LEDs {
   void end();
   void blink(uint8_t led_num, uint8_t num_blinks, bool hold = false,
              uint8_t brightness = LED_DFLT_BRIGHT);
-  State get_state();
+  State get_state() const;
 
   void update();
 
@@ -32,7 +32,5 @@ class LEDs {
   bool new_cmd_blink = false;
   Blink current_blink = {};
 };
-
-extern LEDs leds;
 
 #endif // HOMEBUTTONS_LEDS_H
