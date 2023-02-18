@@ -48,8 +48,8 @@ void Network::update() {
     case IDLE:  // wait for cmd connect
       if (cmd_state == CMDState::CONNECT) {
         cmd_state = CMDState::NONE;
-        mqtt_client.setServer(device_state.mqtt_server.c_str(),
-                              device_state.mqtt_port);
+        mqtt_client.setServer(device_state.network().mqtt.server.c_str(),
+                              device_state.network().mqtt.port);
         mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
         mqtt_client.setCallback(
             std::bind(&Network::callback, this, std::placeholders::_1,
@@ -57,7 +57,7 @@ void Network::update() {
         WiFi.mode(WIFI_STA);
         WiFi.persistent(true);
         wifi_start_time = millis();
-        if (device_state.wifi_quick_connect) {
+        if (device_state.persisted().wifi_quick_connect) {
           log_i("[NET] connecting Wi-Fi (quick mode)...");
           WiFi.begin();
           sm_state = AWAIT_QUICK_WIFI_CONNECTION;
@@ -76,7 +76,7 @@ void Network::update() {
         log_i("[NET] disconnected.");
       } else if (WiFi.status() == WL_CONNECTED) {
         state = State::W_CONNECTED;
-        device_state.ip = WiFi.localIP().toString();
+        device_state.set_ip(WiFi.localIP().toString());
         log_i("[NET] Wi-Fi connected (quick mode).");
         String ssid = WiFi.SSID();
         device_state.save_all();
@@ -94,7 +94,7 @@ void Network::update() {
         log_i(
             "[NET] Wi-Fi connect failed (quick mode). Retrying with normal "
             "mode...");
-        device_state.wifi_quick_connect = false;
+        device_state.persisted().wifi_quick_connect = false;
         WiFi.disconnect();
         delay(500);
         sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
@@ -157,9 +157,9 @@ void Network::update() {
         sm_state = IDLE;
         log_i("[NET] disconnected.");
       } else if (WiFi.status() == WL_CONNECTED) {
-        device_state.wifi_quick_connect = true;
+        device_state.persisted().wifi_quick_connect = true;
         state = State::W_CONNECTED;
-        device_state.ip = WiFi.localIP().toString();
+        device_state.set_ip(WiFi.localIP().toString());
         log_i("[NET] Wi-Fi connected, quick mode settings saved.");
         // proceed with MQTT connection
         log_i("[NET] connecting MQTT....");
@@ -167,7 +167,7 @@ void Network::update() {
         mqtt_start_time = millis();
         sm_state = AWAIT_MQTT_CONNECTION;
       } else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
-        device_state.wifi_quick_connect = false;
+        device_state.persisted().wifi_quick_connect = false;
         log_i("[NET] Wi-Fi quick mode save settings failed. Retrying...");
         sm_state = BEGIN_WIFI_NORMAL_CONNECTION;
       }
@@ -298,13 +298,13 @@ void Network::set_on_connect(std::function<void()> on_connect) {
 uint32_t Network::get_cmd_connect_time() { return cmd_connect_time; }
 
 bool Network::connect_mqtt() {
-  if (device_state.mqtt_user.length() > 0 &&
-      device_state.mqtt_password.length() > 0) {
-    return mqtt_client.connect(device_state.unique_id.c_str(),
-                               device_state.mqtt_user.c_str(),
-                               device_state.mqtt_password.c_str());
+  if (device_state.network().mqtt.user.length() > 0 &&
+      device_state.network().mqtt.password.length() > 0) {
+    return mqtt_client.connect(device_state.factory().unique_id.c_str(),
+                               device_state.network().mqtt.user.c_str(),
+                               device_state.network().mqtt.password.c_str());
   } else {
-    return mqtt_client.connect(device_state.unique_id.c_str());
+    return mqtt_client.connect(device_state.factory().unique_id.c_str());
   }
 }
 

@@ -279,7 +279,7 @@ void Display::draw_main() {
   disp->fillScreen(bg_color);
 
   // charging line
-  if(device_state.charging) {
+  if(device_state.sensors().charging) {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
@@ -339,7 +339,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 30);
   disp->print(text);
 
-  text = String(device_state.temperature, 1) + String(" C");
+  text = String(device_state.sensors().temperature, 1) + String(" C");
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
@@ -351,7 +351,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 129);
   disp->print(text);
 
-  text = String(device_state.humidity, 0) + String(" %");
+  text = String(device_state.sensors().humidity, 0) + String(" %");
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
@@ -363,8 +363,8 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 228);
   disp->print(text);
 
-  if (device_state.battery_present) {
-    text = String(device_state.battery_pct) + String(" %");
+  if (device_state.sensors().battery_present) {
+    text = String(device_state.sensors().battery_pct) + String(" %");
   } else {
     text = "-";
   }
@@ -377,7 +377,7 @@ void Display::draw_info() {
   disp->setFont();
   disp->setTextSize(1);
   disp->setCursor(0, 288);
-  disp->print(device_state.device_name);
+  disp->print(device_state.device_name());
 
   disp->display();
 }
@@ -440,18 +440,18 @@ void Display::draw_welcome() {
 
   disp->setCursor(0, 275);
   String model_info =
-      String("Model: ") + device_state.model_id + " rev " + device_state.hw_version;
+      String("Model: ") + device_state.factory().model_id + " rev " + device_state.factory().hw_version;
   disp->print(model_info);
 
   disp->setCursor(0, 285);
-  disp->print(device_state.unique_id);
+  disp->print(device_state.factory().unique_id);
 
   disp->display();
 }
 
 void Display::draw_ap_config() {
-  String contents = String("WIFI:T:WPA;S:") + device_state.ap_ssid +
-                    ";P:" + device_state.ap_password + ";;";
+  String contents = String("WIFI:T:WPA;S:") + device_state.network().ap_ssid +
+                    ";P:" + device_state.network().ap_password + ";;";
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -502,20 +502,20 @@ void Display::draw_ap_config() {
   disp->print("Wi-Fi:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 235);
-  disp->print(device_state.ap_ssid.c_str());
+  disp->print(device_state.network().ap_ssid.c_str());
 
   disp->setFont(&FreeSans9pt7b);
   disp->setCursor(0, 260);
   disp->print("Password:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 275);
-  disp->print(device_state.ap_password.c_str());
+  disp->print(device_state.network().ap_password.c_str());
 
   disp->display();
 }
 
 void Display::draw_web_config() {
-  String contents = String("http://") + device_state.ip;
+  String contents = String("http://") + device_state.network().ip;
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -567,7 +567,7 @@ void Display::draw_web_config() {
   disp->setCursor(0, 240);
   disp->print("http://");
   disp->setCursor(0, 260);
-  disp->print(device_state.ip.c_str());
+  disp->print(device_state.network().ip.c_str());
 
   disp->display();
 }

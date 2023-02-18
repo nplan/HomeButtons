@@ -1,7 +1,7 @@
 #ifndef HOMEBUTTONS_CONFIG_H
 #define HOMEBUTTONS_CONFIG_H
 
-#include <Arduino.h>
+#include <WString.h>
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";

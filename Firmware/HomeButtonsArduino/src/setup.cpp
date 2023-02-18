@@ -9,7 +9,6 @@
 #include "display.h"
 #include "hardware.h"
 #include "state.h"
-#include "utils.h"
 
 static WiFiManager wifi_manager;
 
@@ -41,8 +40,7 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 static bool web_portal_saved = false;
 
 void start_wifi_setup() {
-  device_state.ap_ssid = String("HB-") + device_state.random_id;
-  device_state.ap_password = SETUP_AP_PASSWORD;
+  device_state.set_ap_ssid_and_password(String("HB-") + device_state.factory().random_id, SETUP_AP_PASSWORD);
   display.disp_ap_config();
   display.update();
 
@@ -55,7 +53,7 @@ void start_wifi_setup() {
   wifi_manager.setShowInfoUpdate(false);
 
   bool wifi_connected = wifi_manager.startConfigPortal(
-      device_state.ap_ssid.c_str(), SETUP_AP_PASSWORD);
+      device_state.network().ap_ssid.c_str(), device_state.network().ap_password.c_str());
 
   bool wifi_connected_2 = false;
   WiFi.mode(WIFI_STA);
@@ -73,8 +71,8 @@ void start_wifi_setup() {
   }
 
   if (wifi_connected_2) {
-    device_state.wifi_done = true;
-    device_state.restart_to_setup = true;
+    device_state.persisted().wifi_done = true;
+    device_state.persisted().restart_to_setup = true;
     device_state.save_all();
     log_i("[W_SETUP] Wi-Fi connected.");
     display.disp_message_large("Wi-Fi\nconnected\n:)");
@@ -82,7 +80,7 @@ void start_wifi_setup() {
     delay(3000);
     ESP.restart();
   } else {
-    device_state.wifi_done = false;
+    device_state.persisted().wifi_done = false;
     device_state.save_all();
     log_w("[W_SETUP] Wi-Fi error.");
     display.disp_error("Wi-Fi\nconnection\nerror");
@@ -93,19 +91,20 @@ void start_wifi_setup() {
 }
 
 void save_params_callback() {
-  device_state.device_name = device_name_param.getValue();
-  device_state.mqtt_server = mqtt_server_param.getValue();
-  device_state.mqtt_port = String(mqtt_port_param.getValue()).toInt();
-  device_state.mqtt_user = mqtt_user_param.getValue();
-  device_state.mqtt_password = mqtt_password_param.getValue();
-  device_state.base_topic = base_topic_param.getValue();
-  device_state.discovery_prefix = discovery_prefix_param.getValue();
-  device_state.btn_1_label = check_button_label(btn1_label_param.getValue());
-  device_state.btn_2_label = check_button_label(btn2_label_param.getValue());
-  device_state.btn_3_label = check_button_label(btn3_label_param.getValue());
-  device_state.btn_4_label = check_button_label(btn4_label_param.getValue());
-  device_state.btn_5_label = check_button_label(btn5_label_param.getValue());
-  device_state.btn_6_label = check_button_label(btn6_label_param.getValue());
+  device_state.set_device_name(device_name_param.getValue());
+  device_state.set_mqtt_parameters(
+    mqtt_server_param.getValue(),
+    String(mqtt_port_param.getValue()).toInt(),
+    mqtt_user_param.getValue(),
+    mqtt_password_param.getValue(),
+    base_topic_param.getValue(),
+    discovery_prefix_param.getValue());
+  device_state.set_btn_label(0, btn1_label_param.getValue());
+  device_state.set_btn_label(1, btn2_label_param.getValue());
+  device_state.set_btn_label(2, btn3_label_param.getValue());
+  device_state.set_btn_label(3, btn4_label_param.getValue());
+  device_state.set_btn_label(4, btn5_label_param.getValue());
+  device_state.set_btn_label(5, btn6_label_param.getValue());
   web_portal_saved = true;
 }
 
@@ -120,19 +119,19 @@ void start_setup() {
   wifi_manager.setShowInfoUpdate(true);
 
   // parameters
-  device_name_param.setValue(device_state.device_name.c_str(), 20);
-  mqtt_server_param.setValue(device_state.mqtt_server.c_str(), 50);
-  mqtt_port_param.setValue(String(device_state.mqtt_port).c_str(), 6);
-  mqtt_user_param.setValue(device_state.mqtt_user.c_str(), 50);
-  mqtt_password_param.setValue(device_state.mqtt_password.c_str(), 50);
-  base_topic_param.setValue(device_state.base_topic.c_str(), 50);
-  discovery_prefix_param.setValue(device_state.discovery_prefix.c_str(), 50);
-  btn1_label_param.setValue(device_state.btn_1_label.c_str(), 20);
-  btn2_label_param.setValue(device_state.btn_2_label.c_str(), 20);
-  btn3_label_param.setValue(device_state.btn_3_label.c_str(), 20);
-  btn4_label_param.setValue(device_state.btn_4_label.c_str(), 20);
-  btn5_label_param.setValue(device_state.btn_5_label.c_str(), 20);
-  btn6_label_param.setValue(device_state.btn_6_label.c_str(), 20);
+  device_name_param.setValue(device_state.device_name().c_str(), 20);
+  mqtt_server_param.setValue(device_state.network().mqtt.server.c_str(), 50);
+  mqtt_port_param.setValue(String(device_state.network().mqtt.port).c_str(), 6);
+  mqtt_user_param.setValue(device_state.network().mqtt.user.c_str(), 50);
+  mqtt_password_param.setValue(device_state.network().mqtt.password.c_str(), 50);
+  base_topic_param.setValue(device_state.network().mqtt.base_topic.c_str(), 50);
+  discovery_prefix_param.setValue(device_state.network().mqtt.discovery_prefix.c_str(), 50);
+  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
+  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
+  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
+  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(), 20);
+  btn5_label_param.setValue(device_state.get_btn_label(4).c_str(), 20);
+  btn6_label_param.setValue(device_state.get_btn_label(5).c_str(), 20);
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
   wifi_manager.addParameter(&mqtt_port_param);
@@ -154,7 +153,7 @@ void start_setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(100);
     if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
-      device_state.wifi_done = false;
+      device_state.persisted().wifi_done = false;
       device_state.save_all();
       log_w("[SETUP] Wi-Fi error.");
       display.disp_error("Wi-Fi\nerror");
@@ -163,7 +162,7 @@ void start_setup() {
       ESP.restart();
     }
   }
-  device_state.ip = WiFi.localIP().toString();
+  device_state.set_ip(WiFi.localIP().toString());
   display.disp_web_config();
   display.update();
   uint32_t setup_start_time = millis();
@@ -183,14 +182,14 @@ void start_setup() {
   uint32_t mqtt_start_time = millis();
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
-  mqtt_client.setServer(device_state.mqtt_server.c_str(), device_state.mqtt_port);
-  if (device_state.mqtt_user.length() > 0 &&
-      device_state.mqtt_password.length() > 0) {
-    mqtt_client.connect(device_state.unique_id.c_str(),
-                               device_state.mqtt_user.c_str(),
-                               device_state.mqtt_password.c_str());
+  mqtt_client.setServer(device_state.network().mqtt.server.c_str(), device_state.network().mqtt.port);
+  if (device_state.network().mqtt.user.length() > 0 &&
+      device_state.network().mqtt.password.length() > 0) {
+    mqtt_client.connect(device_state.factory().unique_id.c_str(),
+                               device_state.network().mqtt.user.c_str(),
+                               device_state.network().mqtt.password.c_str());
   } else {
-    mqtt_client.connect(device_state.unique_id.c_str());
+    mqtt_client.connect(device_state.factory().unique_id.c_str());
   }
 
   display.disp_message("Confirming\nsetup...");
@@ -199,7 +198,7 @@ void start_setup() {
   while (!mqtt_client.connected()) {
     delay(10);
     if (millis() - mqtt_start_time >= MQTT_TIMEOUT) {
-      device_state.setup_done = false;
+      device_state.persisted().setup_done = false;
       device_state.save_all();
       log_w("[SETUP] MQTT error.");
       display.disp_error("MQTT\nerror");
@@ -211,8 +210,8 @@ void start_setup() {
 
   mqtt_client.disconnect();
   WiFi.disconnect(true);
-  device_state.setup_done = true;
-  device_state.send_discovery_config = true;
+  device_state.persisted().setup_done = true;
+  device_state.persisted().send_discovery_config = true;
   device_state.save_all();
 
   log_i("[SETUP] setup successful");
