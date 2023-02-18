@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+class DeviceState;
 
 class Network {
 
@@ -18,6 +19,8 @@ class Network {
       CONNECT,
       DISCONNECT
     };
+
+    Network(DeviceState& device_state) : m_device_state(device_state) {}
 
     void connect();
     void disconnect(bool erase = false);
@@ -35,6 +38,7 @@ class Network {
   private:
     State state = State::DISCONNECTED;
     CMDState cmd_state = CMDState::NONE;
+    DeviceState& m_device_state;
 
     uint32_t wifi_start_time = 0;
     uint32_t mqtt_start_time = 0;
@@ -44,7 +48,7 @@ class Network {
 
     bool erase = false;
 
-    enum StateMachineState {
+    enum class StateMachineState {
       NONE,
       IDLE,
       AWAIT_QUICK_WIFI_CONNECTION,
@@ -57,8 +61,8 @@ class Network {
       DISCONNECT
     };
 
-    StateMachineState sm_state = IDLE;
-    StateMachineState prev_sm_state = IDLE;
+    StateMachineState sm_state = StateMachineState::IDLE;
+    StateMachineState prev_sm_state = StateMachineState::IDLE;
 
     std::function<void(const String&, const String&)> usr_callback = NULL;
     std::function<void()> on_connect = NULL;
@@ -66,7 +70,5 @@ class Network {
     bool connect_mqtt();
     void callback(const char* topic, uint8_t* payload, uint32_t length);
 };
-
-extern Network network;
 
 #endif // HOMEBUTTONS_NETWORK_H
