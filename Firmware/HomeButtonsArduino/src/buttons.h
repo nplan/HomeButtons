@@ -24,16 +24,16 @@ class Button {
     LONG_3,
     LONG_4
   };
-
-  void begin(uint8_t pin, uint16_t id, bool active_high = true);
+  void setup(uint8_t pin, uint16_t id, bool active_high = true);
+  void begin();
   void init_press();
   void end();
   void update();
-  ButtonAction get_action();
-  bool is_press_finished();
+  ButtonAction get_action() const;
+  bool is_press_finished() const;
   void clear();
-  uint8_t get_pin();
-  uint16_t get_id();
+  uint8_t get_pin() const;
+  uint16_t get_id() const;
   static const char* get_action_name(ButtonAction action);
   static uint8_t get_action_multi_count(ButtonAction action);
 
@@ -56,7 +56,7 @@ class Button {
   bool falling_flag = false;
 
   void IRAM_ATTR isr();
-  bool read_pin();
+  bool read_pin() const;
   void reset();
 };
 

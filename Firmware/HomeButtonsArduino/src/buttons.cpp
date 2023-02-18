@@ -2,15 +2,19 @@
 
 #include "FunctionalInterrupt.h"
 
-void Button::begin(uint8_t pin, uint16_t id, bool active_high) {
+
+void Button::setup(uint8_t pin, uint16_t id, bool active_high) {
+  this->pin = pin;
+  this->id = id;
+  this->active_high = active_high;
+}
+
+void Button::begin() {
   if (begun) return;
   if (!(LONG_1_TIME < LONG_3_TIME && LONG_2_TIME < LONG_3_TIME &&
         LONG_3_TIME < LONG_4_TIME)) {
     return;
   }
-  this->pin = pin;
-  this->id = id;
-  this->active_high = active_high;
   attachInterrupt(pin, std::bind(&Button::isr, this), CHANGE);
   begun = true;
   log_d("[BTN] id %d begun", id);
@@ -146,15 +150,15 @@ void Button::update() {
   }
 }
 
-Button::ButtonAction Button::get_action() { return action; }
+Button::ButtonAction Button::get_action() const { return action; }
 
-bool Button::is_press_finished() { return press_finished; }
+bool Button::is_press_finished() const { return press_finished; }
 
 void Button::clear() { reset(); }
 
-uint8_t Button::get_pin() { return pin; }
+uint8_t Button::get_pin() const { return pin; }
 
-uint16_t Button::get_id() { return id; }
+uint16_t Button::get_id() const { return id; }
 
 const char* Button::get_action_name(ButtonAction action) {
   switch (action) {
@@ -210,7 +214,7 @@ void Button::isr() {
   }
 }
 
-bool Button::read_pin() {
+bool Button::read_pin() const {
   if (active_high) {
     return digitalRead(pin);
   } else {
