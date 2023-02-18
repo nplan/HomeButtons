@@ -5,7 +5,7 @@
 #include "buttons.h"
 #include "config.h"
 
-class State {
+class DeviceState {
 private:
   struct Factory {
     String serial_number = "";  // len = 8
@@ -142,7 +142,5 @@ public:
 private:
   Preferences preferences;
 };
-
-extern State device_state;
 
 #endif // HOMEBUTTONS_STATE_H

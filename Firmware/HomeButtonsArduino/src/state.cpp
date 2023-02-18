@@ -1,9 +1,7 @@
 #include "state.h"
 #include "config.h"
 
-State device_state = {};
-
-void State::save_factory() {
+void DeviceState::save_factory() {
   preferences.begin("factory", false);
   preferences.putString("serial_number", m_factory.serial_number);
   preferences.putString("random_id", m_factory.random_id);
@@ -14,7 +12,7 @@ void State::save_factory() {
   preferences.end();
 }
 
-void State::load_factory() {
+void DeviceState::load_factory() {
   preferences.begin("factory", true);
   m_factory.serial_number = preferences.getString("serial_number", "");
   m_factory.random_id = preferences.getString("random_id", "");
@@ -25,13 +23,13 @@ void State::load_factory() {
   preferences.end();
 }
 
-void State::clear_factory() {
+void DeviceState::clear_factory() {
   preferences.begin("factory", false);
   preferences.clear();
   preferences.end();
 }
 
-void State::save_user() {
+void DeviceState::save_user() {
   preferences.begin("user", false);
   preferences.putString("device_name", m_personalization.device_name);
   preferences.putString("mqtt_srv", m_network.mqtt.server);
@@ -50,7 +48,7 @@ void State::save_user() {
   preferences.end();
 }
 
-void State::load_user() {
+void DeviceState::load_user() {
   preferences.begin("user", true);
   m_personalization.device_name = preferences.getString("device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
   m_network.mqtt.server = preferences.getString("mqtt_srv", "");
@@ -69,13 +67,13 @@ void State::load_user() {
   preferences.end();
 }
 
-void State::clear_user() {
+void DeviceState::clear_user() {
   preferences.begin("user", false);
   preferences.clear();
   preferences.end();
 }
 
-void State::save_persisted() {
+void DeviceState::save_persisted() {
   preferences.begin("persisted", false);
   preferences.putBool("lb_mode", m_persisted.low_batt_mode);
   preferences.putBool("wifi_done", m_persisted.wifi_done);
@@ -94,7 +92,7 @@ void State::save_persisted() {
   preferences.end();
 }
 
-void State::load_persisted() {
+void DeviceState::load_persisted() {
   preferences.begin("persisted", false);
   m_persisted.low_batt_mode = preferences.getBool("lb_mode", false);
   m_persisted.wifi_done = preferences.getBool("wifi_done", false);
@@ -113,13 +111,13 @@ void State::load_persisted() {
   preferences.end();
 }
 
-void State::clear_persisted() {
+void DeviceState::clear_persisted() {
   preferences.begin("persisted", false);
   preferences.clear();
   preferences.end();
 }
 
-void State::clear_persisted_flags() {
+void DeviceState::clear_persisted_flags() {
   m_persisted.wifi_quick_connect = false;
   m_persisted.charge_complete_showing = false;
   m_persisted.info_screen_showing = false;
@@ -131,13 +129,13 @@ void State::clear_persisted_flags() {
   save_all();
 }
 
-void State::save_all() {
+void DeviceState::save_all() {
   log_d("[PREF] state save all");
   save_user();
   save_persisted();
 }
 
-void State::load_all() {
+void DeviceState::load_all() {
   log_d("[PREF] state load all");
   load_factory();
   load_user();
@@ -145,13 +143,13 @@ void State::load_all() {
   set_topics();
 }
 
-void State::clear_all() {
+void DeviceState::clear_all() {
   log_d("[PREF] state clear all");
   clear_user();
   clear_persisted();
 }
 
-const char* State::get_btn_label(uint8_t i) const {
+const char* DeviceState::get_btn_label(uint8_t i) const {
   if (i < NUM_BUTTONS) {
     return m_personalization.btn_labels[i];
   } else {
@@ -159,13 +157,13 @@ const char* State::get_btn_label(uint8_t i) const {
   }
 }
 
-void State::set_btn_label(uint8_t i, const char* label) {
+void DeviceState::set_btn_label(uint8_t i, const char* label) {
   if (i < NUM_BUTTONS) {
     snprintf(m_personalization.btn_labels[i], sizeof(m_personalization.btn_labels[i]), "%s", label);
   }
 }
 
-void State::set_topics() {
+void DeviceState::set_topics() {
   m_topics.t_common = m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
   m_topics.t_cmd = m_topics.t_common + "cmd/";
 
@@ -197,7 +195,7 @@ void State::set_topics() {
 
 }
 
-String State::get_button_topic(uint8_t btn_id, Button::ButtonAction action) {
+String DeviceState::get_button_topic(uint8_t btn_id, Button::ButtonAction action) {
   if (btn_id < 1 || btn_id > NUM_BUTTONS) {
     return "";
   }
