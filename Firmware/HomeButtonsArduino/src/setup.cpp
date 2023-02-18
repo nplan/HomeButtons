@@ -39,7 +39,7 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 
 static bool web_portal_saved = false;
 
-void start_wifi_setup() {
+void start_wifi_setup(DeviceState& device_state, Display& display) {
   device_state.set_ap_ssid_and_password(String("HB-") + device_state.factory().random_id, SETUP_AP_PASSWORD);
   display.disp_ap_config();
   display.update();
@@ -90,7 +90,7 @@ void start_wifi_setup() {
   }
 }
 
-void save_params_callback() {
+void save_params_callback(DeviceState& device_state) {
   device_state.set_device_name(device_name_param.getValue());
   device_state.set_mqtt_parameters(
     mqtt_server_param.getValue(),
@@ -108,10 +108,10 @@ void save_params_callback() {
   web_portal_saved = true;
 }
 
-void start_setup() {
+void start_setup(DeviceState& device_state, Display& display) {
   // config
   wifi_manager.setTitle(WIFI_MANAGER_TITLE);
-  wifi_manager.setSaveParamsCallback(save_params_callback);
+  wifi_manager.setSaveParamsCallback(std::bind(&save_params_callback, device_state));
   wifi_manager.setBreakAfterConfig(true);
   wifi_manager.setShowPassword(true);
   wifi_manager.setParamsPage(true);
