@@ -9,7 +9,7 @@
 
 namespace factory
 {
-  bool factory_mode();
+  void factory_mode(DeviceState& device_state, Display& display);
 }
 
 #endif // HOMEBUTTONS_FACTORY_H

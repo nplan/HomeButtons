@@ -55,7 +55,7 @@ void test_buttons() {
   HW.set_led(HW.LED6_CH, 0);
 }
 
-void test_display() {
+void test_display(Display& display) {
   display.disp_test(false);
   display.update();
   while (!HW.digitalReadAny()) {
@@ -66,7 +66,7 @@ void test_display() {
   }
 }
 
-void test_wifi(const NetworkSettings& settings) {
+void test_wifi(const NetworkSettings& settings, DeviceState& device_state) {
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
 
@@ -131,7 +131,7 @@ bool test_sensors(const TestSettings& settings) {
   return true;
 }
 
-bool run_tests(const TestSettings& settings) {
+bool run_tests(const TestSettings& settings, Display& display) {
   if (HW.digitalReadAny()) {
     log_e("button pressed at start of test");
     return false;
@@ -143,7 +143,7 @@ bool run_tests(const TestSettings& settings) {
   if (!test_sensors(settings)) {
     return false;
   }
-  test_display();
+  test_display(display);
   return true;
 }
 
@@ -151,7 +151,7 @@ void sendOK() { Serial.println("OK"); }
 
 void sendFAIL() { Serial.println("FAIL"); }
 
-bool factory_mode() {
+void factory_mode(DeviceState& device_state, Display& display) {
   NetworkSettings networkSettings = {};
   TestSettings test_settings = {};
 
@@ -175,7 +175,7 @@ bool factory_mode() {
           display.begin();
           HW.begin();
           log_i("starting hw test...");
-          if (run_tests(test_settings)) {
+          if (run_tests(test_settings, display)) {
             log_i("test complete");
             sendOK();
           } else {
@@ -287,7 +287,7 @@ bool factory_mode() {
       } else if (cmd == "TW") {
         if (device_state.factory().serial_number.length() > 0) {
           log_i("starting wifi test...");
-          test_wifi(networkSettings);
+          test_wifi(networkSettings, device_state);
           sendOK();
         }
         else {
@@ -337,7 +337,7 @@ bool factory_mode() {
           device_state.save_factory();
           display.end();
           display.update();
-          return true;
+          return;
         } else {
           log_w("settings missing or incorrect");
           sendFAIL();
