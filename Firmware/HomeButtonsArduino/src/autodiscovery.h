@@ -1,8 +1,10 @@
 #ifndef HOMEBUTTONS_AUTODISCOVERY_H
 #define HOMEBUTTONS_AUTODISCOVERY_H
 
-void send_discovery_config();
+class DeviceState;
+class Network;
 
-void update_discovery_config();
+void send_discovery_config(const DeviceState& device_state, Network& network);
+void update_discovery_config(const DeviceState& device_state, Network& network);
 
 #endif // HOMEBUTTONS_AUTODISCOVERY_H

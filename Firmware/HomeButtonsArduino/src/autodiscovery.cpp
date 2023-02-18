@@ -8,7 +8,7 @@
 #include "state.h"
 #include "hardware.h"
 
-void send_discovery_config() {
+void send_discovery_config(const DeviceState& device_state, Network& network) {
   // Construct topics
   char trigger_topic_common[128];
   snprintf(trigger_topic_common, sizeof(trigger_topic_common), "%s/device_automation/%s", device_state.network().mqtt.discovery_prefix.c_str(), device_state.factory().unique_id.c_str());
@@ -204,7 +204,7 @@ void send_discovery_config() {
   }
 }
 
-void update_discovery_config() {
+void update_discovery_config(const DeviceState& device_state, Network& network) {
   // sensor config topics
   String sensor_topic_common =
       device_state.network().mqtt.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
