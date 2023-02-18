@@ -86,7 +86,6 @@ std::pair<BootCause, Button *> App::_determine_boot_cause()
   }
   for (auto &b : m_buttons)
   {
-    log_i("%d vs %d", b.get_pin(), wakeup_pin);
     if (b.get_pin() == wakeup_pin)
     {
       active_button = &b;
@@ -369,24 +368,18 @@ void App::_main_task()
   // ------ boot cause ------
   auto &&[boot_cause, active_button] = _determine_boot_cause();
 
-  log_i("yes");
 
   // ------ handle boot cause ------
   switch (boot_cause)
   {
   case BootCause::RESET:
   {
-    log_i("yes");
     if (!m_device_state.persisted().silent_restart)
     {
-      log_i("yes");
       m_display.disp_message("RESTART...", 0);
-      log_i("yes");
       m_display.update();
-      log_i("yes");
     }
 
-log_i("yes");
     if (m_device_state.persisted().restart_to_wifi_setup)
     {
       m_device_state.clear_persisted_flags();
@@ -399,12 +392,9 @@ log_i("yes");
       log_i("[DEVICE] staring setup...");
       start_setup(m_device_state, m_display); // resets ESP when done
     }
-log_i("yes");
     m_device_state.clear_persisted_flags();
-log_i("yes");
     if (!m_device_state.persisted().wifi_done || !m_device_state.persisted().setup_done)
     {
-      log_i("yes");
       m_display.disp_welcome();
       m_display.update();
       m_display.end();
@@ -413,20 +403,16 @@ log_i("yes");
     }
     else
     {
-      log_i("yes");
       m_display.disp_main();
       m_display.update();
     }
-    log_i("yes");
     if (m_device_state.flags().awake_mode)
     {
-      log_i("yes");
       // proceed with awake mode
       m_sm_state = StateMachineState::AWAIT_NET_CONNECT;
     }
     else
     {
-      log_i("yes");
       m_display.end();
       m_display.update();
       _go_to_sleep();
@@ -528,12 +514,10 @@ log_i("yes");
   }
   }
 
-log_i("yes");
   m_display.init_ui_state(UIState{.page = DisplayPage::MAIN});
   m_network.set_callback(std::bind(&App::_mqtt_callback, this, std::placeholders::_1, std::placeholders::_2));
   m_network.set_on_connect(std::bind(&App::_net_on_connect, this));
 
-log_i("yes");
   if (!m_device_state.flags().awake_mode)
   {
     // ######## SLEEP MODE state machine ########

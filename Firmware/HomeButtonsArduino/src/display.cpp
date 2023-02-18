@@ -312,7 +312,6 @@ void Display::draw_main() {
     }
     h_pos = heights[i] + h / 2;
     u8g2.setCursor(w_pos, h_pos);
-    log_i("t was %s", t.c_str());
     u8g2.print(t.c_str());
   }
   disp->display();
