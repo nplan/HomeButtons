@@ -190,7 +190,7 @@ void App::_start_button_task() {
               "BUTTON",       // Name of the task (for debugging)
               2000,           // Stack size (bytes)
               this,           // Parameter to pass
-              23,             // Task priority
+              1,             // Task priority
               &m_button_task_h  // Task handle
   );
 }
@@ -202,7 +202,7 @@ void App::_start_display_task() {
               "DISPLAY",       // Name of the task (for debugging)
               5000,            // Stack size (bytes)
               this,            // Parameter to pass
-              5,               // Task priority
+              1,               // Task priority
               &m_display_task_h  // Task handle
   );
 }
@@ -214,7 +214,7 @@ void App::_start_network_task() {
               "NETWORK",       // Name of the task (for debugging)
               10000,           // Stack size (bytes)
               this,            // Parameter to pass
-              10,              // Task priority
+              1,              // Task priority
               &m_network_task_h  // Task handle
   );
 }
@@ -226,7 +226,7 @@ void App::_start_leds_task() {
               "LEDS",       // Name of the task (for debugging)
               2000,         // Stack size (bytes)
               this,         // Parameter to pass
-              23,           // Task priority
+              1,           // Task priority
               &m_leds_task_h  // Task handle
   );
 }
