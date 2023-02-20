@@ -7,11 +7,12 @@
 #include "network.h"
 #include "state.h"
 #include "hardware.h"
+#include "StaticString.h"
 
 void send_discovery_config(const DeviceState& device_state, Network& network) {
   // Construct topics
-  char trigger_topic_common[128];
-  snprintf(trigger_topic_common, sizeof(trigger_topic_common), "%s/device_automation/%s", device_state.network().mqtt.discovery_prefix.c_str(), device_state.factory().unique_id.c_str());
+  using TopicType = StaticString<128>;
+  TopicType trigger_topic_common("%s/device_automation/%s", device_state.network().mqtt.discovery_prefix.c_str(), device_state.factory().unique_id.c_str());
 
   // sensor config topics
   String sensor_topic_common =
@@ -64,9 +65,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
       conf["dev"] = device_short;
     }
     n = serializeJson(conf, buffer);
-    char topic_name[128];
-    snprintf(topic_name, sizeof(topic_name), "%s/button_%d/config", trigger_topic_common, i + 1);
-    network.publish(topic_name, buffer, true);
+    TopicType topic_name("%s/button_%d/config", trigger_topic_common.c_str(), i + 1);
+    network.publish(topic_name.c_str(), buffer, true);
   }
 
   // button double press
@@ -79,9 +79,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
     n = serializeJson(conf, buffer);
-    char topic_name[128];
-    snprintf(topic_name, sizeof(topic_name), "%s/button_%d_double/config", trigger_topic_common, i + 1);
-    network.publish(topic_name, buffer, true);
+    TopicType topic_name("%s/button_%d_double/config", trigger_topic_common.c_str(), i + 1);
+    network.publish(topic_name.c_str(), buffer, true);
   }
 
   // button triple press
@@ -94,9 +93,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
     n = serializeJson(conf, buffer);
-    char topic_name[128];
-    snprintf(topic_name, sizeof(topic_name), "%s/button_%d_triple/config", trigger_topic_common, i + 1);
-    network.publish(topic_name, buffer, true);
+    TopicType topic_name("%s/button_%d_triple/config", trigger_topic_common.c_str(), i + 1);
+    network.publish(topic_name.c_str(), buffer, true);
   }
 
   // button quad press
@@ -109,9 +107,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
     n = serializeJson(conf, buffer);
-    char topic_name[128];
-    snprintf(topic_name, sizeof(topic_name), "%s/button_%d_quad/config", trigger_topic_common, i + 1);
-    network.publish(topic_name, buffer, true);
+    TopicType topic_name("%s/button_%d_quad/config", trigger_topic_common.c_str(), i + 1);
+    network.publish(topic_name.c_str(), buffer, true);
   }
 
   uint16_t expire_after = device_state.sensor_interval() * 60 + 60;  // seconds

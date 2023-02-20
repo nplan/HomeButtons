@@ -515,7 +515,7 @@ void App::_main_task()
   }
 
   m_display.init_ui_state(UIState{.page = DisplayPage::MAIN});
-  m_network.set_callback(std::bind(&App::_mqtt_callback, this, std::placeholders::_1, std::placeholders::_2));
+  m_network.set_mqtt_callback(std::bind(&App::_mqtt_callback, this, std::placeholders::_1, std::placeholders::_2));
   m_network.set_on_connect(std::bind(&App::_net_on_connect, this));
 
   if (!m_device_state.flags().awake_mode)
@@ -642,8 +642,7 @@ void App::_main_task()
           m_device_state.persisted().failed_connections = 0;
           m_sm_state = StateMachineState::CMD_SHUTDOWN;
         }
-        else if (millis() - m_network.get_cmd_connect_time() >=
-                 NET_CONNECT_TIMEOUT)
+        else if (millis() >= NET_CONNECT_TIMEOUT)
         {
           log_d("[DEVICE] network connect timeout.");
           if (boot_cause == BootCause::BUTTON)
@@ -1018,11 +1017,11 @@ void App::_main_task()
 
 void App::_publish_sensors() {
   m_network.publish(m_device_state.topics().t_temperature.c_str(),
-                  String(m_device_state.sensors().temperature).c_str());
+                  StaticString<32>("%.2f", m_device_state.sensors().temperature).c_str());
   m_network.publish(m_device_state.topics().t_humidity.c_str(),
-                  String(m_device_state.sensors().humidity).c_str());
+                  StaticString<32>("%.2f", m_device_state.sensors().humidity).c_str());
   m_network.publish(m_device_state.topics().t_battery.c_str(),
-                  String(m_device_state.sensors().battery_pct).c_str());
+                  StaticString<32>("%u", m_device_state.sensors().battery_pct).c_str());
 }
 
 void App::_publish_awake_mode_avlb() {
@@ -1033,48 +1032,51 @@ void App::_publish_awake_mode_avlb() {
   }
 }
 
-void App::_mqtt_callback(const String& topic, const String& payload) {
-  if (topic == m_device_state.topics().t_sensor_interval_cmd) {
-    uint16_t mins = payload.toInt();
+void App::_mqtt_callback(const char* topic, const char* payload) {
+  if (strcmp(topic, m_device_state.topics().t_sensor_interval_cmd.c_str()) == 0) {
+    uint16_t mins = atoi(payload);
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
       m_device_state.set_sensor_interval(mins);
       m_device_state.save_all();
       m_network.publish(m_device_state.topics().t_sensor_interval_state.c_str(),
-                      String(m_device_state.sensor_interval()).c_str(), true);
+                      StaticString<32>("%u", m_device_state.sensor_interval()).c_str(), true);
       update_discovery_config(m_device_state, m_network);
       log_d("[DEVICE] sensor interval set to %d minutes", mins);
       _publish_sensors();
     }
     m_network.publish(m_device_state.topics().t_sensor_interval_cmd.c_str(), nullptr, true);
+    return;
   }
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    if (topic == m_device_state.topics().t_btn_label_cmd[i]) {
-      m_device_state.set_btn_label(i, payload.c_str());
+    if (strcmp(topic, m_device_state.topics().t_btn_label_cmd[i].c_str()) == 0) {
+      m_device_state.set_btn_label(i, payload);
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
             m_device_state.get_btn_label(i));
       m_network.publish(m_device_state.topics().t_btn_label_state[i].c_str(),
                       m_device_state.get_btn_label(i), true);
       m_network.publish(m_device_state.topics().t_btn_label_cmd[i].c_str(), nullptr, true);
       m_device_state.flags().display_redraw = true;
+      return;
     }
   }
 
-  if (topic == m_device_state.topics().t_awake_mode_cmd) {
-    if (payload == "ON") {
+  if (strcmp(topic, m_device_state.topics().t_awake_mode_cmd.c_str()) == 0) {
+    if (strcmp(payload,"ON") == 0) {
       m_device_state.persisted().user_awake_mode = true;
       m_device_state.flags().awake_mode = true;
       m_device_state.save_all();
       m_network.publish(m_device_state.topics().t_awake_mode_state.c_str(), "ON", true);
       log_d("[DEVICE] user awake mode set to: ON");
       log_d("[DEVICE] resetting to awake mode...");
-    } else if (payload == "OFF") {
+    } else if (strcmp(payload, "OFF") == 0) {
       m_device_state.persisted().user_awake_mode = false;
       m_device_state.save_all();
       m_network.publish(m_device_state.topics().t_awake_mode_state.c_str(), "OFF", true);
       log_d("[DEVICE] user awake mode set to: OFF");
     }
     m_network.publish(m_device_state.topics().t_awake_mode_cmd.c_str(), nullptr, true);
+    return;
   }
 }
 
@@ -1083,7 +1085,7 @@ void App::_net_on_connect() {
   delay(100);
   _publish_awake_mode_avlb();
   m_network.publish(m_device_state.topics().t_sensor_interval_state.c_str(),
-                  String(m_device_state.sensor_interval()).c_str(), true);
+                  StaticString<32>("%u", m_device_state.sensor_interval()).c_str(), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     auto t = m_device_state.topics().t_btn_label_state[i];
     m_network.publish(t.c_str(), m_device_state.get_btn_label(i), true);

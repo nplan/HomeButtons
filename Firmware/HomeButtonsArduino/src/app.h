@@ -39,7 +39,7 @@ private:
 
     void _publish_sensors();
     void _publish_awake_mode_avlb();
-    void _mqtt_callback(const String& topic, const String& payload);
+    void _mqtt_callback(const char* topic, const char* payload);
     void _net_on_connect();
 
     enum class StateMachineState {
