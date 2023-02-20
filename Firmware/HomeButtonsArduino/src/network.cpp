@@ -10,314 +10,347 @@
 static WiFiClient wifi_client;
 static PubSubClient mqtt_client(wifi_client);
 
-String mac2String(uint8_t ar[]) {
+String mac2String(uint8_t ar[])
+{
   String s;
-  for (uint8_t i = 0; i < 6; ++i) {
+  for (uint8_t i = 0; i < 6; ++i)
+  {
     char buf[3];
-    sprintf(buf, "%02X", ar[i]);  // J-M-L: slight modification, added the 0 in
-                                  // the format for padding
+    sprintf(buf, "%02X", ar[i]); // J-M-L: slight modification, added the 0 in
+                                 // the format for padding
     s += buf;
-    if (i < 5) s += ':';
+    if (i < 5)
+      s += ':';
   }
   return s;
 }
 
-void Network::connect() {
+void NetworkSMStates::IdleState::executeOnce()
+{
+  if (m_stateMachine.cmd_state == Network::CMDState::CONNECT)
+  {
+    if (m_stateMachine.m_device_state.persisted().wifi_quick_connect)
+    {
+      transitionTo<QuickConnectState>();
+    }
+    else
+    {
+      transitionTo<NormalConnectState>();
+    }
+  }
+}
+
+void NetworkSMStates::QuickConnectState::entry()
+{
+  log_i("[NET] connecting Wi-Fi (quick mode)...");
+  WiFi.mode(WIFI_STA);
+  WiFi.persistent(true);
+  m_start_time = millis();
+  WiFi.begin();
+}
+
+void NetworkSMStates::QuickConnectState::executeOnce()
+{
+  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT)
+  {
+    transitionTo<DisconnectState>();
+  }
+  else if (WiFi.status() == WL_CONNECTED)
+  {
+    transitionTo<WifiConnectedState>();
+  }
+  else if (millis() - m_start_time > QUICK_WIFI_TIMEOUT)
+  {
+    // try again with normal mode
+    log_i(
+        "[NET] Wi-Fi connect failed (quick mode). Retrying with normal "
+        "mode...");
+    m_stateMachine.m_device_state.persisted().wifi_quick_connect = false;
+    return transitionTo<DisconnectState>();
+  }
+}
+
+void NetworkSMStates::NormalConnectState::entry()
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.persistent(true);
+
+  // WiFi.begin();
+  delay(500);
+  // get ssid from esp32 saved config
+  wifi_config_t conf;
+  if (esp_wifi_get_config(WIFI_IF_STA, &conf))
+  {
+    log_e("failed to get esp wifi config");
+  }
+  String ssid = reinterpret_cast<const char *>(conf.sta.ssid);
+  String psk = reinterpret_cast<const char *>(conf.sta.password);
+  log_i("[NET] connecting Wi-Fi (normal mode): SSID: %s", ssid.c_str());
+  WiFi.begin(ssid.c_str(), psk.c_str());
+
+  m_start_time = millis();
+  m_await_confirm_quick_wifi_settings = false;
+}
+
+void NetworkSMStates::NormalConnectState::executeOnce()
+{
+  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT)
+  {
+    return transitionTo<DisconnectState>();
+  }
+  else if (WiFi.status() == WL_CONNECTED)
+  {
+    if (m_await_confirm_quick_wifi_settings)
+    {
+      m_stateMachine.m_device_state.persisted().wifi_quick_connect = true;
+      m_stateMachine.m_device_state.save_persisted();
+      m_stateMachine.state = Network::State::W_CONNECTED;
+      m_stateMachine.m_device_state.set_ip(WiFi.localIP().toString());
+      log_i("[NET] Wi-Fi connected, quick mode settings saved.");
+      return transitionTo<MQTTConnectState>();
+    }
+    else
+    {
+      // get bssid and ch, and save it directly to ESP
+      log_i(
+          "[NET] Wi-Fi connected (normal mode). Saving settings for "
+          "quick mode...");
+
+      String ssid = WiFi.SSID();
+      String psk = WiFi.psk();
+      uint8_t *bssid = WiFi.BSSID();
+      int32_t ch = WiFi.channel();
+      log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
+            mac2String(bssid).c_str(), ch);
+
+      // WiFi.disconnect(); not required, already done in WiFi.begin()
+      WiFi.begin(ssid.c_str(), psk.c_str(), ch, bssid, true);
+      m_start_time = millis();
+      m_await_confirm_quick_wifi_settings = true;
+    }
+  }
+  else if (millis() - m_start_time >= WIFI_TIMEOUT)
+  {
+    log_w("[NET] Wi-Fi connect failed (normal mode). Retrying...");
+    return transitionTo<DisconnectState>();
+  }
+}
+
+void NetworkSMStates::MQTTConnectState::entry()
+{
+  mqtt_client.setServer(m_stateMachine.m_device_state.network().mqtt.server.c_str(),
+                        m_stateMachine.m_device_state.network().mqtt.port);
+  mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
+  mqtt_client.setCallback(
+      std::bind(&Network::_mqtt_callback, m_stateMachine, std::placeholders::_1,
+                std::placeholders::_2, std::placeholders::_3));
+  // proceed with MQTT connection
+  log_i("[NET] connecting MQTT....");
+  m_stateMachine._connect_mqtt();
+  m_start_time = millis();
+  // await
+}
+
+void NetworkSMStates::MQTTConnectState::executeOnce()
+{
+  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT)
+  {
+    return transitionTo<DisconnectState>();
+  }
+  else if (mqtt_client.connected())
+  {
+    log_i("[NET] MQTT connected.");
+    return transitionTo<FullyConnectedState>();
+  }
+  else if (millis() - m_start_time > MQTT_TIMEOUT)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      m_stateMachine.state = Network::State::W_CONNECTED;
+      log_w("[NET] MQTT connect failed. Retrying...");
+      m_stateMachine._connect_mqtt();
+      m_start_time = millis();
+    }
+    else
+    {
+      log_w(
+          "[NET] MQTT connect failed. Wi-Fi not connected. Retrying "
+          "Wi-Fi...");
+      return transitionTo<DisconnectState>();
+    }
+  }
+}
+
+void NetworkSMStates::WifiConnectedState::executeOnce()
+{
+  m_stateMachine.state = Network::State::W_CONNECTED;
+  m_stateMachine.m_device_state.set_ip(WiFi.localIP().toString());
+  log_i("[NET] Wi-Fi connected.");
+  String ssid = WiFi.SSID();
+  m_stateMachine.m_device_state.save_all();
+  uint8_t *bssid = WiFi.BSSID();
+  int32_t ch = WiFi.channel();
+  log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
+        mac2String(bssid).c_str(), ch);
+  transitionTo<MQTTConnectState>();
+}
+
+void NetworkSMStates::DisconnectState::entry()
+{
+  log_i("[NET] disconnecting...");
+  mqtt_client.disconnect();
+  wifi_client.flush();
+  WiFi.disconnect(true, m_stateMachine.erase);
+  WiFi.mode(WIFI_OFF);
+  m_stateMachine.state = Network::State::DISCONNECTED;
+  log_i("[NET] disconnected.");
+}
+
+void NetworkSMStates::DisconnectState::executeOnce()
+{
+  if (WiFi.status() == WL_DISCONNECTED)
+  {
+    return transitionTo<IdleState>();
+  }
+}
+
+void NetworkSMStates::FullyConnectedState::entry()
+{
+  m_last_conn_check_time = millis();
+  if (m_stateMachine.on_connect)
+  {
+    m_stateMachine.on_connect();
+  }
+  m_stateMachine.state = Network::State::M_CONNECTED;
+}
+
+void NetworkSMStates::FullyConnectedState::executeOnce()
+{
+  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT)
+  {
+    return transitionTo<DisconnectState>();
+  }
+  else if (millis() - m_last_conn_check_time > NET_CONN_CHECK_INTERVAL)
+  {
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      log_w("[NET] Wi-Fi connection interrupted. Reconnecting...");
+      return transitionTo<DisconnectState>();
+    }
+    else if (!mqtt_client.connected())
+    {
+      m_stateMachine.state = Network::State::W_CONNECTED;
+      log_w("[NET] MQTT connection interrupted. Reconnecting...");
+      return transitionTo<MQTTConnectState>();
+    }
+    m_last_conn_check_time = millis();
+  }
+}
+
+void Network::connect()
+{
   cmd_state = CMDState::CONNECT;
   this->erase = false;
   log_d("[NET] cmd connect");
 }
 
-void Network::disconnect(bool erase) {
+void Network::disconnect(bool erase)
+{
   cmd_state = CMDState::DISCONNECT;
   this->erase = erase;
   log_d("[NET] cmd disconnect");
 }
 
-void Network::update() {
+void Network::update()
+{
   mqtt_client.loop();
-
-  if (sm_state != prev_sm_state) {
-    prev_sm_state = sm_state;
-    log_d("[NET] state machine changed to: %d", sm_state);
-  }
-
-  switch (sm_state) {
-    case StateMachineState::IDLE:  // wait for cmd connect
-      if (cmd_state == CMDState::CONNECT) {
-        cmd_state = CMDState::NONE;
-        mqtt_client.setServer(m_device_state.network().mqtt.server.c_str(),
-                              m_device_state.network().mqtt.port);
-        mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
-        mqtt_client.setCallback(
-            std::bind(&Network::callback, this, std::placeholders::_1,
-                      std::placeholders::_2, std::placeholders::_3));
-        WiFi.mode(WIFI_STA);
-        WiFi.persistent(true);
-        wifi_start_time = millis();
-        if (m_device_state.persisted().wifi_quick_connect) {
-          log_i("[NET] connecting Wi-Fi (quick mode)...");
-          WiFi.begin();
-          sm_state = StateMachineState::AWAIT_QUICK_WIFI_CONNECTION;
-        } else {
-          sm_state = StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION;
-        }
-      }
-      break;
-    case StateMachineState::AWAIT_QUICK_WIFI_CONNECTION:
-      if (cmd_state == CMDState::DISCONNECT) {
-        cmd_state = CMDState::NONE;
-        log_i("[NET] disconnecting...");
-        WiFi.disconnect(true, erase);
-        state = State::DISCONNECTED;
-        sm_state = StateMachineState::IDLE;
-        log_i("[NET] disconnected.");
-      } else if (WiFi.status() == WL_CONNECTED) {
-        state = State::W_CONNECTED;
-        m_device_state.set_ip(WiFi.localIP().toString());
-        log_i("[NET] Wi-Fi connected (quick mode).");
-        String ssid = WiFi.SSID();
-        m_device_state.save_all();
-        uint8_t* bssid = WiFi.BSSID();
-        int32_t ch = WiFi.channel();
-        log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
-              mac2String(bssid).c_str(), ch);
-        // proceed with MQTT connection
-        log_i("[NET] connecting MQTT....");
-        connect_mqtt();
-        mqtt_start_time = millis();
-        sm_state = StateMachineState::AWAIT_MQTT_CONNECTION;
-      } else if (millis() - wifi_start_time > QUICK_WIFI_TIMEOUT) {
-        // try again with normal mode
-        log_i(
-            "[NET] Wi-Fi connect failed (quick mode). Retrying with normal "
-            "mode...");
-        m_device_state.persisted().wifi_quick_connect = false;
-        WiFi.disconnect();
-        delay(500);
-        sm_state = StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION;
-      }
-      break;
-    case StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION: {
-      WiFi.begin();
-      delay(500);
-      // get ssid from esp32 saved config
-      wifi_config_t conf;
-      esp_wifi_get_config(WIFI_IF_STA, &conf);
-      String ssid = reinterpret_cast<const char*>(conf.sta.ssid);
-      String psk = WiFi.psk();
-      log_i("[NET] connecting Wi-Fi (normal mode): SSID: %s", ssid.c_str());
-      WiFi.begin(ssid.c_str(), psk.c_str());
-      wifi_start_time = millis();
-      sm_state = StateMachineState::AWAIT_NORMAL_WIFI_CONNECTION;
-      break;
-    }
-    case StateMachineState::AWAIT_NORMAL_WIFI_CONNECTION:
-      if (cmd_state == CMDState::DISCONNECT) {
-        cmd_state = CMDState::NONE;
-        log_i("[NET] disconnecting...");
-        WiFi.disconnect(true, erase);
-        state = State::DISCONNECTED;
-        sm_state = StateMachineState::IDLE;
-        log_i("[NET] disconnected.");
-      } else if (WiFi.status() == WL_CONNECTED) {
-        // get bssid and ch, disconnect, reconnect with bssid and ch to save it
-        // to ESP
-        log_i(
-            "[NET] Wi-Fi connected (normal mode). Saving settings for "
-            "quick mode...");
-        String ssid = WiFi.SSID();
-        String psk = WiFi.psk();
-        m_device_state.save_all();
-        uint8_t* bssid = WiFi.BSSID();
-        int32_t ch = WiFi.channel();
-        log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
-              mac2String(bssid).c_str(), ch);
-        WiFi.disconnect();
-        WiFi.begin(ssid.c_str(), psk.c_str(), ch, bssid, true);
-        wifi_start_time = millis();
-        sm_state = StateMachineState::AWAIT_CONFIRM_QUICK_WIFI_SETTINGS;
-      } else if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
-        log_w("[NET] Wi-Fi connect failed (normal mode). Retrying...");
-        WiFi.disconnect(true);
-        delay(500);
-        WiFi.mode(WIFI_STA);
-        WiFi.persistent(true);
-        sm_state = StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION;
-      }
-      break;
-    case StateMachineState::AWAIT_CONFIRM_QUICK_WIFI_SETTINGS:
-      if (cmd_state == CMDState::DISCONNECT) {
-        cmd_state = CMDState::NONE;
-        log_i("[NET] disconnecting...");
-        WiFi.disconnect(true, erase);
-        state = State::DISCONNECTED;
-        sm_state = StateMachineState::IDLE;
-        log_i("[NET] disconnected.");
-      } else if (WiFi.status() == WL_CONNECTED) {
-        m_device_state.persisted().wifi_quick_connect = true;
-        state = State::W_CONNECTED;
-        m_device_state.set_ip(WiFi.localIP().toString());
-        log_i("[NET] Wi-Fi connected, quick mode settings saved.");
-        // proceed with MQTT connection
-        log_i("[NET] connecting MQTT....");
-        connect_mqtt();
-        mqtt_start_time = millis();
-        sm_state = StateMachineState::AWAIT_MQTT_CONNECTION;
-      } else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
-        m_device_state.persisted().wifi_quick_connect = false;
-        log_i("[NET] Wi-Fi quick mode save settings failed. Retrying...");
-        sm_state = StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION;
-      }
-      break;
-    case StateMachineState::AWAIT_MQTT_CONNECTION:
-      if (cmd_state == CMDState::DISCONNECT) {
-        cmd_state = CMDState::NONE;
-        log_i("[NET] disconnecting...");
-        WiFi.disconnect(true, erase);
-        WiFi.mode(WIFI_OFF);
-        state = State::DISCONNECTED;
-        sm_state = StateMachineState::IDLE;
-        log_i("[NET] disconnected.");
-      } else if (mqtt_client.connected()) {
-        log_i("[NET] MQTT connected.");
-        last_conn_check_time = millis();
-        if (on_connect != NULL) {
-          on_connect();
-        }
-        state = State::M_CONNECTED;
-        sm_state = StateMachineState::CONNECTED;
-      } else if (millis() - mqtt_start_time > MQTT_TIMEOUT) {
-        if (WiFi.status() == WL_CONNECTED) {
-          state = State::W_CONNECTED;
-          log_w("[NET] MQTT connect failed. Retrying...");
-          connect_mqtt();
-          mqtt_start_time = millis();
-          sm_state = StateMachineState::AWAIT_MQTT_CONNECTION;
-        } else {
-          state = State::DISCONNECTED;
-          log_w(
-              "[NET] MQTT connect failed. Wi-Fi not connected. Retrying "
-              "Wi-Fi...");
-          WiFi.disconnect(true);
-          delay(500);
-          WiFi.mode(WIFI_STA);
-          WiFi.persistent(true);
-          sm_state = StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION;
-        }
-      }
-      break;
-    case StateMachineState::CONNECTED:
-      if (cmd_state == CMDState::DISCONNECT) {
-        cmd_state = CMDState::NONE;
-        log_i("[NET] disconnecting...");
-        disconnect_start_time = millis();
-        sm_state = StateMachineState::AWAIT_DISCONNECTING_TIMEOUT;
-      } else if (millis() - last_conn_check_time > NET_CONN_CHECK_INTERVAL) {
-        if (WiFi.status() != WL_CONNECTED) {
-          state = State::DISCONNECTED;
-          log_w("[NET] Wi-Fi connection interrupted. Reconnecting...");
-          WiFi.disconnect(true);
-          delay(500);
-          WiFi.mode(WIFI_STA);
-          WiFi.persistent(true);
-          sm_state = StateMachineState::BEGIN_WIFI_NORMAL_CONNECTION;
-        } else if (!mqtt_client.connected()) {
-          state = State::W_CONNECTED;
-          log_w("[NET] MQTT connection interrupted. Reconnecting...");
-          connect_mqtt();
-          mqtt_start_time = millis();
-          sm_state = StateMachineState::AWAIT_MQTT_CONNECTION;
-        }
-        last_conn_check_time = millis();
-      }
-      break;
-    case StateMachineState::AWAIT_DISCONNECTING_TIMEOUT:
-      if (millis() - disconnect_start_time > MQTT_DISCONNECT_TIMEOUT) {
-        mqtt_client.disconnect();
-        wifi_client.flush();
-        sm_state = StateMachineState::DISCONNECT;
-      }
-      break;
-    case StateMachineState::DISCONNECT:
-      if (mqtt_client.state() == -1) {
-        WiFi.disconnect(true, erase);
-        delay(100);
-        state = State::DISCONNECTED;
-        log_i("[NET] disconnected.");
-        sm_state = StateMachineState::IDLE;
-      }
-      break;
-  }
+  executeOnce();
 }
 
 Network::State Network::get_state() { return state; }
 
-bool Network::publish(const char* topic, const char* payload, bool retained) {
+bool Network::publish(const char *topic, const char *payload, bool retained)
+{
   bool ret;
-  if (retained) {
+  if (retained)
+  {
     ret = mqtt_client.publish(topic, payload, true);
-  } else {
+  }
+  else
+  {
     ret = mqtt_client.publish(topic, payload);
     delay(10);
   }
-  if (ret) {
+  if (ret)
+  {
     log_d("[NET] pub to: %s SUCCESS.", topic);
-  } else {
+  }
+  else
+  {
     log_w("[NET] pub to: %s FAIL.", topic);
   }
   return ret;
 }
 
-bool Network::subscribe(const String& topic) {
-  if (topic.length() <= 0) {
+bool Network::subscribe(const String &topic)
+{
+  if (topic.length() <= 0)
+  {
     log_w("[NET] sub to empty topic blocked", topic.c_str());
     return false;
   }
   bool ret;
   ret = mqtt_client.subscribe(topic.c_str());
   delay(10);
-  if (ret) {
+  if (ret)
+  {
     log_d("[NET] sub to: %s SUCCESS.", topic.c_str());
-  } else {
+  }
+  else
+  {
     log_w("[NET] sub to: %s FAIL.", topic.c_str());
   }
   return ret;
 }
 
-void Network::set_callback(std::function<void(const String&, const String&)> callback) {
+void Network::set_mqtt_callback(std::function<void(const char *, const char *)> callback)
+{
   usr_callback = callback;
 }
 
-void Network::set_on_connect(std::function<void()> on_connect) {
+void Network::set_on_connect(std::function<void()> on_connect)
+{
   this->on_connect = on_connect;
 }
 
-uint32_t Network::get_cmd_connect_time() { return cmd_connect_time; }
-
-bool Network::connect_mqtt() {
+bool Network::_connect_mqtt()
+{
   if (m_device_state.network().mqtt.user.length() > 0 &&
-      m_device_state.network().mqtt.password.length() > 0) {
+      m_device_state.network().mqtt.password.length() > 0)
+  {
     return mqtt_client.connect(m_device_state.factory().unique_id.c_str(),
                                m_device_state.network().mqtt.user.c_str(),
                                m_device_state.network().mqtt.password.c_str());
-  } else {
+  }
+  else
+  {
     return mqtt_client.connect(m_device_state.factory().unique_id.c_str());
   }
 }
 
-void Network::callback(const char* topic, uint8_t* payload, uint32_t length) {
+void Network::_mqtt_callback(const char *topic, uint8_t *payload, uint32_t length)
+{
   char buff[length + 1];
   memcpy(buff, payload, (size_t)length);
-  buff[length] = '\0';  // required so it can be converted to String
-  String topic_str = topic;
-  String payload_str = (char*)buff;
-  log_d("[NET] msg on topic: %s, len: %d, payload: %s", topic_str.c_str(),
-        length, payload_str.c_str());
-  if (length < 1) {
+  buff[length] = '\0'; // required so it can be converted to String
+  log_d("[NET] msg on topic: %s, len: %d, payload: %s", topic,
+        length, buff);
+  if (length < 1)
+  {
     return;
   }
-  if (usr_callback != NULL) {
-    usr_callback(topic_str, payload_str);
+  if (usr_callback != NULL)
+  {
+    usr_callback(topic, buff);
   }
 }
