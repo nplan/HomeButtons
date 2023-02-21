@@ -233,8 +233,9 @@ void App::_main_task() {
       m_device_state.persisted().last_sw_ver = SW_VERSION;
       m_device_state.persisted().send_discovery_config = true;
       m_device_state.save_all();
-      m_display.disp_message(UIState::MessageType("Firmware\nupdated to\n") +
-                             SW_VERSION);
+      m_display.disp_message(
+          (UIState::MessageType("Firmware\nupdated to\n") + SW_VERSION)
+              .c_str());
       m_display.update();
       ESP.restart();
     } else {  // first boot after factory flash
@@ -456,7 +457,6 @@ void App::_main_task() {
               case Button::DOUBLE:
               case Button::TRIPLE:
               case Button::QUAD:
-                btn_action = btn_action;
                 m_leds.blink(active_button->get_id(),
                              Button::get_action_multi_count(btn_action), true);
                 if (m_device_state.sensors().battery_low) {

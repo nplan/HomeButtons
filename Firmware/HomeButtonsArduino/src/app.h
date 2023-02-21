@@ -1,6 +1,7 @@
 #ifndef HOMEBUTTONS_APP_H
 #define HOMEBUTTONS_APP_H
 
+#include <array>
 #include "state.h"
 #include "buttons.h"
 #include "leds.h"
@@ -53,7 +54,7 @@ class App {
     AWAIT_SHUTDOWN,
     AWAIT_FACTORY_RESET,
   };
-  StateMachineState m_sm_state;
+  StateMachineState m_sm_state = StateMachineState::AWAIT_NET_CONNECT;
   DeviceState m_device_state;
   TaskHandle_t m_button_task_h = nullptr;
   TaskHandle_t m_display_task_h = nullptr;
@@ -61,7 +62,7 @@ class App {
   TaskHandle_t m_leds_task_h = nullptr;
   TaskHandle_t m_main_task_h = nullptr;
 
-  Button m_buttons[NUM_BUTTONS];
+  std::array<Button, NUM_BUTTONS> m_buttons;
   LEDs m_leds;
   Network m_network;
   Display m_display;

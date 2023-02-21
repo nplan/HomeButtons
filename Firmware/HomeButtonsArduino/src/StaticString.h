@@ -9,10 +9,12 @@ template <size_t MAX_SIZE>
 class StaticString {
  public:
   StaticString() {}
-  StaticString(const char* str) { snprintf(m_data, MAX_SIZE, "%s", str); }
+  explicit StaticString(const char* str) {
+    snprintf(m_data, MAX_SIZE, "%s", str);
+  }
 
   template <typename... Args>
-  StaticString(const char* format, Args... args) {
+  explicit StaticString(const char* format, Args... args) {
     std::snprintf(m_data, MAX_SIZE, format, args...);
   }
 
@@ -37,6 +39,11 @@ class StaticString {
     StaticString output;
     snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
     return output;
+  }
+
+  StaticString& operator=(const char* other) {
+    std::snprintf(m_data, MAX_SIZE, "%s", other);
+    return *this;
   }
 
  private:

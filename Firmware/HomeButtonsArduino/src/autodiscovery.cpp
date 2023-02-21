@@ -52,7 +52,6 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
   device_short["ids"][0] = device_state.factory().unique_id;
 
   // send mqtt msg
-  size_t n;
   char buffer[MQTT_PYLD_SIZE];
 
   // button single press
@@ -68,7 +67,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     } else {
       conf["dev"] = device_short;
     }
-    n = serializeJson(conf, buffer);
+    serializeJson(conf, buffer);
     TopicType topic_name("%s/button_%d/config", trigger_topic_common.c_str(),
                          i + 1);
     network.publish(topic_name.c_str(), buffer, true);
@@ -83,7 +82,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["type"] = "button_double_press";
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
-    n = serializeJson(conf, buffer);
+    serializeJson(conf, buffer);
     TopicType topic_name("%s/button_%d_double/config",
                          trigger_topic_common.c_str(), i + 1);
     network.publish(topic_name.c_str(), buffer, true);
@@ -98,7 +97,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["type"] = "button_triple_press";
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
-    n = serializeJson(conf, buffer);
+    serializeJson(conf, buffer);
     TopicType topic_name("%s/button_%d_triple/config",
                          trigger_topic_common.c_str(), i + 1);
     network.publish(topic_name.c_str(), buffer, true);
@@ -113,7 +112,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["type"] = "button_quadruple_press";
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
-    n = serializeJson(conf, buffer);
+    serializeJson(conf, buffer);
     TopicType topic_name("%s/button_%d_quad/config",
                          trigger_topic_common.c_str(), i + 1);
     network.publish(topic_name.c_str(), buffer, true);
@@ -130,7 +129,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     temp_conf["unit_of_meas"] = "°C";
     temp_conf["exp_aft"] = expire_after;
     temp_conf["dev"] = device_short;
-    n = serializeJson(temp_conf, buffer);
+    serializeJson(temp_conf, buffer);
     network.publish(temperature_config_topic.c_str(), buffer, true);
   }
 
@@ -143,7 +142,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     humidity_conf["unit_of_meas"] = "%";
     humidity_conf["exp_aft"] = expire_after;
     humidity_conf["dev"] = device_short;
-    n = serializeJson(humidity_conf, buffer);
+    serializeJson(humidity_conf, buffer);
     network.publish(humidity_config_topic.c_str(), buffer, true);
   }
 
@@ -156,7 +155,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     battery_conf["unit_of_meas"] = "%";
     battery_conf["exp_aft"] = expire_after;
     battery_conf["dev"] = device_short;
-    n = serializeJson(battery_conf, buffer);
+    serializeJson(battery_conf, buffer);
     network.publish(battery_config_topic.c_str(), buffer, true);
   }
 
@@ -176,7 +175,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     sensor_interval_conf["ic"] = "mdi:timer-sand";
     sensor_interval_conf["ret"] = "true";
     sensor_interval_conf["dev"] = device_short;
-    n = serializeJson(sensor_interval_conf, buffer);
+    serializeJson(sensor_interval_conf, buffer);
     network.publish(sensor_interval_config_topic.c_str(), buffer, true);
   }
 
@@ -192,7 +191,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["ic"] = String("mdi:numeric-") + String(i + 1) + "-box";
     conf["ret"] = "true";
     conf["dev"] = device_short;
-    n = serializeJson(conf, buffer);
+    serializeJson(conf, buffer);
     network.publish(button_label_config_topics[i].c_str(), buffer, true);
   }
 
@@ -207,7 +206,7 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     awake_mode_conf["ret"] = "true";
     awake_mode_conf["avty_t"] = device_state.topics().t_awake_mode_avlb;
     awake_mode_conf["dev"] = device_short;
-    n = serializeJson(awake_mode_conf, buffer);
+    serializeJson(awake_mode_conf, buffer);
     network.publish(awake_mode_config_topic.c_str(), buffer, true);
   }
 }
@@ -224,7 +223,6 @@ void update_discovery_config(const DeviceState& device_state,
   StaticJsonDocument<128> device_short;
   device_short["ids"][0] = device_state.factory().unique_id;
 
-  size_t n;
   char buffer[MQTT_PYLD_SIZE];
 
   uint16_t expire_after = device_state.sensor_interval() * 60 + 60;  // seconds
@@ -238,7 +236,7 @@ void update_discovery_config(const DeviceState& device_state,
     temp_conf["unit_of_meas"] = "°C";
     temp_conf["exp_aft"] = expire_after;
     temp_conf["dev"] = device_short;
-    n = serializeJson(temp_conf, buffer);
+    serializeJson(temp_conf, buffer);
     network.publish(temperature_config_topic.c_str(), buffer, true);
   }
 
@@ -251,7 +249,7 @@ void update_discovery_config(const DeviceState& device_state,
     humidity_conf["unit_of_meas"] = "%";
     humidity_conf["exp_aft"] = expire_after;
     humidity_conf["dev"] = device_short;
-    n = serializeJson(humidity_conf, buffer);
+    serializeJson(humidity_conf, buffer);
     network.publish(humidity_config_topic.c_str(), buffer, true);
   }
 
@@ -264,7 +262,7 @@ void update_discovery_config(const DeviceState& device_state,
     battery_conf["unit_of_meas"] = "%";
     battery_conf["exp_aft"] = expire_after;
     battery_conf["dev"] = device_short;
-    n = serializeJson(battery_conf, buffer);
+    serializeJson(battery_conf, buffer);
     network.publish(battery_config_topic.c_str(), buffer, true);
   }
 }

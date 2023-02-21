@@ -4,7 +4,7 @@ void hw_tests::blink_leds(const String& hw_version) {
   HW.init(hw_version);
   HW.begin();
   while (1) {
-    for (int n = 0; n < 10; n++) {
+    for (int m = 0; m < 10; m++) {
       for (int n = 0; n <= 255; n++) {
         ledcWrite(HW.LED1_CH, n);
         ledcWrite(HW.LED2_CH, n);

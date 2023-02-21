@@ -28,7 +28,7 @@ class QuickConnectState : public State<Network> {
   const char *getName() override { return "QuickConnectState"; }
 
  private:
-  uint32_t m_start_time;
+  uint32_t m_start_time = 0;
 };
 
 class NormalConnectState : public State<Network> {
@@ -41,8 +41,8 @@ class NormalConnectState : public State<Network> {
   const char *getName() override { return "NormalConnectState"; }
 
  private:
-  uint32_t m_start_time;
-  bool m_await_confirm_quick_wifi_settings;
+  uint32_t m_start_time = 0;
+  bool m_await_confirm_quick_wifi_settings = false;
 };
 
 class MQTTConnectState : public State<Network> {
@@ -55,7 +55,7 @@ class MQTTConnectState : public State<Network> {
   const char *getName() override { return "MQTTConnectState"; }
 
  private:
-  uint32_t m_start_time;
+  uint32_t m_start_time = 0;
 };
 
 class WifiConnectedState : public State<Network> {
@@ -87,7 +87,7 @@ class FullyConnectedState : public State<Network> {
   const char *getName() override { return "FullyConnectedState"; }
 
  private:
-  uint32_t m_last_conn_check_time;
+  uint32_t m_last_conn_check_time = 0;
 };
 }  // namespace NetworkSMStates
 
@@ -107,7 +107,7 @@ class Network : public NetworkStateMachine {
 
   enum class CMDState { NONE, CONNECT, DISCONNECT };
 
-  Network(DeviceState &device_state)
+  explicit Network(DeviceState &device_state)
       : NetworkStateMachine("NetworkSM", *this), m_device_state(device_state) {}
 
   void connect();
@@ -126,10 +126,6 @@ class Network : public NetworkStateMachine {
   State state = State::DISCONNECTED;
   CMDState cmd_state = CMDState::NONE;
   DeviceState &m_device_state;
-
-  // uint32_t wifi_start_time = 0;
-  // uint32_t mqtt_start_time = 0;
-  uint32_t disconnect_start_time = 0;
 
   bool erase = false;
 

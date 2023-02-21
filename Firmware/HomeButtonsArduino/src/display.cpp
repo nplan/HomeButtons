@@ -144,9 +144,8 @@ void Display::update() {
   }
 }
 
-void Display::disp_message(const UIState::MessageType &message,
-                           uint32_t duration) {
-  UIState new_cmd_state{DisplayPage::MESSAGE, message};
+void Display::disp_message(const char *message, uint32_t duration) {
+  UIState new_cmd_state{DisplayPage::MESSAGE, UIState::MessageType{message}};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
@@ -154,18 +153,17 @@ void Display::disp_message(const UIState::MessageType &message,
   set_cmd_state(new_cmd_state);
 }
 
-void Display::disp_message_large(const UIState::MessageType &message,
-                                 uint32_t duration) {
-  UIState new_cmd_state{DisplayPage::MESSAGE_LARGE, message};
+void Display::disp_message_large(const char *message, uint32_t duration) {
+  UIState new_cmd_state{DisplayPage::MESSAGE_LARGE,
+                        UIState::MessageType{message}};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
   }
   set_cmd_state(new_cmd_state);
 }
-void Display::disp_error(const UIState::MessageType &message,
-                         uint32_t duration) {
-  UIState new_cmd_state{DisplayPage::ERROR, message};
+void Display::disp_error(const char *message, uint32_t duration) {
+  UIState new_cmd_state{DisplayPage::ERROR, UIState::MessageType{message}};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
@@ -258,7 +256,6 @@ void Display::draw_main() {
   const uint8_t num_buttons = 6;
   const uint16_t min_btn_clearance = 14;
   const uint16_t h_padding = 5;
-  const uint16_t W = WIDTH / 2;
   const uint16_t heights[] = {
       static_cast<uint16_t>(round(HEIGHT / 12.)),
       static_cast<uint16_t>(round(HEIGHT / 12. + HEIGHT / 6.)),
@@ -266,8 +263,6 @@ void Display::draw_main() {
       static_cast<uint16_t>(round(HEIGHT / 12. + 3 * HEIGHT / 6.)),
       static_cast<uint16_t>(round(HEIGHT / 12. + 4 * HEIGHT / 6.)),
       static_cast<uint16_t>(round(HEIGHT / 12. + 5 * HEIGHT / 6.))};
-
-  uint16_t w, h;
 
   disp->setRotation(0);
   disp->setFullWindow();
@@ -285,7 +280,8 @@ void Display::draw_main() {
 
   // Loop through buttons
   for (uint16_t i = 0; i < num_buttons; i++) {
-    UIState::MessageType t = m_device_state.get_btn_label(i);
+    uint16_t w, h;
+    UIState::MessageType t{m_device_state.get_btn_label(i)};
 
     u8g2.setFont(u8g2_font_helvB24_te);
     w = u8g2.getUTF8Width(t.c_str());
@@ -419,12 +415,12 @@ void Display::draw_welcome() {
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 165;
-  for (uint8_t y = 0; y < qrcode.size; y++) {
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
     // Each horizontal module
-    for (uint8_t x = 0; x < qrcode.size; x++) {
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
       // Display each module
-      if (qrcode_getModule(&qrcode, x, y)) {
-        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
       }
     }
   }
@@ -477,12 +473,12 @@ void Display::draw_ap_config() {
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 35;
-  for (uint8_t y = 0; y < qrcode.size; y++) {
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
     // Each horizontal module
-    for (uint8_t x = 0; x < qrcode.size; x++) {
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
       // Display each module
-      if (qrcode_getModule(&qrcode, x, y)) {
-        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
       }
     }
   }
@@ -541,12 +537,12 @@ void Display::draw_web_config() {
   uint16_t qr_x = 23;
   uint16_t qr_y = 35;
 
-  for (uint8_t y = 0; y < qrcode.size; y++) {
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
     // Each horizontal module
-    for (uint8_t x = 0; x < qrcode.size; x++) {
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
       // Display each module
-      if (qrcode_getModule(&qrcode, x, y)) {
-        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
       }
     }
   }

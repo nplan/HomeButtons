@@ -66,7 +66,8 @@ void test_display(Display& display) {
   }
 }
 
-void test_wifi(const NetworkSettings& settings, DeviceState& device_state) {
+void test_wifi(const NetworkSettings& settings,
+               const DeviceState& device_state) {
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
 

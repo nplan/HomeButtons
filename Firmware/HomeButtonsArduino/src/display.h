@@ -35,15 +35,15 @@ struct UIState {
 class Display {
  public:
   enum class State { IDLE, ACTIVE, CMD_END, ENDING };
-  Display(const DeviceState& device_state) : m_device_state(device_state) {}
+  explicit Display(const DeviceState& device_state)
+      : m_device_state(device_state) {}
   void begin();
   void end();
   void update();
 
-  void disp_message(const UIState::MessageType& message, uint32_t duration = 0);
-  void disp_message_large(const UIState::MessageType& message,
-                          uint32_t duration = 0);
-  void disp_error(const UIState::MessageType& message, uint32_t duration = 0);
+  void disp_message(const char* message, uint32_t duration = 0);
+  void disp_message_large(const char* message, uint32_t duration = 0);
+  void disp_error(const char* message, uint32_t duration = 0);
   void disp_main();
   void disp_info();
   void disp_welcome();
