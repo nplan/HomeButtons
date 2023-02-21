@@ -7,9 +7,8 @@
 #include "display.h"
 #include "hardware.h"
 
-namespace factory
-{
-  void factory_mode(DeviceState& device_state, Display& display);
+namespace factory {
+void factory_mode(DeviceState& device_state, Display& display);
 }
 
-#endif // HOMEBUTTONS_FACTORY_H
+#endif  // HOMEBUTTONS_FACTORY_H

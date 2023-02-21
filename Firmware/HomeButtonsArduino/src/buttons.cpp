@@ -2,7 +2,6 @@
 
 #include "FunctionalInterrupt.h"
 
-
 void Button::setup(uint8_t pin, uint16_t id, bool active_high) {
   this->pin = pin;
   this->id = id;
@@ -72,7 +71,7 @@ void Button::update() {
           case LONG_2:
           case LONG_3:
           case LONG_4:
-            log_d("[BTN] id %d press: %s",id, get_action_name(action));
+            log_d("[BTN] id %d press: %s", id, get_action_name(action));
             press_finished = true;
             release_start_time = millis();
             state_machine_state = 8;
@@ -125,7 +124,7 @@ void Button::update() {
           }
           state_machine_state = 6;
         } else {
-          log_d("[BTN] id %d press: %s",id, get_action_name(action));
+          log_d("[BTN] id %d press: %s", id, get_action_name(action));
           press_finished = true;
           release_start_time = millis();
           state_machine_state = 8;

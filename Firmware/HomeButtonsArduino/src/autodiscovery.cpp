@@ -12,27 +12,31 @@
 void send_discovery_config(const DeviceState& device_state, Network& network) {
   // Construct topics
   using TopicType = StaticString<128>;
-  TopicType trigger_topic_common("%s/device_automation/%s", device_state.network().mqtt.discovery_prefix.c_str(), device_state.factory().unique_id.c_str());
+  TopicType trigger_topic_common(
+      "%s/device_automation/%s",
+      device_state.network().mqtt.discovery_prefix.c_str(),
+      device_state.factory().unique_id.c_str());
 
   // sensor config topics
-  String sensor_topic_common =
-      device_state.network().mqtt.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
+  String sensor_topic_common = device_state.network().mqtt.discovery_prefix +
+                               "/sensor/" + device_state.factory().unique_id;
   String temperature_config_topic = sensor_topic_common + "/temperature/config";
   String humidity_config_topic = sensor_topic_common + "/humidity/config";
   String battery_config_topic = sensor_topic_common + "/battery/config";
 
   // command config topics
-  String sensor_interval_config_topic = device_state.network().mqtt.discovery_prefix +
-                                        "/number/" + device_state.factory().unique_id +
-                                        "/sensor_interval/config";
+  String sensor_interval_config_topic =
+      device_state.network().mqtt.discovery_prefix + "/number/" +
+      device_state.factory().unique_id + "/sensor_interval/config";
   String button_label_config_topics[NUM_BUTTONS];
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    button_label_config_topics[i] = device_state.network().mqtt.discovery_prefix + "/text/" +
-                                    device_state.factory().unique_id + "/button_" +
-                                    String(i + 1) + "_label/config";
+    button_label_config_topics[i] =
+        device_state.network().mqtt.discovery_prefix + "/text/" +
+        device_state.factory().unique_id + "/button_" + String(i + 1) +
+        "_label/config";
   }
-  String switch_topic_common =
-      device_state.network().mqtt.discovery_prefix + "/switch/" + device_state.factory().unique_id;
+  String switch_topic_common = device_state.network().mqtt.discovery_prefix +
+                               "/switch/" + device_state.factory().unique_id;
   String awake_mode_config_topic = switch_topic_common + "/awake_mode/config";
 
   // device objects
@@ -65,7 +69,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
       conf["dev"] = device_short;
     }
     n = serializeJson(conf, buffer);
-    TopicType topic_name("%s/button_%d/config", trigger_topic_common.c_str(), i + 1);
+    TopicType topic_name("%s/button_%d/config", trigger_topic_common.c_str(),
+                         i + 1);
     network.publish(topic_name.c_str(), buffer, true);
   }
 
@@ -79,7 +84,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
     n = serializeJson(conf, buffer);
-    TopicType topic_name("%s/button_%d_double/config", trigger_topic_common.c_str(), i + 1);
+    TopicType topic_name("%s/button_%d_double/config",
+                         trigger_topic_common.c_str(), i + 1);
     network.publish(topic_name.c_str(), buffer, true);
   }
 
@@ -93,7 +99,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
     n = serializeJson(conf, buffer);
-    TopicType topic_name("%s/button_%d_triple/config", trigger_topic_common.c_str(), i + 1);
+    TopicType topic_name("%s/button_%d_triple/config",
+                         trigger_topic_common.c_str(), i + 1);
     network.publish(topic_name.c_str(), buffer, true);
   }
 
@@ -107,7 +114,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     conf["stype"] = "button_" + String(i + 1);
     conf["dev"] = device_short;
     n = serializeJson(conf, buffer);
-    TopicType topic_name("%s/button_%d_quad/config", trigger_topic_common.c_str(), i + 1);
+    TopicType topic_name("%s/button_%d_quad/config",
+                         trigger_topic_common.c_str(), i + 1);
     network.publish(topic_name.c_str(), buffer, true);
   }
 
@@ -154,11 +162,13 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
 
   {
     StaticJsonDocument<MQTT_PYLD_SIZE> sensor_interval_conf;
-    sensor_interval_conf["name"] = device_state.device_name() + " Sensor Interval";
+    sensor_interval_conf["name"] =
+        device_state.device_name() + " Sensor Interval";
     sensor_interval_conf["uniq_id"] =
         device_state.factory().unique_id + "_sensor_interval";
     sensor_interval_conf["cmd_t"] = device_state.topics().t_sensor_interval_cmd;
-    sensor_interval_conf["stat_t"] = device_state.topics().t_sensor_interval_state;
+    sensor_interval_conf["stat_t"] =
+        device_state.topics().t_sensor_interval_state;
     sensor_interval_conf["unit_of_meas"] = "min";
     sensor_interval_conf["min"] = SEN_INTERVAL_MIN;
     sensor_interval_conf["max"] = SEN_INTERVAL_MAX;
@@ -174,8 +184,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
     StaticJsonDocument<MQTT_PYLD_SIZE> conf;
     conf["name"] =
         device_state.device_name() + " Button " + String(i + 1) + " Label";
-    conf["uniq_id"] =
-        device_state.factory().unique_id + "_button_" + String(i + 1) + "_label";
+    conf["uniq_id"] = device_state.factory().unique_id + "_button_" +
+                      String(i + 1) + "_label";
     conf["cmd_t"] = device_state.topics().t_btn_label_cmd[i];
     conf["stat_t"] = device_state.topics().t_btn_label_state[i];
     conf["max"] = BTN_LABEL_MAXLEN;
@@ -189,7 +199,8 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
   {
     StaticJsonDocument<MQTT_PYLD_SIZE> awake_mode_conf;
     awake_mode_conf["name"] = device_state.device_name() + " Awake Mode";
-    awake_mode_conf["uniq_id"] = device_state.factory().unique_id + "_awake_mode";
+    awake_mode_conf["uniq_id"] =
+        device_state.factory().unique_id + "_awake_mode";
     awake_mode_conf["cmd_t"] = device_state.topics().t_awake_mode_cmd;
     awake_mode_conf["stat_t"] = device_state.topics().t_awake_mode_state;
     awake_mode_conf["ic"] = "mdi:coffee";
@@ -201,10 +212,11 @@ void send_discovery_config(const DeviceState& device_state, Network& network) {
   }
 }
 
-void update_discovery_config(const DeviceState& device_state, Network& network) {
+void update_discovery_config(const DeviceState& device_state,
+                             Network& network) {
   // sensor config topics
-  String sensor_topic_common =
-      device_state.network().mqtt.discovery_prefix + "/sensor/" + device_state.factory().unique_id;
+  String sensor_topic_common = device_state.network().mqtt.discovery_prefix +
+                               "/sensor/" + device_state.factory().unique_id;
   String temperature_config_topic = sensor_topic_common + "/temperature/config";
   String humidity_config_topic = sensor_topic_common + "/humidity/config";
   String battery_config_topic = sensor_topic_common + "/battery/config";

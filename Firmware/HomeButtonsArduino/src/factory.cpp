@@ -3,17 +3,17 @@
 namespace factory {
 
 struct TestSettings {
-float target_temp;
-float target_humidity;
+  float target_temp;
+  float target_humidity;
 };
 
 struct NetworkSettings {
-String wifi_ssid = "";
-String wifi_password = "";
-String mqtt_server = "";
-String mqtt_user = "";
-String mqtt_password = "";
-int32_t mqtt_port = 0;
+  String wifi_ssid = "";
+  String wifi_password = "";
+  String mqtt_server = "";
+  String mqtt_user = "";
+  String mqtt_password = "";
+  int32_t mqtt_port = 0;
 };
 
 void test_leds() {
@@ -84,9 +84,11 @@ void test_wifi(const NetworkSettings& settings, DeviceState& device_state) {
   log_i("WiFi connected. IP: %S", WiFi.localIP().toString());
   log_i("Connecting to MQTT...");
   mqtt_client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
-  String client_id = "HBTNS-" + device_state.factory().serial_number + "-factory";
+  String client_id =
+      "HBTNS-" + device_state.factory().serial_number + "-factory";
   while (!mqtt_client.connected()) {
-    mqtt_client.connect(client_id.c_str(), settings.mqtt_user.c_str(), settings.mqtt_password.c_str());
+    mqtt_client.connect(client_id.c_str(), settings.mqtt_user.c_str(),
+                        settings.mqtt_password.c_str());
     delay(100);
   }
   log_i("MWTT connected");
@@ -120,11 +122,13 @@ bool test_sensors(const TestSettings& settings) {
   float hmd_val;
   HW.read_temp_hmd(temp_val, hmd_val);
 
-  if (temp_val <= settings.target_temp - 5.0 || temp_val >= settings.target_temp + 5.0) {
+  if (temp_val <= settings.target_temp - 5.0 ||
+      temp_val >= settings.target_temp + 5.0) {
     log_i("Temp test fail. Measured: %f deg C.", temp_val);
     return false;
   }
-  if (hmd_val <= settings.target_humidity - 10.0 || temp_val >= settings.target_humidity + 10.0) {
+  if (hmd_val <= settings.target_humidity - 10.0 ||
+      temp_val >= settings.target_humidity + 10.0) {
     log_i("Humidity test fail. Measured: %f %.", hmd_val);
     return false;
   }
@@ -187,7 +191,8 @@ void factory_mode(DeviceState& device_state, Display& display) {
       } else if (cmd == "SN") {
         if (pld.length() == 8) {
           device_state.set_serial_number(pld);
-          log_i("setting serial number to: %s", device_state.factory().serial_number.c_str());
+          log_i("setting serial number to: %s",
+                device_state.factory().serial_number.c_str());
           sendOK();
         } else {
           log_w("incorrect serial number: %s", pld.c_str());
@@ -196,7 +201,8 @@ void factory_mode(DeviceState& device_state, Display& display) {
       } else if (cmd == "RI") {
         if (pld.length() == 6) {
           device_state.set_random_id(pld);
-          log_i("setting random id to: %s", device_state.factory().random_id.c_str());
+          log_i("setting random id to: %s",
+                device_state.factory().random_id.c_str());
           sendOK();
         } else {
           log_w("incorrect random id: %s", pld.c_str());
@@ -205,7 +211,8 @@ void factory_mode(DeviceState& device_state, Display& display) {
       } else if (cmd == "MN") {
         if (pld.length() > 0 && pld.length() <= 20) {
           device_state.set_model_name(pld);
-          log_i("setting model name to: %s", device_state.factory().model_name.c_str());
+          log_i("setting model name to: %s",
+                device_state.factory().model_name.c_str());
           sendOK();
         } else {
           log_w("incorrect model name: %s", pld.c_str());
@@ -289,8 +296,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
           log_i("starting wifi test...");
           test_wifi(networkSettings, device_state);
           sendOK();
-        }
-        else {
+        } else {
           log_w("set serial number before wifi test");
           sendFAIL();
         }
@@ -318,8 +324,9 @@ void factory_mode(DeviceState& device_state, Display& display) {
             device_state.factory().model_name.length() > 0 &&
             device_state.factory().model_id.length() > 0 &&
             device_state.factory().hw_version.length() > 0) {
-          device_state.set_unique_id(String("HBTNS-") + device_state.factory().serial_number + "-" +
-                               device_state.factory().random_id);
+          device_state.set_unique_id(String("HBTNS-") +
+                                     device_state.factory().serial_number +
+                                     "-" + device_state.factory().random_id);
 
           log_i("settings confirmed. saving to memory");
           log_i(
@@ -330,9 +337,12 @@ void factory_mode(DeviceState& device_state, Display& display) {
                            device model id: %s\n\
                            hw version: %s\n\
                            unique_id: %s\n",
-              device_state.factory().serial_number.c_str(), device_state.factory().random_id.c_str(),
-              device_state.factory().model_name.c_str(), device_state.factory().model_id.c_str(),
-              device_state.factory().hw_version.c_str(), device_state.factory().unique_id.c_str());
+              device_state.factory().serial_number.c_str(),
+              device_state.factory().random_id.c_str(),
+              device_state.factory().model_name.c_str(),
+              device_state.factory().model_id.c_str(),
+              device_state.factory().hw_version.c_str(),
+              device_state.factory().unique_id.c_str());
           sendOK();
           device_state.save_factory();
           display.end();

@@ -2,127 +2,113 @@
 #define HOMEBUTTONS_NETWORK_H
 
 #include <Arduino.h>
+
 #include "StateMachine.h"
 
 class DeviceState;
 class Network;
 
-namespace NetworkSMStates
-{
-  class IdleState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+namespace NetworkSMStates {
+class IdleState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    void executeOnce() override;
+  void executeOnce() override;
 
-    const char *getName() override { return "IdleState"; }
-  };
+  const char *getName() override { return "IdleState"; }
+};
 
-  class QuickConnectState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+class QuickConnectState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    void entry() override;
-    void executeOnce() override;
+  void entry() override;
+  void executeOnce() override;
 
-    const char *getName() override { return "QuickConnectState"; }
+  const char *getName() override { return "QuickConnectState"; }
 
-  private:
-    uint32_t m_start_time;
-  };
+ private:
+  uint32_t m_start_time;
+};
 
-  class NormalConnectState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+class NormalConnectState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    void entry() override;
-    void executeOnce() override;
+  void entry() override;
+  void executeOnce() override;
 
-    const char *getName() override { return "NormalConnectState"; }
+  const char *getName() override { return "NormalConnectState"; }
 
-  private:
-    uint32_t m_start_time;
-    bool m_await_confirm_quick_wifi_settings;
-  };
+ private:
+  uint32_t m_start_time;
+  bool m_await_confirm_quick_wifi_settings;
+};
 
-  class MQTTConnectState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+class MQTTConnectState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    void entry() override;
-    void executeOnce() override;
+  void entry() override;
+  void executeOnce() override;
 
-    const char *getName() override { return "MQTTConnectState"; }
-  private:
-    uint32_t m_start_time;
-  };
+  const char *getName() override { return "MQTTConnectState"; }
 
-  class WifiConnectedState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+ private:
+  uint32_t m_start_time;
+};
 
-    void executeOnce() override;
+class WifiConnectedState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    const char *getName() override { return "WifiConnectedState"; }
-  };
+  void executeOnce() override;
 
-  class DisconnectState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+  const char *getName() override { return "WifiConnectedState"; }
+};
 
-    void entry() override;
-    void executeOnce() override;
+class DisconnectState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    const char *getName() override { return "DisconnectState"; }
-  };
+  void entry() override;
+  void executeOnce() override;
 
-  class FullyConnectedState : public State<Network>
-  {
-  public:
-    using State<Network>::State;
+  const char *getName() override { return "DisconnectState"; }
+};
 
-    void entry() override;
-    void executeOnce() override;
+class FullyConnectedState : public State<Network> {
+ public:
+  using State<Network>::State;
 
-    const char *getName() override { return "FullyConnectedState"; }
-  private:
-    uint32_t m_last_conn_check_time;
-  };
-}
+  void entry() override;
+  void executeOnce() override;
 
-using NetworkStateMachine = StateMachine<NetworkSMStates::IdleState,
-                                         NetworkSMStates::QuickConnectState,
-                                         NetworkSMStates::NormalConnectState,
-                                         NetworkSMStates::MQTTConnectState,
-                                         NetworkSMStates::WifiConnectedState,
-                                         NetworkSMStates::DisconnectState,
-                                         NetworkSMStates::FullyConnectedState>;
+  const char *getName() override { return "FullyConnectedState"; }
 
-class Network : public NetworkStateMachine
-{
+ private:
+  uint32_t m_last_conn_check_time;
+};
+}  // namespace NetworkSMStates
 
-public:
-  enum class State
-  {
+using NetworkStateMachine = StateMachine<
+    NetworkSMStates::IdleState, NetworkSMStates::QuickConnectState,
+    NetworkSMStates::NormalConnectState, NetworkSMStates::MQTTConnectState,
+    NetworkSMStates::WifiConnectedState, NetworkSMStates::DisconnectState,
+    NetworkSMStates::FullyConnectedState>;
+
+class Network : public NetworkStateMachine {
+ public:
+  enum class State {
     DISCONNECTED,
     W_CONNECTED,
     M_CONNECTED,
   };
 
-  enum class CMDState
-  {
-    NONE,
-    CONNECT,
-    DISCONNECT
-  };
+  enum class CMDState { NONE, CONNECT, DISCONNECT };
 
-  Network(DeviceState &device_state) : NetworkStateMachine("NetworkSM", *this), m_device_state(device_state) {}
+  Network(DeviceState &device_state)
+      : NetworkStateMachine("NetworkSM", *this), m_device_state(device_state) {}
 
   void connect();
   void disconnect(bool erase = false);
@@ -132,16 +118,17 @@ public:
 
   bool publish(const char *topic, const char *payload, bool retained = false);
   bool subscribe(const String &topic);
-  void set_mqtt_callback(std::function<void(const char *, const char *)> callback);
+  void set_mqtt_callback(
+      std::function<void(const char *, const char *)> callback);
   void set_on_connect(std::function<void()> on_connect);
 
-private:
+ private:
   State state = State::DISCONNECTED;
   CMDState cmd_state = CMDState::NONE;
   DeviceState &m_device_state;
 
   // uint32_t wifi_start_time = 0;
-  //uint32_t mqtt_start_time = 0;
+  // uint32_t mqtt_start_time = 0;
   uint32_t disconnect_start_time = 0;
 
   bool erase = false;
@@ -161,4 +148,4 @@ private:
   friend class NetworkSMStates::FullyConnectedState;
 };
 
-#endif // HOMEBUTTONS_NETWORK_H
+#endif  // HOMEBUTTONS_NETWORK_H

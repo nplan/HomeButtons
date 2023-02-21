@@ -28,14 +28,14 @@ const int HEIGHT = 296;
        : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
 
 static GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
-                            MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>* disp;
+                            MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> *disp;
 
 static U8G2_FOR_ADAFRUIT_GFX u8g2;
 
 void Display::begin() {
   if (state != State::IDLE) return;
   disp = new GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
-                                     MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
+                                  MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
       GxEPD2_DRIVER_CLASS(/*CS=*/HW.EINK_CS, /*DC=*/HW.EINK_DC,
                           /*RST=*/HW.EINK_RST, /*BUSY=*/HW.EINK_BUSY));
   disp->init();
@@ -92,8 +92,9 @@ void Display::update() {
     return;
   }
 
-  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s", draw_ui_state.page,
-        draw_ui_state.disappearing, draw_ui_state.message.c_str());
+  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s",
+        draw_ui_state.page, draw_ui_state.disappearing,
+        draw_ui_state.message.c_str());
 
   redraw_in_progress = true;
   switch (draw_ui_state.page) {
@@ -143,7 +144,8 @@ void Display::update() {
   }
 }
 
-void Display::disp_message(const UIState::MessageType& message, uint32_t duration) {
+void Display::disp_message(const UIState::MessageType &message,
+                           uint32_t duration) {
   UIState new_cmd_state{DisplayPage::MESSAGE, message};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
@@ -152,7 +154,8 @@ void Display::disp_message(const UIState::MessageType& message, uint32_t duratio
   set_cmd_state(new_cmd_state);
 }
 
-void Display::disp_message_large(const UIState::MessageType& message, uint32_t duration) {
+void Display::disp_message_large(const UIState::MessageType &message,
+                                 uint32_t duration) {
   UIState new_cmd_state{DisplayPage::MESSAGE_LARGE, message};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
@@ -160,7 +163,8 @@ void Display::disp_message_large(const UIState::MessageType& message, uint32_t d
   }
   set_cmd_state(new_cmd_state);
 }
-void Display::disp_error(const UIState::MessageType& message, uint32_t duration) {
+void Display::disp_error(const UIState::MessageType &message,
+                         uint32_t duration) {
   UIState new_cmd_state{DisplayPage::ERROR, message};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
@@ -195,20 +199,18 @@ void Display::disp_web_config() {
 }
 
 void Display::disp_test(bool invert) {
-UIState new_cmd_state{};
-if (!invert) {
-  new_cmd_state.page = DisplayPage::TEST;
-} else {
-  new_cmd_state.page = DisplayPage::TEST_INV;
-}
-set_cmd_state(new_cmd_state);
+  UIState new_cmd_state{};
+  if (!invert) {
+    new_cmd_state.page = DisplayPage::TEST;
+  } else {
+    new_cmd_state.page = DisplayPage::TEST_INV;
+  }
+  set_cmd_state(new_cmd_state);
 }
 
 UIState Display::get_ui_state() { return current_ui_state; }
 
-void Display::init_ui_state(UIState ui_state) {
-  current_ui_state = ui_state;
-}
+void Display::init_ui_state(UIState ui_state) { current_ui_state = ui_state; }
 
 Display::State Display::get_state() { return state; }
 
@@ -217,7 +219,8 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
-void Display::draw_message(const UIState::MessageType& message, bool error, bool large) {
+void Display::draw_message(const UIState::MessageType &message, bool error,
+                           bool large) {
   disp->setRotation(0);
   disp->setTextColor(text_color);
   disp->setTextWrap(true);
@@ -240,7 +243,7 @@ void Display::draw_message(const UIState::MessageType& message, bool error, bool
     disp->setCursor(0, 0);
     int16_t x, y;
     uint16_t w, h;
-    const char* text = "ERROR";
+    const char *text = "ERROR";
     disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
     disp->setCursor(WIDTH / 2 - w / 2, 20);
     disp->print(text);
@@ -276,7 +279,7 @@ void Display::draw_main() {
   disp->fillScreen(bg_color);
 
   // charging line
-  if(m_device_state.sensors().charging) {
+  if (m_device_state.sensors().charging) {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
@@ -390,7 +393,7 @@ void Display::draw_welcome() {
 
   int16_t x, y;
   uint16_t w, h;
-  const char* text = "Home Buttons";
+  const char *text = "Home Buttons";
   disp->setFont(&FreeSansBold9pt7b);
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 40);
@@ -434,8 +437,10 @@ void Display::draw_welcome() {
   disp->print(sw_ver.c_str());
 
   disp->setCursor(0, 275);
-  UIState::MessageType model_info =
-      UIState::MessageType("Model: ") + m_device_state.factory().model_id.c_str() + " rev " + m_device_state.factory().hw_version.c_str();
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    m_device_state.factory().model_id.c_str() +
+                                    " rev " +
+                                    m_device_state.factory().hw_version.c_str();
   disp->print(model_info.c_str());
 
   disp->setCursor(0, 285);
@@ -445,8 +450,10 @@ void Display::draw_welcome() {
 }
 
 void Display::draw_ap_config() {
-  UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") + m_device_state.network().ap_ssid.c_str() +
-                    ";P:" + m_device_state.network().ap_password.c_str() + ";;";
+  UIState::MessageType contents =
+      UIState::MessageType("WIFI:T:WPA;S:") +
+      m_device_state.network().ap_ssid.c_str() +
+      ";P:" + m_device_state.network().ap_password.c_str() + ";;";
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -463,7 +470,7 @@ void Display::draw_ap_config() {
 
   int16_t x, y;
   uint16_t w, h;
-  const char* text = "Scan:";
+  const char *text = "Scan:";
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 20);
   disp->print(text);
@@ -508,7 +515,8 @@ void Display::draw_ap_config() {
 }
 
 void Display::draw_web_config() {
-  UIState::MessageType contents = UIState::MessageType("http://") + m_device_state.network().ip.c_str();
+  UIState::MessageType contents =
+      UIState::MessageType("http://") + m_device_state.network().ip.c_str();
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -525,7 +533,7 @@ void Display::draw_web_config() {
 
   int16_t x, y;
   uint16_t w, h;
-  const char* text = "Scan:";
+  const char *text = "Scan:";
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 20);
   disp->print(text);
@@ -583,7 +591,7 @@ void Display::draw_test(bool invert) {
 
   int16_t x, y;
   uint16_t w, h;
-  const char* text = "TEST";
+  const char *text = "TEST";
 
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
 

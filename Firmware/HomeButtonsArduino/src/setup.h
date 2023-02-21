@@ -7,4 +7,4 @@ class Display;
 void start_wifi_setup(DeviceState& device_state, Display& display);
 void start_setup(DeviceState& device_state, Display& display);
 
-#endif // HOMEBUTTONS_SETUP_H
+#endif  // HOMEBUTTONS_SETUP_H

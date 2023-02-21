@@ -33,4 +33,4 @@ class LEDs {
   Blink current_blink = {};
 };
 
-#endif // HOMEBUTTONS_LEDS_H
+#endif  // HOMEBUTTONS_LEDS_H

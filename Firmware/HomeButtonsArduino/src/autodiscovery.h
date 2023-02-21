@@ -7,4 +7,4 @@ class Network;
 void send_discovery_config(const DeviceState& device_state, Network& network);
 void update_discovery_config(const DeviceState& device_state, Network& network);
 
-#endif // HOMEBUTTONS_AUTODISCOVERY_H
+#endif  // HOMEBUTTONS_AUTODISCOVERY_H
