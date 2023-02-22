@@ -3,10 +3,12 @@
 
 #include <cstdlib>
 
-// A class to hold a string up to MAX_SIZE-1 characters (or MAX_SIZE characters
+// A class to hold a string up to MAX_SIZE characters (or MAX_SIZE+1 characters
 // including \0)
-template <size_t MAX_SIZE>
+template <size_t _MAX_SIZE>
 class StaticString {
+  static constexpr size_t MAX_SIZE = _MAX_SIZE + 1;  // to include trailing '\0'
+
  public:
   StaticString() {}
   explicit StaticString(const char* str) {
@@ -16,6 +18,11 @@ class StaticString {
   template <typename... Args>
   explicit StaticString(const char* format, Args... args) {
     std::snprintf(m_data, MAX_SIZE, format, args...);
+  }
+
+  template <typename... Args>
+  void set(Args... args) {
+    *this = StaticString(args...);
   }
 
   const char* c_str() const { return m_data; }
