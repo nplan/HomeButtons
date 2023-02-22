@@ -54,6 +54,7 @@ void Network::update() {
         mqtt_client.setCallback(
             std::bind(&Network::callback, this, std::placeholders::_1,
                       std::placeholders::_2, std::placeholders::_3));
+        WiFi.useStaticBuffers(true);
         WiFi.mode(WIFI_STA);
         WiFi.persistent(true);
         wifi_start_time = millis();

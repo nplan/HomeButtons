@@ -7,9 +7,6 @@ from uuid import uuid4
 import argparse
 import paho.mqtt.client as mqtt
 
-port = "/dev/cu.usbmodem01"
-baud = 115200
-
 test_topic = "homebuttons-factory/test"
 test_payload = "OK"
 @dataclass
@@ -251,7 +248,7 @@ class FactoryHandler:
             print("FAIL")
             return False
 
-    def run_factory_setup(self, settings: FactorySettings, sensor_targets: SensorTargets,
+    def run_factory_setup(self, port, baud, settings: FactorySettings, sensor_targets: SensorTargets,
                           network_settings: NetworkSettings=None):
         with Serial(port, baudrate=baud) as self.serial:
             if not self.set_hw_version(settings.hw_version):
@@ -349,4 +346,4 @@ if __name__ == "__main__":
     )
 
     factory = FactoryHandler()
-    factory.run_factory_setup(settings, sensor_targets, network_settings)
+    factory.run_factory_setup(args.port, args.baud, settings, sensor_targets, network_settings)

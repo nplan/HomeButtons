@@ -45,7 +45,6 @@ class Network {
     bool erase = false;
 
     enum StateMachineState {
-      NONE,
       IDLE,
       AWAIT_QUICK_WIFI_CONNECTION,
       BEGIN_WIFI_NORMAL_CONNECTION,

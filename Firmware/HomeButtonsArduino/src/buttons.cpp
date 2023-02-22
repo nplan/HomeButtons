@@ -118,6 +118,8 @@ void Button::update() {
             case TRIPLE:
               action = QUAD;
               break;
+            default:
+              break;
           }
           state_machine_state = 6;
         } else {
