@@ -40,8 +40,6 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 static bool web_portal_saved = false;
 
 void start_wifi_setup(DeviceState& device_state, Display& display) {
-  device_state.set_ap_ssid_and_password(
-      String("HB-") + device_state.factory().random_id, SETUP_AP_PASSWORD);
   display.disp_ap_config();
   display.update();
 
@@ -54,8 +52,7 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
   wifi_manager.setShowInfoUpdate(false);
 
   bool wifi_connected = wifi_manager.startConfigPortal(
-      device_state.network().ap_ssid.c_str(),
-      device_state.network().ap_password.c_str());
+      device_state.get_ap_ssid().c_str(), device_state.get_ap_password());
 
   bool wifi_connected_2 = false;
   WiFi.mode(WIFI_STA);
@@ -164,7 +161,7 @@ void start_setup(DeviceState& device_state, Display& display) {
       ESP.restart();
     }
   }
-  device_state.set_ip(WiFi.localIP().toString());
+  device_state.set_ip(WiFi.localIP());
   display.disp_web_config();
   display.update();
   uint32_t setup_start_time = millis();

@@ -105,10 +105,10 @@ class Network : public NetworkStateMachine {
     M_CONNECTED,
   };
 
-  enum class CMDState { NONE, CONNECT, DISCONNECT };
+  enum class Command { NONE, CONNECT, DISCONNECT };
 
   explicit Network(DeviceState &device_state)
-      : NetworkStateMachine("NetworkSM", *this), m_device_state(device_state) {}
+      : NetworkStateMachine("NetworkSM", *this), device_state_(device_state) {}
 
   void connect();
   void disconnect(bool erase = false);
@@ -123,14 +123,14 @@ class Network : public NetworkStateMachine {
   void set_on_connect(std::function<void()> on_connect);
 
  private:
-  State state = State::DISCONNECTED;
-  CMDState cmd_state = CMDState::NONE;
-  DeviceState &m_device_state;
+  State state_ = State::DISCONNECTED;
+  Command command_ = Command::NONE;
+  bool erase_ = false;
 
-  bool erase = false;
+  DeviceState &device_state_;
 
-  std::function<void(const char *, const char *)> usr_callback;
-  std::function<void()> on_connect;
+  std::function<void(const char *, const char *)> usr_callback_;
+  std::function<void()> on_connect_callback_;
 
   bool _connect_mqtt();
   void _mqtt_callback(const char *topic, uint8_t *payload, uint32_t length);

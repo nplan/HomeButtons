@@ -5,6 +5,7 @@
 
 #include "buttons.h"
 #include "config.h"
+#include "StaticString.h"
 
 class DeviceState {
  private:
@@ -18,9 +19,7 @@ class DeviceState {
   } m_factory;
 
   struct Network {
-    String ip = "";
-    String ap_ssid = "";
-    String ap_password = "";
+    StaticString<15> ip_address;
     struct {
       String server = "";
       int32_t port = 0;
@@ -98,11 +97,15 @@ class DeviceState {
   void set_unique_id(const String& str) { m_factory.unique_id = str; }
 
   const Network& network() const { return m_network; }
-  void set_ip(const String& str) { m_network.ip = str; }
-  void set_ap_ssid_and_password(const String& ssid, const String& pwd) {
-    m_network.ap_ssid = ssid;
-    m_network.ap_password = pwd;
+  void set_ip(const IPAddress& ip_address) {
+    m_network.ip_address.set("%u.%u.%u.%u", ip_address[0], ip_address[1],
+                             ip_address[2], ip_address[3]);
   }
+  StaticString<32> get_ap_ssid() const {
+    return StaticString<32>("HB-") + m_factory.random_id.c_str();
+  }
+  const char* get_ap_password() const { return SETUP_AP_PASSWORD; }
+
   void set_mqtt_parameters(const String& server, int32_t port,
                            const String& user, const String& password,
                            const String& base_topic,

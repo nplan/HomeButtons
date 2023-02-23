@@ -446,10 +446,10 @@ void Display::draw_welcome() {
 }
 
 void Display::draw_ap_config() {
-  UIState::MessageType contents =
-      UIState::MessageType("WIFI:T:WPA;S:") +
-      m_device_state.network().ap_ssid.c_str() +
-      ";P:" + m_device_state.network().ap_password.c_str() + ";;";
+  UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") +
+                                  m_device_state.get_ap_ssid().c_str() +
+                                  ";P:" + m_device_state.get_ap_password() +
+                                  ";;";
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -498,21 +498,21 @@ void Display::draw_ap_config() {
   disp->print("Wi-Fi:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 235);
-  disp->print(m_device_state.network().ap_ssid.c_str());
+  disp->print(m_device_state.get_ap_ssid().c_str());
 
   disp->setFont(&FreeSans9pt7b);
   disp->setCursor(0, 260);
   disp->print("Password:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 275);
-  disp->print(m_device_state.network().ap_password.c_str());
+  disp->print(m_device_state.get_ap_password());
 
   disp->display();
 }
 
 void Display::draw_web_config() {
-  UIState::MessageType contents =
-      UIState::MessageType("http://") + m_device_state.network().ip.c_str();
+  UIState::MessageType contents = UIState::MessageType("http://") +
+                                  m_device_state.network().ip_address.c_str();
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -562,7 +562,7 @@ void Display::draw_web_config() {
   disp->setCursor(0, 240);
   disp->print("http://");
   disp->setCursor(0, 260);
-  disp->print(m_device_state.network().ip.c_str());
+  disp->print(m_device_state.network().ip_address.c_str());
 
   disp->display();
 }

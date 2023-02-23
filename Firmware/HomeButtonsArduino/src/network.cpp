@@ -23,8 +23,8 @@ String mac2String(uint8_t ar[]) {
 }
 
 void NetworkSMStates::IdleState::executeOnce() {
-  if (m_stateMachine.cmd_state == Network::CMDState::CONNECT) {
-    if (m_stateMachine.m_device_state.persisted().wifi_quick_connect) {
+  if (m_stateMachine.command_ == Network::Command::CONNECT) {
+    if (m_stateMachine.device_state_.persisted().wifi_quick_connect) {
       transitionTo<QuickConnectState>();
     } else {
       transitionTo<NormalConnectState>();
@@ -41,7 +41,7 @@ void NetworkSMStates::QuickConnectState::entry() {
 }
 
 void NetworkSMStates::QuickConnectState::executeOnce() {
-  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT) {
+  if (m_stateMachine.command_ == Network::Command::DISCONNECT) {
     transitionTo<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
     transitionTo<WifiConnectedState>();
@@ -50,7 +50,7 @@ void NetworkSMStates::QuickConnectState::executeOnce() {
     log_i(
         "[NET] Wi-Fi connect failed (quick mode). Retrying with normal "
         "mode...");
-    m_stateMachine.m_device_state.persisted().wifi_quick_connect = false;
+    m_stateMachine.device_state_.persisted().wifi_quick_connect = false;
     return transitionTo<DisconnectState>();
   }
 }
@@ -76,16 +76,14 @@ void NetworkSMStates::NormalConnectState::entry() {
 }
 
 void NetworkSMStates::NormalConnectState::executeOnce() {
-  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT) {
+  if (m_stateMachine.command_ == Network::Command::DISCONNECT) {
     return transitionTo<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
     if (m_await_confirm_quick_wifi_settings) {
-      m_stateMachine.m_device_state.persisted().wifi_quick_connect = true;
-      m_stateMachine.m_device_state.save_persisted();
-      m_stateMachine.state = Network::State::W_CONNECTED;
-      m_stateMachine.m_device_state.set_ip(WiFi.localIP().toString());
       log_i("[NET] Wi-Fi connected, quick mode settings saved.");
-      return transitionTo<MQTTConnectState>();
+      m_stateMachine.device_state_.persisted().wifi_quick_connect = true;
+      m_stateMachine.device_state_.save_persisted();
+      return transitionTo<WifiConnectedState>();
     } else {
       // get bssid and ch, and save it directly to ESP
       log_i(
@@ -112,8 +110,8 @@ void NetworkSMStates::NormalConnectState::executeOnce() {
 
 void NetworkSMStates::MQTTConnectState::entry() {
   mqtt_client.setServer(
-      m_stateMachine.m_device_state.network().mqtt.server.c_str(),
-      m_stateMachine.m_device_state.network().mqtt.port);
+      m_stateMachine.device_state_.network().mqtt.server.c_str(),
+      m_stateMachine.device_state_.network().mqtt.port);
   mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
   mqtt_client.setCallback(
       std::bind(&Network::_mqtt_callback, m_stateMachine, std::placeholders::_1,
@@ -126,14 +124,14 @@ void NetworkSMStates::MQTTConnectState::entry() {
 }
 
 void NetworkSMStates::MQTTConnectState::executeOnce() {
-  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT) {
+  if (m_stateMachine.command_ == Network::Command::DISCONNECT) {
     return transitionTo<DisconnectState>();
   } else if (mqtt_client.connected()) {
     log_i("[NET] MQTT connected.");
     return transitionTo<FullyConnectedState>();
   } else if (millis() - m_start_time > MQTT_TIMEOUT) {
     if (WiFi.status() == WL_CONNECTED) {
-      m_stateMachine.state = Network::State::W_CONNECTED;
+      m_stateMachine.state_ = Network::State::W_CONNECTED;
       log_w("[NET] MQTT connect failed. Retrying...");
       m_stateMachine._connect_mqtt();
       m_start_time = millis();
@@ -147,11 +145,11 @@ void NetworkSMStates::MQTTConnectState::executeOnce() {
 }
 
 void NetworkSMStates::WifiConnectedState::executeOnce() {
-  m_stateMachine.state = Network::State::W_CONNECTED;
-  m_stateMachine.m_device_state.set_ip(WiFi.localIP().toString());
+  m_stateMachine.state_ = Network::State::W_CONNECTED;
+  m_stateMachine.device_state_.set_ip(WiFi.localIP());
   log_i("[NET] Wi-Fi connected.");
   String ssid = WiFi.SSID();
-  m_stateMachine.m_device_state.save_all();
+  m_stateMachine.device_state_.save_all();
   uint8_t *bssid = WiFi.BSSID();
   int32_t ch = WiFi.channel();
   log_i("[NET] SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
@@ -163,9 +161,9 @@ void NetworkSMStates::DisconnectState::entry() {
   log_i("[NET] disconnecting...");
   mqtt_client.disconnect();
   wifi_client.flush();
-  WiFi.disconnect(true, m_stateMachine.erase);
+  WiFi.disconnect(true, m_stateMachine.erase_);
   WiFi.mode(WIFI_OFF);
-  m_stateMachine.state = Network::State::DISCONNECTED;
+  m_stateMachine.state_ = Network::State::DISCONNECTED;
   log_i("[NET] disconnected.");
 }
 
@@ -175,21 +173,21 @@ void NetworkSMStates::DisconnectState::executeOnce() {
 
 void NetworkSMStates::FullyConnectedState::entry() {
   m_last_conn_check_time = millis();
-  if (m_stateMachine.on_connect) {
-    m_stateMachine.on_connect();
+  if (m_stateMachine.on_connect_callback_) {
+    m_stateMachine.on_connect_callback_();
   }
-  m_stateMachine.state = Network::State::M_CONNECTED;
+  m_stateMachine.state_ = Network::State::M_CONNECTED;
 }
 
 void NetworkSMStates::FullyConnectedState::executeOnce() {
-  if (m_stateMachine.cmd_state == Network::CMDState::DISCONNECT) {
+  if (m_stateMachine.command_ == Network::Command::DISCONNECT) {
     return transitionTo<DisconnectState>();
   } else if (millis() - m_last_conn_check_time > NET_CONN_CHECK_INTERVAL) {
     if (WiFi.status() != WL_CONNECTED) {
       log_w("[NET] Wi-Fi connection interrupted. Reconnecting...");
       return transitionTo<DisconnectState>();
     } else if (!mqtt_client.connected()) {
-      m_stateMachine.state = Network::State::W_CONNECTED;
+      m_stateMachine.state_ = Network::State::W_CONNECTED;
       log_w("[NET] MQTT connection interrupted. Reconnecting...");
       return transitionTo<MQTTConnectState>();
     }
@@ -198,14 +196,14 @@ void NetworkSMStates::FullyConnectedState::executeOnce() {
 }
 
 void Network::connect() {
-  cmd_state = CMDState::CONNECT;
-  this->erase = false;
+  command_ = Command::CONNECT;
+  this->erase_ = false;
   log_d("[NET] cmd connect");
 }
 
 void Network::disconnect(bool erase) {
-  cmd_state = CMDState::DISCONNECT;
-  this->erase = erase;
+  command_ = Command::DISCONNECT;
+  this->erase_ = erase;
   log_d("[NET] cmd disconnect");
 }
 
@@ -214,7 +212,7 @@ void Network::update() {
   executeOnce();
 }
 
-Network::State Network::get_state() { return state; }
+Network::State Network::get_state() { return state_; }
 
 bool Network::publish(const char *topic, const char *payload, bool retained) {
   bool ret;
@@ -250,21 +248,21 @@ bool Network::subscribe(const String &topic) {
 
 void Network::set_mqtt_callback(
     std::function<void(const char *, const char *)> callback) {
-  usr_callback = callback;
+  usr_callback_ = callback;
 }
 
 void Network::set_on_connect(std::function<void()> on_connect) {
-  this->on_connect = on_connect;
+  this->on_connect_callback_ = on_connect;
 }
 
 bool Network::_connect_mqtt() {
-  if (m_device_state.network().mqtt.user.length() > 0 &&
-      m_device_state.network().mqtt.password.length() > 0) {
-    return mqtt_client.connect(m_device_state.factory().unique_id.c_str(),
-                               m_device_state.network().mqtt.user.c_str(),
-                               m_device_state.network().mqtt.password.c_str());
+  if (device_state_.network().mqtt.user.length() > 0 &&
+      device_state_.network().mqtt.password.length() > 0) {
+    return mqtt_client.connect(device_state_.factory().unique_id.c_str(),
+                               device_state_.network().mqtt.user.c_str(),
+                               device_state_.network().mqtt.password.c_str());
   } else {
-    return mqtt_client.connect(m_device_state.factory().unique_id.c_str());
+    return mqtt_client.connect(device_state_.factory().unique_id.c_str());
   }
 }
 
@@ -277,7 +275,7 @@ void Network::_mqtt_callback(const char *topic, uint8_t *payload,
   if (length < 1) {
     return;
   }
-  if (usr_callback != NULL) {
-    usr_callback(topic, buff);
+  if (usr_callback_ != NULL) {
+    usr_callback_(topic, buff);
   }
 }
