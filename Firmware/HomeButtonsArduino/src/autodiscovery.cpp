@@ -7,7 +7,7 @@
 #include "network.h"
 #include "state.h"
 #include "hardware.h"
-#include "StaticString.h"
+#include "static_string.h"
 
 void send_discovery_config(const DeviceState& device_state, Network& network) {
   // Construct topics

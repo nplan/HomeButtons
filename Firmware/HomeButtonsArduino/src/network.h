@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#include "StateMachine.h"
+#include "state_machine.h"
 
 class DeviceState;
 class Network;

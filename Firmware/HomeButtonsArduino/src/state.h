@@ -5,7 +5,7 @@
 
 #include "buttons.h"
 #include "config.h"
-#include "StaticString.h"
+#include "static_string.h"
 
 class DeviceState {
  private:

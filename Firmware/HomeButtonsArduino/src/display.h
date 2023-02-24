@@ -3,7 +3,7 @@
 
 #include "state.h"
 #include <GxEPD2.h>
-#include "StaticString.h"
+#include "static_string.h"
 
 class DeviceState;
 
