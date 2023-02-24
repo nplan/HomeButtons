@@ -107,8 +107,7 @@ class Network : public NetworkStateMachine {
 
   enum class Command { NONE, CONNECT, DISCONNECT };
 
-  explicit Network(DeviceState &device_state)
-      : NetworkStateMachine("NetworkSM", *this), device_state_(device_state) {}
+  explicit Network(DeviceState &device_state);
 
   void connect();
   void disconnect(bool erase = false);

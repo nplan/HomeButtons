@@ -195,6 +195,11 @@ void NetworkSMStates::FullyConnectedState::executeOnce() {
   }
 }
 
+Network::Network(DeviceState &device_state)
+    : NetworkStateMachine("NetworkSM", *this), device_state_(device_state) {
+  WiFi.useStaticBuffers(true);
+}
+
 void Network::connect() {
   command_ = Command::CONNECT;
   this->erase_ = false;

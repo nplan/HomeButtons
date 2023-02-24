@@ -517,6 +517,8 @@ void App::_main_task() {
                 case Button::LONG_4:
                   m_display.disp_message("Release\nfor\nFACTORY\nRESET");
                   break;
+                default:
+                  break;
               }
               prev_action = new_action;
             }
@@ -601,6 +603,8 @@ void App::_main_task() {
           }
           break;
         }
+        default:
+          break;
       }  // end switch()
       delay(10);
     }  // end while()
@@ -791,6 +795,8 @@ void App::_main_task() {
                   break;
                 case Button::LONG_4:
                   m_display.disp_message("Release\nfor\nFACTORY\nRESET");
+                  break;
+                default:
                   break;
               }
               prev_action = new_action;
