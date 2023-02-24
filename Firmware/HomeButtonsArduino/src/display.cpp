@@ -172,27 +172,27 @@ void Display::disp_error(const char *message, uint32_t duration) {
 }
 
 void Display::disp_main() {
-  UIState new_cmd_state{.page = DisplayPage::MAIN};
+  UIState new_cmd_state{DisplayPage::MAIN};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_info() {
-  UIState new_cmd_state{.page = DisplayPage::INFO};
+  UIState new_cmd_state{DisplayPage::INFO};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_welcome() {
-  UIState new_cmd_state{.page = DisplayPage::WELCOME};
+  UIState new_cmd_state{DisplayPage::WELCOME};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_ap_config() {
-  UIState new_cmd_state{.page = DisplayPage::AP_CONFIG};
+  UIState new_cmd_state{DisplayPage::AP_CONFIG};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_web_config() {
-  UIState new_cmd_state{.page = DisplayPage::WEB_CONFIG};
+  UIState new_cmd_state{DisplayPage::WEB_CONFIG};
   set_cmd_state(new_cmd_state);
 }
 

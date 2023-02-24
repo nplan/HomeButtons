@@ -17,7 +17,8 @@ class StaticString {
 
   template <typename... Args>
   explicit StaticString(const char* format, Args... args) {
-    std::snprintf(m_data, MAX_SIZE, format, args...);
+    auto n = std::snprintf(m_data, MAX_SIZE, format, args...);
+    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
   }
 
   template <typename... Args>
@@ -38,18 +39,21 @@ class StaticString {
 
   StaticString operator+(const StaticString& other) {
     StaticString output;
-    snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other.m_data);
+    auto n = snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other.m_data);
+    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
     return output;
   }
 
   StaticString operator+(const char* other) {
     StaticString output;
-    snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
+    auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
+    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
     return output;
   }
 
   StaticString& operator=(const char* other) {
-    std::snprintf(m_data, MAX_SIZE, "%s", other);
+    auto n = std::snprintf(m_data, MAX_SIZE, "%s", other);
+    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
     return *this;
   }
 

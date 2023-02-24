@@ -51,25 +51,25 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
   wifi_manager.setDarkMode(true);
   wifi_manager.setShowInfoUpdate(false);
 
-  bool wifi_connected = wifi_manager.startConfigPortal(
-      device_state.get_ap_ssid().c_str(), device_state.get_ap_password());
+  wifi_manager.startConfigPortal(device_state.get_ap_ssid().c_str(),
+                                 device_state.get_ap_password());
 
-  bool wifi_connected_2 = false;
+  bool wifi_connected = false;
   WiFi.mode(WIFI_STA);
   uint32_t wifi_start_time = millis();
   WiFi.begin();
   while (true) {
     delay(100);
     if (WiFi.status() == WL_CONNECTED) {
-      wifi_connected_2 = true;
+      wifi_connected = true;
       break;
     } else if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
-      wifi_connected_2 = false;
+      wifi_connected = false;
       break;
     }
   }
 
-  if (wifi_connected_2) {
+  if (wifi_connected) {
     device_state.persisted().wifi_done = true;
     device_state.persisted().restart_to_setup = true;
     device_state.save_all();

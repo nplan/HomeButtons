@@ -26,7 +26,7 @@ struct UIState {
   using MessageType = StaticString<MAX_MESSAGE_SIZE>;
 
   DisplayPage page = DisplayPage::EMPTY;
-  MessageType message;
+  MessageType message{};
   bool disappearing = false;
   uint32_t appear_time = 0;
   uint32_t disappear_timeout = 0;
