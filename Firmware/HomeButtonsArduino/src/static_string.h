@@ -12,13 +12,14 @@ class StaticString {
  public:
   StaticString() {}
   explicit StaticString(const char* str) {
-    snprintf(m_data, MAX_SIZE, "%s", str);
+    auto n = std::snprintf(m_data, MAX_SIZE, "%s", str);
+    _check_snprintf_return_value(n);
   }
 
   template <typename... Args>
   explicit StaticString(const char* format, Args... args) {
     auto n = std::snprintf(m_data, MAX_SIZE, format, args...);
-    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
+    _check_snprintf_return_value(n);
   }
 
   template <typename... Args>
@@ -32,7 +33,9 @@ class StaticString {
   StaticString substring(size_t i, size_t j) {
     StaticString output;
     if (i < MAX_SIZE) {
-      snprintf(output.m_data, std::min(MAX_SIZE, j - i + 1), m_data + i);
+      auto n = std::snprintf(output.m_data, std::min(MAX_SIZE, j - i + 1),
+                             m_data + i);
+      _check_snprintf_return_value(n);
     }
     return output;
   }
@@ -40,25 +43,31 @@ class StaticString {
   StaticString operator+(const StaticString& other) {
     StaticString output;
     auto n = snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other.m_data);
-    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
+    _check_snprintf_return_value(n);
     return output;
   }
 
   StaticString operator+(const char* other) {
     StaticString output;
     auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
-    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
+    _check_snprintf_return_value(n);
     return output;
   }
 
   StaticString& operator=(const char* other) {
     auto n = std::snprintf(m_data, MAX_SIZE, "%s", other);
-    if (n >= MAX_SIZE) log_d("warning, StaticString too small");
+    _check_snprintf_return_value(n);
     return *this;
   }
 
  private:
   char m_data[MAX_SIZE] = {'\0'};
+  void _check_snprintf_return_value(int value) {
+    if (value >= MAX_SIZE)
+      log_w("warning, StaticString too small");
+    else if (value < 0)
+      log_w("warning, StaticString format failed");
+  }
 };
 
 #endif  // HOMEBUTTONS_STATICSTRING_H
