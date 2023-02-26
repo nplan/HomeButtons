@@ -89,18 +89,18 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
   }
 }
 
-void save_params_callback(DeviceState& device_state) {
-  device_state.set_device_name(device_name_param.getValue());
-  device_state.set_mqtt_parameters(
+void save_params_callback(DeviceState* device_state) {
+  device_state->set_device_name(device_name_param.getValue());
+  device_state->set_mqtt_parameters(
       mqtt_server_param.getValue(), String(mqtt_port_param.getValue()).toInt(),
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
       base_topic_param.getValue(), discovery_prefix_param.getValue());
-  device_state.set_btn_label(0, btn1_label_param.getValue());
-  device_state.set_btn_label(1, btn2_label_param.getValue());
-  device_state.set_btn_label(2, btn3_label_param.getValue());
-  device_state.set_btn_label(3, btn4_label_param.getValue());
-  device_state.set_btn_label(4, btn5_label_param.getValue());
-  device_state.set_btn_label(5, btn6_label_param.getValue());
+  device_state->set_btn_label(0, btn1_label_param.getValue());
+  device_state->set_btn_label(1, btn2_label_param.getValue());
+  device_state->set_btn_label(2, btn3_label_param.getValue());
+  device_state->set_btn_label(3, btn4_label_param.getValue());
+  device_state->set_btn_label(4, btn5_label_param.getValue());
+  device_state->set_btn_label(5, btn6_label_param.getValue());
   web_portal_saved = true;
 }
 
@@ -108,7 +108,7 @@ void start_setup(DeviceState& device_state, Display& display) {
   // config
   wifi_manager.setTitle(WIFI_MANAGER_TITLE);
   wifi_manager.setSaveParamsCallback(
-      std::bind(&save_params_callback, device_state));
+      std::bind(&save_params_callback, &device_state));
   wifi_manager.setBreakAfterConfig(true);
   wifi_manager.setShowPassword(true);
   wifi_manager.setParamsPage(true);
@@ -181,6 +181,9 @@ void start_setup(DeviceState& device_state, Display& display) {
   uint32_t mqtt_start_time = millis();
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
+  log_d("Trying to connect to mqtt://%s:%d",
+        device_state.network().mqtt.server.c_str(),
+        device_state.network().mqtt.port);
   mqtt_client.setServer(device_state.network().mqtt.server.c_str(),
                         device_state.network().mqtt.port);
   if (device_state.network().mqtt.user.length() > 0 &&

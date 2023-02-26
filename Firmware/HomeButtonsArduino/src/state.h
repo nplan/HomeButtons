@@ -88,6 +88,8 @@ class DeviceState {
   } m_sensors;
 
  public:
+  DeviceState() = default;
+  DeviceState(const DeviceState&) = delete;
   const Factory& factory() const { return m_factory; }
   void set_serial_number(const String& str) { m_factory.serial_number = str; }
   void set_random_id(const String& str) { m_factory.random_id = str; }
