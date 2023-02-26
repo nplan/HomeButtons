@@ -147,11 +147,27 @@ void start_setup(DeviceState& device_state, Display& display) {
 
   // connect Wi-Fi
   WiFi.mode(WIFI_STA);
-  uint32_t wifi_start_time = millis();
-  WiFi.begin();
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(100);
-    if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
+  int remaining_tries = MAX_WIFI_RETRIES_DURING_MQTT_SETUP;
+
+  while (true) {
+    uint32_t wifi_start_time = millis();
+    WiFi.begin();
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(100);
+      if (millis() - wifi_start_time >= WIFI_TIMEOUT) {
+        break;
+      }
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+      break;
+    } else if (remaining_tries > 0) {
+      remaining_tries--;
+      log_w("[SETUP] Wi-Fi error, retrying (remainig tries: %d)",
+            remaining_tries);
+      WiFi.disconnect();
+      delay(1000);
+    } else {
       device_state.persisted().wifi_done = false;
       device_state.save_all();
       log_w("[SETUP] Wi-Fi error.");
