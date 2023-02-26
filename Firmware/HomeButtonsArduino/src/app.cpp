@@ -87,14 +87,14 @@ void App::_log_stack_status() const {
   uint32_t leds_free = uxTaskGetStackHighWaterMark(m_leds_task_h);
   uint32_t main_free = uxTaskGetStackHighWaterMark(m_main_task_h);
   uint32_t num_tasks = uxTaskGetNumberOfTasks();
-  log_d(
+  log_i(
       "[DEVICE] free stack: btns %d, disp %d, net %d, leds %d, main "
       "%d, num tasks %d",
       btns_free, disp_free, net_free, leds_free, main_free, num_tasks);
   uint32_t esp_free_heap = ESP.getFreeHeap();
   uint32_t esp_min_free_heap = ESP.getMinFreeHeap();
   uint32_t rtos_free_heap = xPortGetFreeHeapSize();
-  log_d("[DEVICE] free heap: esp %d, esp min %d, rtos %d", esp_free_heap,
+  log_i("[DEVICE] free heap: esp %d, esp min %d, rtos %d", esp_free_heap,
         esp_min_free_heap, rtos_free_heap);
 }
 
