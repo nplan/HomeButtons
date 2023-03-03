@@ -216,6 +216,8 @@ class FactoryHandler:
         client.on_connect = on_connect
         client.on_message = on_message
 
+        if network_settings.mqtt_user and network_settings.mqtt_password:
+            client.username_pw_set(network_settings.mqtt_user, network_settings.mqtt_password)
         client.connect(network_settings.mqtt_server, network_settings.mqtt_port, 60)
         client.loop_start()
 
@@ -312,8 +314,8 @@ if __name__ == "__main__":
 
     required.add_argument("--wifi_ssid", type=str, required=True)
     required.add_argument("--wifi_password", type=str, required=True)
-    required.add_argument("--mqtt_server", type=str, required=True)
-    required.add_argument("--mqtt_user", type=str, required=True)
+    required.add_argument("--mqtt_server", type=str, required=False)
+    required.add_argument("--mqtt_user", type=str, required=False)
     required.add_argument("--mqtt_password", type=str, required=True)
     required.add_argument("--mqtt_port", type=int, required=True)
 
