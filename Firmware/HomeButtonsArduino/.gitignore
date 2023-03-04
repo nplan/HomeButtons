@@ -4,4 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 logs
-sdkconfig.homebuttons
+sdkconfig.debug
+sdkconfig.release
