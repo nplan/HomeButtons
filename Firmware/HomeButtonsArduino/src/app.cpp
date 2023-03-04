@@ -3,12 +3,14 @@
 #include <Arduino.h>
 #include <esp_task_wdt.h>
 
-#include "autodiscovery.h"
 #include "config.h"
 #include "factory.h"
 #include "setup.h"
 
-App::App() : m_network(m_device_state), m_display(m_device_state) {}
+App::App()
+    : m_network(m_device_state),
+      m_display(m_device_state),
+      m_mqtt(m_device_state, m_network) {}
 
 void App::setup() {
   xTaskCreate(_main_task_helper,  // Function that should be called
@@ -530,8 +532,7 @@ void App::_main_task() {
             // net_on_connect();
             if (active_button != nullptr && btn_action != Button::IDLE) {
               m_network.publish(
-                  m_device_state
-                      .get_button_topic(active_button->get_id(), btn_action)
+                  m_mqtt.get_button_topic(active_button->get_id(), btn_action)
                       .c_str(),
                   BTN_PRESS_PAYLOAD);
             }
@@ -730,8 +731,7 @@ void App::_main_task() {
                 m_leds.blink(active_button->get_id(),
                              Button::get_action_multi_count(btn_action));
                 m_network.publish(
-                    m_device_state
-                        .get_button_topic(active_button->get_id(), btn_action)
+                    m_mqtt.get_button_topic(active_button->get_id(), btn_action)
                         .c_str(),
                     BTN_PRESS_PAYLOAD);
                 m_sm_state = StateMachineState::AWAIT_USER_INPUT_START;
@@ -856,100 +856,91 @@ void App::_main_task() {
 
 void App::_publish_sensors() {
   m_network.publish(
-      m_device_state.topics().t_temperature.c_str(),
+      m_mqtt.t_temperature().c_str(),
       StaticString<32>("%.2f", m_device_state.sensors().temperature).c_str());
   m_network.publish(
-      m_device_state.topics().t_humidity.c_str(),
+      m_mqtt.t_humidity().c_str(),
       StaticString<32>("%.2f", m_device_state.sensors().humidity).c_str());
   m_network.publish(
-      m_device_state.topics().t_battery.c_str(),
+      m_mqtt.t_battery().c_str(),
       StaticString<32>("%u", m_device_state.sensors().battery_pct).c_str());
 }
 
 void App::_publish_awake_mode_avlb() {
   if (HW.is_dc_connected()) {
-    m_network.publish(m_device_state.topics().t_awake_mode_avlb.c_str(),
-                      "online", true);
+    m_network.publish(m_mqtt.t_awake_mode_avlb().c_str(), "online", true);
   } else {
-    m_network.publish(m_device_state.topics().t_awake_mode_avlb.c_str(),
-                      "offline", true);
+    m_network.publish(m_mqtt.t_awake_mode_avlb().c_str(), "offline", true);
   }
 }
 
 void App::_mqtt_callback(const char* topic, const char* payload) {
-  if (strcmp(topic, m_device_state.topics().t_sensor_interval_cmd.c_str()) ==
-      0) {
+  if (strcmp(topic, m_mqtt.t_sensor_interval_cmd().c_str()) == 0) {
     uint16_t mins = atoi(payload);
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
       m_device_state.set_sensor_interval(mins);
       m_device_state.save_all();
       m_network.publish(
-          m_device_state.topics().t_sensor_interval_state.c_str(),
+          m_mqtt.t_sensor_interval_state().c_str(),
           StaticString<32>("%u", m_device_state.sensor_interval()).c_str(),
           true);
-      update_discovery_config(m_device_state, m_network);
+      m_mqtt.update_discovery_config();
       log_d("[DEVICE] sensor interval set to %d minutes", mins);
       _publish_sensors();
     }
-    m_network.publish(m_device_state.topics().t_sensor_interval_cmd.c_str(),
-                      nullptr, true);
+    m_network.publish(m_mqtt.t_sensor_interval_cmd().c_str(), nullptr, true);
     return;
   }
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    if (strcmp(topic, m_device_state.topics().t_btn_label_cmd[i].c_str()) ==
-        0) {
+    if (strcmp(topic, m_mqtt.t_btn_label_cmd(i).c_str()) == 0) {
       m_device_state.set_btn_label(i, payload);
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
             m_device_state.get_btn_label(i));
-      m_network.publish(m_device_state.topics().t_btn_label_state[i].c_str(),
+      m_network.publish(m_mqtt.t_btn_label_state(i).c_str(),
                         m_device_state.get_btn_label(i), true);
-      m_network.publish(m_device_state.topics().t_btn_label_cmd[i].c_str(),
-                        nullptr, true);
+      m_network.publish(m_mqtt.t_btn_label_cmd(i).c_str(), nullptr, true);
       m_device_state.flags().display_redraw = true;
       return;
     }
   }
 
-  if (strcmp(topic, m_device_state.topics().t_awake_mode_cmd.c_str()) == 0) {
+  if (strcmp(topic, m_mqtt.t_awake_mode_cmd().c_str()) == 0) {
     if (strcmp(payload, "ON") == 0) {
       m_device_state.persisted().user_awake_mode = true;
       m_device_state.flags().awake_mode = true;
       m_device_state.save_all();
-      m_network.publish(m_device_state.topics().t_awake_mode_state.c_str(),
-                        "ON", true);
+      m_network.publish(m_mqtt.t_awake_mode_state().c_str(), "ON", true);
       log_d("[DEVICE] user awake mode set to: ON");
       log_d("[DEVICE] resetting to awake mode...");
     } else if (strcmp(payload, "OFF") == 0) {
       m_device_state.persisted().user_awake_mode = false;
       m_device_state.save_all();
-      m_network.publish(m_device_state.topics().t_awake_mode_state.c_str(),
-                        "OFF", true);
+      m_network.publish(m_mqtt.t_awake_mode_state().c_str(), "OFF", true);
       log_d("[DEVICE] user awake mode set to: OFF");
     }
-    m_network.publish(m_device_state.topics().t_awake_mode_cmd.c_str(), nullptr,
-                      true);
+    m_network.publish(m_mqtt.t_awake_mode_cmd().c_str(), nullptr, true);
     return;
   }
 }
 
 void App::_net_on_connect() {
-  m_network.subscribe(m_device_state.topics().t_cmd + "#");
+  m_network.subscribe(m_mqtt.t_cmd() + "#");
   delay(100);
   _publish_awake_mode_avlb();
   m_network.publish(
-      m_device_state.topics().t_sensor_interval_state.c_str(),
+      m_mqtt.t_sensor_interval_state().c_str(),
       StaticString<32>("%u", m_device_state.sensor_interval()).c_str(), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    auto t = m_device_state.topics().t_btn_label_state[i];
+    auto t = m_mqtt.t_btn_label_state(i);
     m_network.publish(t.c_str(), m_device_state.get_btn_label(i), true);
   }
-  m_network.publish(m_device_state.topics().t_awake_mode_state.c_str(),
+  m_network.publish(m_mqtt.t_awake_mode_state().c_str(),
                     (m_device_state.persisted().user_awake_mode) ? "ON" : "OFF",
                     true);
 
   if (m_device_state.persisted().send_discovery_config) {
     m_device_state.persisted().send_discovery_config = false;
-    send_discovery_config(m_device_state, m_network);
+    m_mqtt.send_discovery_config();
   }
 }

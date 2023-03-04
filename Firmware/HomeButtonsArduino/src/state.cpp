@@ -32,34 +32,35 @@ void DeviceState::clear_factory() {
 
 void DeviceState::save_user() {
   preferences.begin("user", false);
-  preferences.putString("device_name", m_personalization.device_name);
-  preferences.putString("mqtt_srv", m_network.mqtt.server);
-  preferences.putUInt("mqtt_port", m_network.mqtt.port);
-  preferences.putString("mqtt_user", m_network.mqtt.user);
-  preferences.putString("mqtt_pass", m_network.mqtt.password);
-  preferences.putString("base_topic", m_network.mqtt.base_topic);
-  preferences.putString("disc_prefix", m_network.mqtt.discovery_prefix);
-  preferences.putString("btn1_txt", m_personalization.btn_labels[0]);
-  preferences.putString("btn2_txt", m_personalization.btn_labels[1]);
-  preferences.putString("btn3_txt", m_personalization.btn_labels[2]);
-  preferences.putString("btn4_txt", m_personalization.btn_labels[3]);
-  preferences.putString("btn5_txt", m_personalization.btn_labels[4]);
-  preferences.putString("btn6_txt", m_personalization.btn_labels[5]);
-  preferences.putUInt("sen_itv", m_personalization.sensor_interval);
+  preferences.putString("device_name", m_userPreferences.device_name);
+  preferences.putString("mqtt_srv", m_userPreferences.mqtt.server);
+  preferences.putUInt("mqtt_port", m_userPreferences.mqtt.port);
+  preferences.putString("mqtt_user", m_userPreferences.mqtt.user);
+  preferences.putString("mqtt_pass", m_userPreferences.mqtt.password);
+  preferences.putString("base_topic", m_userPreferences.mqtt.base_topic);
+  preferences.putString("disc_prefix", m_userPreferences.mqtt.discovery_prefix);
+  preferences.putString("btn1_txt", m_userPreferences.btn_labels[0]);
+  preferences.putString("btn2_txt", m_userPreferences.btn_labels[1]);
+  preferences.putString("btn3_txt", m_userPreferences.btn_labels[2]);
+  preferences.putString("btn4_txt", m_userPreferences.btn_labels[3]);
+  preferences.putString("btn5_txt", m_userPreferences.btn_labels[4]);
+  preferences.putString("btn6_txt", m_userPreferences.btn_labels[5]);
+  preferences.putUInt("sen_itv", m_userPreferences.sensor_interval);
   preferences.end();
 }
 
 void DeviceState::load_user() {
   preferences.begin("user", true);
-  m_personalization.device_name = preferences.getString(
+  m_userPreferences.device_name = preferences.getString(
       "device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
-  m_network.mqtt.server = preferences.getString("mqtt_srv", "");
-  m_network.mqtt.port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
-  m_network.mqtt.user = preferences.getString("mqtt_user", "");
-  m_network.mqtt.password = preferences.getString("mqtt_pass", "");
-  m_network.mqtt.base_topic =
+  m_userPreferences.mqtt.server = preferences.getString("mqtt_srv", "");
+  m_userPreferences.mqtt.port =
+      preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
+  m_userPreferences.mqtt.user = preferences.getString("mqtt_user", "");
+  m_userPreferences.mqtt.password = preferences.getString("mqtt_pass", "");
+  m_userPreferences.mqtt.base_topic =
       preferences.getString("base_topic", BASE_TOPIC_DFLT);
-  m_network.mqtt.discovery_prefix =
+  m_userPreferences.mqtt.discovery_prefix =
       preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
   set_btn_label(0, preferences.getString("btn1_txt", BTN_1_LABEL_DFLT).c_str());
   set_btn_label(1, preferences.getString("btn2_txt", BTN_2_LABEL_DFLT).c_str());
@@ -67,7 +68,7 @@ void DeviceState::load_user() {
   set_btn_label(3, preferences.getString("btn4_txt", BTN_4_LABEL_DFLT).c_str());
   set_btn_label(4, preferences.getString("btn5_txt", BTN_5_LABEL_DFLT).c_str());
   set_btn_label(5, preferences.getString("btn6_txt", BTN_6_LABEL_DFLT).c_str());
-  m_personalization.sensor_interval =
+  m_userPreferences.sensor_interval =
       preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   preferences.end();
 }
@@ -147,7 +148,6 @@ void DeviceState::load_all() {
   load_factory();
   load_user();
   load_persisted();
-  set_topics();
 }
 
 void DeviceState::clear_all() {
@@ -158,7 +158,7 @@ void DeviceState::clear_all() {
 
 const char* DeviceState::get_btn_label(uint8_t i) const {
   if (i < NUM_BUTTONS) {
-    return m_personalization.btn_labels[i];
+    return m_userPreferences.btn_labels[i];
   } else {
     return "";
   }
@@ -166,67 +166,7 @@ const char* DeviceState::get_btn_label(uint8_t i) const {
 
 void DeviceState::set_btn_label(uint8_t i, const char* label) {
   if (i < NUM_BUTTONS) {
-    snprintf(m_personalization.btn_labels[i],
-             sizeof(m_personalization.btn_labels[i]), "%s", label);
+    snprintf(m_userPreferences.btn_labels[i],
+             sizeof(m_userPreferences.btn_labels[i]), "%s", label);
   }
-}
-
-void DeviceState::set_topics() {
-  m_topics.t_common =
-      m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
-  m_topics.t_cmd = m_topics.t_common + "cmd/";
-
-  // button press topics
-  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    m_topics.t_btn_press[i] = m_topics.t_common + "button_" + String(i + 1);
-  }
-
-  // sensors
-  m_topics.t_temperature = m_topics.t_common + "temperature";
-  m_topics.t_humidity = m_topics.t_common + "humidity";
-  m_topics.t_battery = m_topics.t_common + "battery";
-
-  // sensor interval
-  m_topics.t_sensor_interval_state = m_topics.t_common + "sensor_interval";
-  m_topics.t_sensor_interval_cmd = m_topics.t_cmd + "sensor_interval";
-
-  // button label state & cmd
-  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    m_topics.t_btn_label_state[i] =
-        m_topics.t_common + "btn_" + String(i + 1) + "_label";
-    m_topics.t_btn_label_cmd[i] =
-        m_topics.t_cmd + "btn_" + String(i + 1) + "_label";
-  }
-
-  // awake mode
-  m_topics.t_awake_mode_state = m_topics.t_common + "awake_mode";
-  m_topics.t_awake_mode_cmd = m_topics.t_cmd + "awake_mode";
-  m_topics.t_awake_mode_avlb = m_topics.t_awake_mode_state + "/available";
-}
-
-String DeviceState::get_button_topic(uint8_t btn_id,
-                                     Button::ButtonAction action) {
-  if (btn_id < 1 || btn_id > NUM_BUTTONS) {
-    return "";
-  }
-  String append;
-  switch (action) {
-    case Button::SINGLE:
-      append = "";
-      break;
-    case Button::DOUBLE:
-      append = "_double";
-      break;
-    case Button::TRIPLE:
-      append = "_triple";
-      break;
-    case Button::QUAD:
-      append = "_quad";
-      break;
-    default:
-      return "";
-  }
-  String topic_common =
-      m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
-  return topic_common + "button_" + String(btn_id) + append;
 }

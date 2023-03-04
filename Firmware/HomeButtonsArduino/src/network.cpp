@@ -110,8 +110,8 @@ void NetworkSMStates::NormalConnectState::executeOnce() {
 
 void NetworkSMStates::MQTTConnectState::entry() {
   mqtt_client.setServer(
-      m_stateMachine.device_state_.network().mqtt.server.c_str(),
-      m_stateMachine.device_state_.network().mqtt.port);
+      m_stateMachine.device_state_.userPreferences().mqtt.server.c_str(),
+      m_stateMachine.device_state_.userPreferences().mqtt.port);
   mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
   mqtt_client.setCallback(
       std::bind(&Network::_mqtt_callback, m_stateMachine, std::placeholders::_1,
@@ -235,7 +235,7 @@ bool Network::publish(const char *topic, const char *payload, bool retained) {
   return ret;
 }
 
-bool Network::subscribe(const String &topic) {
+bool Network::subscribe(const TopicType &topic) {
   if (topic.length() <= 0) {
     log_w("[NET] sub to empty topic blocked", topic.c_str());
     return false;
@@ -261,11 +261,12 @@ void Network::set_on_connect(std::function<void()> on_connect) {
 }
 
 bool Network::_connect_mqtt() {
-  if (device_state_.network().mqtt.user.length() > 0 &&
-      device_state_.network().mqtt.password.length() > 0) {
-    return mqtt_client.connect(device_state_.factory().unique_id.c_str(),
-                               device_state_.network().mqtt.user.c_str(),
-                               device_state_.network().mqtt.password.c_str());
+  if (device_state_.userPreferences().mqtt.user.length() > 0 &&
+      device_state_.userPreferences().mqtt.password.length() > 0) {
+    return mqtt_client.connect(
+        device_state_.factory().unique_id.c_str(),
+        device_state_.userPreferences().mqtt.user.c_str(),
+        device_state_.userPreferences().mqtt.password.c_str());
   } else {
     return mqtt_client.connect(device_state_.factory().unique_id.c_str());
   }

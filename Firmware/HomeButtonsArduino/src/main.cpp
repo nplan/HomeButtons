@@ -3,7 +3,6 @@
 #include <esp_task_wdt.h>
 
 #include "app.h"
-#include "autodiscovery.h"
 #include "buttons.h"
 #include "config.h"
 #include "display.h"

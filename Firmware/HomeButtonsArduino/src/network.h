@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #include "state_machine.h"
+#include "mqtt_helper.h"  // For TopicType
 
 class DeviceState;
 class Network;
@@ -116,7 +117,7 @@ class Network : public NetworkStateMachine {
   State get_state();
 
   bool publish(const char *topic, const char *payload, bool retained = false);
-  bool subscribe(const String &topic);
+  bool subscribe(const TopicType &topic);
   void set_mqtt_callback(
       std::function<void(const char *, const char *)> callback);
   void set_on_connect(std::function<void()> on_connect);

@@ -1,7 +1,9 @@
 #ifndef HOMEBUTTONS_STATICSTRING_H
 #define HOMEBUTTONS_STATICSTRING_H
 
-#include <cstdlib>
+#include <cstdio>
+#include <algorithm>
+#include "Arduino.h"
 
 // A class to hold a string up to MAX_SIZE characters (or MAX_SIZE+1 characters
 // including \0)
@@ -50,6 +52,13 @@ class StaticString {
   StaticString operator+(const char* other) {
     StaticString output;
     auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
+    _check_snprintf_return_value(n);
+    return output;
+  }
+
+  StaticString operator+(unsigned long i) {
+    StaticString output;
+    auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%lu", m_data, i);
     _check_snprintf_return_value(n);
     return output;
   }

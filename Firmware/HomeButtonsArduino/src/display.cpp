@@ -511,8 +511,8 @@ void Display::draw_ap_config() {
 }
 
 void Display::draw_web_config() {
-  UIState::MessageType contents = UIState::MessageType("http://") +
-                                  m_device_state.network().ip_address.c_str();
+  UIState::MessageType contents =
+      UIState::MessageType("http://") + m_device_state.ip();
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -562,7 +562,7 @@ void Display::draw_web_config() {
   disp->setCursor(0, 240);
   disp->print("http://");
   disp->setCursor(0, 260);
-  disp->print(m_device_state.network().ip_address.c_str());
+  disp->print(m_device_state.ip());
 
   disp->display();
 }

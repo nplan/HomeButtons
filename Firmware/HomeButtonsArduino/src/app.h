@@ -7,6 +7,7 @@
 #include "leds.h"
 #include "network.h"
 #include "display.h"
+#include "mqtt_helper.h"
 
 enum class BootCause { RESET, TIMER, BUTTON };
 
@@ -66,6 +67,7 @@ class App {
   LEDs m_leds;
   Network m_network;
   Display m_display;
+  MQTTHelper m_mqtt;
 };
 
 #endif  // HOMEBUTTONS_APP_H
