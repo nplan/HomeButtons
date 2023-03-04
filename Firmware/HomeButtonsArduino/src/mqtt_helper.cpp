@@ -221,12 +221,10 @@ void MQTTHelper::send_discovery_config() {
 
 void MQTTHelper::update_discovery_config() {
   // sensor config topics
-  String sensor_topic_common =
-      _device_state.userPreferences().mqtt.discovery_prefix + "/sensor/" +
-      _device_state.factory().unique_id;
-  String temperature_config_topic = sensor_topic_common + "/temperature/config";
-  String humidity_config_topic = sensor_topic_common + "/humidity/config";
-  String battery_config_topic = sensor_topic_common + "/battery/config";
+  TopicType sensor_topic_common(
+      "%s/sensor/%s",
+      _device_state.userPreferences().mqtt.discovery_prefix.c_str(),
+      _device_state.factory().unique_id.c_str());
 
   StaticJsonDocument<128> device_short;
   device_short["ids"][0] = _device_state.factory().unique_id;
@@ -236,6 +234,8 @@ void MQTTHelper::update_discovery_config() {
   uint16_t expire_after = _device_state.sensor_interval() * 60 + 60;  // seconds
 
   {
+    TopicType temperature_config_topic =
+        sensor_topic_common + "/temperature/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> temp_conf;
     temp_conf["name"] = _device_state.device_name() + " Temperature";
     temp_conf["uniq_id"] = _device_state.factory().unique_id + "_temperature";
@@ -249,6 +249,7 @@ void MQTTHelper::update_discovery_config() {
   }
 
   {
+    TopicType humidity_config_topic = sensor_topic_common + "/humidity/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> humidity_conf;
     humidity_conf["name"] = _device_state.device_name() + " Humidity";
     humidity_conf["uniq_id"] = _device_state.factory().unique_id + "_humidity";
@@ -262,6 +263,7 @@ void MQTTHelper::update_discovery_config() {
   }
 
   {
+    TopicType battery_config_topic = sensor_topic_common + "/battery/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> battery_conf;
     battery_conf["name"] = _device_state.device_name() + " Battery";
     battery_conf["uniq_id"] = _device_state.factory().unique_id + "_battery";
@@ -277,28 +279,18 @@ void MQTTHelper::update_discovery_config() {
 
 TopicType MQTTHelper::get_button_topic(uint8_t btn_id,
                                        Button::ButtonAction action) {
-  if (btn_id < 1 || btn_id > NUM_BUTTONS) {
-    return {};
-  }
-  String append;
-  switch (action) {
-    case Button::SINGLE:
-      append = "";
-      break;
-    case Button::DOUBLE:
-      append = "_double";
-      break;
-    case Button::TRIPLE:
-      append = "_triple";
-      break;
-    case Button::QUAD:
-      append = "_quad";
-      break;
-    default:
-      return {};
-  }
+  if (btn_id < 1 || btn_id > NUM_BUTTONS) return {};
 
-  return t_common() + "button_" + btn_id + append.c_str();
+  if (action == Button::SINGLE)
+    return t_common() + "button_" + btn_id;
+  else if (action == Button::DOUBLE)
+    return t_common() + "button_" + btn_id + "_double";
+  else if (action == Button::TRIPLE)
+    return t_common() + "button_" + btn_id + "_triple";
+  else if (action == Button::QUAD)
+    return t_common() + "button_" + btn_id + "_quad";
+  else
+    return {};
 }
 
 TopicType MQTTHelper::t_common() const {
@@ -314,14 +306,14 @@ TopicType MQTTHelper::t_humidity() const { return t_common() + "humidity"; }
 TopicType MQTTHelper::t_battery() const { return t_common() + "battery"; }
 TopicType MQTTHelper::t_btn_press(uint8_t i) const {
   if (i < NUM_BUTTONS)
-    return t_common() + "button_" + String(i + 1).c_str();
+    return t_common() + "button_" + (i + 1);
   else
     return {};
 }
 
 TopicType MQTTHelper::t_btn_label_state(uint8_t i) const {
   if (i < NUM_BUTTONS)
-    return t_common() + "btn_" + String(i + 1).c_str() + "_label";
+    return t_common() + "btn_" + (i + 1) + "_label";
   else
     return {};
 }
