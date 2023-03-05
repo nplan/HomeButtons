@@ -6,6 +6,7 @@
 #include "config.h"
 #include "factory.h"
 #include "setup.h"
+#include "hardware.h"
 
 App::App()
     : m_network(m_device_state),

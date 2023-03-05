@@ -229,6 +229,7 @@ bool Network::publish(const char *topic, const char *payload, bool retained) {
   }
   if (ret) {
     log_d("[NET] pub to: %s SUCCESS.", topic);
+    log_d("[NET] content: %s", payload == nullptr ? "[none]" : payload);
   } else {
     log_w("[NET] pub to: %s FAIL.", topic);
   }
@@ -236,7 +237,7 @@ bool Network::publish(const char *topic, const char *payload, bool retained) {
 }
 
 bool Network::subscribe(const TopicType &topic) {
-  if (topic.length() <= 0) {
+  if (topic.empty()) {
     log_w("[NET] sub to empty topic blocked", topic.c_str());
     return false;
   }

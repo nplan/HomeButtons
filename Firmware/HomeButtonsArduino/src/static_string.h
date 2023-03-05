@@ -32,6 +32,7 @@ class StaticString {
   const char* c_str() const { return m_data; }
 
   size_t length() const { return strlen(m_data); }
+  bool empty() const { return strlen(m_data) == 0; }
   StaticString substring(size_t i, size_t j) {
     StaticString output;
     if (i < MAX_SIZE) {
