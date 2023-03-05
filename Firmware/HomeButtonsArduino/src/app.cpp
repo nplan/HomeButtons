@@ -899,7 +899,7 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
             m_device_state.get_btn_label(i));
       m_network.publish(m_mqtt.t_btn_label_state(i).c_str(),
-                        m_device_state.get_btn_label(i), true);
+                        m_device_state.get_btn_label(i).c_str(), true);
       m_network.publish(m_mqtt.t_btn_label_cmd(i).c_str(), nullptr, true);
       m_device_state.flags().display_redraw = true;
       return;
@@ -934,7 +934,7 @@ void App::_net_on_connect() {
       StaticString<32>("%u", m_device_state.sensor_interval()).c_str(), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     auto t = m_mqtt.t_btn_label_state(i);
-    m_network.publish(t.c_str(), m_device_state.get_btn_label(i), true);
+    m_network.publish(t.c_str(), m_device_state.get_btn_label(i).c_str(), true);
   }
   m_network.publish(m_mqtt.t_awake_mode_state().c_str(),
                     (m_device_state.persisted().user_awake_mode) ? "ON" : "OFF",

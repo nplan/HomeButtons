@@ -95,8 +95,8 @@ void test_wifi(const NetworkSettings& settings,
   log_i("WiFi connected. IP: %S", WiFi.localIP().toString());
   log_i("Connecting to MQTT...");
   mqtt_client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
-  String client_id =
-      "HBTNS-" + device_state.factory().serial_number + "-factory";
+  auto client_id = StaticString<64>{"HBTNS-"} +
+                   device_state.factory().serial_number + "-factory";
   while (!mqtt_client.connected()) {
     mqtt_client.connect(client_id.c_str(), settings.mqtt_user.c_str(),
                         settings.mqtt_password.c_str());
@@ -202,7 +202,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "SN") {
         if (pld.length() == 8) {
-          device_state.set_serial_number(pld);
+          device_state.set_serial_number(DeviceState::SerialNumber{pld});
           log_i("setting serial number to: %s",
                 device_state.factory().serial_number.c_str());
           sendOK();
@@ -212,7 +212,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "RI") {
         if (pld.length() == 6) {
-          device_state.set_random_id(pld);
+          device_state.set_random_id(DeviceState::RandomID{pld});
           log_i("setting random id to: %s",
                 device_state.factory().random_id.c_str());
           sendOK();
@@ -222,7 +222,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "MN") {
         if (pld.length() > 0 && pld.length() <= 20) {
-          device_state.set_model_name(pld);
+          device_state.set_model_name(DeviceState::ModelName{pld});
           log_i("setting model name to: %s",
                 device_state.factory().model_name.c_str());
           sendOK();
@@ -232,7 +232,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "MI") {
         if (pld.length() == 2) {
-          device_state.set_model_id(pld);
+          device_state.set_model_id(DeviceState::ModelID{pld});
           log_i("setting model id to: %s", device_state.factory().model_id);
           sendOK();
         } else {
@@ -241,7 +241,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "HV") {
         if (pld.length() == 3) {
-          device_state.set_hw_version(pld);
+          device_state.set_hw_version(DeviceState::HWVersion{pld});
           log_i("setting hw version to: %s", device_state.factory().hw_version);
           sendOK();
         } else {
@@ -336,7 +336,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
             device_state.factory().model_name.length() > 0 &&
             device_state.factory().model_id.length() > 0 &&
             device_state.factory().hw_version.length() > 0) {
-          device_state.set_unique_id(String("HBTNS-") +
+          device_state.set_unique_id(DeviceState::UniqueID("HBTNS-") +
                                      device_state.factory().serial_number +
                                      "-" + device_state.factory().random_id);
 

@@ -11,7 +11,7 @@ HardwareDefinition HW;
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
-void HardwareDefinition::init(const String &hw_version) {
+void HardwareDefinition::init(const DeviceState::HWVersion &hw_version) {
   if (hw_version == "1.0") {
     HW = hw_rev_1_0;
     log_i("configured for hw version: 1.0");

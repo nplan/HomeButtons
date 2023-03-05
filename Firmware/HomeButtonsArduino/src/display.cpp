@@ -281,7 +281,7 @@ void Display::draw_main() {
   // Loop through buttons
   for (uint16_t i = 0; i < num_buttons; i++) {
     uint16_t w, h;
-    UIState::MessageType t{m_device_state.get_btn_label(i)};
+    UIState::MessageType t{m_device_state.get_btn_label(i).c_str()};
 
     u8g2.setFont(u8g2_font_helvB24_te);
     w = u8g2.getUTF8Width(t.c_str());
@@ -373,7 +373,7 @@ void Display::draw_info() {
   disp->setFont();
   disp->setTextSize(1);
   disp->setCursor(0, 288);
-  disp->print(m_device_state.device_name());
+  disp->print(m_device_state.device_name().c_str());
 
   disp->display();
 }
@@ -440,7 +440,7 @@ void Display::draw_welcome() {
   disp->print(model_info.c_str());
 
   disp->setCursor(0, 285);
-  disp->print(m_device_state.factory().unique_id);
+  disp->print(m_device_state.factory().unique_id.c_str());
 
   disp->display();
 }

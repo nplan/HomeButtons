@@ -2,6 +2,7 @@
 #define HOMEBUTTONS_STATICSTRING_H
 
 #include <cstdio>
+#include <cstring>
 #include <algorithm>
 #include "Arduino.h"
 
@@ -15,6 +16,11 @@ class StaticString {
   StaticString() {}
   explicit StaticString(const char* str) {
     auto n = std::snprintf(m_data, MAX_SIZE, "%s", str);
+    _check_snprintf_return_value(n);
+  }
+
+  explicit StaticString(const String& str) {
+    auto n = std::snprintf(m_data, MAX_SIZE, "%s", str.c_str());
     _check_snprintf_return_value(n);
   }
 
@@ -43,21 +49,23 @@ class StaticString {
     return output;
   }
 
-  StaticString operator+(const StaticString& other) {
-    StaticString output;
-    auto n = snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other.m_data);
-    _check_snprintf_return_value(n);
-    return output;
+  template <size_t _OTHER_MAX_SIZE>
+  StaticString operator+(const StaticString<_OTHER_MAX_SIZE>& other) const {
+    return *this + other.c_str();
   }
 
-  StaticString operator+(const char* other) {
+  StaticString operator+(const String& other) const {
+    return *this + other.c_str();
+  }
+
+  StaticString operator+(const char* other) const {
     StaticString output;
     auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
     _check_snprintf_return_value(n);
     return output;
   }
 
-  StaticString operator+(unsigned long i) {
+  StaticString operator+(unsigned long i) const {
     StaticString output;
     auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%lu", m_data, i);
     _check_snprintf_return_value(n);
@@ -70,9 +78,20 @@ class StaticString {
     return *this;
   }
 
+  bool operator==(const char* other) const {
+    return std::strncmp(m_data, other, MAX_SIZE) == 0;
+  }
+
+  template <size_t _OTHER_MAX_SIZE>
+  bool operator==(const StaticString<_OTHER_MAX_SIZE> other) const {
+    return std::strncmp(m_data, other.m_data,
+                        std::min(MAX_SIZE,
+                                 StaticString<_OTHER_MAX_SIZE>::MAX_SIZE)) == 0;
+  }
+
  private:
   char m_data[MAX_SIZE] = {'\0'};
-  void _check_snprintf_return_value(int value) {
+  void _check_snprintf_return_value(int value) const {
     if (value >= MAX_SIZE)
       log_w("warning, StaticString too small");
     else if (value < 0)
