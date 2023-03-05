@@ -1,6 +1,16 @@
 #include "factory.h"
 
+#include <PubSubClient.h>
+#include <USB.h>
+#include <USBCDC.h>
+#include <WiFi.h>
+
+#include "display.h"
+#include "hardware.h"
+
 namespace factory {
+
+USBCDC usb_serial(0);
 
 struct TestSettings {
   float target_temp;
@@ -152,22 +162,23 @@ bool run_tests(const TestSettings& settings, Display& display) {
   return true;
 }
 
-void sendOK() { Serial.println("OK"); }
+void sendOK() { usb_serial.println("OK"); }
 
-void sendFAIL() { Serial.println("FAIL"); }
+void sendFAIL() { usb_serial.println("FAIL"); }
 
 void factory_mode(DeviceState& device_state, Display& display) {
   NetworkSettings networkSettings = {};
   TestSettings test_settings = {};
 
-  Serial.begin(115200);
+  USB.begin();
+  usb_serial.begin(115200);
   delay(1000);
 
   log_i("factory mode active");
 
   while (1) {
-    Serial.setTimeout(5000);
-    String msg = Serial.readStringUntil('\r');
+    usb_serial.setTimeout(5000);
+    String msg = usb_serial.readStringUntil('\r');
 
     if (msg.length() > 0) {
       String cmd = msg.substring(0, 2);
