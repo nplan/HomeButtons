@@ -1,6 +1,6 @@
 #include "hw_tests.h"
 
-void hw_tests::blink_leds(const DeviceState::HWVersion& hw_version) {
+void hw_tests::blink_leds(const HWVersion& hw_version) {
   HW.init(hw_version);
   HW.begin();
   while (1) {
@@ -27,7 +27,7 @@ void hw_tests::blink_leds(const DeviceState::HWVersion& hw_version) {
   }
 }
 
-void hw_tests::led_on_button(const DeviceState::HWVersion& hw_version) {
+void hw_tests::led_on_button(const HWVersion& hw_version) {
   HW.init(hw_version);
   HW.begin();
   while (1) {
@@ -40,7 +40,7 @@ void hw_tests::led_on_button(const DeviceState::HWVersion& hw_version) {
   }
 }
 
-void hw_tests::wifi_stress(const DeviceState::HWVersion& hw_version) {
+void hw_tests::wifi_stress(const HWVersion& hw_version) {
   HW.init(hw_version);
   HW.begin();
   WiFi.mode(WIFI_STA);

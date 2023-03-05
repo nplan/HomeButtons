@@ -202,7 +202,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "SN") {
         if (pld.length() == 8) {
-          device_state.set_serial_number(DeviceState::SerialNumber{pld});
+          device_state.set_serial_number(SerialNumber{pld});
           log_i("setting serial number to: %s",
                 device_state.factory().serial_number.c_str());
           sendOK();
@@ -212,7 +212,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "RI") {
         if (pld.length() == 6) {
-          device_state.set_random_id(DeviceState::RandomID{pld});
+          device_state.set_random_id(RandomID{pld});
           log_i("setting random id to: %s",
                 device_state.factory().random_id.c_str());
           sendOK();
@@ -222,7 +222,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "MN") {
         if (pld.length() > 0 && pld.length() <= 20) {
-          device_state.set_model_name(DeviceState::ModelName{pld});
+          device_state.set_model_name(ModelName{pld});
           log_i("setting model name to: %s",
                 device_state.factory().model_name.c_str());
           sendOK();
@@ -232,7 +232,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "MI") {
         if (pld.length() == 2) {
-          device_state.set_model_id(DeviceState::ModelID{pld});
+          device_state.set_model_id(ModelID{pld});
           log_i("setting model id to: %s", device_state.factory().model_id);
           sendOK();
         } else {
@@ -241,7 +241,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
         }
       } else if (cmd == "HV") {
         if (pld.length() == 3) {
-          device_state.set_hw_version(DeviceState::HWVersion{pld});
+          device_state.set_hw_version(HWVersion{pld});
           log_i("setting hw version to: %s", device_state.factory().hw_version);
           sendOK();
         } else {
@@ -336,7 +336,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
             device_state.factory().model_name.length() > 0 &&
             device_state.factory().model_id.length() > 0 &&
             device_state.factory().hw_version.length() > 0) {
-          device_state.set_unique_id(DeviceState::UniqueID("HBTNS-") +
+          device_state.set_unique_id(UniqueID("HBTNS-") +
                                      device_state.factory().serial_number +
                                      "-" + device_state.factory().random_id);
 

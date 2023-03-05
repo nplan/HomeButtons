@@ -165,8 +165,8 @@ void DeviceState::clear_all() {
   clear_persisted();
 }
 
-const DeviceState::ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
-  static DeviceState::ButtonLabel noLabel;
+const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
+  static ButtonLabel noLabel;
   if (i < NUM_BUTTONS) {
     return userPreferences_.btn_labels[i];
   } else {

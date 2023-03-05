@@ -5,20 +5,9 @@
 
 #include "buttons.h"
 #include "config.h"
-#include "static_string.h"
+#include "types.h"
 
 class DeviceState {
- public:
-  using SerialNumber = StaticString<8>;
-  using RandomID = StaticString<6>;
-  using ModelName = StaticString<20>;
-  using ModelID = StaticString<2>;
-  using HWVersion = StaticString<3>;
-  using UniqueID = StaticString<20>;
-
-  using DeviceName = StaticString<20>;
-  using ButtonLabel = StaticString<BTN_LABEL_MAXLEN>;
-
  private:
   struct Factory {
     SerialNumber serial_number;  // len = 8

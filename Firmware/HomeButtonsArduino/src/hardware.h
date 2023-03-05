@@ -5,7 +5,7 @@
 
 #include <semver.hpp>
 
-#include "state.h"
+#include "types.h"
 #include "config.h"
 
 struct HardwareDefinition {
@@ -68,7 +68,7 @@ struct HardwareDefinition {
   uint64_t WAKE_BITMASK;
 
   // ------ functions ------
-  void init(const DeviceState::HWVersion &hw_version);
+  void init(const HWVersion &hw_version);
 
   void begin();
 

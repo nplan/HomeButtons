@@ -90,8 +90,7 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
 }
 
 void save_params_callback(DeviceState* device_state) {
-  device_state->set_device_name(
-      DeviceState::DeviceName{device_name_param.getValue()});
+  device_state->set_device_name(DeviceName{device_name_param.getValue()});
   device_state->set_mqtt_parameters(
       mqtt_server_param.getValue(), String(mqtt_port_param.getValue()).toInt(),
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
