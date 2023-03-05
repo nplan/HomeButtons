@@ -53,10 +53,14 @@ After inserting the battery, press any button to wake the device and start Wi-Fi
 > If you don't complete the setup in 10 minutes, *Home Buttons* will turn off again to save battery.
 Press any button to wake the device and start again.
 
+
 1. *Home Buttons* establishes a Wi-Fi hotspot for configuration.
 Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
 
     ![Wi-Fi Setup Screen](assets/wifi_setup_screen.png){width="125"}
+
+    > There's an issue with stock firmware (v2.0.3) on a small number of devices where the Wi-Fi hotspot does not appear.
+    If this happens, please flash the firmware again via USB following this [guide](update.md#USB). Use the latest release.
 
 2. After connecting to *Home Buttons* Wi-Fi with your device, a **captive portal** will pop up automatically.
 If it doesn't, open the web browser and navigate to http://192.168.4.1.
