@@ -12,10 +12,10 @@ class DeviceState {
   struct Factory {
     SerialNumber serial_number;  // len = 8
     RandomID random_id;          // len = 6
-    ModelName model_name;        // 1 < len < 20
+    ModelName model_name;        // 1 <= len <= 20
     ModelID model_id;            // len = 2
     HWVersion hw_version;        // len = 3
-    UniqueID unique_id;          // len = 20
+    UniqueID unique_id;          // len = 21
   } factory_;
 
   struct UserPreferences {
@@ -146,8 +146,8 @@ class DeviceState {
   template <std::size_t MAX_SIZE>
   void _load_to_static_string(StaticString<MAX_SIZE>& destination,
                               const char* key, const char* defaultValue) {
-    char buffer[MAX_SIZE];
-    auto ret = preferences_.getString(key, buffer, MAX_SIZE);
+    char buffer[MAX_SIZE + 1];  // +1 for '\0' at the end
+    auto ret = preferences_.getString(key, buffer, MAX_SIZE + 1);
     if (ret == 0)
       destination.set("");
     else
