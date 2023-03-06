@@ -37,7 +37,7 @@ Display display = {};
 void Display::begin() {
   if (state != State::IDLE) return;
   disp = new GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
-                                     MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
+                                  MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
       GxEPD2_DRIVER_CLASS(/*CS=*/HW.EINK_CS, /*DC=*/HW.EINK_DC,
                           /*RST=*/HW.EINK_RST, /*BUSY=*/HW.EINK_BUSY));
   disp->init();
@@ -94,8 +94,9 @@ void Display::update() {
     return;
   }
 
-  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s", draw_ui_state.page,
-        draw_ui_state.disappearing, draw_ui_state.message.c_str());
+  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s",
+        draw_ui_state.page, draw_ui_state.disappearing,
+        draw_ui_state.message.c_str());
 
   redraw_in_progress = true;
   switch (draw_ui_state.page) {
@@ -155,8 +156,7 @@ void Display::disp_message(String message, uint32_t duration) {
 }
 
 void Display::disp_message_large(String message, uint32_t duration) {
-  UIState new_cmd_state{.page = DisplayPage::MESSAGE_LARGE,
-                             .message = message};
+  UIState new_cmd_state{.page = DisplayPage::MESSAGE_LARGE, .message = message};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
@@ -198,20 +198,18 @@ void Display::disp_web_config() {
 }
 
 void Display::disp_test(bool invert) {
-UIState new_cmd_state{};
-if (!invert) {
-  new_cmd_state.page = DisplayPage::TEST;
-} else {
-  new_cmd_state.page = DisplayPage::TEST_INV;
-}
-set_cmd_state(new_cmd_state);
+  UIState new_cmd_state{};
+  if (!invert) {
+    new_cmd_state.page = DisplayPage::TEST;
+  } else {
+    new_cmd_state.page = DisplayPage::TEST_INV;
+  }
+  set_cmd_state(new_cmd_state);
 }
 
 UIState Display::get_ui_state() { return current_ui_state; }
 
-void Display::init_ui_state(UIState ui_state) {
-  current_ui_state = ui_state;
-}
+void Display::init_ui_state(UIState ui_state) { current_ui_state = ui_state; }
 
 Display::State Display::get_state() { return state; }
 
@@ -279,7 +277,7 @@ void Display::draw_main() {
   disp->fillScreen(bg_color);
 
   // charging line
-  if(device_state.sensors().charging) {
+  if (device_state.sensors().charging) {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
@@ -439,8 +437,8 @@ void Display::draw_welcome() {
   disp->print(sw_ver);
 
   disp->setCursor(0, 275);
-  String model_info =
-      String("Model: ") + device_state.factory().model_id + " rev " + device_state.factory().hw_version;
+  String model_info = String("Model: ") + device_state.factory().model_id +
+                      " rev " + device_state.factory().hw_version;
   disp->print(model_info);
 
   disp->setCursor(0, 285);

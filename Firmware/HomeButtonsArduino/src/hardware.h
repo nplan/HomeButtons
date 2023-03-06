@@ -324,4 +324,4 @@ const HardwareDefinition hw_rev_2_3{// ------ PIN definitions ------
 // Struct containing current hardware configuration
 extern HardwareDefinition HW;
 
-#endif // HOMEBUTTONS_HARDWARE_H
+#endif  // HOMEBUTTONS_HARDWARE_H

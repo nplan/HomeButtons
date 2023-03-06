@@ -40,7 +40,8 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 static bool web_portal_saved = false;
 
 void start_wifi_setup() {
-  device_state.set_ap_ssid_and_password(String("HB-") + device_state.factory().random_id, SETUP_AP_PASSWORD);
+  device_state.set_ap_ssid_and_password(
+      String("HB-") + device_state.factory().random_id, SETUP_AP_PASSWORD);
   display.disp_ap_config();
   display.update();
 
@@ -53,7 +54,8 @@ void start_wifi_setup() {
   wifi_manager.setShowInfoUpdate(false);
 
   bool wifi_connected = wifi_manager.startConfigPortal(
-      device_state.network().ap_ssid.c_str(), device_state.network().ap_password.c_str());
+      device_state.network().ap_ssid.c_str(),
+      device_state.network().ap_password.c_str());
 
   bool wifi_connected_2 = false;
   WiFi.mode(WIFI_STA);
@@ -93,12 +95,9 @@ void start_wifi_setup() {
 void save_params_callback() {
   device_state.set_device_name(device_name_param.getValue());
   device_state.set_mqtt_parameters(
-    mqtt_server_param.getValue(),
-    String(mqtt_port_param.getValue()).toInt(),
-    mqtt_user_param.getValue(),
-    mqtt_password_param.getValue(),
-    base_topic_param.getValue(),
-    discovery_prefix_param.getValue());
+      mqtt_server_param.getValue(), String(mqtt_port_param.getValue()).toInt(),
+      mqtt_user_param.getValue(), mqtt_password_param.getValue(),
+      base_topic_param.getValue(), discovery_prefix_param.getValue());
   device_state.set_btn_label(0, btn1_label_param.getValue());
   device_state.set_btn_label(1, btn2_label_param.getValue());
   device_state.set_btn_label(2, btn3_label_param.getValue());
@@ -123,9 +122,11 @@ void start_setup() {
   mqtt_server_param.setValue(device_state.network().mqtt.server.c_str(), 50);
   mqtt_port_param.setValue(String(device_state.network().mqtt.port).c_str(), 6);
   mqtt_user_param.setValue(device_state.network().mqtt.user.c_str(), 50);
-  mqtt_password_param.setValue(device_state.network().mqtt.password.c_str(), 50);
+  mqtt_password_param.setValue(device_state.network().mqtt.password.c_str(),
+                               50);
   base_topic_param.setValue(device_state.network().mqtt.base_topic.c_str(), 50);
-  discovery_prefix_param.setValue(device_state.network().mqtt.discovery_prefix.c_str(), 50);
+  discovery_prefix_param.setValue(
+      device_state.network().mqtt.discovery_prefix.c_str(), 50);
   btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
   btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
   btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
@@ -182,12 +183,13 @@ void start_setup() {
   uint32_t mqtt_start_time = millis();
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
-  mqtt_client.setServer(device_state.network().mqtt.server.c_str(), device_state.network().mqtt.port);
+  mqtt_client.setServer(device_state.network().mqtt.server.c_str(),
+                        device_state.network().mqtt.port);
   if (device_state.network().mqtt.user.length() > 0 &&
       device_state.network().mqtt.password.length() > 0) {
     mqtt_client.connect(device_state.factory().unique_id.c_str(),
-                               device_state.network().mqtt.user.c_str(),
-                               device_state.network().mqtt.password.c_str());
+                        device_state.network().mqtt.user.c_str(),
+                        device_state.network().mqtt.password.c_str());
   } else {
     mqtt_client.connect(device_state.factory().unique_id.c_str());
   }
@@ -219,5 +221,4 @@ void start_setup() {
   display.update();
   delay(3000);
   ESP.restart();
-  
 }

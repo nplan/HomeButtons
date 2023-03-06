@@ -35,4 +35,4 @@ class LEDs {
 
 extern LEDs leds;
 
-#endif // HOMEBUTTONS_LEDS_H
+#endif  // HOMEBUTTONS_LEDS_H
