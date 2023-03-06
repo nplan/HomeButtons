@@ -5,4 +5,4 @@ void send_discovery_config();
 
 void update_discovery_config();
 
-#endif // HOMEBUTTONS_AUTODISCOVERY_H
+#endif  // HOMEBUTTONS_AUTODISCOVERY_H

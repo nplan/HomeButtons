@@ -39,12 +39,15 @@ TaskHandle_t main_task_h = nullptr;
 
 void start_esp_sleep() {
   esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
-  if (device_state.persisted().wifi_done && device_state.persisted().setup_done &&
-      !device_state.persisted().low_batt_mode && !device_state.persisted().check_connection) {
+  if (device_state.persisted().wifi_done &&
+      device_state.persisted().setup_done &&
+      !device_state.persisted().low_batt_mode &&
+      !device_state.persisted().check_connection) {
     if (device_state.persisted().info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
     } else {
-      esp_sleep_enable_timer_wakeup(device_state.sensor_interval() * 60000000UL);
+      esp_sleep_enable_timer_wakeup(device_state.sensor_interval() *
+                                    60000000UL);
     }
   }
   log_i("[DEVICE] deep sleep... z z z");
@@ -86,9 +89,11 @@ void publish_sensors() {
 
 void publish_awake_mode_avlb() {
   if (HW.is_dc_connected()) {
-    network.publish(device_state.topics().t_awake_mode_avlb.c_str(), "online", true);
+    network.publish(device_state.topics().t_awake_mode_avlb.c_str(), "online",
+                    true);
   } else {
-    network.publish(device_state.topics().t_awake_mode_avlb.c_str(), "offline", true);
+    network.publish(device_state.topics().t_awake_mode_avlb.c_str(), "offline",
+                    true);
   }
 }
 
@@ -104,7 +109,8 @@ void mqtt_callback(String topic, String payload) {
       log_d("[DEVICE] sensor interval set to %d minutes", mins);
       publish_sensors();
     }
-    network.publish(device_state.topics().t_sensor_interval_cmd.c_str(), nullptr, true);
+    network.publish(device_state.topics().t_sensor_interval_cmd.c_str(),
+                    nullptr, true);
   }
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
@@ -114,7 +120,8 @@ void mqtt_callback(String topic, String payload) {
             device_state.get_btn_label(i).c_str());
       network.publish(device_state.topics().t_btn_label_state[i].c_str(),
                       device_state.get_btn_label(i).c_str(), true);
-      network.publish(device_state.topics().t_btn_label_cmd[i].c_str(), nullptr, true);
+      network.publish(device_state.topics().t_btn_label_cmd[i].c_str(), nullptr,
+                      true);
       device_state.flags().display_redraw = true;
     }
   }
@@ -124,16 +131,19 @@ void mqtt_callback(String topic, String payload) {
       device_state.persisted().user_awake_mode = true;
       device_state.flags().awake_mode = true;
       device_state.save_all();
-      network.publish(device_state.topics().t_awake_mode_state.c_str(), "ON", true);
+      network.publish(device_state.topics().t_awake_mode_state.c_str(), "ON",
+                      true);
       log_d("[DEVICE] user awake mode set to: ON");
       log_d("[DEVICE] resetting to awake mode...");
     } else if (payload == "OFF") {
       device_state.persisted().user_awake_mode = false;
       device_state.save_all();
-      network.publish(device_state.topics().t_awake_mode_state.c_str(), "OFF", true);
+      network.publish(device_state.topics().t_awake_mode_state.c_str(), "OFF",
+                      true);
       log_d("[DEVICE] user awake mode set to: OFF");
     }
-    network.publish(device_state.topics().t_awake_mode_cmd.c_str(), nullptr, true);
+    network.publish(device_state.topics().t_awake_mode_cmd.c_str(), nullptr,
+                    true);
   }
 }
 
@@ -148,7 +158,8 @@ void net_on_connect() {
     network.publish(t.c_str(), device_state.get_btn_label(i).c_str(), true);
   }
   network.publish(device_state.topics().t_awake_mode_state.c_str(),
-                (device_state.persisted().user_awake_mode) ? "ON" : "OFF", true);
+                  (device_state.persisted().user_awake_mode) ? "ON" : "OFF",
+                  true);
 
   if (device_state.persisted().send_discovery_config) {
     device_state.persisted().send_discovery_config = false;
@@ -280,7 +291,8 @@ void main_task(void *param) {
   device_state.sensors().battery_present = HW.is_battery_present();
   device_state.sensors().dc_connected = HW.is_dc_connected();
   log_i("[DEVICE] batt present: %d, DC connected: %d",
-        device_state.sensors().battery_present, device_state.sensors().dc_connected);
+        device_state.sensors().battery_present,
+        device_state.sensors().dc_connected);
 
   if (device_state.sensors().battery_present) {
     float batt_voltage = HW.read_battery_voltage();
@@ -292,7 +304,8 @@ void main_task(void *param) {
         HW.enable_charger(true);
         device_state.flags().awake_mode = true;
       } else {
-        device_state.flags().awake_mode = device_state.persisted().user_awake_mode;
+        device_state.flags().awake_mode =
+            device_state.persisted().user_awake_mode;
       }
       device_state.persisted().low_batt_mode = false;
     } else {  // dc_connected == false
@@ -329,17 +342,20 @@ void main_task(void *param) {
     if (device_state.sensors().dc_connected) {
       device_state.persisted().low_batt_mode = false;
       // choose power mode based on user setting
-      device_state.flags().awake_mode = device_state.persisted().user_awake_mode;
+      device_state.flags().awake_mode =
+          device_state.persisted().user_awake_mode;
     } else {
       // should never happen
       go_to_sleep();
     }
   }
   log_i("[DEVICE] usr awake mode: %d, awake mode: %d",
-        device_state.persisted().user_awake_mode, device_state.flags().awake_mode);
+        device_state.persisted().user_awake_mode,
+        device_state.flags().awake_mode);
 
   // ------ read sensors ------
-  HW.read_temp_hmd(device_state.sensors().temperature, device_state.sensors().humidity);
+  HW.read_temp_hmd(device_state.sensors().temperature,
+                   device_state.sensors().humidity);
   device_state.sensors().battery_pct = HW.read_battery_percent();
 
   // ------ boot cause ------
@@ -389,7 +405,8 @@ void main_task(void *param) {
 
       device_state.clear_persisted_flags();
 
-      if (!device_state.persisted().wifi_done || !device_state.persisted().setup_done) {
+      if (!device_state.persisted().wifi_done ||
+          !device_state.persisted().setup_done) {
         display.disp_welcome();
         display.update();
         display.end();
@@ -591,7 +608,8 @@ void main_task(void *param) {
                       .c_str(),
                   BTN_PRESS_PAYLOAD);
             }
-            HW.read_temp_hmd(device_state.sensors().temperature, device_state.sensors().humidity);
+            HW.read_temp_hmd(device_state.sensors().temperature,
+                             device_state.sensors().humidity);
             device_state.sensors().battery_pct = HW.read_battery_percent();
             publish_sensors();
             device_state.persisted().failed_connections = 0;
@@ -604,7 +622,8 @@ void main_task(void *param) {
               delay(100);
             } else if (boot_cause == BootCause::TIMER) {
               device_state.persisted().failed_connections++;
-              if (device_state.persisted().failed_connections >= MAX_FAILED_CONNECTIONS) {
+              if (device_state.persisted().failed_connections >=
+                  MAX_FAILED_CONNECTIONS) {
                 device_state.persisted().failed_connections = 0;
                 device_state.persisted().check_connection = true;
                 display.disp_error("Check\nconnection!");
@@ -703,7 +722,8 @@ void main_task(void *param) {
             for (auto b : buttons) {
               b->clear();
             }
-            HW.read_temp_hmd(device_state.sensors().temperature, device_state.sensors().humidity);
+            HW.read_temp_hmd(device_state.sensors().temperature,
+                             device_state.sensors().humidity);
             device_state.sensors().battery_pct = HW.read_battery_percent();
             publish_sensors();
             sm_state = StateMachineState::AWAIT_USER_INPUT_START;
@@ -726,7 +746,8 @@ void main_task(void *param) {
           if (active_button != nullptr) {
             sm_state = StateMachineState::AWAIT_USER_INPUT_FINISH;
           } else if (millis() - last_sensor_publish >= AWAKE_SENSOR_INTERVAL) {
-            HW.read_temp_hmd(device_state.sensors().temperature, device_state.sensors().humidity);
+            HW.read_temp_hmd(device_state.sensors().temperature,
+                             device_state.sensors().humidity);
             device_state.sensors().battery_pct = HW.read_battery_percent();
             publish_sensors();
             last_sensor_publish = millis();

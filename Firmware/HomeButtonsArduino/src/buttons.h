@@ -60,4 +60,4 @@ class Button {
   void reset();
 };
 
-#endif // HOMEBUTTONS_BUTTONS_H
+#endif  // HOMEBUTTONS_BUTTONS_H

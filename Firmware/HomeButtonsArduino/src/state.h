@@ -6,7 +6,7 @@
 #include "config.h"
 
 class State {
-private:
+ private:
   struct Factory {
     String serial_number = "";  // len = 8
     String random_id = "";      // len = 6
@@ -63,7 +63,7 @@ private:
     String last_sw_ver = "";
     bool user_awake_mode = false;
 
-    //Flags
+    // Flags
     bool wifi_quick_connect = false;
     bool charge_complete_showing = false;
     bool info_screen_showing = false;
@@ -90,7 +90,7 @@ private:
     bool battery_low = false;
   } m_sensors;
 
-public:
+ public:
   const Factory& factory() const { return m_factory; }
   void set_serial_number(const String& str) { m_factory.serial_number = str; }
   void set_random_id(const String& str) { m_factory.random_id = str; }
@@ -101,14 +101,26 @@ public:
 
   const Network& network() const { return m_network; }
   void set_ip(const String& str) { m_network.ip = str; }
-  void set_ap_ssid_and_password(const String& ssid, const String& pwd) { m_network.ap_ssid = ssid; m_network.ap_password = pwd; }
-  void set_mqtt_parameters(const String& server, int32_t port, const String& user, const String& password, const String& base_topic, const String& discovery_prefix)
-  { m_network.mqtt = {server, port, user, password, base_topic, discovery_prefix}; }
+  void set_ap_ssid_and_password(const String& ssid, const String& pwd) {
+    m_network.ap_ssid = ssid;
+    m_network.ap_password = pwd;
+  }
+  void set_mqtt_parameters(const String& server, int32_t port,
+                           const String& user, const String& password,
+                           const String& base_topic,
+                           const String& discovery_prefix) {
+    m_network.mqtt = {server,   port,       user,
+                      password, base_topic, discovery_prefix};
+  }
 
   const String& device_name() const { return m_personalization.device_name; }
-  void set_device_name(const String& device_name) { m_personalization.device_name = device_name; }
+  void set_device_name(const String& device_name) {
+    m_personalization.device_name = device_name;
+  }
   uint16_t sensor_interval() const { return m_personalization.sensor_interval; }
-  void set_sensor_interval(uint16_t interval_min) { m_personalization.sensor_interval = interval_min; }
+  void set_sensor_interval(uint16_t interval_min) {
+    m_personalization.sensor_interval = interval_min;
+  }
   String get_btn_label(uint8_t i);
   void set_btn_label(uint8_t i, String label);
 
@@ -142,10 +154,10 @@ public:
   void set_topics();
   String get_button_topic(uint8_t btn_idx, Button::ButtonAction action);
 
-private:
+ private:
   Preferences preferences;
 };
 
 extern State device_state;
 
-#endif // HOMEBUTTONS_STATE_H
+#endif  // HOMEBUTTONS_STATE_H

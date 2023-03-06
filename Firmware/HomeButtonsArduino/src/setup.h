@@ -4,4 +4,4 @@
 void start_wifi_setup();
 void start_setup();
 
-#endif // HOMEBUTTONS_SETUP_H
+#endif  // HOMEBUTTONS_SETUP_H

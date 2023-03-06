@@ -5,17 +5,17 @@
 #include <GxEPD2.h>
 
 enum class DisplayPage {
-    EMPTY,
-    MAIN,
-    INFO,
-    MESSAGE,
-    MESSAGE_LARGE,
-    ERROR,
-    WELCOME,
-    AP_CONFIG,
-    WEB_CONFIG,
-    TEST,
-    TEST_INV
+  EMPTY,
+  MAIN,
+  INFO,
+  MESSAGE,
+  MESSAGE_LARGE,
+  ERROR,
+  WELCOME,
+  AP_CONFIG,
+  WEB_CONFIG,
+  TEST,
+  TEST_INV
 };
 
 struct UIState {
@@ -28,13 +28,7 @@ struct UIState {
 
 class Display {
  public:
-
-  enum class State {
-    IDLE,
-    ACTIVE,
-    CMD_END,
-    ENDING
-  };
+  enum class State { IDLE, ACTIVE, CMD_END, ENDING };
 
   void begin();
   void end();
@@ -51,7 +45,7 @@ class Display {
   void disp_test(bool invert = false);
 
   UIState get_ui_state();
-  void init_ui_state(UIState ui_state); // used after wakeup
+  void init_ui_state(UIState ui_state);  // used after wakeup
   State get_state();
 
  private:
@@ -61,10 +55,10 @@ class Display {
   UIState cmd_ui_state = {};
   UIState draw_ui_state = {};
   UIState pre_disappear_ui_state = {};
-  
+
   bool new_ui_cmd = false;
   bool redraw_in_progress = false;
-  
+
   uint16_t text_color = GxEPD_BLACK;
   uint16_t bg_color = GxEPD_WHITE;
 
@@ -83,4 +77,4 @@ class Display {
 
 extern Display display;
 
-#endif // HOMEBUTTONS_DISPLAY_H
+#endif  // HOMEBUTTONS_DISPLAY_H
