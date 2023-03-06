@@ -119,6 +119,8 @@ const HardwareDefinition hw_rev_1_0{// ------ PIN definitions ------
                                     .VBAT_ADC = 14,
                                     .CHARGER_STDBY = 12,
                                     .BOOST_EN = 13,
+                                    .DC_IN_DETECT = 0,  // Not available
+                                    .CHG_ENABLE = 0,    // Not available
 
                                     .EINK_CS = 5,
                                     .EINK_DC = 8,
@@ -174,6 +176,8 @@ const HardwareDefinition hw_rev_2_0{// ------ PIN definitions ------
                                     .VBAT_ADC = 14,
                                     .CHARGER_STDBY = 12,
                                     .BOOST_EN = 13,
+                                    .DC_IN_DETECT = 0,  // Not available
+                                    .CHG_ENABLE = 0,    // Not available
 
                                     .EINK_CS = 34,
                                     .EINK_DC = 8,
