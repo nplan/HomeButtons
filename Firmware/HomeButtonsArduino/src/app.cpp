@@ -185,7 +185,7 @@ void App::_start_network_task() {
   log_d("[DEVICE] network task started.");
   xTaskCreate(_network_task,     // Function that should be called
               "NETWORK",         // Name of the task (for debugging)
-              10000,             // Stack size (bytes)
+              20000,             // Stack size (bytes)
               this,              // Parameter to pass
               1,                 // Task priority
               &m_network_task_h  // Task handle
