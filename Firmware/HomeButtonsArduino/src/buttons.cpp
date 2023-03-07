@@ -6,6 +6,7 @@ void Button::setup(uint8_t pin, uint16_t id, bool active_high) {
   this->pin = pin;
   this->id = id;
   this->active_high = active_high;
+  pinMode(pin, INPUT);
 }
 
 void Button::begin() {

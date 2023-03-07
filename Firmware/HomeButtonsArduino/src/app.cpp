@@ -224,9 +224,10 @@ void App::_main_task() {
   // ------ init hardware ------
   log_i("[HW] version: %s", m_device_state.factory().hw_version.c_str());
   HW.init(m_device_state.factory().hw_version);
+  _setup_buttons();
+  _begin_buttons();
   m_display.begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   HW.begin();
-  _setup_buttons();
 
   // ------ after update handler ------
   if (m_device_state.persisted().last_sw_ver != SW_VERSION) {
@@ -410,7 +411,6 @@ void App::_main_task() {
           m_display.update();
           _go_to_sleep();
         } else {
-          _begin_buttons();
           log_i("Active button : %ul", active_button);
           if (active_button != nullptr) {
             active_button->init_press();
@@ -622,7 +622,6 @@ void App::_main_task() {
     m_device_state.persisted().check_connection = false;
     m_device_state.persisted().charge_complete_showing = false;
     m_display.disp_main();
-    _begin_buttons();
     _start_button_task();
     m_leds.begin();
     _start_leds_task();

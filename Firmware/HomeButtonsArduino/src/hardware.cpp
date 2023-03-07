@@ -33,13 +33,6 @@ void HardwareDefinition::init(const HWVersion &hw_version) {
 }
 
 void HardwareDefinition::begin() {
-  pinMode(HW.BTN1_PIN, INPUT);
-  pinMode(HW.BTN2_PIN, INPUT);
-  pinMode(HW.BTN3_PIN, INPUT);
-  pinMode(HW.BTN4_PIN, INPUT);
-  pinMode(HW.BTN5_PIN, INPUT);
-  pinMode(HW.BTN6_PIN, INPUT);
-
   pinMode(HW.CHARGER_STDBY, INPUT_PULLUP);
 
   if (HW.version >= semver::version{2, 2, 0}) {
