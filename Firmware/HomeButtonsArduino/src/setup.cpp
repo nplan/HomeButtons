@@ -190,7 +190,7 @@ void start_setup(DeviceState& device_state, Display& display) {
   wifi_manager.startWebPortal();
   while (millis() - setup_start_time < SETUP_TIMEOUT * 1000L) {
     wifi_manager.process();
-    if (HW.digitalReadAny() || web_portal_saved) {
+    if (HW.any_button_pressed() || web_portal_saved) {
       break;
     }
     delay(10);

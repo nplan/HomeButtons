@@ -68,11 +68,11 @@ void test_buttons() {
 void test_display(Display& display) {
   display.disp_test(false);
   display.update();
-  while (!HW.digitalReadAny()) {
+  while (!HW.any_button_pressed()) {
   }
   display.disp_test(true);
   display.update();
-  while (!HW.digitalReadAny()) {
+  while (!HW.any_button_pressed()) {
   }
 }
 
@@ -147,11 +147,11 @@ bool test_sensors(const TestSettings& settings) {
 }
 
 bool run_tests(const TestSettings& settings, Display& display) {
-  if (HW.digitalReadAny()) {
+  if (HW.any_button_pressed()) {
     log_e("button pressed at start of test");
     return false;
   }
-  while (!HW.digitalReadAny()) {
+  while (!HW.any_button_pressed()) {
     test_leds();
   }
   test_buttons();

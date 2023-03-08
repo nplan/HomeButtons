@@ -63,7 +63,7 @@ void HardwareDefinition::begin() {
   analogSetPinAttenuation(HW.VBAT_ADC, ADC_11db);
 }
 
-bool HardwareDefinition::digitalReadAny() {
+bool HardwareDefinition::any_button_pressed() {
   return digitalRead(HW.BTN1_PIN) || digitalRead(HW.BTN2_PIN) ||
          digitalRead(HW.BTN3_PIN) || digitalRead(HW.BTN4_PIN) ||
          digitalRead(HW.BTN5_PIN) || digitalRead(HW.BTN6_PIN);
