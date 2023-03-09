@@ -7,8 +7,11 @@
 class DeviceState;
 class Network;
 
+static constexpr uint16_t MQTT_PYLD_SIZE = 512;
+static constexpr uint16_t MQTT_BUFFER_SIZE = 777;
 static constexpr size_t MAX_TOPIC_LENGTH = 256;
 using TopicType = StaticString<MAX_TOPIC_LENGTH>;
+using PayloadType = StaticString<MQTT_PYLD_SIZE>;
 
 class MQTTHelper {
  public:

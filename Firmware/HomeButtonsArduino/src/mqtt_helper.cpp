@@ -11,8 +11,12 @@
 
 template <size_t SIZE>
 bool convertToJson(const StaticString<SIZE>& src, JsonVariant dst) {
-  return dst.set(src.c_str());
+  return dst.set(
+      const_cast<char*>(src.c_str()));  // Warning: use char*, not const char*
+                                        // to force a copy in ArduinoJson.
 }
+
+using FormatterType = StaticString<64>;
 
 MQTTHelper::MQTTHelper(DeviceState& state, Network& network)
     : _device_state(state), _network(network) {}
@@ -52,16 +56,16 @@ void MQTTHelper::send_discovery_config() {
     conf["t"] = t_btn_press(i);
     conf["pl"] = BTN_PRESS_PAYLOAD;
     conf["type"] = "button_short_press";
-    conf["stype"] = StaticString<16>("button_%d", i + 1).c_str();
+    conf["stype"] = FormatterType("button_%d", i + 1);
     if (i == 0) {
       conf["dev"] = device_full;
     } else {
       conf["dev"] = device_short;
     }
-    serializeJson(conf, buffer);
+    serializeJson(conf, buffer, sizeof(buffer));
     TopicType topic_name("%s/button_%d/config", trigger_topic_common.c_str(),
                          i + 1);
-    _network.publish(topic_name.c_str(), buffer, true);
+    _network.publish(topic_name, buffer, true);
   }
 
   // button double press
@@ -71,12 +75,12 @@ void MQTTHelper::send_discovery_config() {
     conf["t"] = t_btn_press(i) + "_double";
     conf["pl"] = BTN_PRESS_PAYLOAD;
     conf["type"] = "button_double_press";
-    conf["stype"] = StaticString<16>("button_%d", i + 1).c_str();
+    conf["stype"] = FormatterType("button_%d", i + 1);
     conf["dev"] = device_short;
-    serializeJson(conf, buffer);
+    serializeJson(conf, buffer, sizeof(buffer));
     TopicType topic_name("%s/button_%d_double/config",
                          trigger_topic_common.c_str(), i + 1);
-    _network.publish(topic_name.c_str(), buffer, true);
+    _network.publish(topic_name, buffer, true);
   }
 
   // button triple press
@@ -86,12 +90,12 @@ void MQTTHelper::send_discovery_config() {
     conf["t"] = t_btn_press(i) + "_triple";
     conf["pl"] = BTN_PRESS_PAYLOAD;
     conf["type"] = "button_triple_press";
-    conf["stype"] = StaticString<16>("button_%d", i + 1).c_str();
+    conf["stype"] = FormatterType("button_%d", i + 1);
     conf["dev"] = device_short;
-    serializeJson(conf, buffer);
+    serializeJson(conf, buffer, sizeof(buffer));
     TopicType topic_name("%s/button_%d_triple/config",
                          trigger_topic_common.c_str(), i + 1);
-    _network.publish(topic_name.c_str(), buffer, true);
+    _network.publish(topic_name, buffer, true);
   }
 
   // button quad press
@@ -101,12 +105,12 @@ void MQTTHelper::send_discovery_config() {
     conf["t"] = t_btn_press(i) + "_quad";
     conf["pl"] = BTN_PRESS_PAYLOAD;
     conf["type"] = "button_quadruple_press";
-    conf["stype"] = StaticString<16>("button_%d", i + 1).c_str();
+    conf["stype"] = FormatterType("button_%d", i + 1);
     conf["dev"] = device_short;
-    serializeJson(conf, buffer);
+    serializeJson(conf, buffer, sizeof(buffer));
     TopicType topic_name("%s/button_%d_quad/config",
                          trigger_topic_common.c_str(), i + 1);
-    _network.publish(topic_name.c_str(), buffer, true);
+    _network.publish(topic_name, buffer, true);
   }
 
   uint16_t expire_after = _device_state.sensor_interval() * 60 + 60;  // seconds
@@ -115,43 +119,49 @@ void MQTTHelper::send_discovery_config() {
     TopicType temperature_config_topic =
         sensor_topic_common + "/temperature/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> temp_conf;
-    temp_conf["name"] = _device_state.device_name() + " Temperature";
-    temp_conf["uniq_id"] = _device_state.factory().unique_id + "_temperature";
+    temp_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Temperature";
+    temp_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = t_temperature();
     temp_conf["dev_cla"] = "temperature";
     temp_conf["unit_of_meas"] = "°C";
     temp_conf["exp_aft"] = expire_after;
     temp_conf["dev"] = device_short;
-    serializeJson(temp_conf, buffer);
-    _network.publish(temperature_config_topic.c_str(), buffer, true);
+    serializeJson(temp_conf, buffer, sizeof(buffer));
+    _network.publish(temperature_config_topic, buffer, true);
   }
 
   {
     TopicType humidity_config_topic = sensor_topic_common + "/humidity/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> humidity_conf;
-    humidity_conf["name"] = _device_state.device_name() + " Humidity";
-    humidity_conf["uniq_id"] = _device_state.factory().unique_id + "_humidity";
+    humidity_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Humidity";
+    humidity_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_humidity";
     humidity_conf["stat_t"] = t_humidity();
     humidity_conf["dev_cla"] = "humidity";
     humidity_conf["unit_of_meas"] = "%";
     humidity_conf["exp_aft"] = expire_after;
     humidity_conf["dev"] = device_short;
-    serializeJson(humidity_conf, buffer);
-    _network.publish(humidity_config_topic.c_str(), buffer, true);
+    serializeJson(humidity_conf, buffer, sizeof(buffer));
+    _network.publish(humidity_config_topic, buffer, true);
   }
 
   {
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> battery_conf;
-    battery_conf["name"] = _device_state.device_name() + " Battery";
-    battery_conf["uniq_id"] = _device_state.factory().unique_id + "_battery";
+    battery_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Battery";
+    battery_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_battery";
     battery_conf["stat_t"] = t_battery();
     battery_conf["dev_cla"] = "battery";
     battery_conf["unit_of_meas"] = "%";
     battery_conf["exp_aft"] = expire_after;
     battery_conf["dev"] = device_short;
-    serializeJson(battery_conf, buffer);
-    _network.publish(battery_config_topic.c_str(), buffer, true);
+    serializeJson(battery_conf, buffer, sizeof(buffer));
+    _network.publish(battery_config_topic, buffer, true);
   }
 
   {
@@ -161,9 +171,10 @@ void MQTTHelper::send_discovery_config() {
         "/sensor_interval/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> sensor_interval_conf;
     sensor_interval_conf["name"] =
-        _device_state.device_name() + " Sensor Interval";
-    sensor_interval_conf["uniq_id"] =
-        _device_state.factory().unique_id + "_sensor_interval";
+        FormatterType{} + _device_state.device_name() + " Sensor Interval";
+    sensor_interval_conf["uniq_id"] = FormatterType{} +
+                                      _device_state.factory().unique_id +
+                                      "_sensor_interval";
     sensor_interval_conf["cmd_t"] = t_sensor_interval_cmd();
     sensor_interval_conf["stat_t"] = t_sensor_interval_state();
     sensor_interval_conf["unit_of_meas"] = "min";
@@ -173,8 +184,8 @@ void MQTTHelper::send_discovery_config() {
     sensor_interval_conf["ic"] = "mdi:timer-sand";
     sensor_interval_conf["ret"] = "true";
     sensor_interval_conf["dev"] = device_short;
-    serializeJson(sensor_interval_conf, buffer);
-    _network.publish(sensor_interval_config_topic.c_str(), buffer, true);
+    serializeJson(sensor_interval_conf, buffer, sizeof(buffer));
+    _network.publish(sensor_interval_config_topic, buffer, true);
   }
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
@@ -183,18 +194,18 @@ void MQTTHelper::send_discovery_config() {
         "/text/" + _device_state.factory().unique_id + "/button_" + (i + 1) +
         "_label/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> conf;
-    conf["name"] = StaticString<64>{} + _device_state.device_name() +
-                   " Button " + (i + 1) + " Label";
-    conf["uniq_id"] = StaticString<64>{} + _device_state.factory().unique_id +
+    conf["name"] = FormatterType{} + _device_state.device_name() + " Button " +
+                   (i + 1) + " Label";
+    conf["uniq_id"] = FormatterType{} + _device_state.factory().unique_id +
                       "_button_" + (i + 1) + "_label";
     conf["cmd_t"] = t_btn_label_cmd(i);
     conf["stat_t"] = t_btn_label_state(i);
     conf["max"] = BTN_LABEL_MAXLEN;
-    conf["ic"] = StaticString<32>("mdi:numeric-%d-box", i + 1).c_str();
+    conf["ic"] = FormatterType("mdi:numeric-%d-box", i + 1);
     conf["ret"] = "true";
     conf["dev"] = device_short;
-    serializeJson(conf, buffer);
-    _network.publish(button_label_config_topics.c_str(), buffer, true);
+    serializeJson(conf, buffer, sizeof(buffer));
+    _network.publish(button_label_config_topics, buffer, true);
   }
 
   {
@@ -202,17 +213,18 @@ void MQTTHelper::send_discovery_config() {
         TopicType{} + _device_state.userPreferences().mqtt.discovery_prefix +
         "/switch/" + _device_state.factory().unique_id + "/awake_mode/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> awake_mode_conf;
-    awake_mode_conf["name"] = _device_state.device_name() + " Awake Mode";
+    awake_mode_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Awake Mode";
     awake_mode_conf["uniq_id"] =
-        _device_state.factory().unique_id + "_awake_mode";
+        FormatterType{} + _device_state.factory().unique_id + "_awake_mode";
     awake_mode_conf["cmd_t"] = t_awake_mode_cmd();
     awake_mode_conf["stat_t"] = t_awake_mode_state();
     awake_mode_conf["ic"] = "mdi:coffee";
     awake_mode_conf["ret"] = "true";
     awake_mode_conf["avty_t"] = t_awake_mode_avlb();
     awake_mode_conf["dev"] = device_short;
-    serializeJson(awake_mode_conf, buffer);
-    _network.publish(awake_mode_config_topic.c_str(), buffer, true);
+    serializeJson(awake_mode_conf, buffer, sizeof(buffer));
+    _network.publish(awake_mode_config_topic, buffer, true);
   }
 }
 
@@ -234,43 +246,49 @@ void MQTTHelper::update_discovery_config() {
     TopicType temperature_config_topic =
         sensor_topic_common + "/temperature/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> temp_conf;
-    temp_conf["name"] = _device_state.device_name() + " Temperature";
-    temp_conf["uniq_id"] = _device_state.factory().unique_id + "_temperature";
+    temp_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Temperature";
+    temp_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = t_temperature();
     temp_conf["dev_cla"] = "temperature";
     temp_conf["unit_of_meas"] = "°C";
     temp_conf["exp_aft"] = expire_after;
     temp_conf["dev"] = device_short;
-    serializeJson(temp_conf, buffer);
-    _network.publish(temperature_config_topic.c_str(), buffer, true);
+    serializeJson(temp_conf, buffer, sizeof(buffer));
+    _network.publish(temperature_config_topic, buffer, true);
   }
 
   {
     TopicType humidity_config_topic = sensor_topic_common + "/humidity/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> humidity_conf;
-    humidity_conf["name"] = _device_state.device_name() + " Humidity";
-    humidity_conf["uniq_id"] = _device_state.factory().unique_id + "_humidity";
+    humidity_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Humidity";
+    humidity_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_humidity";
     humidity_conf["stat_t"] = t_humidity();
     humidity_conf["dev_cla"] = "humidity";
     humidity_conf["unit_of_meas"] = "%";
     humidity_conf["exp_aft"] = expire_after;
     humidity_conf["dev"] = device_short;
-    serializeJson(humidity_conf, buffer);
-    _network.publish(humidity_config_topic.c_str(), buffer, true);
+    serializeJson(humidity_conf, buffer, sizeof(buffer));
+    _network.publish(humidity_config_topic, buffer, true);
   }
 
   {
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> battery_conf;
-    battery_conf["name"] = _device_state.device_name() + " Battery";
-    battery_conf["uniq_id"] = _device_state.factory().unique_id + "_battery";
+    battery_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Battery";
+    battery_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_battery";
     battery_conf["stat_t"] = t_battery();
     battery_conf["dev_cla"] = "battery";
     battery_conf["unit_of_meas"] = "%";
     battery_conf["exp_aft"] = expire_after;
     battery_conf["dev"] = device_short;
-    serializeJson(battery_conf, buffer);
-    _network.publish(battery_config_topic.c_str(), buffer, true);
+    serializeJson(battery_conf, buffer, sizeof(buffer));
+    _network.publish(battery_config_topic, buffer, true);
   }
 }
 

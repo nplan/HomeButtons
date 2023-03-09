@@ -150,6 +150,7 @@ void App::_display_task(void* param) {
 
 void App::_network_task(void* param) {
   App* app = static_cast<App*>(param);
+  app->m_network.setup();
   while (true) {
     app->m_network.update();
     delay(10);
@@ -533,8 +534,7 @@ void App::_main_task() {
             // net_on_connect();
             if (active_button != nullptr && btn_action != Button::IDLE) {
               m_network.publish(
-                  m_mqtt.get_button_topic(active_button->get_id(), btn_action)
-                      .c_str(),
+                  m_mqtt.get_button_topic(active_button->get_id(), btn_action),
                   BTN_PRESS_PAYLOAD);
             }
             HW.read_temp_hmd(m_device_state.sensors().temperature,
@@ -730,10 +730,9 @@ void App::_main_task() {
                 }
                 m_leds.blink(active_button->get_id(),
                              Button::get_action_multi_count(btn_action));
-                m_network.publish(
-                    m_mqtt.get_button_topic(active_button->get_id(), btn_action)
-                        .c_str(),
-                    BTN_PRESS_PAYLOAD);
+                m_network.publish(m_mqtt.get_button_topic(
+                                      active_button->get_id(), btn_action),
+                                  BTN_PRESS_PAYLOAD);
                 m_sm_state = StateMachineState::AWAIT_USER_INPUT_START;
                 break;
               case Button::LONG_1:
@@ -855,22 +854,19 @@ void App::_main_task() {
 }
 
 void App::_publish_sensors() {
-  m_network.publish(
-      m_mqtt.t_temperature().c_str(),
-      StaticString<32>("%.2f", m_device_state.sensors().temperature).c_str());
-  m_network.publish(
-      m_mqtt.t_humidity().c_str(),
-      StaticString<32>("%.2f", m_device_state.sensors().humidity).c_str());
-  m_network.publish(
-      m_mqtt.t_battery().c_str(),
-      StaticString<32>("%u", m_device_state.sensors().battery_pct).c_str());
+  m_network.publish(m_mqtt.t_temperature(),
+                    PayloadType("%.2f", m_device_state.sensors().temperature));
+  m_network.publish(m_mqtt.t_humidity(),
+                    PayloadType("%.2f", m_device_state.sensors().humidity));
+  m_network.publish(m_mqtt.t_battery(),
+                    PayloadType("%u", m_device_state.sensors().battery_pct));
 }
 
 void App::_publish_awake_mode_avlb() {
   if (HW.is_dc_connected()) {
-    m_network.publish(m_mqtt.t_awake_mode_avlb().c_str(), "online", true);
+    m_network.publish(m_mqtt.t_awake_mode_avlb(), "online", true);
   } else {
-    m_network.publish(m_mqtt.t_awake_mode_avlb().c_str(), "offline", true);
+    m_network.publish(m_mqtt.t_awake_mode_avlb(), "offline", true);
   }
 }
 
@@ -880,15 +876,14 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
       m_device_state.set_sensor_interval(mins);
       m_device_state.save_all();
-      m_network.publish(
-          m_mqtt.t_sensor_interval_state().c_str(),
-          StaticString<32>("%u", m_device_state.sensor_interval()).c_str(),
-          true);
+      m_network.publish(m_mqtt.t_sensor_interval_state(),
+                        PayloadType("%u", m_device_state.sensor_interval()),
+                        true);
       m_mqtt.update_discovery_config();
       log_d("[DEVICE] sensor interval set to %d minutes", mins);
       _publish_sensors();
     }
-    m_network.publish(m_mqtt.t_sensor_interval_cmd().c_str(), nullptr, true);
+    m_network.publish(m_mqtt.t_sensor_interval_cmd(), "", true);
     return;
   }
 
@@ -897,9 +892,9 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       m_device_state.set_btn_label(i, payload);
       log_d("[DEVICE] button %d label changed to: %s", i + 1,
             m_device_state.get_btn_label(i));
-      m_network.publish(m_mqtt.t_btn_label_state(i).c_str(),
-                        m_device_state.get_btn_label(i).c_str(), true);
-      m_network.publish(m_mqtt.t_btn_label_cmd(i).c_str(), nullptr, true);
+      m_network.publish(m_mqtt.t_btn_label_state(i),
+                        m_device_state.get_btn_label(i), true);
+      m_network.publish(m_mqtt.t_btn_label_cmd(i), "", true);
       m_device_state.flags().display_redraw = true;
       return;
     }
@@ -910,16 +905,16 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       m_device_state.persisted().user_awake_mode = true;
       m_device_state.flags().awake_mode = true;
       m_device_state.save_all();
-      m_network.publish(m_mqtt.t_awake_mode_state().c_str(), "ON", true);
+      m_network.publish(m_mqtt.t_awake_mode_state(), "ON", true);
       log_d("[DEVICE] user awake mode set to: ON");
       log_d("[DEVICE] resetting to awake mode...");
     } else if (strcmp(payload, "OFF") == 0) {
       m_device_state.persisted().user_awake_mode = false;
       m_device_state.save_all();
-      m_network.publish(m_mqtt.t_awake_mode_state().c_str(), "OFF", true);
+      m_network.publish(m_mqtt.t_awake_mode_state(), "OFF", true);
       log_d("[DEVICE] user awake mode set to: OFF");
     }
-    m_network.publish(m_mqtt.t_awake_mode_cmd().c_str(), nullptr, true);
+    m_network.publish(m_mqtt.t_awake_mode_cmd(), "", true);
     return;
   }
 }
@@ -928,14 +923,13 @@ void App::_net_on_connect() {
   m_network.subscribe(m_mqtt.t_cmd() + "#");
   delay(100);
   _publish_awake_mode_avlb();
-  m_network.publish(
-      m_mqtt.t_sensor_interval_state().c_str(),
-      StaticString<32>("%u", m_device_state.sensor_interval()).c_str(), true);
+  m_network.publish(m_mqtt.t_sensor_interval_state(),
+                    PayloadType("%u", m_device_state.sensor_interval()), true);
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     auto t = m_mqtt.t_btn_label_state(i);
-    m_network.publish(t.c_str(), m_device_state.get_btn_label(i).c_str(), true);
+    m_network.publish(t, m_device_state.get_btn_label(i), true);
   }
-  m_network.publish(m_mqtt.t_awake_mode_state().c_str(),
+  m_network.publish(m_mqtt.t_awake_mode_state(),
                     (m_device_state.persisted().user_awake_mode) ? "ON" : "OFF",
                     true);
 

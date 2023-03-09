@@ -24,6 +24,12 @@ class StaticString {
     _check_snprintf_return_value(n);
   }
 
+  template <size_t _OTHER_MAX_SIZE>
+  StaticString(const StaticString<_OTHER_MAX_SIZE>& other) {
+    auto n = std::snprintf(m_data, MAX_SIZE, "%s", other.c_str());
+    _check_snprintf_return_value(n);
+  }
+
   template <typename... Args>
   explicit StaticString(const char* format, Args... args) {
     auto n = std::snprintf(m_data, MAX_SIZE, format, args...);
@@ -93,9 +99,10 @@ class StaticString {
   char m_data[MAX_SIZE] = {'\0'};
   void _check_snprintf_return_value(int value) const {
     if (value >= MAX_SIZE)
-      log_w("warning, StaticString too small");
+      log_e("buffer too small (size: %d, wanted: %d, content: %s)", MAX_SIZE,
+            value, m_data);
     else if (value < 0)
-      log_w("warning, StaticString format failed");
+      log_e("format failed");
   }
 };
 

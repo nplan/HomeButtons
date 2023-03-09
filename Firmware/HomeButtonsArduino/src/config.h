@@ -51,8 +51,6 @@ static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
 static constexpr uint32_t NET_CONNECT_TIMEOUT = 45000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
-static constexpr uint16_t MQTT_PYLD_SIZE = 512;
-static constexpr uint16_t MQTT_BUFFER_SIZE = 777;
 
 // ------ LEDs ------
 static constexpr uint8_t LED_DFLT_BRIGHT = 225;

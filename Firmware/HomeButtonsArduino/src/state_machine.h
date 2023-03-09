@@ -14,8 +14,9 @@ class StateMachine;
 template <typename StateMachineDefinition>
 class State {
  public:
+  using SM = StateMachineDefinition;
   explicit State(StateMachineDefinition &stateMachineDefinition)
-      : m_stateMachine(stateMachineDefinition) {}
+      : state_machine_(stateMachineDefinition) {}
 
   virtual void entry() {}
   virtual void executeOnce() {}
@@ -25,11 +26,12 @@ class State {
 
   template <typename NextState>
   void transitionTo() {
-    m_stateMachine.template transitionTo<NextState>();
+    state_machine_.template transitionTo<NextState>();
   }
 
  protected:
-  StateMachineDefinition &m_stateMachine;
+  StateMachineDefinition &state_machine_;
+  StateMachineDefinition &sm() { return state_machine_; }
 };
 
 template <typename... States>
