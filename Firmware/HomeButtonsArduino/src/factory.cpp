@@ -282,23 +282,21 @@ void factory_mode(DeviceState& device_state, Display& display) {
           sendFAIL();
         }
       } else if (cmd == "MU") {
+        networkSettings.mqtt_user = pld;
         if (pld.length() > 0) {
-          networkSettings.mqtt_user = pld;
-          log_i("mqtt user: %s", pld.c_str());
-          sendOK();
+          logger.info("mqtt user: %s", pld.c_str());
         } else {
-          log_w("incorrect mqtt user");
-          sendFAIL();
+          logger.warning("no mqtt user");
         }
+        sendOK();
       } else if (cmd == "MP") {
+        networkSettings.mqtt_password = pld;
         if (pld.length() > 0) {
-          networkSettings.mqtt_password = pld;
-          log_i("mqtt password: %s", pld.c_str());
-          sendOK();
+          logger.info("mqtt password: %s", pld.c_str());
         } else {
-          log_w("incorrect mqtt password");
-          sendFAIL();
+          logger.warning("no mqtt password");
         }
+        sendOK();
       } else if (cmd == "MT") {
         if (pld.length() > 0) {
           networkSettings.mqtt_port = pld.toInt();
