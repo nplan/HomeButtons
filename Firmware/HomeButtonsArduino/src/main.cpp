@@ -1,7 +1,10 @@
 #include "app.h"
 
-static App app;
+static App *app;
 
-void setup() { app.setup(); }
+void setup() {
+  app = new App();
+  app->setup();
+}
 
 void loop() {}

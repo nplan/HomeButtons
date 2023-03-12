@@ -55,27 +55,50 @@ class StaticString {
     return output;
   }
 
+  template <typename T>
+  StaticString operator+(T other) const {
+    StaticString output = *this;
+    output += other;
+    return output;
+  }
+
   template <size_t _OTHER_MAX_SIZE>
-  StaticString operator+(const StaticString<_OTHER_MAX_SIZE>& other) const {
-    return *this + other.c_str();
+  StaticString& operator+=(const StaticString<_OTHER_MAX_SIZE>& other) {
+    *this += other.c_str();
+    return *this;
   }
 
-  StaticString operator+(const String& other) const {
-    return *this + other.c_str();
+  StaticString& operator+=(const String& other) {
+    *this += other.c_str();
+    return *this;
   }
 
-  StaticString operator+(const char* other) const {
-    StaticString output;
-    auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%s", m_data, other);
+  StaticString& operator+=(unsigned long i) {
+    auto offset = length();
+    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%lu", i);
     _check_snprintf_return_value(n);
-    return output;
+    return *this;
   }
 
-  StaticString operator+(unsigned long i) const {
-    StaticString output;
-    auto n = std::snprintf(output.m_data, MAX_SIZE, "%s%lu", m_data, i);
+  StaticString& operator+=(int i) {
+    auto offset = length();
+    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%d", i);
     _check_snprintf_return_value(n);
-    return output;
+    return *this;
+  }
+
+  StaticString& operator+=(const char* other) {
+    auto offset = length();
+    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%s", other);
+    _check_snprintf_return_value(n);
+    return *this;
+  }
+
+  StaticString& operator+=(char other) {
+    auto offset = length();
+    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%c", other);
+    _check_snprintf_return_value(n);
+    return *this;
   }
 
   StaticString& operator=(const char* other) {

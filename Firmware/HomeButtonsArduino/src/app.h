@@ -15,6 +15,7 @@ enum class BootCause { RESET, TIMER, BUTTON };
 class App : public Logger {
  public:
   App();
+  App(const App&) = delete;
   void setup();
 
  private:
