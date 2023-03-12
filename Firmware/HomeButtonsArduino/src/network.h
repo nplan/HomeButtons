@@ -18,9 +18,9 @@ class IdleState : public State<Network> {
  public:
   using State<Network>::State;
 
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "IdleState"; }
+  const char *get_name() override { return "IdleState"; }
 };
 
 class QuickConnectState : public State<Network> {
@@ -28,9 +28,9 @@ class QuickConnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "QuickConnectState"; }
+  const char *get_name() override { return "QuickConnectState"; }
 
  private:
   uint32_t m_start_time = 0;
@@ -41,9 +41,9 @@ class NormalConnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "NormalConnectState"; }
+  const char *get_name() override { return "NormalConnectState"; }
 
  private:
   uint32_t m_start_time = 0;
@@ -55,9 +55,9 @@ class MQTTConnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "MQTTConnectState"; }
+  const char *get_name() override { return "MQTTConnectState"; }
 
  private:
   uint32_t m_start_time = 0;
@@ -67,9 +67,9 @@ class WifiConnectedState : public State<Network> {
  public:
   using State<Network>::State;
 
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "WifiConnectedState"; }
+  const char *get_name() override { return "WifiConnectedState"; }
 };
 
 class DisconnectState : public State<Network> {
@@ -77,9 +77,9 @@ class DisconnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "DisconnectState"; }
+  const char *get_name() override { return "DisconnectState"; }
 };
 
 class FullyConnectedState : public State<Network> {
@@ -87,9 +87,9 @@ class FullyConnectedState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void executeOnce() override;
+  void execute_once() override;
 
-  const char *getName() override { return "FullyConnectedState"; }
+  const char *get_name() override { return "FullyConnectedState"; }
 
  private:
   uint32_t m_last_conn_check_time = 0;
