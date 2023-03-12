@@ -18,7 +18,7 @@ void App::setup() {
               "MAIN",             // Name of the task (for debugging)
               20000,              // Stack size (bytes)
               this,               // Parameter to pass
-              1,                  // Task priority
+              tskIDLE_PRIORITY,   // Task priority
               &m_main_task_h      // Task handle
   );
   log_d("[DEVICE] main task started.");
