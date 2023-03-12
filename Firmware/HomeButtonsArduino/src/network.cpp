@@ -52,8 +52,6 @@ void NetworkSMStates::NormalConnectState::entry() {
   WiFi.mode(WIFI_STA);
   WiFi.persistent(true);
 
-  // WiFi.begin();
-  delay(500);
   // get ssid from esp32 saved config
   wifi_config_t conf;
   if (esp_wifi_get_config(WIFI_IF_STA, &conf)) {
@@ -158,6 +156,7 @@ void NetworkSMStates::DisconnectState::entry() {
   WiFi.mode(WIFI_OFF);
   sm().state_ = Network::State::DISCONNECTED;
   sm().info("disconnected.");
+  delay(500);
 }
 
 void NetworkSMStates::DisconnectState::execute_once() {
