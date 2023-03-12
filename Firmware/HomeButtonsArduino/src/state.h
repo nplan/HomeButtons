@@ -150,7 +150,7 @@ class DeviceState : public Logger {
     char buffer[MAX_SIZE + 1];  // +1 for '\0' at the end
     auto ret = preferences_.getString(key, buffer, MAX_SIZE + 1);
     if (ret == 0)
-      destination.set("");
+      destination.set(defaultValue);
     else
       destination.set(buffer);
   }
