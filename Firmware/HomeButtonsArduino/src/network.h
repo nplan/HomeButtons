@@ -8,6 +8,7 @@
 #include "state_machine.h"
 #include "mqtt_helper.h"  // For TopicType
 #include "freertos/queue.h"
+#include "logger.h"
 
 class DeviceState;
 class Network;
@@ -95,13 +96,15 @@ class FullyConnectedState : public State<Network> {
 };
 }  // namespace NetworkSMStates
 
+class Network;
+
 using NetworkStateMachine = StateMachine<
-    NetworkSMStates::IdleState, NetworkSMStates::QuickConnectState,
+    Network, NetworkSMStates::IdleState, NetworkSMStates::QuickConnectState,
     NetworkSMStates::NormalConnectState, NetworkSMStates::MQTTConnectState,
     NetworkSMStates::WifiConnectedState, NetworkSMStates::DisconnectState,
     NetworkSMStates::FullyConnectedState>;
 
-class Network : public NetworkStateMachine {
+class Network : public NetworkStateMachine, public Logger {
  public:
   enum class State {
     DISCONNECTED,

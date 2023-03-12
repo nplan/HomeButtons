@@ -17,7 +17,7 @@ void Button::begin() {
   }
   attachInterrupt(pin, std::bind(&Button::isr, this), CHANGE);
   begun = true;
-  log_d("[BTN] id %d begun", id);
+  debug("id %d begun", id);
 }
 
 void Button::init_press() {
@@ -31,7 +31,7 @@ void Button::end() {
   detachInterrupt(pin);
   reset();
   begun = false;
-  log_d("[BTN] id %d ended", id);
+  debug("id %d ended", id);
 }
 
 void Button::update() {
@@ -72,7 +72,7 @@ void Button::update() {
           case LONG_2:
           case LONG_3:
           case LONG_4:
-            log_d("[BTN] id %d press: %s", id, get_action_name(action));
+            debug("id %d press: %s", id, get_action_name(action));
             press_finished = true;
             release_start_time = millis();
             state_machine_state = 8;
@@ -104,7 +104,7 @@ void Button::update() {
         press_start_time = millis();
         state_machine_state = 5;
       } else if (since_press_start >= PRESS_TIMEOUT) {
-        log_d("[BTN] id %d press: %s", id, get_action_name(action));
+        debug("id %d press: %s", id, get_action_name(action));
         press_finished = true;
         state_machine_state = 0;
       }
@@ -127,7 +127,7 @@ void Button::update() {
           }
           state_machine_state = 6;
         } else {
-          log_d("[BTN] id %d press: %s", id, get_action_name(action));
+          debug("id %d press: %s", id, get_action_name(action));
           press_finished = true;
           release_start_time = millis();
           state_machine_state = 8;

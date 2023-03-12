@@ -7,6 +7,7 @@
 
 #include "display.h"
 #include "hardware.h"
+#include "logger.h"
 
 namespace factory {
 
@@ -76,7 +77,7 @@ void test_display(Display& display) {
   }
 }
 
-void test_wifi(const NetworkSettings& settings,
+void test_wifi(const Logger& logger, const NetworkSettings& settings,
                const DeviceState& device_state) {
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
@@ -84,7 +85,7 @@ void test_wifi(const NetworkSettings& settings,
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
 
-  log_i("Connecting to WiFi...");
+  logger.info("Connecting to WiFi...");
   WiFi.begin(settings.wifi_ssid.c_str(), settings.wifi_password.c_str());
   while (true) {
     delay(100);
@@ -92,8 +93,8 @@ void test_wifi(const NetworkSettings& settings,
       break;
     }
   }
-  log_i("WiFi connected. IP: %S", WiFi.localIP().toString());
-  log_i("Connecting to MQTT...");
+  logger.info("WiFi connected. IP: %s", WiFi.localIP().toString().c_str());
+  logger.info("Connecting to MQTT...");
   mqtt_client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
   auto client_id = StaticString<64>{"HBTNS-"} +
                    device_state.factory().serial_number + "-factory";
@@ -102,9 +103,9 @@ void test_wifi(const NetworkSettings& settings,
                         settings.mqtt_password.c_str());
     delay(100);
   }
-  log_i("MWTT connected");
+  logger.info("MWTT connected");
   mqtt_client.publish("homebuttons-factory/test", "OK");
-  log_i("MQTT payload 'OK' sent to topic: homebuttons-factory/test");
+  logger.info("MQTT payload 'OK' sent to topic: homebuttons-factory/test");
   // disconnect
   unsigned long tm = millis();
   while (millis() - tm < MQTT_DISCONNECT_TIMEOUT) {
@@ -118,14 +119,14 @@ void test_wifi(const NetworkSettings& settings,
     mqtt_client.loop();
     delay(10);
   }
-  log_i("MQTT disconnected");
+  logger.info("MQTT disconnected");
   WiFi.disconnect(true, true);
-  log_i("WiFi disconnected");
+  logger.info("WiFi disconnected");
 }
 
-bool test_sensors(const TestSettings& settings) {
+bool test_sensors(const Logger& logger, const TestSettings& settings) {
   if (settings.target_temp == 0. && settings.target_humidity == 0.) {
-    log_e("target values not set");
+    logger.error("target values not set");
     return false;
   }
 
@@ -135,27 +136,28 @@ bool test_sensors(const TestSettings& settings) {
 
   if (temp_val <= settings.target_temp - 5.0 ||
       temp_val >= settings.target_temp + 5.0) {
-    log_i("Temp test fail. Measured: %f deg C.", temp_val);
+    logger.info("Temp test fail. Measured: %f deg C.", temp_val);
     return false;
   }
   if (hmd_val <= settings.target_humidity - 10.0 ||
       temp_val >= settings.target_humidity + 10.0) {
-    log_i("Humidity test fail. Measured: %f %.", hmd_val);
+    logger.info("Humidity test fail. Measured: %f %%.", hmd_val);
     return false;
   }
   return true;
 }
 
-bool run_tests(const TestSettings& settings, Display& display) {
+bool run_tests(const Logger& logger, const TestSettings& settings,
+               Display& display) {
   if (HW.any_button_pressed()) {
-    log_e("button pressed at start of test");
+    logger.error("button pressed at start of test");
     return false;
   }
   while (!HW.any_button_pressed()) {
     test_leds();
   }
   test_buttons();
-  if (!test_sensors(settings)) {
+  if (!test_sensors(logger, settings)) {
     return false;
   }
   test_display(display);
@@ -169,12 +171,13 @@ void sendFAIL() { usb_serial.println("FAIL"); }
 void factory_mode(DeviceState& device_state, Display& display) {
   NetworkSettings networkSettings = {};
   TestSettings test_settings = {};
+  Logger logger("FACTORY");
 
   USB.begin();
   usb_serial.begin(115200);
   delay(1000);
 
-  log_i("factory mode active");
+  logger.info("factory mode active");
 
   while (1) {
     usb_serial.setTimeout(5000);
@@ -183,97 +186,99 @@ void factory_mode(DeviceState& device_state, Display& display) {
     if (msg.length() > 0) {
       String cmd = msg.substring(0, 2);
       String pld = msg.substring(3);
-      log_i("received cmd: %s, pld: %s", cmd.c_str(), pld.c_str());
+      logger.info("received cmd: %s, pld: %s", cmd.c_str(), pld.c_str());
 
       if (cmd == "ST") {
         if (device_state.factory().hw_version.length() > 0) {
-          HW.init(device_state.factory().hw_version);
+          HW.init(logger, device_state.factory().hw_version);
           display.begin();
           HW.begin();
-          log_i("starting hw test...");
-          if (run_tests(test_settings, display)) {
-            log_i("test complete");
+          logger.info("starting hw test...");
+          if (run_tests(logger, test_settings, display)) {
+            logger.info("test complete");
             sendOK();
           } else {
             sendFAIL();
           }
         } else {
-          log_w("set hardware version before running tests");
+          logger.warning("set hardware version before running tests");
         }
       } else if (cmd == "SN") {
         if (pld.length() == 8) {
           device_state.set_serial_number(SerialNumber{pld});
-          log_i("setting serial number to: %s",
-                device_state.factory().serial_number.c_str());
+          logger.info("setting serial number to: %s",
+                      device_state.factory().serial_number.c_str());
           sendOK();
         } else {
-          log_w("incorrect serial number: %s", pld.c_str());
+          logger.warning("incorrect serial number: %s", pld.c_str());
           sendFAIL();
         }
       } else if (cmd == "RI") {
         if (pld.length() == 6) {
           device_state.set_random_id(RandomID{pld});
-          log_i("setting random id to: %s",
-                device_state.factory().random_id.c_str());
+          logger.info("setting random id to: %s",
+                      device_state.factory().random_id.c_str());
           sendOK();
         } else {
-          log_w("incorrect random id: %s", pld.c_str());
+          logger.warning("incorrect random id: %s", pld.c_str());
           sendFAIL();
         }
       } else if (cmd == "MN") {
         if (pld.length() > 0 && pld.length() <= 20) {
           device_state.set_model_name(ModelName{pld});
-          log_i("setting model name to: %s",
-                device_state.factory().model_name.c_str());
+          logger.info("setting model name to: %s",
+                      device_state.factory().model_name.c_str());
           sendOK();
         } else {
-          log_w("incorrect model name: %s", pld.c_str());
+          logger.warning("incorrect model name: %s", pld.c_str());
           sendFAIL();
         }
       } else if (cmd == "MI") {
         if (pld.length() == 2) {
           device_state.set_model_id(ModelID{pld});
-          log_i("setting model id to: %s", device_state.factory().model_id);
+          logger.info("setting model id to: %s",
+                      device_state.factory().model_id.c_str());
           sendOK();
         } else {
-          log_w("incorrect model id: %s", pld.c_str());
+          logger.warning("incorrect model id: %s", pld.c_str());
           sendFAIL();
         }
       } else if (cmd == "HV") {
         if (pld.length() == 3) {
           device_state.set_hw_version(HWVersion{pld});
-          log_i("setting hw version to: %s", device_state.factory().hw_version);
+          logger.info("setting hw version to: %s",
+                      device_state.factory().hw_version.c_str());
           sendOK();
         } else {
-          log_w("incorrect hw version: %s", pld.c_str());
+          logger.warning("incorrect hw version: %s", pld.c_str());
           sendFAIL();
         }
       } else if (cmd == "WS") {
         if (pld.length() > 0) {
           networkSettings.wifi_ssid = pld;
-          log_i("wifi ssid: %s", pld.c_str());
+          logger.info("wifi ssid: %s", pld.c_str());
           sendOK();
         } else {
-          log_w("incorrect wifi ssid");
+          logger.warning("incorrect wifi ssid");
           sendFAIL();
         }
         sendOK();
       } else if (cmd == "WP") {
         if (pld.length() > 0) {
           networkSettings.wifi_password = pld;
-          log_i("wifi password: %s", pld.c_str());
+          logger.info("wifi password: %s", pld.c_str());
           sendOK();
         } else {
-          log_w("incorrect wifi password");
+          logger.warning("incorrect wifi password");
           sendFAIL();
         }
       } else if (cmd == "MS") {
         if (pld.length() > 0) {
           networkSettings.mqtt_server = pld;
-          log_i("mqtt server: %s", pld.c_str());
+          logger.info("mqtt server: %s", pld.c_str());
           sendOK();
         } else {
-          log_w("incorrect mqtt server");
+          logger.warning("incorrect mqtt server");
           sendFAIL();
         }
       } else if (cmd == "MU") {
@@ -297,37 +302,38 @@ void factory_mode(DeviceState& device_state, Display& display) {
       } else if (cmd == "MT") {
         if (pld.length() > 0) {
           networkSettings.mqtt_port = pld.toInt();
-          log_i("mqtt port: %d", networkSettings.mqtt_port);
+          logger.info("mqtt port: %d", networkSettings.mqtt_port);
           sendOK();
         } else {
-          log_w("incorrect mqtt port");
+          logger.warning("incorrect mqtt port");
           sendFAIL();
         }
       } else if (cmd == "TW") {
         if (device_state.factory().serial_number.length() > 0) {
-          log_i("starting wifi test...");
-          test_wifi(networkSettings, device_state);
+          logger.info("starting wifi test...");
+          test_wifi(logger, networkSettings, device_state);
           sendOK();
         } else {
-          log_w("set serial number before wifi test");
+          logger.warning("set serial number before wifi test");
           sendFAIL();
         }
       } else if (cmd == "TT") {
         if (pld.length() > 0) {
           test_settings.target_temp = pld.toFloat();
-          log_i("target temp set to: %f C", test_settings.target_temp);
+          logger.info("target temp set to: %f C", test_settings.target_temp);
           sendOK();
         } else {
-          log_w("incorrect target temp");
+          logger.warning("incorrect target temp");
           sendFAIL();
         }
       } else if (cmd == "TH") {
         if (pld.length() > 0) {
           test_settings.target_humidity = pld.toFloat();
-          log_i("target humidity set to: %f C", test_settings.target_humidity);
+          logger.info("target humidity set to: %f C",
+                      test_settings.target_humidity);
           sendOK();
         } else {
-          log_w("incorrect target humidity");
+          logger.warning("incorrect target humidity");
           sendFAIL();
         }
       } else if (cmd == "OK") {
@@ -340,8 +346,8 @@ void factory_mode(DeviceState& device_state, Display& display) {
                                      device_state.factory().serial_number +
                                      "-" + device_state.factory().random_id);
 
-          log_i("settings confirmed. saving to memory");
-          log_i(
+          logger.info("settings confirmed. saving to memory");
+          logger.info(
               "settings:\n\
                            serial number: %s\n\
                            random id: %s\n\
@@ -361,7 +367,7 @@ void factory_mode(DeviceState& device_state, Display& display) {
           display.update();
           return;
         } else {
-          log_w("settings missing or incorrect");
+          logger.warning("settings missing or incorrect");
           sendFAIL();
         }
       }

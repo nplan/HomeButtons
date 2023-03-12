@@ -9,7 +9,8 @@
 #include "hardware.h"
 
 App::App()
-    : m_network(m_device_state),
+    : Logger("APP"),
+      m_network(m_device_state),
       m_display(m_device_state),
       m_mqtt(m_device_state, m_network) {}
 
@@ -21,7 +22,7 @@ void App::setup() {
               tskIDLE_PRIORITY,   // Task priority
               &m_main_task_h      // Task handle
   );
-  log_d("[DEVICE] main task started.");
+  debug("main task started.");
 
   vTaskDelete(NULL);
 }
@@ -39,7 +40,7 @@ void App::_start_esp_sleep() {
                                     60000000UL);
     }
   }
-  log_i("[DEVICE] deep sleep... z z z");
+  info("deep sleep... z z z");
   esp_deep_sleep_start();
 }
 
@@ -57,7 +58,7 @@ std::pair<BootCause, Button*> App::_determine_boot_cause() {
     case ESP_SLEEP_WAKEUP_EXT1: {
       uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
       wakeup_pin = (log(GPIO_reason)) / log(2);
-      log_i("[DEVICE] wakeup cause: PIN %d", wakeup_pin);
+      info("wakeup cause: PIN %d", wakeup_pin);
       if (wakeup_pin == HW.BTN1_PIN || wakeup_pin == HW.BTN2_PIN ||
           wakeup_pin == HW.BTN3_PIN || wakeup_pin == HW.BTN4_PIN ||
           wakeup_pin == HW.BTN5_PIN || wakeup_pin == HW.BTN6_PIN) {
@@ -67,11 +68,11 @@ std::pair<BootCause, Button*> App::_determine_boot_cause() {
       }
     } break;
     case ESP_SLEEP_WAKEUP_TIMER:
-      log_i("[DEVICE] wakeup cause: TIMER");
+      info("wakeup cause: TIMER");
       boot_cause = BootCause::TIMER;
       break;
     default:
-      log_i("[DEVICE] wakeup cause: RESET");
+      info("wakeup cause: RESET");
       boot_cause = BootCause::RESET;
       break;
   }
@@ -90,15 +91,15 @@ void App::_log_stack_status() const {
   uint32_t leds_free = uxTaskGetStackHighWaterMark(m_leds_task_h);
   uint32_t main_free = uxTaskGetStackHighWaterMark(m_main_task_h);
   uint32_t num_tasks = uxTaskGetNumberOfTasks();
-  log_i(
-      "[DEVICE] free stack: btns %d, disp %d, net %d, leds %d, main "
+  info(
+      "free stack: btns %d, disp %d, net %d, leds %d, main "
       "%d, num tasks %d",
       btns_free, disp_free, net_free, leds_free, main_free, num_tasks);
   uint32_t esp_free_heap = ESP.getFreeHeap();
   uint32_t esp_min_free_heap = ESP.getMinFreeHeap();
   uint32_t rtos_free_heap = xPortGetFreeHeapSize();
-  log_i("[DEVICE] free heap: esp %d, esp min %d, rtos %d", esp_free_heap,
-        esp_min_free_heap, rtos_free_heap);
+  info("free heap: esp %d, esp min %d, rtos %d", esp_free_heap,
+       esp_min_free_heap, rtos_free_heap);
 }
 
 void App::_setup_buttons() {
@@ -159,7 +160,7 @@ void App::_network_task(void* param) {
 
 void App::_start_button_task() {
   if (m_button_task_h != nullptr) return;
-  log_d("[DEVICE] button task started.");
+  debug("button task started.");
   xTaskCreate(_button_task,     // Function that should be called
               "BUTTON",         // Name of the task (for debugging)
               2000,             // Stack size (bytes)
@@ -171,7 +172,7 @@ void App::_start_button_task() {
 
 void App::_start_display_task() {
   if (m_display_task_h != nullptr) return;
-  log_d("[DEVICE] m_display task started.");
+  debug("m_display task started.");
   xTaskCreate(_display_task,     // Function that should be called
               "DISPLAY",         // Name of the task (for debugging)
               5000,              // Stack size (bytes)
@@ -183,7 +184,7 @@ void App::_start_display_task() {
 
 void App::_start_network_task() {
   if (m_network_task_h != nullptr) return;
-  log_d("[DEVICE] network task started.");
+  debug("network task started.");
   xTaskCreate(_network_task,     // Function that should be called
               "NETWORK",         // Name of the task (for debugging)
               20000,             // Stack size (bytes)
@@ -195,7 +196,7 @@ void App::_start_network_task() {
 
 void App::_start_leds_task() {
   if (m_leds_task_h != nullptr) return;
-  log_d("[DEVICE] leds task started.");
+  debug("leds task started.");
   xTaskCreate(&_leds_task,    // Function that should be called
               "LEDS",         // Name of the task (for debugging)
               2000,           // Stack size (bytes)
@@ -206,25 +207,25 @@ void App::_start_leds_task() {
 }
 
 void App::_main_task() {
-  log_i("[DEVICE] woke up.");
-  log_i("[DEVICE] SW version: %s", SW_VERSION);
+  info("woke up.");
+  info("SW version: %s", SW_VERSION);
   m_device_state.load_all();
 
   // ------ factory mode ------
   if (m_device_state.factory().serial_number.length() < 1) {
-    log_i("[DEVICE] first boot, starting factory mode...");
+    info("first boot, starting factory mode...");
     factory::factory_mode(m_device_state, m_display);
     m_display.begin();
     m_display.disp_welcome();
     m_display.update();
     m_display.end();
-    log_i("[DEVICE] factory settings complete. Going to sleep.");
+    info("factory settings complete. Going to sleep.");
     _start_esp_sleep();
   }
 
   // ------ init hardware ------
-  log_i("[HW] version: %s", m_device_state.factory().hw_version.c_str());
-  HW.init(m_device_state.factory().hw_version);
+  info("HW version: %s", m_device_state.factory().hw_version.c_str());
+  HW.init(*this, m_device_state.factory().hw_version);
   _setup_buttons();
   _begin_buttons();
   m_display.begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
@@ -233,8 +234,8 @@ void App::_main_task() {
   // ------ after update handler ------
   if (m_device_state.persisted().last_sw_ver != SW_VERSION) {
     if (m_device_state.persisted().last_sw_ver.length() > 0) {
-      log_i("[DEVICE] firmware updated from %s to %s",
-            m_device_state.persisted().last_sw_ver.c_str(), SW_VERSION);
+      info("firmware updated from %s to %s",
+           m_device_state.persisted().last_sw_ver.c_str(), SW_VERSION);
       m_device_state.persisted().last_sw_ver = SW_VERSION;
       m_device_state.persisted().send_discovery_config = true;
       m_device_state.save_all();
@@ -251,18 +252,18 @@ void App::_main_task() {
   // ------ determine power mode ------
   m_device_state.sensors().battery_present = HW.is_battery_present();
   m_device_state.sensors().dc_connected = HW.is_dc_connected();
-  log_i("[DEVICE] batt present: %d, DC connected: %d",
-        m_device_state.sensors().battery_present,
-        m_device_state.sensors().dc_connected);
+  info("batt present: %d, DC connected: %d",
+       m_device_state.sensors().battery_present,
+       m_device_state.sensors().dc_connected);
 
   if (m_device_state.sensors().battery_present) {
     float batt_voltage = HW.read_battery_voltage();
-    log_i("[DEVICE] batt volts: %f", batt_voltage);
+    info("batt volts: %f", batt_voltage);
     if (m_device_state.sensors().dc_connected) {
       // charging
       if (batt_voltage < HW.CHARGE_HYSTERESIS_VOLT) {
         m_device_state.sensors().charging = true;
-        HW.enable_charger(true);
+        HW.enable_charger(*this, true);
         m_device_state.flags().awake_mode = true;
       } else {
         m_device_state.flags().awake_mode =
@@ -274,10 +275,10 @@ void App::_main_task() {
         if (batt_voltage >= HW.BATT_HYSTERESIS_VOLT) {
           m_device_state.persisted().low_batt_mode = false;
           m_device_state.save_all();
-          log_i("[DEVICE] low batt mode disabled");
+          info("low batt mode disabled");
           ESP.restart();  // to handle m_display update
         } else {
-          log_i("[DEVICE] in low batt mode...");
+          info("in low batt mode...");
           _go_to_sleep();
         }
       } else {  // low_batt_mode == false
@@ -287,7 +288,7 @@ void App::_main_task() {
           batt_voltage = HW.read_battery_voltage();
           if (batt_voltage < HW.MIN_BATT_VOLT) {
             m_device_state.persisted().low_batt_mode = true;
-            log_w("[DEVICE] batt voltage too low, low bat mode enabled");
+            warning("batt voltage too low, low bat mode enabled");
             m_display.disp_message_large(
                 "Turned\nOFF\n\nPlease\nrecharge\nbattery!");
             m_display.update();
@@ -310,9 +311,9 @@ void App::_main_task() {
       _go_to_sleep();
     }
   }
-  log_i("[DEVICE] usr awake mode: %d, awake mode: %d",
-        m_device_state.persisted().user_awake_mode,
-        m_device_state.flags().awake_mode);
+  info("usr awake mode: %d, awake mode: %d",
+       m_device_state.persisted().user_awake_mode,
+       m_device_state.flags().awake_mode);
 
   // ------ read sensors ------
   HW.read_temp_hmd(m_device_state.sensors().temperature,
@@ -332,11 +333,11 @@ void App::_main_task() {
 
       if (m_device_state.persisted().restart_to_wifi_setup) {
         m_device_state.clear_persisted_flags();
-        log_i("[DEVICE] staring Wi-Fi setup...");
+        info("staring Wi-Fi setup...");
         start_wifi_setup(m_device_state, m_display);  // resets ESP when done
       } else if (m_device_state.persisted().restart_to_setup) {
         m_device_state.clear_persisted_flags();
-        log_i("[DEVICE] staring setup...");
+        info("staring setup...");
         start_setup(m_device_state, m_display);  // resets ESP when done
       }
       m_device_state.clear_persisted_flags();
@@ -412,7 +413,7 @@ void App::_main_task() {
           m_display.update();
           _go_to_sleep();
         } else {
-          log_i("Active button : %ul", active_button);
+          info("Active button : %p", active_button);
           if (active_button != nullptr) {
             active_button->init_press();
             _start_button_task();
@@ -450,11 +451,11 @@ void App::_main_task() {
       switch (m_sm_state) {
         case StateMachineState::AWAIT_USER_INPUT_FINISH: {
           if (active_button == nullptr) {
-            log_e("[DEVICE] active button = null");
+            error("active button = null");
             m_sm_state = StateMachineState::CMD_SHUTDOWN;
           } else if (active_button->is_press_finished()) {
             btn_action = active_button->get_action();
-            log_d("[DEVICE] BTN_%d pressed - state %s", active_button->get_id(),
+            debug("BTN_%d pressed - state %s", active_button->get_id(),
                   active_button->get_action_name(btn_action));
             switch (btn_action) {
               case Button::SINGLE:
@@ -472,7 +473,7 @@ void App::_main_task() {
               case Button::LONG_1:
                 // info screen - already m_displayed by transient action handler
                 m_device_state.persisted().info_screen_showing = true;
-                log_d("[DEVICE] m_displayed info screen");
+                debug("m_displayed info screen");
                 m_sm_state = StateMachineState::CMD_SHUTDOWN;
                 break;
               case Button::LONG_2:
@@ -544,7 +545,7 @@ void App::_main_task() {
             m_device_state.persisted().failed_connections = 0;
             m_sm_state = StateMachineState::CMD_SHUTDOWN;
           } else if (millis() >= NET_CONNECT_TIMEOUT) {
-            log_d("[DEVICE] network connect timeout.");
+            debug("network connect timeout.");
             if (boot_cause == BootCause::BUTTON) {
               m_display.disp_error("Network\nconnection\nnot\nsuccessful",
                                    3000);
@@ -600,7 +601,7 @@ void App::_main_task() {
           if (m_network.get_state() == Network::State::DISCONNECTED &&
               m_display.get_state() == Display::State::IDLE) {
             m_device_state.clear_all();
-            log_i("[DEVICE] factory reset complete.");
+            info("factory reset complete.");
             ESP.restart();
           }
           break;
@@ -715,7 +716,7 @@ void App::_main_task() {
             m_sm_state = StateMachineState::AWAIT_USER_INPUT_START;
           } else if (active_button->is_press_finished()) {
             auto btn_action = active_button->get_action();
-            log_d("[DEVICE] BTN_%d pressed - state %s", active_button->get_id(),
+            debug("BTN_%d pressed - state %s", active_button->get_id(),
                   active_button->get_action_name(btn_action));
             switch (btn_action) {
               case Button::SINGLE:
@@ -745,7 +746,7 @@ void App::_main_task() {
                 // info screen - already m_displayed by transient action handler
                 m_device_state.persisted().info_screen_showing = true;
                 info_screen_start_time = millis();
-                log_d("[DEVICE] m_displayed info screen");
+                debug("m_displayed info screen");
                 m_sm_state = StateMachineState::AWAIT_USER_INPUT_START;
                 break;
               case Button::LONG_2:
@@ -834,14 +835,14 @@ void App::_main_task() {
           if (m_network.get_state() == Network::State::DISCONNECTED &&
               m_display.get_state() == Display::State::IDLE) {
             m_device_state.clear_all();
-            log_i("[DEVICE] factory reset complete.");
+            info("factory reset complete.");
             ESP.restart();
           }
           break;
         }
       }  // end switch()
       if (ESP.getMinFreeHeap() < MIN_FREE_HEAP) {
-        log_w("[DEVICE] free heap low, restarting...");
+        warning("free heap low, restarting...");
         _log_stack_status();
         m_device_state.persisted().silent_restart = true;
         m_device_state.save_all();
@@ -880,7 +881,7 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
                         PayloadType("%u", m_device_state.sensor_interval()),
                         true);
       m_mqtt.update_discovery_config();
-      log_d("[DEVICE] sensor interval set to %d minutes", mins);
+      debug("sensor interval set to %d minutes", mins);
       _publish_sensors();
     }
     m_network.publish(m_mqtt.t_sensor_interval_cmd(), "", true);
@@ -890,8 +891,8 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     if (strcmp(topic, m_mqtt.t_btn_label_cmd(i).c_str()) == 0) {
       m_device_state.set_btn_label(i, payload);
-      log_d("[DEVICE] button %d label changed to: %s", i + 1,
-            m_device_state.get_btn_label(i));
+      debug("button %d label changed to: %s", i + 1,
+            m_device_state.get_btn_label(i).c_str());
       m_network.publish(m_mqtt.t_btn_label_state(i),
                         m_device_state.get_btn_label(i), true);
       m_network.publish(m_mqtt.t_btn_label_cmd(i), "", true);
@@ -906,13 +907,13 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       m_device_state.flags().awake_mode = true;
       m_device_state.save_all();
       m_network.publish(m_mqtt.t_awake_mode_state(), "ON", true);
-      log_d("[DEVICE] user awake mode set to: ON");
-      log_d("[DEVICE] resetting to awake mode...");
+      debug("user awake mode set to: ON");
+      debug("resetting to awake mode...");
     } else if (strcmp(payload, "OFF") == 0) {
       m_device_state.persisted().user_awake_mode = false;
       m_device_state.save_all();
       m_network.publish(m_mqtt.t_awake_mode_state(), "OFF", true);
-      log_d("[DEVICE] user awake mode set to: OFF");
+      debug("user awake mode set to: OFF");
     }
     m_network.publish(m_mqtt.t_awake_mode_cmd(), "", true);
     return;

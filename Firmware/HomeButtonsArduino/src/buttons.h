@@ -2,6 +2,7 @@
 #define HOMEBUTTONS_BUTTONS_H
 
 #include "Arduino.h"
+#include "logger.h"
 
 const uint32_t LONG_1_TIME = 2000L;
 const uint32_t LONG_2_TIME = 10000L;
@@ -11,7 +12,7 @@ const uint32_t LONG_4_TIME = 30000L;
 const uint32_t DEBOUNCE_TIMEOUT = 50L;
 const uint32_t PRESS_TIMEOUT = 500L;
 
-class Button {
+class Button : public Logger {
  public:
   enum ButtonAction {
     IDLE,
@@ -24,6 +25,7 @@ class Button {
     LONG_3,
     LONG_4
   };
+  Button() : Logger("BTN") {}
   void setup(uint8_t pin, uint16_t id, bool active_high = true);
   void begin();
   void init_press();

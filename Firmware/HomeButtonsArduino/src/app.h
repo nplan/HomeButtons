@@ -8,10 +8,11 @@
 #include "network.h"
 #include "display.h"
 #include "mqtt_helper.h"
+#include "logger.h"
 
 enum class BootCause { RESET, TIMER, BUTTON };
 
-class App {
+class App : public Logger {
  public:
   App();
   void setup();

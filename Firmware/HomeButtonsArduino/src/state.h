@@ -6,8 +6,9 @@
 #include "buttons.h"
 #include "config.h"
 #include "types.h"
+#include "logger.h"
 
-class DeviceState {
+class DeviceState : public Logger {
  private:
   struct Factory {
     SerialNumber serial_number;  // len = 8
@@ -69,7 +70,7 @@ class DeviceState {
   } sensors_;
 
  public:
-  DeviceState() = default;
+  DeviceState() : Logger("State") {}
   DeviceState(const DeviceState&) = delete;
 
   // Factory

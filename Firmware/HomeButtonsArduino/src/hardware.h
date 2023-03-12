@@ -8,6 +8,8 @@
 #include "types.h"
 #include "config.h"
 
+class Logger;
+
 struct HardwareDefinition {
   semver::version version;
 
@@ -68,7 +70,7 @@ struct HardwareDefinition {
   uint64_t WAKE_BITMASK;
 
   // ------ functions ------
-  void init(const HWVersion &hw_version);
+  void init(const Logger &logger, const HWVersion &hw_version);
 
   void begin();
 
@@ -93,7 +95,7 @@ struct HardwareDefinition {
 
   bool is_dc_connected();
 
-  void enable_charger(bool enable);
+  void enable_charger(const Logger &logger, bool enable);
 
   bool is_battery_present();
 };

@@ -4,6 +4,7 @@
 #include "state.h"
 #include <GxEPD2.h>
 #include "static_string.h"
+#include "logger.h"
 
 class DeviceState;
 
@@ -32,11 +33,11 @@ struct UIState {
   uint32_t disappear_timeout = 0;
 };
 
-class Display {
+class Display : public Logger {
  public:
   enum class State { IDLE, ACTIVE, CMD_END, ENDING };
   explicit Display(const DeviceState& device_state)
-      : m_device_state(device_state) {}
+      : Logger("Display"), m_device_state(device_state) {}
   void begin();
   void end();
   void update();

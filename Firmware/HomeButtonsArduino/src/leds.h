@@ -3,10 +3,13 @@
 
 #include "Arduino.h"
 #include "config.h"
+#include "logger.h"
 
-class LEDs {
+class LEDs : public Logger {
  public:
   enum class State { IDLE, ACTIVE };
+
+  LEDs() : Logger("LEDs") {}
 
   void begin();
   void end();

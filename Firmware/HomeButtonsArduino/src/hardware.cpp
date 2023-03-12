@@ -1,4 +1,5 @@
 #include "hardware.h"
+#include "logger.h"
 
 #include <Wire.h>
 
@@ -11,24 +12,25 @@ HardwareDefinition HW;
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
-void HardwareDefinition::init(const HWVersion &hw_version) {
+void HardwareDefinition::init(const Logger &logger,
+                              const HWVersion &hw_version) {
   if (hw_version == "1.0") {
     HW = hw_rev_1_0;
-    log_i("configured for hw version: 1.0");
+    logger.info("configured for hw version: 1.0");
   } else if (hw_version == "2.0") {
     HW = hw_rev_2_0;
-    log_i("configured for hw version: 2.0");
+    logger.info("configured for hw version: 2.0");
   } else if (hw_version == "2.1") {
     HW = hw_rev_2_0;
-    log_i("configured for hw version: 2.1");
+    logger.info("configured for hw version: 2.1");
   } else if (hw_version == "2.2") {
     HW = hw_rev_2_2;
-    log_i("configured for hw version: 2.2");
+    logger.info("configured for hw version: 2.2");
   } else if (hw_version == "2.3") {
     HW = hw_rev_2_3;
-    log_i("configured for hw version: 2.3");
+    logger.info("configured for hw version: 2.3");
   } else {
-    log_e("HW rev %s not supported", hw_version);
+    logger.error("HW rev %s not supported", hw_version.c_str());
   }
 }
 
@@ -189,12 +191,12 @@ bool HardwareDefinition::is_dc_connected() {
   }
 }
 
-void HardwareDefinition::enable_charger(bool enable) {
+void HardwareDefinition::enable_charger(const Logger &logger, bool enable) {
   if (HW.version >= semver::version{2, 2, 0}) {
     digitalWrite(HW.CHG_ENABLE, enable);
-    log_d("[HW] charger enabled: %d", enable);
+    logger.debug("[HW] charger enabled: %d", enable);
   } else {
-    log_d("[HW] this HW version doesn't support charger control.");
+    logger.debug("[HW] this HW version doesn't support charger control.");
   }
 }
 

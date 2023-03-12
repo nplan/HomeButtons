@@ -45,13 +45,13 @@ void Display::begin() {
   draw_ui_state = {};
   pre_disappear_ui_state = {};
   state = State::ACTIVE;
-  log_i("[DISP] begin");
+  info("begin");
 }
 
 void Display::end() {
   if (state != State::ACTIVE) return;
   state = State::CMD_END;
-  log_d("[DISP] cmd end");
+  debug("cmd end");
 }
 
 void Display::update() {
@@ -64,7 +64,7 @@ void Display::update() {
     } else {
       disp->hibernate();
       state = State::IDLE;
-      log_i("[DISP] ended.");
+      info("ended.");
       return;
     }
   } else if (current_ui_state.disappearing) {
@@ -92,8 +92,8 @@ void Display::update() {
     return;
   }
 
-  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s",
-        draw_ui_state.page, draw_ui_state.disappearing,
+  debug("update: page: %d; disappearing: %d, msg: %s",
+        static_cast<int>(draw_ui_state.page), draw_ui_state.disappearing,
         draw_ui_state.message.c_str());
 
   redraw_in_progress = true;
@@ -140,7 +140,7 @@ void Display::update() {
   if (state == State::ENDING) {
     disp->hibernate();
     state = State::IDLE;
-    log_i("[DISP] ended.");
+    info("ended.");
   }
 }
 

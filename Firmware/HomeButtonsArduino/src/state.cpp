@@ -147,20 +147,20 @@ void DeviceState::clear_persisted_flags() {
 }
 
 void DeviceState::save_all() {
-  log_d("[PREF] state save all");
+  debug("state save all");
   save_user();
   save_persisted();
 }
 
 void DeviceState::load_all() {
-  log_d("[PREF] state load all");
+  debug("state load all");
   load_factory();
   load_user();
   load_persisted();
 }
 
 void DeviceState::clear_all() {
-  log_d("[PREF] state clear all");
+  debug("state clear all");
   clear_user();
   clear_persisted();
 }

@@ -5,74 +5,77 @@
 #include <variant>
 #include <stdio.h>
 
-template <typename StateMachineDefinition>
+#include "logger.h"
+
+template <typename Base>
 class State;
 
-template <typename... States>
+template <typename Base, typename... States>
 class StateMachine;
 
-template <typename StateMachineDefinition>
+template <typename Base>
 class State {
  public:
-  using SM = StateMachineDefinition;
-  explicit State(StateMachineDefinition &stateMachineDefinition)
-      : state_machine_(stateMachineDefinition) {}
+  using SM = Base;
+  explicit State(Base &base) : base_(base) {}
 
   virtual void entry() {}
-  virtual void executeOnce() {}
+  virtual void execute_once() {}
   virtual void exit() {}
 
-  virtual const char *getName() = 0;
+  virtual const char *get_name() = 0;
 
   template <typename NextState>
-  void transitionTo() {
-    state_machine_.template transitionTo<NextState>();
+  void transition_to() {
+    base_.template transition_to<NextState>();
   }
 
  protected:
-  StateMachineDefinition &state_machine_;
-  StateMachineDefinition &sm() { return state_machine_; }
+  Base &base_;
+  Base &sm() { return base_; }
 };
 
-template <typename... States>
+template <typename Base, typename... States>
 class StateMachine {
  public:
-  template <typename StateMachineType>
-  StateMachine(const char *name, StateMachineType &stateMachineType)
-      : m_currentState(&std::get<0>(m_states)),
-        m_states(States(stateMachineType)...) {
-    snprintf(m_name, MAX_NAME_LENGTH, "%s", name);
+  StateMachine(const char *name, Base &base)
+      : current_state_(&std::get<0>(states_)),
+        states_(States(base)...),
+        base_(base) {
+    static_assert(std::is_base_of<Logger, Base>::value);
+    snprintf(name_, MAX_NAME_LENGTH, "%s", name);
   }
 
   template <typename NextState>
-  void transitionTo() {
-    log_i("Leaving state %s::%s", m_name,
-          std::visit([](auto statePtr) { return statePtr->getName(); },
-                     m_currentState));
-    std::visit([](auto statePtr) { statePtr->exit(); }, m_currentState);
+  void transition_to() {
+    base_.info("Leaving state %s::%s", name_,
+               std::visit([](auto statePtr) { return statePtr->get_name(); },
+                          current_state_));
+    std::visit([](auto statePtr) { statePtr->exit(); }, current_state_);
 
-    m_currentState = &std::get<NextState>(m_states);
+    current_state_ = &std::get<NextState>(states_);
 
-    log_i("Entering state %s::%s", m_name,
-          std::visit([](auto statePtr) { return statePtr->getName(); },
-                     m_currentState));
-    std::visit([](auto statePtr) { statePtr->entry(); }, m_currentState);
+    base_.info("Entering state %s::%s", name_,
+               std::visit([](auto statePtr) { return statePtr->get_name(); },
+                          current_state_));
+    std::visit([](auto statePtr) { statePtr->entry(); }, current_state_);
   }
 
-  void executeOnce() {
-    std::visit([](auto statePtr) { statePtr->executeOnce(); }, m_currentState);
+  void execute_once() {
+    std::visit([](auto statePtr) { statePtr->execute_once(); }, current_state_);
   }
 
   template <typename State>
-  bool isCurrentState() const {
-    return std::holds_alternative<State *>(m_currentState);
+  bool is_current_state() const {
+    return std::holds_alternative<State *>(current_state_);
   }
 
  protected:
-  std::variant<States *...> m_currentState;
-  std::tuple<States...> m_states;
+  std::variant<States *...> current_state_;
+  std::tuple<States...> states_;
   static constexpr size_t MAX_NAME_LENGTH = 32;
-  char m_name[MAX_NAME_LENGTH];
+  char name_[MAX_NAME_LENGTH];
+  Base &base_;
 };
 
 #endif  // HOMEBUTTONS_STATEMACHINE_H
