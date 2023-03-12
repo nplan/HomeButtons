@@ -187,11 +187,13 @@ void NetworkSMStates::FullyConnectedState::execute_once() {
     m_last_conn_check_time = millis();
   } else {
     SM::PublishQueueElement element;
-    while (sm().mqtt_publish_queue_ != nullptr &&
+    uint8_t max_element_to_process = 5;
+    while (max_element_to_process > 0 && sm().mqtt_publish_queue_ != nullptr &&
            xQueueReceive(sm().mqtt_publish_queue_, &element, 0)) {
       sm().debug("received payload (topic: %s)", element.topic.c_str());
       sm()._publish_unsafe(element.topic, element.payload.c_str(),
                            element.retained);
+      max_element_to_process--;
     }
   }
 }
