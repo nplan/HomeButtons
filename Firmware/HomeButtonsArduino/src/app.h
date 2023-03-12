@@ -23,7 +23,6 @@ class App : public Logger {
   std::pair<BootCause, Button*> _determine_boot_cause();
   void _log_stack_status() const;
 
-  void _setup_buttons();
   void _begin_buttons();
   void _end_buttons();
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from asyncio import open_connection
 from dataclasses import dataclass
 from time import sleep

@@ -26,8 +26,7 @@ class Button : public Logger {
     LONG_4
   };
   Button() : Logger("BTN") {}
-  void setup(uint8_t pin, uint16_t id, bool active_high = true);
-  void begin();
+  void begin(uint8_t pin, uint16_t id, bool active_high = true);
   void init_press();
   void end();
   void update();

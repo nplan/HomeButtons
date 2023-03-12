@@ -102,18 +102,12 @@ void App::_log_stack_status() const {
        esp_min_free_heap, rtos_free_heap);
 }
 
-void App::_setup_buttons() {
+void App::_begin_buttons() {
   std::pair<uint8_t, uint16_t> button_map[NUM_BUTTONS] = {
       {HW.BTN1_PIN, 1}, {HW.BTN6_PIN, 2}, {HW.BTN2_PIN, 3},
       {HW.BTN5_PIN, 4}, {HW.BTN3_PIN, 5}, {HW.BTN4_PIN, 6}};
   for (uint i = 0; i < NUM_BUTTONS; i++) {
-    m_buttons[i].setup(button_map[i].first, button_map[i].second);
-  }
-}
-
-void App::_begin_buttons() {
-  for (auto& b : m_buttons) {
-    b.begin();
+    m_buttons[i].begin(button_map[i].first, button_map[i].second);
   }
 }
 
@@ -226,7 +220,6 @@ void App::_main_task() {
   // ------ init hardware ------
   info("HW version: %s", m_device_state.factory().hw_version.c_str());
   HW.init(*this, m_device_state.factory().hw_version);
-  _setup_buttons();
   _begin_buttons();
   m_display.begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   HW.begin();

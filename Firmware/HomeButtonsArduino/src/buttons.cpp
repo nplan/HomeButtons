@@ -2,19 +2,15 @@
 
 #include "FunctionalInterrupt.h"
 
-void Button::setup(uint8_t pin, uint16_t id, bool active_high) {
-  this->pin = pin;
-  this->id = id;
-  this->active_high = active_high;
-  pinMode(pin, INPUT);
-}
-
-void Button::begin() {
+void Button::begin(uint8_t pin, uint16_t id, bool active_high) {
   if (begun) return;
   if (!(LONG_1_TIME < LONG_3_TIME && LONG_2_TIME < LONG_3_TIME &&
         LONG_3_TIME < LONG_4_TIME)) {
     return;
   }
+  this->pin = pin;
+  this->id = id;
+  this->active_high = active_high;
   attachInterrupt(pin, std::bind(&Button::isr, this), CHANGE);
   begun = true;
   debug("id %d begun", id);
