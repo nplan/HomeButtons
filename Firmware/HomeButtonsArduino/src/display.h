@@ -6,6 +6,7 @@
 #include "static_string.h"
 #include "logger.h"
 
+struct HardwareDefinition;
 class DeviceState;
 
 enum class DisplayPage {
@@ -38,7 +39,7 @@ class Display : public Logger {
   enum class State { IDLE, ACTIVE, CMD_END, ENDING };
   explicit Display(const DeviceState& device_state)
       : Logger("Display"), m_device_state(device_state) {}
-  void begin();
+  void begin(HardwareDefinition& HW);
   void end();
   void update();
 

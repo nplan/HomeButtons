@@ -104,7 +104,8 @@ void save_params_callback(DeviceState* device_state) {
   web_portal_saved = true;
 }
 
-void start_setup(DeviceState& device_state, Display& display) {
+void start_setup(DeviceState& device_state, Display& display,
+                 HardwareDefinition& HW) {
   // config
   wifi_manager.setTitle(WIFI_MANAGER_TITLE);
   wifi_manager.setSaveParamsCallback(

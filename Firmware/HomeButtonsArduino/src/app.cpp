@@ -28,7 +28,7 @@ void App::setup() {
 }
 
 void App::_start_esp_sleep() {
-  esp_sleep_enable_ext1_wakeup(HW.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_ext1_wakeup(hw_.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
   if (m_device_state.persisted().wifi_done &&
       m_device_state.persisted().setup_done &&
       !m_device_state.persisted().low_batt_mode &&
@@ -46,7 +46,7 @@ void App::_start_esp_sleep() {
 
 void App::_go_to_sleep() {
   m_device_state.save_all();
-  HW.set_all_leds(0);
+  hw_.set_all_leds(0);
   _start_esp_sleep();
 }
 
@@ -59,9 +59,9 @@ std::pair<BootCause, Button*> App::_determine_boot_cause() {
       uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
       wakeup_pin = (log(GPIO_reason)) / log(2);
       info("wakeup cause: PIN %d", wakeup_pin);
-      if (wakeup_pin == HW.BTN1_PIN || wakeup_pin == HW.BTN2_PIN ||
-          wakeup_pin == HW.BTN3_PIN || wakeup_pin == HW.BTN4_PIN ||
-          wakeup_pin == HW.BTN5_PIN || wakeup_pin == HW.BTN6_PIN) {
+      if (wakeup_pin == hw_.BTN1_PIN || wakeup_pin == hw_.BTN2_PIN ||
+          wakeup_pin == hw_.BTN3_PIN || wakeup_pin == hw_.BTN4_PIN ||
+          wakeup_pin == hw_.BTN5_PIN || wakeup_pin == hw_.BTN6_PIN) {
         boot_cause = BootCause::BUTTON;
       } else {
         boot_cause = BootCause::RESET;
@@ -104,8 +104,8 @@ void App::_log_stack_status() const {
 
 void App::_begin_buttons() {
   std::pair<uint8_t, uint16_t> button_map[NUM_BUTTONS] = {
-      {HW.BTN1_PIN, 1}, {HW.BTN6_PIN, 2}, {HW.BTN2_PIN, 3},
-      {HW.BTN5_PIN, 4}, {HW.BTN3_PIN, 5}, {HW.BTN4_PIN, 6}};
+      {hw_.BTN1_PIN, 1}, {hw_.BTN6_PIN, 2}, {hw_.BTN2_PIN, 3},
+      {hw_.BTN5_PIN, 4}, {hw_.BTN3_PIN, 5}, {hw_.BTN4_PIN, 6}};
   for (uint i = 0; i < NUM_BUTTONS; i++) {
     m_buttons[i].begin(button_map[i].first, button_map[i].second);
   }
@@ -130,7 +130,7 @@ void App::_button_task(void* param) {
 void App::_leds_task(void* param) {
   App* app = static_cast<App*>(param);
   while (true) {
-    app->m_leds.update();
+    app->m_leds.update(app->hw_);
     delay(100);
   }
 }
@@ -208,8 +208,8 @@ void App::_main_task() {
   // ------ factory mode ------
   if (m_device_state.factory().serial_number.length() < 1) {
     info("first boot, starting factory mode...");
-    factory::factory_mode(m_device_state, m_display);
-    m_display.begin();
+    factory::factory_mode(hw_, m_device_state, m_display);
+    m_display.begin(hw_);
     m_display.disp_welcome();
     m_display.update();
     m_display.end();
@@ -219,10 +219,11 @@ void App::_main_task() {
 
   // ------ init hardware ------
   info("HW version: %s", m_device_state.factory().hw_version.c_str());
-  HW.init(*this, m_device_state.factory().hw_version);
+  hw_.init(m_device_state.factory().hw_version);
   _begin_buttons();
-  m_display.begin();  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
-  HW.begin();
+  m_display.begin(
+      hw_);  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+  hw_.begin();
 
   // ------ after update handler ------
   if (m_device_state.persisted().last_sw_ver != SW_VERSION) {
@@ -243,20 +244,20 @@ void App::_main_task() {
   }
 
   // ------ determine power mode ------
-  m_device_state.sensors().battery_present = HW.is_battery_present();
-  m_device_state.sensors().dc_connected = HW.is_dc_connected();
+  m_device_state.sensors().battery_present = hw_.is_battery_present();
+  m_device_state.sensors().dc_connected = hw_.is_dc_connected();
   info("batt present: %d, DC connected: %d",
        m_device_state.sensors().battery_present,
        m_device_state.sensors().dc_connected);
 
   if (m_device_state.sensors().battery_present) {
-    float batt_voltage = HW.read_battery_voltage();
+    float batt_voltage = hw_.read_battery_voltage();
     info("batt volts: %f", batt_voltage);
     if (m_device_state.sensors().dc_connected) {
       // charging
-      if (batt_voltage < HW.CHARGE_HYSTERESIS_VOLT) {
+      if (batt_voltage < hw_.CHARGE_HYSTERESIS_VOLT) {
         m_device_state.sensors().charging = true;
-        HW.enable_charger(*this, true);
+        hw_.enable_charger(true);
         m_device_state.flags().awake_mode = true;
       } else {
         m_device_state.flags().awake_mode =
@@ -265,7 +266,7 @@ void App::_main_task() {
       m_device_state.persisted().low_batt_mode = false;
     } else {  // dc_connected == false
       if (m_device_state.persisted().low_batt_mode) {
-        if (batt_voltage >= HW.BATT_HYSTERESIS_VOLT) {
+        if (batt_voltage >= hw_.BATT_HYSTERESIS_VOLT) {
           m_device_state.persisted().low_batt_mode = false;
           m_device_state.save_all();
           info("low batt mode disabled");
@@ -275,11 +276,11 @@ void App::_main_task() {
           _go_to_sleep();
         }
       } else {  // low_batt_mode == false
-        if (batt_voltage < HW.MIN_BATT_VOLT) {
+        if (batt_voltage < hw_.MIN_BATT_VOLT) {
           // check again
           delay(1000);
-          batt_voltage = HW.read_battery_voltage();
-          if (batt_voltage < HW.MIN_BATT_VOLT) {
+          batt_voltage = hw_.read_battery_voltage();
+          if (batt_voltage < hw_.MIN_BATT_VOLT) {
             m_device_state.persisted().low_batt_mode = true;
             warning("batt voltage too low, low bat mode enabled");
             m_display.disp_message_large(
@@ -287,7 +288,7 @@ void App::_main_task() {
             m_display.update();
             _go_to_sleep();
           }
-        } else if (batt_voltage <= HW.WARN_BATT_VOLT) {
+        } else if (batt_voltage <= hw_.WARN_BATT_VOLT) {
           m_device_state.sensors().battery_low = true;
         }
         m_device_state.flags().awake_mode = false;
@@ -309,9 +310,9 @@ void App::_main_task() {
        m_device_state.flags().awake_mode);
 
   // ------ read sensors ------
-  HW.read_temp_hmd(m_device_state.sensors().temperature,
-                   m_device_state.sensors().humidity);
-  m_device_state.sensors().battery_pct = HW.read_battery_percent();
+  hw_.read_temp_hmd(m_device_state.sensors().temperature,
+                    m_device_state.sensors().humidity);
+  m_device_state.sensors().battery_pct = hw_.read_battery_percent();
 
   // ------ boot cause ------
   auto&& [boot_cause, active_button] = _determine_boot_cause();
@@ -331,7 +332,7 @@ void App::_main_task() {
       } else if (m_device_state.persisted().restart_to_setup) {
         m_device_state.clear_persisted_flags();
         info("staring setup...");
-        start_setup(m_device_state, m_display);  // resets ESP when done
+        start_setup(m_device_state, m_display, hw_);  // resets ESP when done
       }
       m_device_state.clear_persisted_flags();
       if (!m_device_state.persisted().wifi_done ||
@@ -364,7 +365,7 @@ void App::_main_task() {
           m_device_state.persisted().info_screen_showing = false;
           m_display.disp_main();
         }
-        if (HW.is_charger_in_standby()) {  // hw <= 2.1 doesn't have awake
+        if (hw_.is_charger_in_standby()) {  // hw <= 2.1 doesn't have awake
           // mode when charging
           if (!m_device_state.persisted().charge_complete_showing) {
             m_device_state.persisted().charge_complete_showing = true;
@@ -380,7 +381,7 @@ void App::_main_task() {
       if (!m_device_state.persisted().wifi_done) {
         start_wifi_setup(m_device_state, m_display);
       } else if (!m_device_state.persisted().setup_done) {
-        start_setup(m_device_state, m_display);
+        start_setup(m_device_state, m_display, hw_);
       }
 
       if (!m_device_state.flags().awake_mode) {
@@ -531,9 +532,9 @@ void App::_main_task() {
                   m_mqtt.get_button_topic(active_button->get_id(), btn_action),
                   BTN_PRESS_PAYLOAD);
             }
-            HW.read_temp_hmd(m_device_state.sensors().temperature,
-                             m_device_state.sensors().humidity);
-            m_device_state.sensors().battery_pct = HW.read_battery_percent();
+            hw_.read_temp_hmd(m_device_state.sensors().temperature,
+                              m_device_state.sensors().humidity);
+            m_device_state.sensors().battery_pct = hw_.read_battery_percent();
             _publish_sensors();
             m_device_state.persisted().failed_connections = 0;
             m_sm_state = StateMachineState::CMD_SHUTDOWN;
@@ -629,12 +630,12 @@ void App::_main_task() {
             for (auto& b : m_buttons) {
               b.clear();
             }
-            HW.read_temp_hmd(m_device_state.sensors().temperature,
-                             m_device_state.sensors().humidity);
-            m_device_state.sensors().battery_pct = HW.read_battery_percent();
+            hw_.read_temp_hmd(m_device_state.sensors().temperature,
+                              m_device_state.sensors().humidity);
+            m_device_state.sensors().battery_pct = hw_.read_battery_percent();
             _publish_sensors();
             m_sm_state = StateMachineState::AWAIT_USER_INPUT_START;
-          } else if (!HW.is_dc_connected()) {
+          } else if (!hw_.is_dc_connected()) {
             m_device_state.sensors().charging = false;
             m_device_state.persisted().info_screen_showing = false;
             m_display.disp_main();
@@ -653,9 +654,9 @@ void App::_main_task() {
           if (active_button != nullptr) {
             m_sm_state = StateMachineState::AWAIT_USER_INPUT_FINISH;
           } else if (millis() - last_sensor_publish >= AWAKE_SENSOR_INTERVAL) {
-            HW.read_temp_hmd(m_device_state.sensors().temperature,
-                             m_device_state.sensors().humidity);
-            m_device_state.sensors().battery_pct = HW.read_battery_percent();
+            hw_.read_temp_hmd(m_device_state.sensors().temperature,
+                              m_device_state.sensors().humidity);
+            m_device_state.sensors().battery_pct = hw_.read_battery_percent();
             _publish_sensors();
             last_sensor_publish = millis();
             // log stack status
@@ -676,7 +677,7 @@ void App::_main_task() {
                          INFO_SCREEN_DISP_TIME) {
             m_display.disp_main();
             m_device_state.persisted().info_screen_showing = false;
-          } else if (!HW.is_dc_connected()) {
+          } else if (!hw_.is_dc_connected()) {
             _publish_awake_mode_avlb();
             m_device_state.sensors().charging = false;
             m_display.disp_main();
@@ -684,7 +685,7 @@ void App::_main_task() {
             m_sm_state = StateMachineState::CMD_SHUTDOWN;
           }
           if (m_device_state.sensors().charging) {
-            if (HW.is_charger_in_standby()) {
+            if (hw_.is_charger_in_standby()) {
               m_device_state.sensors().charging = false;
               m_display.disp_main();
               if (!m_device_state.persisted().user_awake_mode) {
@@ -857,7 +858,7 @@ void App::_publish_sensors() {
 }
 
 void App::_publish_awake_mode_avlb() {
-  if (HW.is_dc_connected()) {
+  if (hw_.is_dc_connected()) {
     m_network.publish(m_mqtt.t_awake_mode_avlb(), "online", true);
   } else {
     m_network.publish(m_mqtt.t_awake_mode_avlb(), "offline", true);

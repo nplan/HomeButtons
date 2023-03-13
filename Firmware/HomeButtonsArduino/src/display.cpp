@@ -32,7 +32,7 @@ static GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
 
 static U8G2_FOR_ADAFRUIT_GFX u8g2;
 
-void Display::begin() {
+void Display::begin(HardwareDefinition &HW) {
   if (state != State::IDLE) return;
   disp = new GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
                                   MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(

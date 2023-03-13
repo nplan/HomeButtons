@@ -27,14 +27,14 @@ struct NetworkSettings {
   int32_t mqtt_port = 0;
 };
 
-void test_leds() {
+void test_leds(HardwareDefinition& HW) {
   HW.set_all_leds(255);
   delay(250);
   HW.set_all_leds(0);
   delay(250);
 }
 
-void test_buttons() {
+void test_buttons(HardwareDefinition& HW) {
   HW.set_led(HW.LED1_CH, 255);
   while (!digitalRead(HW.BTN1_PIN)) {
   }
@@ -66,7 +66,7 @@ void test_buttons() {
   HW.set_led(HW.LED6_CH, 0);
 }
 
-void test_display(Display& display) {
+void test_display(HardwareDefinition& HW, Display& display) {
   display.disp_test(false);
   display.update();
   while (!HW.any_button_pressed()) {
@@ -124,7 +124,8 @@ void test_wifi(const Logger& logger, const NetworkSettings& settings,
   logger.info("WiFi disconnected");
 }
 
-bool test_sensors(const Logger& logger, const TestSettings& settings) {
+bool test_sensors(HardwareDefinition& HW, const Logger& logger,
+                  const TestSettings& settings) {
   if (settings.target_temp == 0. && settings.target_humidity == 0.) {
     logger.error("target values not set");
     return false;
@@ -147,20 +148,20 @@ bool test_sensors(const Logger& logger, const TestSettings& settings) {
   return true;
 }
 
-bool run_tests(const Logger& logger, const TestSettings& settings,
-               Display& display) {
+bool run_tests(HardwareDefinition& HW, const Logger& logger,
+               const TestSettings& settings, Display& display) {
   if (HW.any_button_pressed()) {
     logger.error("button pressed at start of test");
     return false;
   }
   while (!HW.any_button_pressed()) {
-    test_leds();
+    test_leds(HW);
   }
-  test_buttons();
-  if (!test_sensors(logger, settings)) {
+  test_buttons(HW);
+  if (!test_sensors(HW, logger, settings)) {
     return false;
   }
-  test_display(display);
+  test_display(HW, display);
   return true;
 }
 
@@ -168,7 +169,8 @@ void sendOK() { usb_serial.println("OK"); }
 
 void sendFAIL() { usb_serial.println("FAIL"); }
 
-void factory_mode(DeviceState& device_state, Display& display) {
+void factory_mode(HardwareDefinition& HW, DeviceState& device_state,
+                  Display& display) {
   NetworkSettings networkSettings = {};
   TestSettings test_settings = {};
   Logger logger("FACTORY");
@@ -190,11 +192,11 @@ void factory_mode(DeviceState& device_state, Display& display) {
 
       if (cmd == "ST") {
         if (device_state.factory().hw_version.length() > 0) {
-          HW.init(logger, device_state.factory().hw_version);
-          display.begin();
+          HW.init(device_state.factory().hw_version);
+          display.begin(HW);
           HW.begin();
           logger.info("starting hw test...");
-          if (run_tests(logger, test_settings, display)) {
+          if (run_tests(HW, logger, test_settings, display)) {
             logger.info("test complete");
             sendOK();
           } else {

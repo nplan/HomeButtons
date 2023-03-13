@@ -3,9 +3,11 @@
 
 class DeviceState;
 class Display;
+struct HardwareDefinition;
 
 namespace factory {
-void factory_mode(DeviceState& device_state, Display& display);
+void factory_mode(HardwareDefinition& HW, DeviceState& device_state,
+                  Display& display);
 }
 
 #endif  // HOMEBUTTONS_FACTORY_H

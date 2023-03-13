@@ -9,6 +9,7 @@
 #include "display.h"
 #include "mqtt_helper.h"
 #include "logger.h"
+#include "hardware.h"
 
 enum class BootCause { RESET, TIMER, BUTTON };
 
@@ -69,6 +70,7 @@ class App : public Logger {
   Network m_network;
   Display m_display;
   MQTTHelper m_mqtt;
+  HardwareDefinition hw_;
 };
 
 #endif  // HOMEBUTTONS_APP_H

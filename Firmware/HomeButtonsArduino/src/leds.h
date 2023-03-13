@@ -5,6 +5,8 @@
 #include "config.h"
 #include "logger.h"
 
+struct HardwareDefinition;
+
 class LEDs : public Logger {
  public:
   enum class State { IDLE, ACTIVE };
@@ -17,7 +19,7 @@ class LEDs : public Logger {
              uint8_t brightness = LED_DFLT_BRIGHT);
   State get_state() const;
 
-  void update();
+  void update(HardwareDefinition& HW);
 
  private:
   enum class CMDState { NONE, CMD_END };

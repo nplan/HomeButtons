@@ -2,7 +2,8 @@
 #include "logger.h"
 
 void hw_tests::blink_leds(const Logger& logger, const HWVersion& hw_version) {
-  HW.init(logger, hw_version);
+  HardwareDefinition HW;
+  HW.init(hw_version);
   HW.begin();
   while (1) {
     for (int m = 0; m < 10; m++) {
@@ -30,7 +31,8 @@ void hw_tests::blink_leds(const Logger& logger, const HWVersion& hw_version) {
 
 void hw_tests::led_on_button(const Logger& logger,
                              const HWVersion& hw_version) {
-  HW.init(logger, hw_version);
+  HardwareDefinition HW;
+  HW.init(hw_version);
   HW.begin();
   while (1) {
     HW.set_led(HW.LED3_CH, digitalRead(HW.BTN3_PIN) ? 255 : 0);
@@ -43,7 +45,8 @@ void hw_tests::led_on_button(const Logger& logger,
 }
 
 void hw_tests::wifi_stress(const Logger& logger, const HWVersion& hw_version) {
-  HW.init(logger, hw_version);
+  HardwareDefinition HW;
+  HW.init(hw_version);
   HW.begin();
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);

@@ -10,6 +10,12 @@
 
 class Logger {
  public:
+  // Warning: the logger constructor MUST NOT be called before arduino setup()
+  // Reason: the following line in arduino framework is resetting all log
+  // levels during init phase:
+  // esp_log_level_set("*", CONFIG_LOG_DEFAULT_LEVEL);
+  // Therefore, you cannot have any static logger when using arduino framework
+
   Logger(const char* tag, esp_log_level_t level = LOGGER_DEFAULT_LOG_LEVEL)
       : tag_(tag), log_level_(level) {
     _computed_padded_tag();

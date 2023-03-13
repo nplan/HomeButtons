@@ -30,7 +30,7 @@ void LEDs::blink(uint8_t led_num, uint8_t num_blinks, bool hold,
 
 LEDs::State LEDs::get_state() const { return state; }
 
-void LEDs::update() {
+void LEDs::update(HardwareDefinition& HW) {
   if (state != State::ACTIVE) {
     return;
   }
