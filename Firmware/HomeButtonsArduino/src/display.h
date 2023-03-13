@@ -38,7 +38,7 @@ class Display : public Logger {
  public:
   enum class State { IDLE, ACTIVE, CMD_END, ENDING };
   explicit Display(const DeviceState& device_state)
-      : Logger("Display"), m_device_state(device_state) {}
+      : Logger("Display"), device_state_(device_state) {}
   void begin(HardwareDefinition& HW);
   void end();
   void update();
@@ -71,7 +71,7 @@ class Display : public Logger {
   uint16_t text_color = GxEPD_BLACK;
   uint16_t bg_color = GxEPD_WHITE;
 
-  const DeviceState& m_device_state;
+  const DeviceState& device_state_;
 
   void set_cmd_state(UIState cmd);
 

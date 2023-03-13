@@ -15,24 +15,24 @@ class StaticString {
  public:
   StaticString() {}
   explicit StaticString(const char* str) {
-    auto n = std::snprintf(m_data, MAX_SIZE, "%s", str);
+    auto n = std::snprintf(data_, MAX_SIZE, "%s", str);
     _check_snprintf_return_value(n);
   }
 
   explicit StaticString(const String& str) {
-    auto n = std::snprintf(m_data, MAX_SIZE, "%s", str.c_str());
+    auto n = std::snprintf(data_, MAX_SIZE, "%s", str.c_str());
     _check_snprintf_return_value(n);
   }
 
   template <size_t _OTHER_MAX_SIZE>
   StaticString(const StaticString<_OTHER_MAX_SIZE>& other) {
-    auto n = std::snprintf(m_data, MAX_SIZE, "%s", other.c_str());
+    auto n = std::snprintf(data_, MAX_SIZE, "%s", other.c_str());
     _check_snprintf_return_value(n);
   }
 
   template <typename... Args>
   explicit StaticString(const char* format, Args... args) {
-    auto n = std::snprintf(m_data, MAX_SIZE, format, args...);
+    auto n = std::snprintf(data_, MAX_SIZE, format, args...);
     _check_snprintf_return_value(n);
   }
 
@@ -41,15 +41,15 @@ class StaticString {
     *this = StaticString(args...);
   }
 
-  const char* c_str() const { return m_data; }
+  const char* c_str() const { return data_; }
 
-  size_t length() const { return strlen(m_data); }
-  bool empty() const { return strlen(m_data) == 0; }
+  size_t length() const { return strlen(data_); }
+  bool empty() const { return strlen(data_) == 0; }
   StaticString substring(size_t i, size_t j) {
     StaticString output;
     if (i < MAX_SIZE) {
-      auto n = std::snprintf(output.m_data, std::min(MAX_SIZE, j - i + 1),
-                             m_data + i);
+      auto n =
+          std::snprintf(output.data_, std::min(MAX_SIZE, j - i + 1), data_ + i);
       _check_snprintf_return_value(n);
     }
     return output;
@@ -75,55 +75,55 @@ class StaticString {
 
   StaticString& operator+=(unsigned long i) {
     auto offset = length();
-    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%lu", i);
+    auto n = std::snprintf(&data_[offset], MAX_SIZE - offset, "%lu", i);
     _check_snprintf_return_value(n);
     return *this;
   }
 
   StaticString& operator+=(int i) {
     auto offset = length();
-    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%d", i);
+    auto n = std::snprintf(&data_[offset], MAX_SIZE - offset, "%d", i);
     _check_snprintf_return_value(n);
     return *this;
   }
 
   StaticString& operator+=(const char* other) {
     auto offset = length();
-    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%s", other);
+    auto n = std::snprintf(&data_[offset], MAX_SIZE - offset, "%s", other);
     _check_snprintf_return_value(n);
     return *this;
   }
 
   StaticString& operator+=(char other) {
     auto offset = length();
-    auto n = std::snprintf(&m_data[offset], MAX_SIZE - offset, "%c", other);
+    auto n = std::snprintf(&data_[offset], MAX_SIZE - offset, "%c", other);
     _check_snprintf_return_value(n);
     return *this;
   }
 
   StaticString& operator=(const char* other) {
-    auto n = std::snprintf(m_data, MAX_SIZE, "%s", other);
+    auto n = std::snprintf(data_, MAX_SIZE, "%s", other);
     _check_snprintf_return_value(n);
     return *this;
   }
 
   bool operator==(const char* other) const {
-    return std::strncmp(m_data, other, MAX_SIZE) == 0;
+    return std::strncmp(data_, other, MAX_SIZE) == 0;
   }
 
   template <size_t _OTHER_MAX_SIZE>
   bool operator==(const StaticString<_OTHER_MAX_SIZE> other) const {
-    return std::strncmp(m_data, other.m_data,
+    return std::strncmp(data_, other.data_,
                         std::min(MAX_SIZE,
                                  StaticString<_OTHER_MAX_SIZE>::MAX_SIZE)) == 0;
   }
 
  private:
-  char m_data[MAX_SIZE] = {'\0'};
+  char data_[MAX_SIZE] = {'\0'};
   void _check_snprintf_return_value(int value) const {
     if (value >= MAX_SIZE)
       log_e("buffer too small (size: %d, wanted: %d, content: %s)", MAX_SIZE,
-            value, m_data);
+            value, data_);
     else if (value < 0)
       log_e("format failed");
   }

@@ -274,14 +274,14 @@ void Display::draw_main() {
   disp->fillScreen(bg_color);
 
   // charging line
-  if (m_device_state.sensors().charging) {
+  if (device_state_.sensors().charging) {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
   // Loop through buttons
   for (uint16_t i = 0; i < num_buttons; i++) {
     uint16_t w, h;
-    UIState::MessageType t{m_device_state.get_btn_label(i).c_str()};
+    UIState::MessageType t{device_state_.get_btn_label(i).c_str()};
 
     u8g2.setFont(u8g2_font_helvB24_te);
     w = u8g2.getUTF8Width(t.c_str());
@@ -335,7 +335,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 30);
   disp->print(text.c_str());
 
-  text = UIState::MessageType("%.1f C", m_device_state.sensors().temperature);
+  text = UIState::MessageType("%.1f C", device_state_.sensors().temperature);
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
@@ -347,7 +347,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 129);
   disp->print(text.c_str());
 
-  text = UIState::MessageType("%.0f %", m_device_state.sensors().humidity);
+  text = UIState::MessageType("%.0f %", device_state_.sensors().humidity);
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
@@ -359,8 +359,8 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 228);
   disp->print(text.c_str());
 
-  if (m_device_state.sensors().battery_present) {
-    text = UIState::MessageType("%d %%", m_device_state.sensors().battery_pct);
+  if (device_state_.sensors().battery_present) {
+    text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
   } else {
     text = "-";
   }
@@ -373,7 +373,7 @@ void Display::draw_info() {
   disp->setFont();
   disp->setTextSize(1);
   disp->setCursor(0, 288);
-  disp->print(m_device_state.device_name().c_str());
+  disp->print(device_state_.device_name().c_str());
 
   disp->display();
 }
@@ -434,21 +434,21 @@ void Display::draw_welcome() {
 
   disp->setCursor(0, 275);
   UIState::MessageType model_info = UIState::MessageType("Model: ") +
-                                    m_device_state.factory().model_id.c_str() +
+                                    device_state_.factory().model_id.c_str() +
                                     " rev " +
-                                    m_device_state.factory().hw_version.c_str();
+                                    device_state_.factory().hw_version.c_str();
   disp->print(model_info.c_str());
 
   disp->setCursor(0, 285);
-  disp->print(m_device_state.factory().unique_id.c_str());
+  disp->print(device_state_.factory().unique_id.c_str());
 
   disp->display();
 }
 
 void Display::draw_ap_config() {
   UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") +
-                                  m_device_state.get_ap_ssid().c_str() +
-                                  ";P:" + m_device_state.get_ap_password() +
+                                  device_state_.get_ap_ssid().c_str() +
+                                  ";P:" + device_state_.get_ap_password() +
                                   ";;";
 
   uint8_t version = 6;  // 41x41px
@@ -498,21 +498,21 @@ void Display::draw_ap_config() {
   disp->print("Wi-Fi:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 235);
-  disp->print(m_device_state.get_ap_ssid().c_str());
+  disp->print(device_state_.get_ap_ssid().c_str());
 
   disp->setFont(&FreeSans9pt7b);
   disp->setCursor(0, 260);
   disp->print("Password:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 275);
-  disp->print(m_device_state.get_ap_password());
+  disp->print(device_state_.get_ap_password());
 
   disp->display();
 }
 
 void Display::draw_web_config() {
   UIState::MessageType contents =
-      UIState::MessageType("http://") + m_device_state.ip();
+      UIState::MessageType("http://") + device_state_.ip();
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -562,7 +562,7 @@ void Display::draw_web_config() {
   disp->setCursor(0, 240);
   disp->print("http://");
   disp->setCursor(0, 260);
-  disp->print(m_device_state.ip());
+  disp->print(device_state_.ip());
 
   disp->display();
 }
