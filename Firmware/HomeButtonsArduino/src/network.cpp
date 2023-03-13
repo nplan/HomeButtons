@@ -29,7 +29,7 @@ void NetworkSMStates::QuickConnectState::entry() {
   sm().info("connecting Wi-Fi (quick mode)...");
   WiFi.mode(WIFI_STA);
   WiFi.persistent(true);
-  m_start_time = millis();
+  start_time_ = millis();
   WiFi.begin();
 }
 
@@ -38,7 +38,7 @@ void NetworkSMStates::QuickConnectState::execute_once() {
     transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
     transition_to<WifiConnectedState>();
-  } else if (millis() - m_start_time > QUICK_WIFI_TIMEOUT) {
+  } else if (millis() - start_time_ > QUICK_WIFI_TIMEOUT) {
     // try again with normal mode
     sm().info(
         "Wi-Fi connect failed (quick mode). Retrying with normal "
@@ -62,15 +62,15 @@ void NetworkSMStates::NormalConnectState::entry() {
   sm().info("connecting Wi-Fi (normal mode): SSID: %s", ssid);
   WiFi.begin(ssid, psk);
 
-  m_start_time = millis();
-  m_await_confirm_quick_wifi_settings = false;
+  start_time_ = millis();
+  await_confirm_quick_wifi_settings_ = false;
 }
 
 void NetworkSMStates::NormalConnectState::execute_once() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
-    if (m_await_confirm_quick_wifi_settings) {
+    if (await_confirm_quick_wifi_settings_) {
       sm().info("Wi-Fi connected, quick mode settings saved.");
       sm().device_state_.persisted().wifi_quick_connect = true;
       sm().device_state_.save_persisted();
@@ -90,10 +90,10 @@ void NetworkSMStates::NormalConnectState::execute_once() {
 
       // WiFi.disconnect(); not required, already done in WiFi.begin()
       WiFi.begin(ssid.c_str(), psk.c_str(), ch, bssid, true);
-      m_start_time = millis();
-      m_await_confirm_quick_wifi_settings = true;
+      start_time_ = millis();
+      await_confirm_quick_wifi_settings_ = true;
     }
-  } else if (millis() - m_start_time >= WIFI_TIMEOUT) {
+  } else if (millis() - start_time_ >= WIFI_TIMEOUT) {
     sm().warning("Wi-Fi connect failed (normal mode). Retrying...");
     return transition_to<DisconnectState>();
   }
@@ -110,7 +110,7 @@ void NetworkSMStates::MQTTConnectState::entry() {
   // proceed with MQTT connection
   sm().info("connecting MQTT....");
   sm()._connect_mqtt();
-  m_start_time = millis();
+  start_time_ = millis();
   // await
 }
 
@@ -120,12 +120,12 @@ void NetworkSMStates::MQTTConnectState::execute_once() {
   } else if (sm().mqtt_client_.connected()) {
     sm().info("MQTT connected.");
     return transition_to<FullyConnectedState>();
-  } else if (millis() - m_start_time > MQTT_TIMEOUT) {
+  } else if (millis() - start_time_ > MQTT_TIMEOUT) {
     if (WiFi.status() == WL_CONNECTED) {
       sm().state_ = Network::State::W_CONNECTED;
       sm().warning("MQTT connect failed. Retrying...");
       sm()._connect_mqtt();
-      m_start_time = millis();
+      start_time_ = millis();
     } else {
       sm().warning(
           "MQTT connect failed. Wi-Fi not connected. Retrying "
@@ -164,7 +164,7 @@ void NetworkSMStates::DisconnectState::execute_once() {
 }
 
 void NetworkSMStates::FullyConnectedState::entry() {
-  m_last_conn_check_time = millis();
+  last_conn_check_time_ = millis();
   if (sm().on_connect_callback_) {
     sm().on_connect_callback_();
   }
@@ -174,7 +174,7 @@ void NetworkSMStates::FullyConnectedState::entry() {
 void NetworkSMStates::FullyConnectedState::execute_once() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
-  } else if (millis() - m_last_conn_check_time > NET_CONN_CHECK_INTERVAL) {
+  } else if (millis() - last_conn_check_time_ > NET_CONN_CHECK_INTERVAL) {
     if (WiFi.status() != WL_CONNECTED) {
       sm().warning("Wi-Fi connection interrupted. Reconnecting...");
       return transition_to<DisconnectState>();
@@ -183,7 +183,7 @@ void NetworkSMStates::FullyConnectedState::execute_once() {
       sm().warning("MQTT connection interrupted. Reconnecting...");
       return transition_to<MQTTConnectState>();
     }
-    m_last_conn_check_time = millis();
+    last_conn_check_time_ = millis();
   } else {
     SM::PublishQueueElement element;
     uint8_t max_element_to_process = 5;

@@ -33,7 +33,7 @@ class QuickConnectState : public State<Network> {
   const char *get_name() override { return "QuickConnectState"; }
 
  private:
-  uint32_t m_start_time = 0;
+  uint32_t start_time_ = 0;
 };
 
 class NormalConnectState : public State<Network> {
@@ -46,8 +46,8 @@ class NormalConnectState : public State<Network> {
   const char *get_name() override { return "NormalConnectState"; }
 
  private:
-  uint32_t m_start_time = 0;
-  bool m_await_confirm_quick_wifi_settings = false;
+  uint32_t start_time_ = 0;
+  bool await_confirm_quick_wifi_settings_ = false;
 };
 
 class MQTTConnectState : public State<Network> {
@@ -60,7 +60,7 @@ class MQTTConnectState : public State<Network> {
   const char *get_name() override { return "MQTTConnectState"; }
 
  private:
-  uint32_t m_start_time = 0;
+  uint32_t start_time_ = 0;
 };
 
 class WifiConnectedState : public State<Network> {
@@ -92,7 +92,7 @@ class FullyConnectedState : public State<Network> {
   const char *get_name() override { return "FullyConnectedState"; }
 
  private:
-  uint32_t m_last_conn_check_time = 0;
+  uint32_t last_conn_check_time_ = 0;
 };
 }  // namespace NetworkSMStates
 
