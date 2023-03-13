@@ -57,19 +57,19 @@ class App : public Logger {
     AWAIT_SHUTDOWN,
     AWAIT_FACTORY_RESET,
   };
-  StateMachineState m_sm_state = StateMachineState::AWAIT_NET_CONNECT;
-  DeviceState m_device_state;
-  TaskHandle_t m_button_task_h = nullptr;
-  TaskHandle_t m_display_task_h = nullptr;
-  TaskHandle_t m_network_task_h = nullptr;
-  TaskHandle_t m_leds_task_h = nullptr;
-  TaskHandle_t m_main_task_h = nullptr;
+  StateMachineState sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
+  DeviceState device_state_;
+  TaskHandle_t button_task_h_ = nullptr;
+  TaskHandle_t display_task_h_ = nullptr;
+  TaskHandle_t network_task_h_ = nullptr;
+  TaskHandle_t leds_task_h_ = nullptr;
+  TaskHandle_t main_task_h_ = nullptr;
 
-  std::array<Button, NUM_BUTTONS> m_buttons;
-  LEDs m_leds;
-  Network m_network;
-  Display m_display;
-  MQTTHelper m_mqtt;
+  std::array<Button, NUM_BUTTONS> buttons_;
+  LEDs leds_;
+  Network network_;
+  Display display_;
+  MQTTHelper mqtt_;
   HardwareDefinition hw_;
 };
 
