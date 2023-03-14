@@ -9,6 +9,7 @@
 #include "display.h"
 #include "hardware.h"
 #include "state.h"
+#include "logger.h"
 
 static WiFiManager wifi_manager;
 
@@ -40,6 +41,7 @@ static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
 static bool web_portal_saved = false;
 
 void start_wifi_setup(DeviceState& device_state, Display& display) {
+  static Logger setupLogger("W_SETUP");
   display.disp_ap_config();
   display.update();
 
@@ -73,7 +75,7 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
     device_state.persisted().wifi_done = true;
     device_state.persisted().restart_to_setup = true;
     device_state.save_all();
-    log_i("[W_SETUP] Wi-Fi connected.");
+    setupLogger.info("Wi-Fi connected.");
     display.disp_message_large("Wi-Fi\nconnected\n:)");
     display.update();
     delay(3000);
@@ -81,7 +83,7 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
   } else {
     device_state.persisted().wifi_done = false;
     device_state.save_all();
-    log_w("[W_SETUP] Wi-Fi error.");
+    setupLogger.warning("Wi-Fi error.");
     display.disp_error("Wi-Fi\nconnection\nerror");
     display.update();
     delay(5000);
@@ -107,6 +109,7 @@ void save_params_callback(DeviceState* device_state) {
 void start_setup(DeviceState& device_state, Display& display,
                  HardwareDefinition& HW) {
   // config
+  static Logger setupLogger("SETUP");
   wifi_manager.setTitle(WIFI_MANAGER_TITLE);
   wifi_manager.setSaveParamsCallback(
       std::bind(&save_params_callback, &device_state));
@@ -168,14 +171,14 @@ void start_setup(DeviceState& device_state, Display& display,
       break;
     } else if (remaining_tries > 0) {
       remaining_tries--;
-      log_w("[SETUP] Wi-Fi error, retrying (remainig tries: %d)",
-            remaining_tries);
+      setupLogger.warning("Wi-Fi error, retrying (remainig tries: %d)",
+                          remaining_tries);
       WiFi.disconnect();
       delay(1000);
     } else {
       device_state.persisted().wifi_done = false;
       device_state.save_all();
-      log_w("[SETUP] Wi-Fi error.");
+      setupLogger.warning("Wi-Fi error.");
       display.disp_error("Wi-Fi\nerror");
       display.update();
       delay(3000);
@@ -202,9 +205,9 @@ void start_setup(DeviceState& device_state, Display& display,
   uint32_t mqtt_start_time = millis();
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
-  log_d("Trying to connect to mqtt://%s:%d",
-        device_state.userPreferences().mqtt.server.c_str(),
-        device_state.userPreferences().mqtt.port);
+  setupLogger.debug("Trying to connect to mqtt://%s:%d",
+                    device_state.userPreferences().mqtt.server.c_str(),
+                    device_state.userPreferences().mqtt.port);
   mqtt_client.setServer(device_state.userPreferences().mqtt.server.c_str(),
                         device_state.userPreferences().mqtt.port);
   if (device_state.userPreferences().mqtt.user.length() > 0 &&
@@ -224,7 +227,7 @@ void start_setup(DeviceState& device_state, Display& display,
     if (millis() - mqtt_start_time >= MQTT_TIMEOUT) {
       device_state.persisted().setup_done = false;
       device_state.save_all();
-      log_w("[SETUP] MQTT error.");
+      setupLogger.warning("MQTT error.");
       display.disp_error("MQTT\nerror");
       display.update();
       delay(3000);
@@ -238,7 +241,7 @@ void start_setup(DeviceState& device_state, Display& display,
   device_state.persisted().send_discovery_config = true;
   device_state.save_all();
 
-  log_i("[SETUP] setup successful");
+  setupLogger.info("setup successful");
   display.disp_message_large("Setup\ncomplete\n:)");
   display.update();
   delay(3000);

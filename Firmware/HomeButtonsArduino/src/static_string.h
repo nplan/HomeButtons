@@ -122,10 +122,11 @@ class StaticString {
   char data_[MAX_SIZE] = {'\0'};
   void _check_snprintf_return_value(int value) const {
     if (value >= MAX_SIZE)
-      log_e("buffer too small (size: %d, wanted: %d, content: %s)", MAX_SIZE,
-            value, data_);
+      ESP_LOGE("static_string",
+               "buffer too small (size: %d, wanted: %d, content: %s)", MAX_SIZE,
+               value, data_);
     else if (value < 0)
-      log_e("format failed");
+      ESP_LOGE("static_string", "format failed");
   }
 };
 
