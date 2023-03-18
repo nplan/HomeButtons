@@ -5,7 +5,7 @@
 #include "esp_log.h"
 
 #ifndef LOGGER_DEFAULT_LOG_LEVEL
-#define LOGGER_DEFAULT_LOG_LEVEL ESP_LOG_INFO
+#error "LOGGER_DEFAULT_LOG_LEVEL isn't defined"
 #endif
 
 class Logger {
