@@ -915,7 +915,6 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
 
 void App::_net_on_connect() {
   network_.subscribe(mqtt_.t_cmd() + "#");
-  delay(100);
   _publish_awake_mode_avlb();
   network_.publish(mqtt_.t_sensor_interval_state(),
                    PayloadType("%u", device_state_.sensor_interval()), true);

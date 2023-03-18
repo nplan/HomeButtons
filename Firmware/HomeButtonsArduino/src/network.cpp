@@ -268,7 +268,6 @@ bool Network::subscribe(const TopicType &topic) {
   }
   bool ret;
   ret = mqtt_client_.subscribe(topic.c_str());
-  delay(10);
   if (ret) {
     debug("sub to: %s SUCCESS.", topic.c_str());
   } else {
