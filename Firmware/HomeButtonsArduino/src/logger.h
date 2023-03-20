@@ -9,6 +9,12 @@
 #endif
 
 class Logger {
+#ifdef LOGGER_ENABLE_COLOR
+  static constexpr bool ENABLE_COLOR = true;
+#else
+  static constexpr bool ENABLE_COLOR = false;
+#endif
+
  public:
   // Warning: the logger constructor MUST NOT be called before arduino setup()
   // Reason: the following line in arduino framework is resetting all log
@@ -101,10 +107,17 @@ class Logger {
   void _log(esp_log_level_t level, const char* fmt, va_list args) const {
     if (level > log_level_) return;
     char buffer[MAX_LOG_LINE_SIZE];
-    int rc =
-        snprintf(buffer, MAX_LOG_LINE_SIZE, "%s[%6u][%c][%s] " LOG_RESET_COLOR,
-                 _log_level_to_log_color(level), esp_log_timestamp(),
-                 _log_level_to_char(level), padded_tag_.c_str());
+    int rc;
+    if (ENABLE_COLOR) {
+      rc = snprintf(buffer, MAX_LOG_LINE_SIZE,
+                    "%s[%6u][%c][%s] " LOG_RESET_COLOR,
+                    _log_level_to_log_color(level), esp_log_timestamp(),
+                    _log_level_to_char(level), padded_tag_.c_str());
+    } else {
+      rc = snprintf(buffer, MAX_LOG_LINE_SIZE, "[%6u][%c][%s] ",
+                    esp_log_timestamp(), _log_level_to_char(level),
+                    padded_tag_.c_str());
+    }
 
     if (rc < 0) {
       ESP_LOGE("logger", "fatal: unable to log");
