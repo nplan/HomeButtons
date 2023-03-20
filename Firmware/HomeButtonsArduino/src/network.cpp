@@ -26,6 +26,7 @@ String mac2String(uint8_t ar[]) {
 
 void Network::connect() {
   cmd_state = CMDState::CONNECT;
+  cmd_connect_time = millis();
   this->erase = false;
   log_d("[NET] cmd connect");
 }
@@ -78,7 +79,8 @@ void Network::update() {
       } else if (WiFi.status() == WL_CONNECTED) {
         state = State::W_CONNECTED;
         device_state.set_ip(WiFi.localIP().toString());
-        log_i("[NET] Wi-Fi connected (quick mode).");
+        log_i("[NET] Wi-Fi connected (quick mode) in %d ms.",
+              millis() - wifi_start_time);
         String ssid = WiFi.SSID();
         device_state.save_all();
         uint8_t* bssid = WiFi.BSSID();
@@ -87,8 +89,8 @@ void Network::update() {
               mac2String(bssid).c_str(), ch);
         // proceed with MQTT connection
         log_i("[NET] connecting MQTT....");
-        connect_mqtt();
         mqtt_start_time = millis();
+        connect_mqtt();
         sm_state = AWAIT_MQTT_CONNECTION;
       } else if (millis() - wifi_start_time > QUICK_WIFI_TIMEOUT) {
         // try again with normal mode
@@ -127,8 +129,9 @@ void Network::update() {
         // get bssid and ch, disconnect, reconnect with bssid and ch to save it
         // to ESP
         log_i(
-            "[NET] Wi-Fi connected (normal mode). Saving settings for "
-            "quick mode...");
+            "[NET] Wi-Fi connected (normal mode) in %d ms. Saving settings for "
+            "quick mode...",
+            millis() - wifi_start_time);
         String ssid = WiFi.SSID();
         String psk = WiFi.psk();
         device_state.save_all();
@@ -164,8 +167,8 @@ void Network::update() {
         log_i("[NET] Wi-Fi connected, quick mode settings saved.");
         // proceed with MQTT connection
         log_i("[NET] connecting MQTT....");
-        connect_mqtt();
         mqtt_start_time = millis();
+        connect_mqtt();
         sm_state = AWAIT_MQTT_CONNECTION;
       } else if (millis() - wifi_start_time > WIFI_TIMEOUT) {
         device_state.persisted().wifi_quick_connect = false;
@@ -183,7 +186,8 @@ void Network::update() {
         sm_state = IDLE;
         log_i("[NET] disconnected.");
       } else if (mqtt_client.connected()) {
-        log_i("[NET] MQTT connected.");
+        log_i("[NET] MQTT connected in %d ms.", millis() - mqtt_start_time);
+        log_i("[NET] network connected in %d ms.", millis() - cmd_connect_time);
         last_conn_check_time = millis();
         if (on_connect != NULL) {
           on_connect();

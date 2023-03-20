@@ -247,6 +247,7 @@ void start_leds_task() {
 
 void main_task(void *param) {
   log_i("[DEVICE] woke up.");
+  log_i("[DEVICE] cpu freq: %d MHz", getCpuFrequencyMhz());
   log_i("[DEVICE] SW version: %s", SW_VERSION);
   device_state.load_all();
 
@@ -600,7 +601,6 @@ void main_task(void *param) {
         }
         case StateMachineState::AWAIT_NET_CONNECT: {
           if (network.get_state() == Network::State::M_CONNECTED) {
-            // net_on_connect();
             if (active_button != nullptr && btn_action != Button::IDLE) {
               network.publish(
                   device_state
@@ -616,7 +616,7 @@ void main_task(void *param) {
             sm_state = StateMachineState::CMD_SHUTDOWN;
           } else if (millis() - network.get_cmd_connect_time() >=
                      NET_CONNECT_TIMEOUT) {
-            log_d("[DEVICE] network connect timeout.");
+            log_w("[DEVICE] network connect timeout.");
             if (boot_cause == BootCause::BUTTON) {
               display.disp_error("Network\nconnection\nnot\nsuccessful", 3000);
               delay(100);
@@ -956,6 +956,7 @@ void main_task(void *param) {
 }
 
 void setup() {
+  log_i("[DEVICE] starting...");
   xTaskCreate(main_task,    // Function that should be called
               "MAIN",       // Name of the task (for debugging)
               20000,        // Stack size (bytes)

@@ -5,7 +5,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.0.4";
+static constexpr char SW_VERSION[] = "v2.0.5-beta";
 static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
 
 // ------ wifi AP ------
