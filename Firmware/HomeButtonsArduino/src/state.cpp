@@ -1,5 +1,5 @@
 #include "state.h"
-
+#include "utils.h"
 #include "config.h"
 
 void DeviceState::save_factory() {
@@ -46,6 +46,15 @@ void DeviceState::save_user() {
   preferences_.putString("btn5_txt", userPreferences_.btn_labels[4].c_str());
   preferences_.putString("btn6_txt", userPreferences_.btn_labels[5].c_str());
   preferences_.putUInt("sen_itv", userPreferences_.sensor_interval);
+  preferences_.putString(
+      "sta_ip",
+      ip_address_to_static_string(userPreferences_.network.static_ip).c_str());
+  preferences_.putString(
+      "g_way",
+      ip_address_to_static_string(userPreferences_.network.gateway).c_str());
+  preferences_.putString(
+      "s_net",
+      ip_address_to_static_string(userPreferences_.network.subnet).c_str());
   preferences_.end();
 }
 
@@ -79,6 +88,11 @@ void DeviceState::load_user() {
 
   userPreferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
+
+  _load_to_ip_address(userPreferences_.network.static_ip, "sta_ip", "0.0.0.0");
+  _load_to_ip_address(userPreferences_.network.gateway, "g_way", "0.0.0.0");
+  _load_to_ip_address(userPreferences_.network.subnet, "s_net", "0.0.0.0");
+
   preferences_.end();
 }
 
@@ -178,4 +192,14 @@ void DeviceState::set_btn_label(uint8_t i, const char* label) {
   if (i < NUM_BUTTONS) {
     userPreferences_.btn_labels[i].set(label);
   }
+}
+
+void DeviceState::_load_to_ip_address(IPAddress& destination, const char* key,
+                                      const char* defaultValue) {
+  char buffer[16];
+  auto ret = preferences_.getString(key, buffer, 16);
+  if (ret == 0)
+    destination.fromString(defaultValue);
+  else
+    destination.fromString(buffer);
 }

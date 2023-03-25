@@ -137,6 +137,7 @@ class Network : public NetworkStateMachine, public Logger {
  private:
   State state_ = State::DISCONNECTED;
   Command command_ = Command::NONE;
+  uint32_t cmd_connect_time_ = 0;
   bool erase_ = false;
 
   DeviceState &device_state_;
@@ -154,6 +155,7 @@ class Network : public NetworkStateMachine, public Logger {
   std::function<void(const char *, const char *)> usr_callback_;
   std::function<void()> on_connect_callback_;
 
+  void _pre_wifi_connect();
   bool _connect_mqtt();
   void _mqtt_callback(const char *topic, uint8_t *payload, uint32_t length);
   void _publish_unsafe(const TopicType &topic, const char *payload,

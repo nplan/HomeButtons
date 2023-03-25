@@ -2,6 +2,7 @@
 #include <esp_wifi.h>
 #include "config.h"
 #include "state.h"
+#include "utils.h"
 
 String mac2String(uint8_t ar[]) {
   String s;
@@ -26,6 +27,7 @@ void NetworkSMStates::IdleState::execute_once() {
 }
 
 void NetworkSMStates::QuickConnectState::entry() {
+  sm()._pre_wifi_connect();
   sm().info("connecting Wi-Fi (quick mode)...");
   WiFi.mode(WIFI_STA);
   WiFi.persistent(true);
@@ -37,6 +39,8 @@ void NetworkSMStates::QuickConnectState::execute_once() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
+    sm().info("Wi-Fi connected (quick mode) in %lu ms.",
+              millis() - start_time_);
     transition_to<WifiConnectedState>();
   } else if (millis() - start_time_ > QUICK_WIFI_TIMEOUT) {
     // try again with normal mode
@@ -49,6 +53,7 @@ void NetworkSMStates::QuickConnectState::execute_once() {
 }
 
 void NetworkSMStates::NormalConnectState::entry() {
+  sm()._pre_wifi_connect();
   WiFi.mode(WIFI_STA);
   WiFi.persistent(true);
 
@@ -78,8 +83,9 @@ void NetworkSMStates::NormalConnectState::execute_once() {
     } else {
       // get bssid and ch, and save it directly to ESP
       sm().info(
-          "Wi-Fi connected (normal mode). Saving settings for "
-          "quick mode...");
+          "Wi-Fi connected (normal mode) in %lu ms. Saving settings for quick "
+          "mode...",
+          millis() - start_time_);
 
       String ssid = WiFi.SSID();
       String psk = WiFi.psk();
@@ -108,17 +114,18 @@ void NetworkSMStates::MQTTConnectState::entry() {
       std::bind(&Network::_mqtt_callback, &sm(), std::placeholders::_1,
                 std::placeholders::_2, std::placeholders::_3));
   // proceed with MQTT connection
+  start_time_ = millis();
   sm().info("connecting MQTT....");
   sm()._connect_mqtt();
-  start_time_ = millis();
-  // await
 }
 
 void NetworkSMStates::MQTTConnectState::execute_once() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (sm().mqtt_client_.connected()) {
-    sm().info("MQTT connected.");
+    sm().info("MQTT connected in %lu ms.", millis() - start_time_);
+    sm().info("Network connected in %lu ms.",
+              millis() - sm().cmd_connect_time_);
     return transition_to<FullyConnectedState>();
   } else if (millis() - start_time_ > MQTT_TIMEOUT) {
     if (WiFi.status() == WL_CONNECTED) {
@@ -139,6 +146,7 @@ void NetworkSMStates::WifiConnectedState::execute_once() {
   sm().state_ = Network::State::W_CONNECTED;
   sm().device_state_.set_ip(WiFi.localIP());
   sm().info("Wi-Fi connected.");
+  sm().info("IP: %s", ip_address_to_static_string(WiFi.localIP()).c_str());
   String ssid = WiFi.SSID();
   sm().device_state_.save_all();
   uint8_t *bssid = WiFi.BSSID();
@@ -202,7 +210,6 @@ Network::Network(DeviceState &device_state)
       Logger("NET"),
       device_state_(device_state),
       mqtt_client_(wifi_client_) {
-  WiFi.useStaticBuffers(true);
   mqtt_publish_queue_ = xQueueCreate(4, sizeof(PublishQueueElement));
   if (mqtt_publish_queue_ == nullptr) error("Failed to create publish queue");
 }
@@ -215,6 +222,7 @@ Network::~Network() {
 
 void Network::connect() {
   command_ = Command::CONNECT;
+  cmd_connect_time_ = millis();
   this->erase_ = false;
   debug("cmd connect");
 }
@@ -283,6 +291,25 @@ void Network::set_mqtt_callback(
 
 void Network::set_on_connect(std::function<void()> on_connect) {
   this->on_connect_callback_ = on_connect;
+}
+
+void Network::_pre_wifi_connect() {
+  WiFi.useStaticBuffers(true);
+  // set static IP
+  const auto &static_ip = device_state_.userPreferences().network.static_ip;
+  const auto &gateway = device_state_.userPreferences().network.gateway;
+  const auto &subnet = device_state_.userPreferences().network.subnet;
+  bool ip_ok = static_ip != IPAddress(0, 0, 0, 0);
+  bool gw_ok = gateway != IPAddress(0, 0, 0, 0);
+  bool sn_ok = subnet != IPAddress(0, 0, 0, 0);
+  if (ip_ok && gw_ok && sn_ok) {
+    info("Using static IP %s, Gateway %s, Subnet %s",
+         static_ip.toString().c_str(), gateway.toString().c_str(),
+         subnet.toString().c_str());
+    WiFi.config(static_ip, gateway, subnet);
+  } else {
+    info("Using DHCP. Static IP not set or not valid.");
+  }
 }
 
 bool Network::_connect_mqtt() {

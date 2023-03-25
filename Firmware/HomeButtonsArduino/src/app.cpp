@@ -15,6 +15,7 @@ App::App()
       mqtt_(device_state_, network_) {}
 
 void App::setup() {
+  info("starting...");
   xTaskCreate(_main_task_helper,  // Function that should be called
               "MAIN",             // Name of the task (for debugging)
               20000,              // Stack size (bytes)
@@ -202,6 +203,7 @@ void App::_start_leds_task() {
 
 void App::_main_task() {
   info("woke up.");
+  info("cpu freq: %d MHz", getCpuFrequencyMhz());
   info("SW version: %s", SW_VERSION);
   device_state_.load_all();
 
@@ -526,7 +528,6 @@ void App::_main_task() {
         }
         case StateMachineState::AWAIT_NET_CONNECT: {
           if (network_.get_state() == Network::State::M_CONNECTED) {
-            // net_on_connect();
             if (active_button != nullptr && btn_action != Button::IDLE) {
               network_.publish(
                   mqtt_.get_button_topic(active_button->get_id(), btn_action),
@@ -539,7 +540,7 @@ void App::_main_task() {
             device_state_.persisted().failed_connections = 0;
             sm_state_ = StateMachineState::CMD_SHUTDOWN;
           } else if (millis() >= NET_CONNECT_TIMEOUT) {
-            debug("network connect timeout.");
+            warning("network connect timeout.");
             if (boot_cause == BootCause::BUTTON) {
               display_.disp_error("Network\nconnection\nnot\nsuccessful", 3000);
               delay(100);

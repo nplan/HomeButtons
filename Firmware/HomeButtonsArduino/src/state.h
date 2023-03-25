@@ -7,6 +7,7 @@
 #include "config.h"
 #include "types.h"
 #include "logger.h"
+#include <IPAddress.h>
 
 class DeviceState : public Logger {
  private:
@@ -23,6 +24,12 @@ class DeviceState : public Logger {
     DeviceName device_name;
     ButtonLabel btn_labels[NUM_BUTTONS];
     uint16_t sensor_interval = 0;  // minutes
+
+    struct {
+      IPAddress static_ip;
+      IPAddress gateway;
+      IPAddress subnet;
+    } network;
 
     struct {
       String server = "";
@@ -97,6 +104,12 @@ class DeviceState : public Logger {
     userPreferences_.mqtt = {server,   port,       user,
                              password, base_topic, discovery_prefix};
   }
+  void set_static_ip_config(const IPAddress& static_ip,
+                            const IPAddress& gateway, const IPAddress& subnet) {
+    userPreferences_.network.static_ip = static_ip;
+    userPreferences_.network.gateway = gateway;
+    userPreferences_.network.subnet = subnet;
+  }
 
   const DeviceName& device_name() const { return userPreferences_.device_name; }
   void set_device_name(const DeviceName& device_name) {
@@ -154,6 +167,9 @@ class DeviceState : public Logger {
     else
       destination.set(buffer);
   }
+
+  void _load_to_ip_address(IPAddress& destination, const char* key,
+                           const char* defaultValue);
 
   Preferences preferences_;
   StaticString<15> ip_address_;
