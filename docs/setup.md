@@ -2,13 +2,6 @@
 
 **Setup up your *Home Buttons* in a few simple steps!**
 
-> **Important!**
-
-> There is a network connection bug in firmware v2.0.0. If your device came with that version you must perform an update to v2.0.2 or later.
-Please check the firmware version of your device after unboxing it. It is shown at the bottom of the display.
-You can update the firmware after setting up the Wi-Fi connection and before setting up the MQTT parameters.
-Just follow this guide and look for a note.
-
 You will need:
 
 1. Depending on the desired power source (one out of):
@@ -59,9 +52,6 @@ Connect to it by scanning the QR code on the display or manually connecting to W
 
     ![Wi-Fi Setup Screen](assets/wifi_setup_screen.png){width="125"}
 
-    > There's an issue with stock firmware (v2.0.3) on a small number of devices where the Wi-Fi hotspot does not appear.
-    If this happens, please flash the firmware again via USB following this [guide](update.md#USB). Use the latest release.
-
 2. After connecting to *Home Buttons* Wi-Fi with your device, a **captive portal** will pop up automatically.
 If it doesn't, open the web browser and navigate to http://192.168.4.1.
 
@@ -90,8 +80,6 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
     ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page](assets/setup_page.jpeg){width="250"}
 
-1. Perform the **firmware update** now if required. Use [this](update.md#OTA) guide, but **skip step 2**, since you are already in the right menu.
-
 2. Click `Setup`
 
 3. Enter the connection parameters:
@@ -111,13 +99,21 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
     - `Discovery Prefix` - *Home Assistant* parameter for MQTT discovery. The default is `homeassistant`.
     Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
-4. Enter button labels
+4. Enter static IP details (**optional, use only if you know what you're doing**):
+
+    - `Static IP` - IP of *Home Buttons*. Must be outside the DHCP address range of your router.
+
+    - `Gateway` - The IP address of your router.
+
+    - `Subnet Mask` Usually `255.255.255.0.`
+
+5. Enter button labels
 
     > This step is not necessary, you can do it later directly in *Home Assistant*.
 
     - `Button {1-6} Label` - Label that will be displayed next to each button. The order is from top to bottom.
     
-5. Confirm by clicking `Save`. Device will exit the setup and display button labels.
+6. Confirm by clicking `Save`. Device will exit the setup and display button labels.
 
 > If MQTT connection is not successful, `MQTT error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.

@@ -12,6 +12,8 @@ Firmware can be updated in two ways:
 
 > OTA is the simplest way and therefore recommended. Flash via USB only if something goes wrong with the OTA update and web interface is not accessible.
 
+**Important!** Downgrading from v2.0.4 to an earlier version is not supported!
+
 ## Over The Air (OTA) {#OTA}
 
 1. Find the latest firmware *.bin* file [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"} and download it to your computer.

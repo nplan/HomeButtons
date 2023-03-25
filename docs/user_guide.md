@@ -101,6 +101,12 @@ Click `Setup` to change MQTT settings or button labels. A page with the followin
 - `Discovery Prefix` - *Home Assistant* parameter for MQTT discovery. The default is `homeassistant`.
 Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
+- `Static IP` - Optional. IP of *Home Buttons*. Must be outside the DHCP address range of your router.
+
+- `Gateway` - Optional. The IP address of your router.
+
+- `Subnet Mask` Optional. Usually `255.255.255.0.`
+
 - `Button {1-6} Label` - Label that will be displayed next to each button. The order is from top to bottom.
 
 > *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
