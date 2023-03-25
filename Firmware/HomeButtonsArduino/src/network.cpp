@@ -55,7 +55,26 @@ void Network::update() {
         mqtt_client.setCallback(
             std::bind(&Network::callback, this, std::placeholders::_1,
                       std::placeholders::_2, std::placeholders::_3));
+
         WiFi.useStaticBuffers(true);
+
+        // set static IP
+        IPAddress static_ip, gateway, subnet;
+        static_ip = device_state.network().static_ip;
+        gateway = device_state.network().gateway;
+        subnet = device_state.network().subnet;
+        bool ip_ok = static_ip != IPAddress(0, 0, 0, 0);
+        bool gw_ok = gateway != IPAddress(0, 0, 0, 0);
+        bool sn_ok = subnet != IPAddress(0, 0, 0, 0);
+        if (ip_ok && gw_ok && sn_ok) {
+          log_i("[NET] Using static IP %s, Gateway %s, Subnet %s",
+                static_ip.toString().c_str(), gateway.toString().c_str(),
+                subnet.toString().c_str());
+          WiFi.config(static_ip, gateway, subnet);
+        } else {
+          log_i("[NET] Using DHCP. Static IP not set or not valid.");
+        }
+
         WiFi.mode(WIFI_STA);
         WiFi.persistent(true);
         wifi_start_time = millis();
@@ -81,6 +100,7 @@ void Network::update() {
         device_state.set_ip(WiFi.localIP().toString());
         log_i("[NET] Wi-Fi connected (quick mode) in %d ms.",
               millis() - wifi_start_time);
+        log_i("[NET] IP: %s", WiFi.localIP().toString().c_str());
         String ssid = WiFi.SSID();
         device_state.save_all();
         uint8_t* bssid = WiFi.BSSID();
@@ -132,6 +152,7 @@ void Network::update() {
             "[NET] Wi-Fi connected (normal mode) in %d ms. Saving settings for "
             "quick mode...",
             millis() - wifi_start_time);
+        log_i("[NET] IP: %s", WiFi.localIP().toString().c_str());
         String ssid = WiFi.SSID();
         String psk = WiFi.psk();
         device_state.save_all();
@@ -165,6 +186,7 @@ void Network::update() {
         state = State::W_CONNECTED;
         device_state.set_ip(WiFi.localIP().toString());
         log_i("[NET] Wi-Fi connected, quick mode settings saved.");
+        log_i("[NET] IP: %s", WiFi.localIP().toString().c_str());
         // proceed with MQTT connection
         log_i("[NET] connecting MQTT....");
         mqtt_start_time = millis();

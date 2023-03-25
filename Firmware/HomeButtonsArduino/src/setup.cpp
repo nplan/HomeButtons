@@ -24,6 +24,9 @@ static WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "",
                                              50);
 static WiFiManagerParameter discovery_prefix_param("disc_prefix",
                                                    "Discovery Prefix", "", 50);
+static WiFiManagerParameter static_ip_param("static_ip", "Static IP", "", 16);
+static WiFiManagerParameter gateway_param("gateway", "Gateway", "", 16);
+static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 16);
 static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
@@ -104,6 +107,12 @@ void save_params_callback() {
   device_state.set_btn_label(3, btn4_label_param.getValue());
   device_state.set_btn_label(4, btn5_label_param.getValue());
   device_state.set_btn_label(5, btn6_label_param.getValue());
+
+  IPAddress static_ip, gateway, subnet;
+  static_ip.fromString(static_ip_param.getValue());
+  gateway.fromString(gateway_param.getValue());
+  subnet.fromString(subnet_param.getValue());
+  device_state.set_static_ip_config(static_ip, gateway, subnet);
   web_portal_saved = true;
 }
 
@@ -127,6 +136,10 @@ void start_setup() {
   base_topic_param.setValue(device_state.network().mqtt.base_topic.c_str(), 50);
   discovery_prefix_param.setValue(
       device_state.network().mqtt.discovery_prefix.c_str(), 50);
+  static_ip_param.setValue(device_state.network().static_ip.toString().c_str(),
+                           16);
+  gateway_param.setValue(device_state.network().gateway.toString().c_str(), 16);
+  subnet_param.setValue(device_state.network().subnet.toString().c_str(), 16);
   btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
   btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
   btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
@@ -140,6 +153,9 @@ void start_setup() {
   wifi_manager.addParameter(&mqtt_password_param);
   wifi_manager.addParameter(&base_topic_param);
   wifi_manager.addParameter(&discovery_prefix_param);
+  wifi_manager.addParameter(&static_ip_param);
+  wifi_manager.addParameter(&gateway_param);
+  wifi_manager.addParameter(&subnet_param);
   wifi_manager.addParameter(&btn1_label_param);
   wifi_manager.addParameter(&btn2_label_param);
   wifi_manager.addParameter(&btn3_label_param);

@@ -4,6 +4,7 @@
 #include <Preferences.h>
 #include "buttons.h"
 #include "config.h"
+#include <IPAddress.h>
 
 class State {
  private:
@@ -20,6 +21,9 @@ class State {
     String ip = "";
     String ap_ssid = "";
     String ap_password = "";
+    IPAddress static_ip;
+    IPAddress gateway;
+    IPAddress subnet;
     struct {
       String server = "";
       int32_t port = 0;
@@ -111,6 +115,12 @@ class State {
                            const String& discovery_prefix) {
     m_network.mqtt = {server,   port,       user,
                       password, base_topic, discovery_prefix};
+  }
+  void set_static_ip_config(const IPAddress& static_ip,
+                            const IPAddress& gateway, const IPAddress& subnet) {
+    m_network.static_ip = static_ip;
+    m_network.gateway = gateway;
+    m_network.subnet = subnet;
   }
 
   const String& device_name() const { return m_personalization.device_name; }

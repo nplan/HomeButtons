@@ -47,6 +47,9 @@ void State::save_user() {
   preferences.putString("btn5_txt", m_personalization.btn_labels[4]);
   preferences.putString("btn6_txt", m_personalization.btn_labels[5]);
   preferences.putUInt("sen_itv", m_personalization.sensor_interval);
+  preferences.putString("sta_ip", m_network.static_ip.toString());
+  preferences.putString("g_way", m_network.gateway.toString());
+  preferences.putString("s_net", m_network.subnet.toString());
   preferences.end();
 }
 
@@ -76,6 +79,9 @@ void State::load_user() {
       preferences.getString("btn6_txt", BTN_6_LABEL_DFLT);
   m_personalization.sensor_interval =
       preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
+  m_network.static_ip.fromString(preferences.getString("sta_ip", ""));
+  m_network.gateway.fromString(preferences.getString("g_way", ""));
+  m_network.subnet.fromString(preferences.getString("s_net", ""));
   preferences.end();
 }
 
