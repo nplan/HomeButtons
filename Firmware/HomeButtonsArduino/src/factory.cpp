@@ -37,31 +37,37 @@ void test_leds(HardwareDefinition& HW) {
 void test_buttons(HardwareDefinition& HW) {
   HW.set_led(HW.LED1_CH, 255);
   while (!digitalRead(HW.BTN1_PIN)) {
+    delay(10);
   }
   HW.set_led(HW.LED1_CH, 0);
 
   HW.set_led(HW.LED2_CH, 255);
   while (!digitalRead(HW.BTN2_PIN)) {
+    delay(10);
   }
   HW.set_led(HW.LED2_CH, 0);
 
   HW.set_led(HW.LED3_CH, 255);
   while (!digitalRead(HW.BTN3_PIN)) {
+    delay(10);
   }
   HW.set_led(HW.LED3_CH, 0);
 
   HW.set_led(HW.LED4_CH, 255);
   while (!digitalRead(HW.BTN4_PIN)) {
+    delay(10);
   }
   HW.set_led(HW.LED4_CH, 0);
 
   HW.set_led(HW.LED5_CH, 255);
   while (!digitalRead(HW.BTN5_PIN)) {
+    delay(10);
   }
   HW.set_led(HW.LED5_CH, 0);
 
   HW.set_led(HW.LED6_CH, 255);
   while (!digitalRead(HW.BTN6_PIN)) {
+    delay(10);
   }
   HW.set_led(HW.LED6_CH, 0);
 }
@@ -70,10 +76,12 @@ void test_display(HardwareDefinition& HW, Display& display) {
   display.disp_test(false);
   display.update();
   while (!HW.any_button_pressed()) {
+    delay(10);
   }
   display.disp_test(true);
   display.update();
   while (!HW.any_button_pressed()) {
+    delay(10);
   }
 }
 
@@ -110,6 +118,7 @@ void test_wifi(const Logger& logger, const NetworkSettings& settings,
   unsigned long tm = millis();
   while (millis() - tm < MQTT_DISCONNECT_TIMEOUT) {
     mqtt_client.loop();
+    delay(10);
   }
   // disconnect and wait until closed
   mqtt_client.disconnect();
