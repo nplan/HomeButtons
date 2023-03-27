@@ -156,12 +156,14 @@ void App::_network_task(void* param) {
 void App::_start_button_task() {
   if (button_task_h_ != nullptr) return;
   debug("button task started.");
-  xTaskCreate(_button_task,    // Function that should be called
-              "BUTTON",        // Name of the task (for debugging)
-              2000,            // Stack size (bytes)
-              this,            // Parameter to pass
-              1,               // Task priority
-              &button_task_h_  // Task handle
+  xTaskCreate(
+      _button_task,  // Function that should be called
+      "BUTTON",      // Name of the task (for debugging)
+      2000,          // Stack size (bytes)
+      this,          // Parameter to pass
+      23,            // Task priority, using same as wifi driver:
+           // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/performance/speed.html
+      &button_task_h_  // Task handle
   );
 }
 
@@ -192,12 +194,14 @@ void App::_start_network_task() {
 void App::_start_leds_task() {
   if (leds_task_h_ != nullptr) return;
   debug("leds task started.");
-  xTaskCreate(&_leds_task,   // Function that should be called
-              "LEDS",        // Name of the task (for debugging)
-              2000,          // Stack size (bytes)
-              this,          // Parameter to pass
-              1,             // Task priority
-              &leds_task_h_  // Task handle
+  xTaskCreate(
+      &_leds_task,  // Function that should be called
+      "LEDS",       // Name of the task (for debugging)
+      2000,         // Stack size (bytes)
+      this,         // Parameter to pass
+      23,           // Task priority, using same as wifi driver:
+           // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/performance/speed.html
+      &leds_task_h_  // Task handle
   );
 }
 
