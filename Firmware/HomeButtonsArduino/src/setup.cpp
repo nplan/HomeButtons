@@ -130,24 +130,24 @@ void start_setup(DeviceState& device_state, Display& display,
 
   // parameters
   device_name_param.setValue(device_state.device_name().c_str(), 20);
-  mqtt_server_param.setValue(device_state.userPreferences().mqtt.server.c_str(),
-                             50);
+  mqtt_server_param.setValue(
+      device_state.user_preferences().mqtt.server.c_str(), 50);
   mqtt_port_param.setValue(
-      String(device_state.userPreferences().mqtt.port).c_str(), 6);
-  mqtt_user_param.setValue(device_state.userPreferences().mqtt.user.c_str(),
+      String(device_state.user_preferences().mqtt.port).c_str(), 6);
+  mqtt_user_param.setValue(device_state.user_preferences().mqtt.user.c_str(),
                            50);
   mqtt_password_param.setValue(
-      device_state.userPreferences().mqtt.password.c_str(), 50);
+      device_state.user_preferences().mqtt.password.c_str(), 50);
   base_topic_param.setValue(
-      device_state.userPreferences().mqtt.base_topic.c_str(), 50);
+      device_state.user_preferences().mqtt.base_topic.c_str(), 50);
   discovery_prefix_param.setValue(
-      device_state.userPreferences().mqtt.discovery_prefix.c_str(), 50);
+      device_state.user_preferences().mqtt.discovery_prefix.c_str(), 50);
   static_ip_param.setValue(
-      device_state.userPreferences().network.static_ip.toString().c_str(), 16);
+      device_state.user_preferences().network.static_ip.toString().c_str(), 16);
   gateway_param.setValue(
-      device_state.userPreferences().network.gateway.toString().c_str(), 16);
+      device_state.user_preferences().network.gateway.toString().c_str(), 16);
   subnet_param.setValue(
-      device_state.userPreferences().network.subnet.toString().c_str(), 16);
+      device_state.user_preferences().network.subnet.toString().c_str(), 16);
   btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
   btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
   btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
@@ -224,15 +224,15 @@ void start_setup(DeviceState& device_state, Display& display,
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
   setupLogger.debug("Trying to connect to mqtt://%s:%d",
-                    device_state.userPreferences().mqtt.server.c_str(),
-                    device_state.userPreferences().mqtt.port);
-  mqtt_client.setServer(device_state.userPreferences().mqtt.server.c_str(),
-                        device_state.userPreferences().mqtt.port);
-  if (device_state.userPreferences().mqtt.user.length() > 0 &&
-      device_state.userPreferences().mqtt.password.length() > 0) {
+                    device_state.user_preferences().mqtt.server.c_str(),
+                    device_state.user_preferences().mqtt.port);
+  mqtt_client.setServer(device_state.user_preferences().mqtt.server.c_str(),
+                        device_state.user_preferences().mqtt.port);
+  if (device_state.user_preferences().mqtt.user.length() > 0 &&
+      device_state.user_preferences().mqtt.password.length() > 0) {
     mqtt_client.connect(device_state.factory().unique_id.c_str(),
-                        device_state.userPreferences().mqtt.user.c_str(),
-                        device_state.userPreferences().mqtt.password.c_str());
+                        device_state.user_preferences().mqtt.user.c_str(),
+                        device_state.user_preferences().mqtt.password.c_str());
   } else {
     mqtt_client.connect(device_state.factory().unique_id.c_str());
   }

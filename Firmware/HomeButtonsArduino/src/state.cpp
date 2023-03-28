@@ -32,66 +32,67 @@ void DeviceState::clear_factory() {
 
 void DeviceState::save_user() {
   preferences_.begin("user", false);
-  preferences_.putString("device_name", userPreferences_.device_name.c_str());
-  preferences_.putString("mqtt_srv", userPreferences_.mqtt.server);
-  preferences_.putUInt("mqtt_port", userPreferences_.mqtt.port);
-  preferences_.putString("mqtt_user", userPreferences_.mqtt.user);
-  preferences_.putString("mqtt_pass", userPreferences_.mqtt.password);
-  preferences_.putString("base_topic", userPreferences_.mqtt.base_topic);
-  preferences_.putString("disc_prefix", userPreferences_.mqtt.discovery_prefix);
-  preferences_.putString("btn1_txt", userPreferences_.btn_labels[0].c_str());
-  preferences_.putString("btn2_txt", userPreferences_.btn_labels[1].c_str());
-  preferences_.putString("btn3_txt", userPreferences_.btn_labels[2].c_str());
-  preferences_.putString("btn4_txt", userPreferences_.btn_labels[3].c_str());
-  preferences_.putString("btn5_txt", userPreferences_.btn_labels[4].c_str());
-  preferences_.putString("btn6_txt", userPreferences_.btn_labels[5].c_str());
-  preferences_.putUInt("sen_itv", userPreferences_.sensor_interval);
+  preferences_.putString("device_name", user_preferences_.device_name.c_str());
+  preferences_.putString("mqtt_srv", user_preferences_.mqtt.server);
+  preferences_.putUInt("mqtt_port", user_preferences_.mqtt.port);
+  preferences_.putString("mqtt_user", user_preferences_.mqtt.user);
+  preferences_.putString("mqtt_pass", user_preferences_.mqtt.password);
+  preferences_.putString("base_topic", user_preferences_.mqtt.base_topic);
+  preferences_.putString("disc_prefix",
+                         user_preferences_.mqtt.discovery_prefix);
+  preferences_.putString("btn1_txt", user_preferences_.btn_labels[0].c_str());
+  preferences_.putString("btn2_txt", user_preferences_.btn_labels[1].c_str());
+  preferences_.putString("btn3_txt", user_preferences_.btn_labels[2].c_str());
+  preferences_.putString("btn4_txt", user_preferences_.btn_labels[3].c_str());
+  preferences_.putString("btn5_txt", user_preferences_.btn_labels[4].c_str());
+  preferences_.putString("btn6_txt", user_preferences_.btn_labels[5].c_str());
+  preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
   preferences_.putString(
       "sta_ip",
-      ip_address_to_static_string(userPreferences_.network.static_ip).c_str());
+      ip_address_to_static_string(user_preferences_.network.static_ip).c_str());
   preferences_.putString(
       "g_way",
-      ip_address_to_static_string(userPreferences_.network.gateway).c_str());
+      ip_address_to_static_string(user_preferences_.network.gateway).c_str());
   preferences_.putString(
       "s_net",
-      ip_address_to_static_string(userPreferences_.network.subnet).c_str());
+      ip_address_to_static_string(user_preferences_.network.subnet).c_str());
   preferences_.end();
 }
 
 void DeviceState::load_user() {
   preferences_.begin("user", true);
   _load_to_static_string(
-      userPreferences_.device_name, "device_name",
+      user_preferences_.device_name, "device_name",
       (DeviceName{DEVICE_NAME_DFLT} + " " + factory_.random_id).c_str());
-  userPreferences_.mqtt.server = preferences_.getString("mqtt_srv", "");
-  userPreferences_.mqtt.port =
+  user_preferences_.mqtt.server = preferences_.getString("mqtt_srv", "");
+  user_preferences_.mqtt.port =
       preferences_.getUInt("mqtt_port", MQTT_PORT_DFLT);
-  userPreferences_.mqtt.user = preferences_.getString("mqtt_user", "");
-  userPreferences_.mqtt.password = preferences_.getString("mqtt_pass", "");
-  userPreferences_.mqtt.base_topic =
+  user_preferences_.mqtt.user = preferences_.getString("mqtt_user", "");
+  user_preferences_.mqtt.password = preferences_.getString("mqtt_pass", "");
+  user_preferences_.mqtt.base_topic =
       preferences_.getString("base_topic", BASE_TOPIC_DFLT);
-  userPreferences_.mqtt.discovery_prefix =
+  user_preferences_.mqtt.discovery_prefix =
       preferences_.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
 
-  _load_to_static_string(userPreferences_.btn_labels[0], "btn1_txt",
+  _load_to_static_string(user_preferences_.btn_labels[0], "btn1_txt",
                          BTN_1_LABEL_DFLT);
-  _load_to_static_string(userPreferences_.btn_labels[1], "btn2_txt",
+  _load_to_static_string(user_preferences_.btn_labels[1], "btn2_txt",
                          BTN_2_LABEL_DFLT);
-  _load_to_static_string(userPreferences_.btn_labels[2], "btn3_txt",
+  _load_to_static_string(user_preferences_.btn_labels[2], "btn3_txt",
                          BTN_3_LABEL_DFLT);
-  _load_to_static_string(userPreferences_.btn_labels[3], "btn4_txt",
+  _load_to_static_string(user_preferences_.btn_labels[3], "btn4_txt",
                          BTN_4_LABEL_DFLT);
-  _load_to_static_string(userPreferences_.btn_labels[4], "btn5_txt",
+  _load_to_static_string(user_preferences_.btn_labels[4], "btn5_txt",
                          BTN_5_LABEL_DFLT);
-  _load_to_static_string(userPreferences_.btn_labels[5], "btn6_txt",
+  _load_to_static_string(user_preferences_.btn_labels[5], "btn6_txt",
                          BTN_6_LABEL_DFLT);
 
-  userPreferences_.sensor_interval =
+  user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
 
-  _load_to_ip_address(userPreferences_.network.static_ip, "sta_ip", "0.0.0.0");
-  _load_to_ip_address(userPreferences_.network.gateway, "g_way", "0.0.0.0");
-  _load_to_ip_address(userPreferences_.network.subnet, "s_net", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.static_ip, "sta_ip", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.gateway, "g_way", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.subnet, "s_net", "0.0.0.0");
 
   preferences_.end();
 }
@@ -182,7 +183,7 @@ void DeviceState::clear_all() {
 const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
   static ButtonLabel noLabel;
   if (i < NUM_BUTTONS) {
-    return userPreferences_.btn_labels[i];
+    return user_preferences_.btn_labels[i];
   } else {
     return noLabel;
   }
@@ -190,7 +191,7 @@ const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
 
 void DeviceState::set_btn_label(uint8_t i, const char* label) {
   if (i < NUM_BUTTONS) {
-    userPreferences_.btn_labels[i].set(label);
+    user_preferences_.btn_labels[i].set(label);
   }
 }
 

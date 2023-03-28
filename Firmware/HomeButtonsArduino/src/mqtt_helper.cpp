@@ -26,12 +26,12 @@ void MQTTHelper::send_discovery_config() {
 
   TopicType trigger_topic_common(
       "%s/device_automation/%s",
-      _device_state.userPreferences().mqtt.discovery_prefix.c_str(),
+      _device_state.user_preferences().mqtt.discovery_prefix.c_str(),
       _device_state.factory().unique_id.c_str());
 
   // sensor config topics
   TopicType sensor_topic_common =
-      TopicType{} + _device_state.userPreferences().mqtt.discovery_prefix +
+      TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
       "/sensor/" + _device_state.factory().unique_id;
 
   // device objects
@@ -166,7 +166,7 @@ void MQTTHelper::send_discovery_config() {
 
   {
     TopicType sensor_interval_config_topic =
-        TopicType{} + _device_state.userPreferences().mqtt.discovery_prefix +
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/number/" + _device_state.factory().unique_id +
         "/sensor_interval/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> sensor_interval_conf;
@@ -190,7 +190,7 @@ void MQTTHelper::send_discovery_config() {
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     TopicType button_label_config_topics =
-        TopicType{} + _device_state.userPreferences().mqtt.discovery_prefix +
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/text/" + _device_state.factory().unique_id + "/button_" + (i + 1) +
         "_label/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> conf;
@@ -210,7 +210,7 @@ void MQTTHelper::send_discovery_config() {
 
   {
     TopicType awake_mode_config_topic =
-        TopicType{} + _device_state.userPreferences().mqtt.discovery_prefix +
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/switch/" + _device_state.factory().unique_id + "/awake_mode/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> awake_mode_conf;
     awake_mode_conf["name"] =
@@ -232,7 +232,7 @@ void MQTTHelper::update_discovery_config() {
   // sensor config topics
   TopicType sensor_topic_common(
       "%s/sensor/%s",
-      _device_state.userPreferences().mqtt.discovery_prefix.c_str(),
+      _device_state.user_preferences().mqtt.discovery_prefix.c_str(),
       _device_state.factory().unique_id.c_str());
 
   StaticJsonDocument<128> device_short;
@@ -309,8 +309,8 @@ TopicType MQTTHelper::get_button_topic(uint8_t btn_id,
 }
 
 TopicType MQTTHelper::t_common() const {
-  return TopicType(_device_state.userPreferences().mqtt.base_topic.c_str()) +
-         "/" + _device_state.userPreferences().device_name.c_str() + "/";
+  return TopicType(_device_state.user_preferences().mqtt.base_topic.c_str()) +
+         "/" + _device_state.user_preferences().device_name.c_str() + "/";
 }
 
 TopicType MQTTHelper::t_cmd() const { return t_common() + "cmd/"; }

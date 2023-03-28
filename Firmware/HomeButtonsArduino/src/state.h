@@ -39,7 +39,7 @@ class DeviceState : public Logger {
       String base_topic = "";
       String discovery_prefix = "";
     } mqtt;
-  } userPreferences_;
+  } user_preferences_;
 
   struct Persisted {
     // Vars
@@ -96,28 +96,30 @@ class DeviceState : public Logger {
   void clear_factory();
 
   // User preferences
-  const UserPreferences& userPreferences() const { return userPreferences_; }
+  const UserPreferences& user_preferences() const { return user_preferences_; }
   void set_mqtt_parameters(const String& server, int32_t port,
                            const String& user, const String& password,
                            const String& base_topic,
                            const String& discovery_prefix) {
-    userPreferences_.mqtt = {server,   port,       user,
-                             password, base_topic, discovery_prefix};
+    user_preferences_.mqtt = {server,   port,       user,
+                              password, base_topic, discovery_prefix};
   }
   void set_static_ip_config(const IPAddress& static_ip,
                             const IPAddress& gateway, const IPAddress& subnet) {
-    userPreferences_.network.static_ip = static_ip;
-    userPreferences_.network.gateway = gateway;
-    userPreferences_.network.subnet = subnet;
+    user_preferences_.network.static_ip = static_ip;
+    user_preferences_.network.gateway = gateway;
+    user_preferences_.network.subnet = subnet;
   }
 
-  const DeviceName& device_name() const { return userPreferences_.device_name; }
-  void set_device_name(const DeviceName& device_name) {
-    userPreferences_.device_name = device_name;
+  const DeviceName& device_name() const {
+    return user_preferences_.device_name;
   }
-  uint16_t sensor_interval() const { return userPreferences_.sensor_interval; }
+  void set_device_name(const DeviceName& device_name) {
+    user_preferences_.device_name = device_name;
+  }
+  uint16_t sensor_interval() const { return user_preferences_.sensor_interval; }
   void set_sensor_interval(uint16_t interval_min) {
-    userPreferences_.sensor_interval = interval_min;
+    user_preferences_.sensor_interval = interval_min;
   }
   const ButtonLabel& get_btn_label(uint8_t i) const;
   void set_btn_label(uint8_t i, const char* label);

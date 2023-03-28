@@ -107,8 +107,8 @@ void NetworkSMStates::NormalConnectState::execute_once() {
 
 void NetworkSMStates::MQTTConnectState::entry() {
   sm().mqtt_client_.setServer(
-      sm().device_state_.userPreferences().mqtt.server.c_str(),
-      sm().device_state_.userPreferences().mqtt.port);
+      sm().device_state_.user_preferences().mqtt.server.c_str(),
+      sm().device_state_.user_preferences().mqtt.port);
   sm().mqtt_client_.setBufferSize(MQTT_BUFFER_SIZE);
   sm().mqtt_client_.setCallback(
       std::bind(&Network::_mqtt_callback, &sm(), std::placeholders::_1,
@@ -296,9 +296,9 @@ void Network::set_on_connect(std::function<void()> on_connect) {
 void Network::_pre_wifi_connect() {
   WiFi.useStaticBuffers(true);
   // set static IP
-  const auto &static_ip = device_state_.userPreferences().network.static_ip;
-  const auto &gateway = device_state_.userPreferences().network.gateway;
-  const auto &subnet = device_state_.userPreferences().network.subnet;
+  const auto &static_ip = device_state_.user_preferences().network.static_ip;
+  const auto &gateway = device_state_.user_preferences().network.gateway;
+  const auto &subnet = device_state_.user_preferences().network.subnet;
   bool ip_ok = static_ip != IPAddress(0, 0, 0, 0);
   bool gw_ok = gateway != IPAddress(0, 0, 0, 0);
   bool sn_ok = subnet != IPAddress(0, 0, 0, 0);
@@ -313,12 +313,12 @@ void Network::_pre_wifi_connect() {
 }
 
 bool Network::_connect_mqtt() {
-  if (device_state_.userPreferences().mqtt.user.length() > 0 &&
-      device_state_.userPreferences().mqtt.password.length() > 0) {
+  if (device_state_.user_preferences().mqtt.user.length() > 0 &&
+      device_state_.user_preferences().mqtt.password.length() > 0) {
     return mqtt_client_.connect(
         device_state_.factory().unique_id.c_str(),
-        device_state_.userPreferences().mqtt.user.c_str(),
-        device_state_.userPreferences().mqtt.password.c_str());
+        device_state_.user_preferences().mqtt.user.c_str(),
+        device_state_.user_preferences().mqtt.password.c_str());
   } else {
     return mqtt_client_.connect(device_state_.factory().unique_id.c_str());
   }
