@@ -1,249 +1,206 @@
 #include "state.h"
+#include "utils.h"
 #include "config.h"
 
-State device_state = {};
-
-void State::save_factory() {
-  preferences.begin("factory", false);
-  preferences.putString("serial_number", m_factory.serial_number);
-  preferences.putString("random_id", m_factory.random_id);
-  preferences.putString("model_name", m_factory.model_name);
-  preferences.putString("model_id", m_factory.model_id);
-  preferences.putString("hw_version", m_factory.hw_version);
-  preferences.putString("unique_id", m_factory.unique_id);
-  preferences.end();
+void DeviceState::save_factory() {
+  preferences_.begin("factory", false);
+  preferences_.putString("serial_number", factory_.serial_number.c_str());
+  preferences_.putString("random_id", factory_.random_id.c_str());
+  preferences_.putString("model_name", factory_.model_name.c_str());
+  preferences_.putString("model_id", factory_.model_id.c_str());
+  preferences_.putString("hw_version", factory_.hw_version.c_str());
+  preferences_.putString("unique_id", factory_.unique_id.c_str());
+  preferences_.end();
 }
 
-void State::load_factory() {
-  preferences.begin("factory", true);
-  m_factory.serial_number = preferences.getString("serial_number", "");
-  m_factory.random_id = preferences.getString("random_id", "");
-  m_factory.model_name = preferences.getString("model_name", "");
-  m_factory.model_id = preferences.getString("model_id", "");
-  m_factory.hw_version = preferences.getString("hw_version", "");
-  m_factory.unique_id = preferences.getString("unique_id", "");
-  preferences.end();
+void DeviceState::load_factory() {
+  preferences_.begin("factory", true);
+  _load_to_static_string(factory_.serial_number, "serial_number", "");
+  _load_to_static_string(factory_.random_id, "random_id", "");
+  _load_to_static_string(factory_.model_name, "model_name", "");
+  _load_to_static_string(factory_.model_id, "model_id", "");
+  _load_to_static_string(factory_.hw_version, "hw_version", "");
+  _load_to_static_string(factory_.unique_id, "unique_id", "");
+  preferences_.end();
 }
 
-void State::clear_factory() {
-  preferences.begin("factory", false);
-  preferences.clear();
-  preferences.end();
+void DeviceState::clear_factory() {
+  preferences_.begin("factory", false);
+  preferences_.clear();
+  preferences_.end();
 }
 
-void State::save_user() {
-  preferences.begin("user", false);
-  preferences.putString("device_name", m_personalization.device_name);
-  preferences.putString("mqtt_srv", m_network.mqtt.server);
-  preferences.putUInt("mqtt_port", m_network.mqtt.port);
-  preferences.putString("mqtt_user", m_network.mqtt.user);
-  preferences.putString("mqtt_pass", m_network.mqtt.password);
-  preferences.putString("base_topic", m_network.mqtt.base_topic);
-  preferences.putString("disc_prefix", m_network.mqtt.discovery_prefix);
-  preferences.putString("btn1_txt", m_personalization.btn_labels[0]);
-  preferences.putString("btn2_txt", m_personalization.btn_labels[1]);
-  preferences.putString("btn3_txt", m_personalization.btn_labels[2]);
-  preferences.putString("btn4_txt", m_personalization.btn_labels[3]);
-  preferences.putString("btn5_txt", m_personalization.btn_labels[4]);
-  preferences.putString("btn6_txt", m_personalization.btn_labels[5]);
-  preferences.putUInt("sen_itv", m_personalization.sensor_interval);
-  preferences.putString("sta_ip", m_network.static_ip.toString());
-  preferences.putString("g_way", m_network.gateway.toString());
-  preferences.putString("s_net", m_network.subnet.toString());
-  preferences.end();
+void DeviceState::save_user() {
+  preferences_.begin("user", false);
+  preferences_.putString("device_name", user_preferences_.device_name.c_str());
+  preferences_.putString("mqtt_srv", user_preferences_.mqtt.server);
+  preferences_.putUInt("mqtt_port", user_preferences_.mqtt.port);
+  preferences_.putString("mqtt_user", user_preferences_.mqtt.user);
+  preferences_.putString("mqtt_pass", user_preferences_.mqtt.password);
+  preferences_.putString("base_topic", user_preferences_.mqtt.base_topic);
+  preferences_.putString("disc_prefix",
+                         user_preferences_.mqtt.discovery_prefix);
+  preferences_.putString("btn1_txt", user_preferences_.btn_labels[0].c_str());
+  preferences_.putString("btn2_txt", user_preferences_.btn_labels[1].c_str());
+  preferences_.putString("btn3_txt", user_preferences_.btn_labels[2].c_str());
+  preferences_.putString("btn4_txt", user_preferences_.btn_labels[3].c_str());
+  preferences_.putString("btn5_txt", user_preferences_.btn_labels[4].c_str());
+  preferences_.putString("btn6_txt", user_preferences_.btn_labels[5].c_str());
+  preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
+  preferences_.putString(
+      "sta_ip",
+      ip_address_to_static_string(user_preferences_.network.static_ip).c_str());
+  preferences_.putString(
+      "g_way",
+      ip_address_to_static_string(user_preferences_.network.gateway).c_str());
+  preferences_.putString(
+      "s_net",
+      ip_address_to_static_string(user_preferences_.network.subnet).c_str());
+  preferences_.end();
 }
 
-void State::load_user() {
-  preferences.begin("user", true);
-  m_personalization.device_name = preferences.getString(
-      "device_name", DEVICE_NAME_DFLT + String(" ") + m_factory.random_id);
-  m_network.mqtt.server = preferences.getString("mqtt_srv", "");
-  m_network.mqtt.port = preferences.getUInt("mqtt_port", MQTT_PORT_DFLT);
-  m_network.mqtt.user = preferences.getString("mqtt_user", "");
-  m_network.mqtt.password = preferences.getString("mqtt_pass", "");
-  m_network.mqtt.base_topic =
-      preferences.getString("base_topic", BASE_TOPIC_DFLT);
-  m_network.mqtt.discovery_prefix =
-      preferences.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
-  m_personalization.btn_labels[0] =
-      preferences.getString("btn1_txt", BTN_1_LABEL_DFLT);
-  m_personalization.btn_labels[1] =
-      preferences.getString("btn2_txt", BTN_2_LABEL_DFLT);
-  m_personalization.btn_labels[2] =
-      preferences.getString("btn3_txt", BTN_3_LABEL_DFLT);
-  m_personalization.btn_labels[3] =
-      preferences.getString("btn4_txt", BTN_4_LABEL_DFLT);
-  m_personalization.btn_labels[4] =
-      preferences.getString("btn5_txt", BTN_5_LABEL_DFLT);
-  m_personalization.btn_labels[5] =
-      preferences.getString("btn6_txt", BTN_6_LABEL_DFLT);
-  m_personalization.sensor_interval =
-      preferences.getUInt("sen_itv", SEN_INTERVAL_DFLT);
-  m_network.static_ip.fromString(preferences.getString("sta_ip", ""));
-  m_network.gateway.fromString(preferences.getString("g_way", ""));
-  m_network.subnet.fromString(preferences.getString("s_net", ""));
-  preferences.end();
+void DeviceState::load_user() {
+  preferences_.begin("user", true);
+  _load_to_static_string(
+      user_preferences_.device_name, "device_name",
+      (DeviceName{DEVICE_NAME_DFLT} + " " + factory_.random_id).c_str());
+  user_preferences_.mqtt.server = preferences_.getString("mqtt_srv", "");
+  user_preferences_.mqtt.port =
+      preferences_.getUInt("mqtt_port", MQTT_PORT_DFLT);
+  user_preferences_.mqtt.user = preferences_.getString("mqtt_user", "");
+  user_preferences_.mqtt.password = preferences_.getString("mqtt_pass", "");
+  user_preferences_.mqtt.base_topic =
+      preferences_.getString("base_topic", BASE_TOPIC_DFLT);
+  user_preferences_.mqtt.discovery_prefix =
+      preferences_.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
+
+  _load_to_static_string(user_preferences_.btn_labels[0], "btn1_txt",
+                         BTN_1_LABEL_DFLT);
+  _load_to_static_string(user_preferences_.btn_labels[1], "btn2_txt",
+                         BTN_2_LABEL_DFLT);
+  _load_to_static_string(user_preferences_.btn_labels[2], "btn3_txt",
+                         BTN_3_LABEL_DFLT);
+  _load_to_static_string(user_preferences_.btn_labels[3], "btn4_txt",
+                         BTN_4_LABEL_DFLT);
+  _load_to_static_string(user_preferences_.btn_labels[4], "btn5_txt",
+                         BTN_5_LABEL_DFLT);
+  _load_to_static_string(user_preferences_.btn_labels[5], "btn6_txt",
+                         BTN_6_LABEL_DFLT);
+
+  user_preferences_.sensor_interval =
+      preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
+
+  _load_to_ip_address(user_preferences_.network.static_ip, "sta_ip", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.gateway, "g_way", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.subnet, "s_net", "0.0.0.0");
+
+  preferences_.end();
 }
 
-void State::clear_user() {
-  preferences.begin("user", false);
-  preferences.clear();
-  preferences.end();
+void DeviceState::clear_user() {
+  preferences_.begin("user", false);
+  preferences_.clear();
+  preferences_.end();
 }
 
-void State::save_persisted() {
-  preferences.begin("persisted", false);
-  preferences.putBool("lb_mode", m_persisted.low_batt_mode);
-  preferences.putBool("wifi_done", m_persisted.wifi_done);
-  preferences.putBool("setup_done", m_persisted.setup_done);
-  preferences.putString("last_sw", m_persisted.last_sw_ver);
-  preferences.putBool("u_awake", m_persisted.user_awake_mode);
-  preferences.putBool("wifi_qc", m_persisted.wifi_quick_connect);
-  preferences.putBool("chg_cpt_shwn", m_persisted.charge_complete_showing);
-  preferences.putBool("info_shwn", m_persisted.info_screen_showing);
-  preferences.putBool("chk_conn", m_persisted.check_connection);
-  preferences.putUInt("faild_cons", m_persisted.failed_connections);
-  preferences.putBool("rst_to_w_stp", m_persisted.restart_to_wifi_setup);
-  preferences.putBool("rst_to_stp", m_persisted.restart_to_setup);
-  preferences.putBool("send_adisc", m_persisted.send_discovery_config);
-  preferences.putBool("silent_rst", m_persisted.silent_restart);
-  preferences.end();
+void DeviceState::save_persisted() {
+  preferences_.begin("persisted", false);
+  preferences_.putBool("lb_mode", persisted_.low_batt_mode);
+  preferences_.putBool("wifi_done", persisted_.wifi_done);
+  preferences_.putBool("setup_done", persisted_.setup_done);
+  preferences_.putString("last_sw", persisted_.last_sw_ver);
+  preferences_.putBool("u_awake", persisted_.user_awake_mode);
+  preferences_.putBool("wifi_qc", persisted_.wifi_quick_connect);
+  preferences_.putBool("chg_cpt_shwn", persisted_.charge_complete_showing);
+  preferences_.putBool("info_shwn", persisted_.info_screen_showing);
+  preferences_.putBool("chk_conn", persisted_.check_connection);
+  preferences_.putUInt("faild_cons", persisted_.failed_connections);
+  preferences_.putBool("rst_to_w_stp", persisted_.restart_to_wifi_setup);
+  preferences_.putBool("rst_to_stp", persisted_.restart_to_setup);
+  preferences_.putBool("send_adisc", persisted_.send_discovery_config);
+  preferences_.putBool("silent_rst", persisted_.silent_restart);
+  preferences_.end();
 }
 
-void State::load_persisted() {
-  preferences.begin("persisted", false);
-  m_persisted.low_batt_mode = preferences.getBool("lb_mode", false);
-  m_persisted.wifi_done = preferences.getBool("wifi_done", false);
-  m_persisted.setup_done = preferences.getBool("setup_done", false);
-  m_persisted.last_sw_ver = preferences.getString("last_sw", "");
-  m_persisted.user_awake_mode = preferences.getBool("u_awake", false);
-  m_persisted.wifi_quick_connect = preferences.getBool("wifi_qc", false);
-  m_persisted.charge_complete_showing =
-      preferences.getBool("chg_cpt_shwn", false);
-  m_persisted.info_screen_showing = preferences.getBool("info_shwn", false);
-  m_persisted.check_connection = preferences.getBool("chk_conn", false);
-  m_persisted.failed_connections = preferences.getUInt("faild_cons", 0);
-  m_persisted.restart_to_wifi_setup =
-      preferences.getBool("rst_to_w_stp", false);
-  m_persisted.restart_to_setup = preferences.getBool("rst_to_stp", false);
-  m_persisted.send_discovery_config = preferences.getBool("send_adisc", false);
-  m_persisted.silent_restart = preferences.getBool("silent_rst", false);
-  preferences.end();
+void DeviceState::load_persisted() {
+  preferences_.begin("persisted", false);
+  persisted_.low_batt_mode = preferences_.getBool("lb_mode", false);
+  persisted_.wifi_done = preferences_.getBool("wifi_done", false);
+  persisted_.setup_done = preferences_.getBool("setup_done", false);
+  persisted_.last_sw_ver = preferences_.getString("last_sw", "");
+  persisted_.user_awake_mode = preferences_.getBool("u_awake", false);
+  persisted_.wifi_quick_connect = preferences_.getBool("wifi_qc", false);
+  persisted_.charge_complete_showing =
+      preferences_.getBool("chg_cpt_shwn", false);
+  persisted_.info_screen_showing = preferences_.getBool("info_shwn", false);
+  persisted_.check_connection = preferences_.getBool("chk_conn", false);
+  persisted_.failed_connections = preferences_.getUInt("faild_cons", 0);
+  persisted_.restart_to_wifi_setup =
+      preferences_.getBool("rst_to_w_stp", false);
+  persisted_.restart_to_setup = preferences_.getBool("rst_to_stp", false);
+  persisted_.send_discovery_config = preferences_.getBool("send_adisc", false);
+  persisted_.silent_restart = preferences_.getBool("silent_rst", false);
+  preferences_.end();
 }
 
-void State::clear_persisted() {
-  preferences.begin("persisted", false);
-  preferences.clear();
-  preferences.end();
+void DeviceState::clear_persisted() {
+  preferences_.begin("persisted", false);
+  preferences_.clear();
+  preferences_.end();
 }
 
-void State::clear_persisted_flags() {
-  m_persisted.wifi_quick_connect = false;
-  m_persisted.charge_complete_showing = false;
-  m_persisted.info_screen_showing = false;
-  m_persisted.check_connection = false;
-  m_persisted.failed_connections = 0;
-  m_persisted.restart_to_wifi_setup = false;
-  m_persisted.restart_to_setup = false;
-  m_persisted.silent_restart = false;
+void DeviceState::clear_persisted_flags() {
+  persisted_.wifi_quick_connect = false;
+  persisted_.charge_complete_showing = false;
+  persisted_.info_screen_showing = false;
+  persisted_.check_connection = false;
+  persisted_.failed_connections = 0;
+  persisted_.restart_to_wifi_setup = false;
+  persisted_.restart_to_setup = false;
+  persisted_.silent_restart = false;
   save_all();
 }
 
-void State::save_all() {
-  log_d("[PREF] state save all");
+void DeviceState::save_all() {
+  debug("state save all");
   save_user();
   save_persisted();
 }
 
-void State::load_all() {
-  log_d("[PREF] state load all");
+void DeviceState::load_all() {
+  debug("state load all");
   load_factory();
   load_user();
   load_persisted();
-  set_topics();
 }
 
-void State::clear_all() {
-  log_d("[PREF] state clear all");
+void DeviceState::clear_all() {
+  debug("state clear all");
   clear_user();
   clear_persisted();
 }
 
-String State::get_btn_label(uint8_t i) {
+const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
+  static ButtonLabel noLabel;
   if (i < NUM_BUTTONS) {
-    return m_personalization.btn_labels[i];
+    return user_preferences_.btn_labels[i];
   } else {
-    return "";
+    return noLabel;
   }
 }
 
-void State::set_btn_label(uint8_t i, String label) {
+void DeviceState::set_btn_label(uint8_t i, const char* label) {
   if (i < NUM_BUTTONS) {
-    m_personalization.btn_labels[i] = label.substring(0, BTN_LABEL_MAXLEN);
+    user_preferences_.btn_labels[i].set(label);
   }
 }
 
-void State::set_topics() {
-  m_topics.t_common =
-      m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
-  m_topics.t_cmd = m_topics.t_common + "cmd/";
-
-  // button press topics
-  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    m_topics.t_btn_press[i] = m_topics.t_common + "button_" + String(i + 1);
-    m_topics.t_btn_press_double[i] =
-        m_topics.t_common + "button_" + String(i + 1) + "_double";
-    m_topics.t_btn_press_triple[i] =
-        m_topics.t_common + "button_" + String(i + 1) + "_triple";
-    m_topics.t_btn_press_quad[i] =
-        m_topics.t_common + "button_" + String(i + 1) + "_quad";
-  }
-
-  // sensors
-  m_topics.t_temperature = m_topics.t_common + "temperature";
-  m_topics.t_humidity = m_topics.t_common + "humidity";
-  m_topics.t_battery = m_topics.t_common + "battery";
-
-  // sensor interval
-  m_topics.t_sensor_interval_state = m_topics.t_common + "sensor_interval";
-  m_topics.t_sensor_interval_cmd = m_topics.t_cmd + "sensor_interval";
-
-  // button label state & cmd
-  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    m_topics.t_btn_label_state[i] =
-        m_topics.t_common + "btn_" + String(i + 1) + "_label";
-    m_topics.t_btn_label_cmd[i] =
-        m_topics.t_cmd + "btn_" + String(i + 1) + "_label";
-  }
-
-  // awake mode
-  m_topics.t_awake_mode_state = m_topics.t_common + "awake_mode";
-  m_topics.t_awake_mode_cmd = m_topics.t_cmd + "awake_mode";
-  m_topics.t_awake_mode_avlb = m_topics.t_awake_mode_state + "/available";
-}
-
-String State::get_button_topic(uint8_t btn_id, Button::ButtonAction action) {
-  if (btn_id < 1 || btn_id > NUM_BUTTONS) {
-    return "";
-  }
-  String append;
-  switch (action) {
-    case Button::SINGLE:
-      append = "";
-      break;
-    case Button::DOUBLE:
-      append = "_double";
-      break;
-    case Button::TRIPLE:
-      append = "_triple";
-      break;
-    case Button::QUAD:
-      append = "_quad";
-      break;
-    default:
-      return "";
-  }
-  String topic_common =
-      m_network.mqtt.base_topic + "/" + m_personalization.device_name + "/";
-  return topic_common + "button_" + String(btn_id) + append;
+void DeviceState::_load_to_ip_address(IPAddress& destination, const char* key,
+                                      const char* defaultValue) {
+  char buffer[16];
+  auto ret = preferences_.getString(key, buffer, 16);
+  if (ret == 0)
+    destination.fromString(defaultValue);
+  else
+    destination.fromString(buffer);
 }

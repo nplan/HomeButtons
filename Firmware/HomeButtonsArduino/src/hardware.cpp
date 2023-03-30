@@ -1,79 +1,77 @@
 #include "hardware.h"
+#include "logger.h"
 
 #include <Wire.h>
 
 #include "Adafruit_SHTC3.h"
 
-// Struct containing current hardware configuration
-HardwareDefinition HW;
-
 // Temperature & humidity sensor
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
-void HardwareDefinition::init(String hw_version) {
+void HardwareDefinition::init(const HWVersion &hw_version) {
   if (hw_version == "1.0") {
-    HW = hw_rev_1_0;
-    log_i("configured for hw version: 1.0");
+    load_hw_rev_1_0();
+    info("configured for hw version: 1.0");
   } else if (hw_version == "2.0") {
-    HW = hw_rev_2_0;
-    log_i("configured for hw version: 2.0");
+    load_hw_rev_2_0();
+    info("configured for hw version: 2.0");
   } else if (hw_version == "2.1") {
-    HW = hw_rev_2_0;
-    log_i("configured for hw version: 2.1");
+    load_hw_rev_2_0();
+    info("configured for hw version: 2.1");
   } else if (hw_version == "2.2") {
-    HW = hw_rev_2_2;
-    log_i("configured for hw version: 2.2");
+    load_hw_rev_2_2();
+    info("configured for hw version: 2.2");
   } else if (hw_version == "2.3") {
-    HW = hw_rev_2_3;
-    log_i("configured for hw version: 2.3");
+    load_hw_rev_2_3();
+    info("configured for hw version: 2.3");
   } else {
-    log_e("HW rev %s not supported", hw_version);
+    error("HW rev %s not supported", hw_version.c_str());
   }
 }
 
 void HardwareDefinition::begin() {
-  pinMode(HW.BTN1_PIN, INPUT);
-  pinMode(HW.BTN2_PIN, INPUT);
-  pinMode(HW.BTN3_PIN, INPUT);
-  pinMode(HW.BTN4_PIN, INPUT);
-  pinMode(HW.BTN5_PIN, INPUT);
-  pinMode(HW.BTN6_PIN, INPUT);
+  pinMode(BTN1_PIN, INPUT);
+  pinMode(BTN2_PIN, INPUT);
+  pinMode(BTN3_PIN, INPUT);
+  pinMode(BTN4_PIN, INPUT);
+  pinMode(BTN5_PIN, INPUT);
+  pinMode(BTN6_PIN, INPUT);
 
-  pinMode(HW.CHARGER_STDBY, INPUT_PULLUP);
+  pinMode(CHARGER_STDBY, INPUT_PULLUP);
 
-  if (HW.version >= semver::version{2, 2, 0}) {
-    pinMode(HW.DC_IN_DETECT, INPUT);
-    pinMode(HW.CHG_ENABLE, OUTPUT);
+  if (version >= semver::version{2, 2, 0}) {
+    pinMode(DC_IN_DETECT, INPUT);
+    pinMode(CHG_ENABLE, OUTPUT);
   }
 
-  ledcSetup(HW.LED1_CH, HW.LED_FREQ, HW.LED_RES);
-  ledcAttachPin(HW.LED1_PIN, HW.LED1_CH);
+  ledcSetup(LED1_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED1_PIN, LED1_CH);
 
-  ledcSetup(HW.LED2_CH, HW.LED_FREQ, HW.LED_RES);
-  ledcAttachPin(HW.LED2_PIN, HW.LED2_CH);
+  ledcSetup(LED2_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED2_PIN, LED2_CH);
 
-  ledcSetup(HW.LED3_CH, HW.LED_FREQ, HW.LED_RES);
-  ledcAttachPin(HW.LED3_PIN, HW.LED3_CH);
+  ledcSetup(LED3_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED3_PIN, LED3_CH);
 
-  ledcSetup(HW.LED4_CH, HW.LED_FREQ, HW.LED_RES);
-  ledcAttachPin(HW.LED4_PIN, HW.LED4_CH);
+  ledcSetup(LED4_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED4_PIN, LED4_CH);
 
-  ledcSetup(HW.LED5_CH, HW.LED_FREQ, HW.LED_RES);
-  ledcAttachPin(HW.LED5_PIN, HW.LED5_CH);
+  ledcSetup(LED5_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED5_PIN, LED5_CH);
 
-  ledcSetup(HW.LED6_CH, HW.LED_FREQ, HW.LED_RES);
-  ledcAttachPin(HW.LED6_PIN, HW.LED6_CH);
+  ledcSetup(LED6_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED6_PIN, LED6_CH);
 
   // battery voltage adc
-  analogReadResolution(HW.BAT_RES_BITS);
-  analogSetPinAttenuation(HW.VBAT_ADC, ADC_11db);
+  analogReadResolution(BAT_RES_BITS);
+  analogSetPinAttenuation(VBAT_ADC, ADC_11db);
 }
 
-bool HardwareDefinition::digitalReadAny() {
-  return digitalRead(HW.BTN1_PIN) || digitalRead(HW.BTN2_PIN) ||
-         digitalRead(HW.BTN3_PIN) || digitalRead(HW.BTN4_PIN) ||
-         digitalRead(HW.BTN5_PIN) || digitalRead(HW.BTN6_PIN);
+bool HardwareDefinition::any_button_pressed() {
+  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
+         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
+         digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
 }
 
 void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
@@ -84,22 +82,22 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
   uint8_t ch;
   switch (num) {
     case 1:
-      ch = HW.LED1_CH;
+      ch = LED1_CH;
       break;
     case 2:
-      ch = HW.LED6_CH;
+      ch = LED6_CH;
       break;
     case 3:
-      ch = HW.LED2_CH;
+      ch = LED2_CH;
       break;
     case 4:
-      ch = HW.LED5_CH;
+      ch = LED5_CH;
       break;
     case 5:
-      ch = HW.LED3_CH;
+      ch = LED3_CH;
       break;
     case 6:
-      ch = HW.LED4_CH;
+      ch = LED4_CH;
       break;
     default:
       return;
@@ -108,12 +106,12 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
 }
 
 void HardwareDefinition::set_all_leds(uint8_t brightness) {
-  set_led(HW.LED1_CH, brightness);
-  set_led(HW.LED2_CH, brightness);
-  set_led(HW.LED3_CH, brightness);
-  set_led(HW.LED4_CH, brightness);
-  set_led(HW.LED5_CH, brightness);
-  set_led(HW.LED6_CH, brightness);
+  set_led(LED1_CH, brightness);
+  set_led(LED2_CH, brightness);
+  set_led(LED3_CH, brightness);
+  set_led(LED4_CH, brightness);
+  set_led(LED5_CH, brightness);
+  set_led(LED6_CH, brightness);
 }
 
 void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
@@ -156,14 +154,13 @@ void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
 }
 
 float HardwareDefinition::read_battery_voltage() {
-  return analogRead(HW.VBAT_ADC) / 4095.0 * HW.BATT_ADC_REF_VOLT /
-         HW.BATT_DIVIDER;
+  return analogRead(VBAT_ADC) / 4095.0 * BATT_ADC_REF_VOLT / BATT_DIVIDER;
 }
 
 uint8_t HardwareDefinition::read_battery_percent() {
   if (!is_battery_present()) return 0;
-  float pct = 100 * (read_battery_voltage() - HW.BATT_EMPTY_VOLT) /
-              (HW.BATT_FULL_VOLT - HW.BATT_EMPTY_VOLT);
+  float pct = 100 * (read_battery_voltage() - BATT_EMPTY_VOLT) /
+              (BATT_FULL_VOLT - BATT_EMPTY_VOLT);
   if (pct < 0.0)
     pct = 0;
   else if (pct > 100.0)
@@ -173,8 +170,8 @@ uint8_t HardwareDefinition::read_battery_percent() {
 
 void HardwareDefinition::read_temp_hmd(float &temp, float &hmd) {
   shtc3_wire.begin(
-      (int)HW.SDA,
-      (int)HW.SCL);  // must be cast to int otherwise wrong begin() is called
+      (int)SDA,
+      (int)SCL);  // must be cast to int otherwise wrong begin() is called
   shtc3.begin(&shtc3_wire);
   sensors_event_t humidity_event, temp_event;
   shtc3.getEvent(&humidity_event, &temp_event);
@@ -184,33 +181,265 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd) {
 }
 
 bool HardwareDefinition::is_charger_in_standby() {
-  return !digitalRead(HW.CHARGER_STDBY);
+  return !digitalRead(CHARGER_STDBY);
 }
 
 bool HardwareDefinition::is_dc_connected() {
-  if (HW.version >= semver::version{2, 2, 0}) {
-    return digitalRead(HW.DC_IN_DETECT);
+  if (version >= semver::version{2, 2, 0}) {
+    return digitalRead(DC_IN_DETECT);
   } else {
     // hardware hack for powering v2.1 with USB-C
-    return HardwareDefinition::read_battery_voltage() >= HW.DC_DETECT_VOLT;
+    return HardwareDefinition::read_battery_voltage() >= DC_DETECT_VOLT;
   }
 }
 
 void HardwareDefinition::enable_charger(bool enable) {
-  if (HW.version >= semver::version{2, 2, 0}) {
-    digitalWrite(HW.CHG_ENABLE, enable);
-    log_d("[HW] charger enabled: %d", enable);
+  if (version >= semver::version{2, 2, 0}) {
+    digitalWrite(CHG_ENABLE, enable);
+    debug("charger enabled: %d", enable);
   } else {
-    log_d("[HW] this HW version doesn't support charger control.");
+    debug("this HW version doesn't support charger control.");
   }
 }
 
 bool HardwareDefinition::is_battery_present() {
   float volt = read_battery_voltage();
-  if (HW.version >= semver::version{2, 2, 0}) {
-    return volt >= HW.BATT_PRESENT_VOLT;
+  if (version >= semver::version{2, 2, 0}) {
+    return volt >= BATT_PRESENT_VOLT;
   } else {
     // hardware hack for powering v2.1 with USB-C
-    return volt >= HW.BATT_PRESENT_VOLT && volt < HW.DC_DETECT_VOLT;
+    return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
   }
+}
+
+void HardwareDefinition::load_hw_rev_1_0() {  // ------ PIN definitions ------
+  version = semver::version{1, 0, 0};
+  BTN1_PIN = 1;
+  BTN2_PIN = 2;
+  BTN3_PIN = 3;
+  BTN4_PIN = 4;
+  BTN5_PIN = 5;
+  BTN6_PIN = 6;
+
+  LED1_PIN = 15;
+  LED2_PIN = 16;
+  LED3_PIN = 17;
+  LED4_PIN = 37;
+  LED5_PIN = 38;
+  LED6_PIN = 45;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 14;
+  CHARGER_STDBY = 12;
+  BOOST_EN = 13;
+  DC_IN_DETECT = 0;  // Not available
+  CHG_ENABLE = 0;    // Not available
+
+  EINK_CS = 5;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+  LED5_CH = 4;
+  LED6_CH = 5;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 20;
+
+  // ------ battery reading ------“
+  BAT_RES_BITS = 12;
+  BATT_DIVIDER = 0.5;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 3.3;
+  BATT_HYSTERESIS_VOLT = 3.5;
+  WARN_BATT_VOLT = 3.5;
+  BATT_FULL_VOLT = 4.2;
+  BATT_EMPTY_VOLT = 3.3;
+  BATT_PRESENT_VOLT = 2.7;
+  DC_DETECT_VOLT = 4.5;
+  CHARGE_HYSTERESIS_VOLT = 4.0;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x7E;
+}
+
+void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
+  version = semver::version{2, 0, 0};
+  BTN1_PIN = 5;
+  BTN2_PIN = 6;
+  BTN3_PIN = 21;
+  BTN4_PIN = 1;
+  BTN5_PIN = 3;
+  BTN6_PIN = 4;
+
+  LED1_PIN = 15;
+  LED2_PIN = 16;
+  LED3_PIN = 17;
+  LED4_PIN = 2;
+  LED5_PIN = 38;
+  LED6_PIN = 37;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 14;
+  CHARGER_STDBY = 12;
+  BOOST_EN = 13;
+  DC_IN_DETECT = 0;  // Not available
+  CHG_ENABLE = 0;    // Not available
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+  LED5_CH = 4;
+  LED6_CH = 5;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 100;
+
+  // ------ battery reading ------“
+  BAT_RES_BITS = 12;
+  BATT_DIVIDER = 0.5;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 3.3;
+  BATT_HYSTERESIS_VOLT = 3.4;
+  WARN_BATT_VOLT = 3.5;
+  BATT_FULL_VOLT = 4.2;
+  BATT_EMPTY_VOLT = 3.3;
+  BATT_PRESENT_VOLT = 2.7;
+  DC_DETECT_VOLT = 4.5;
+  CHARGE_HYSTERESIS_VOLT = 4.0;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x20007A;
+}
+
+void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
+  version = semver::version{2, 2, 0};
+  BTN1_PIN = 5;
+  BTN2_PIN = 6;
+  BTN3_PIN = 21;
+  BTN4_PIN = 1;
+  BTN5_PIN = 3;
+  BTN6_PIN = 4;
+
+  LED1_PIN = 15;
+  LED2_PIN = 16;
+  LED3_PIN = 17;
+  LED4_PIN = 2;
+  LED5_PIN = 38;
+  LED6_PIN = 37;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 14;
+  CHARGER_STDBY = 12;
+  BOOST_EN = 13;
+  DC_IN_DETECT = 33;
+  CHG_ENABLE = 45;
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+  LED5_CH = 4;
+  LED6_CH = 5;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 100;
+
+  // ------ battery reading ------“
+  BAT_RES_BITS = 12;
+  BATT_DIVIDER = 0.5;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 3.3;
+  BATT_HYSTERESIS_VOLT = 3.4;
+  WARN_BATT_VOLT = 3.5;
+  BATT_FULL_VOLT = 4.2;
+  BATT_EMPTY_VOLT = 3.3;
+  BATT_PRESENT_VOLT = 2.7;
+  DC_DETECT_VOLT = 4.5;
+  CHARGE_HYSTERESIS_VOLT = 4.0;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x20007A;
+}
+
+void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
+  version = semver::version{2, 3, 0};
+  BTN1_PIN = 5;
+  BTN2_PIN = 6;
+  BTN3_PIN = 21;
+  BTN4_PIN = 1;
+  BTN5_PIN = 14;
+  BTN6_PIN = 4;
+
+  LED1_PIN = 15;
+  LED2_PIN = 16;
+  LED3_PIN = 17;
+  LED4_PIN = 2;
+  LED5_PIN = 38;
+  LED6_PIN = 37;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 3;
+  CHARGER_STDBY = 12;
+  BOOST_EN = 13;
+  DC_IN_DETECT = 33;
+  CHG_ENABLE = 45;
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+  LED5_CH = 4;
+  LED6_CH = 5;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 100;
+
+  // ------ battery reading ------“
+  BAT_RES_BITS = 12;
+  BATT_DIVIDER = 0.5;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 3.3;
+  BATT_HYSTERESIS_VOLT = 3.4;
+  WARN_BATT_VOLT = 3.5;
+  BATT_FULL_VOLT = 4.2;
+  BATT_EMPTY_VOLT = 3.3;
+  BATT_PRESENT_VOLT = 2.7;
+  DC_DETECT_VOLT = 4.5;
+  CHARGE_HYSTERESIS_VOLT = 4.0;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x204072;
 }

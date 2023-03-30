@@ -28,13 +28,11 @@ const int HEIGHT = 296;
        : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
 
 static GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
-                            MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>* disp;
+                            MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> *disp;
 
 static U8G2_FOR_ADAFRUIT_GFX u8g2;
 
-Display display = {};
-
-void Display::begin() {
+void Display::begin(HardwareDefinition &HW) {
   if (state != State::IDLE) return;
   disp = new GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
                                   MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
@@ -47,13 +45,13 @@ void Display::begin() {
   draw_ui_state = {};
   pre_disappear_ui_state = {};
   state = State::ACTIVE;
-  log_i("[DISP] begin");
+  info("begin");
 }
 
 void Display::end() {
   if (state != State::ACTIVE) return;
   state = State::CMD_END;
-  log_d("[DISP] cmd end");
+  debug("cmd end");
 }
 
 void Display::update() {
@@ -66,7 +64,7 @@ void Display::update() {
     } else {
       disp->hibernate();
       state = State::IDLE;
-      log_i("[DISP] ended.");
+      info("ended.");
       return;
     }
   } else if (current_ui_state.disappearing) {
@@ -94,8 +92,8 @@ void Display::update() {
     return;
   }
 
-  log_d("[DISP] update: page: %d; disappearing: %d, msg: %s",
-        draw_ui_state.page, draw_ui_state.disappearing,
+  debug("update: page: %d; disappearing: %d, msg: %s",
+        static_cast<int>(draw_ui_state.page), draw_ui_state.disappearing,
         draw_ui_state.message.c_str());
 
   redraw_in_progress = true;
@@ -142,12 +140,12 @@ void Display::update() {
   if (state == State::ENDING) {
     disp->hibernate();
     state = State::IDLE;
-    log_i("[DISP] ended.");
+    info("ended.");
   }
 }
 
-void Display::disp_message(String message, uint32_t duration) {
-  UIState new_cmd_state{.page = DisplayPage::MESSAGE, .message = message};
+void Display::disp_message(const char *message, uint32_t duration) {
+  UIState new_cmd_state{DisplayPage::MESSAGE, UIState::MessageType{message}};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
@@ -155,16 +153,17 @@ void Display::disp_message(String message, uint32_t duration) {
   set_cmd_state(new_cmd_state);
 }
 
-void Display::disp_message_large(String message, uint32_t duration) {
-  UIState new_cmd_state{.page = DisplayPage::MESSAGE_LARGE, .message = message};
+void Display::disp_message_large(const char *message, uint32_t duration) {
+  UIState new_cmd_state{DisplayPage::MESSAGE_LARGE,
+                        UIState::MessageType{message}};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
   }
   set_cmd_state(new_cmd_state);
 }
-void Display::disp_error(String message, uint32_t duration) {
-  UIState new_cmd_state{.page = DisplayPage::ERROR, .message = message};
+void Display::disp_error(const char *message, uint32_t duration) {
+  UIState new_cmd_state{DisplayPage::ERROR, UIState::MessageType{message}};
   if (duration > 0) {
     new_cmd_state.disappearing = true;
     new_cmd_state.disappear_timeout = duration;
@@ -173,27 +172,27 @@ void Display::disp_error(String message, uint32_t duration) {
 }
 
 void Display::disp_main() {
-  UIState new_cmd_state{.page = DisplayPage::MAIN};
+  UIState new_cmd_state{DisplayPage::MAIN};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_info() {
-  UIState new_cmd_state{.page = DisplayPage::INFO};
+  UIState new_cmd_state{DisplayPage::INFO};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_welcome() {
-  UIState new_cmd_state{.page = DisplayPage::WELCOME};
+  UIState new_cmd_state{DisplayPage::WELCOME};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_ap_config() {
-  UIState new_cmd_state{.page = DisplayPage::AP_CONFIG};
+  UIState new_cmd_state{DisplayPage::AP_CONFIG};
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_web_config() {
-  UIState new_cmd_state{.page = DisplayPage::WEB_CONFIG};
+  UIState new_cmd_state{DisplayPage::WEB_CONFIG};
   set_cmd_state(new_cmd_state);
 }
 
@@ -218,7 +217,8 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
-void Display::draw_message(String message, bool error, bool large) {
+void Display::draw_message(const UIState::MessageType &message, bool error,
+                           bool large) {
   disp->setRotation(0);
   disp->setTextColor(text_color);
   disp->setTextWrap(true);
@@ -235,19 +235,19 @@ void Display::draw_message(String message, bool error, bool large) {
       disp->setFont(&FreeMonoBold12pt7b);
       disp->setCursor(0, 30);
     }
-    disp->print(message);
+    disp->print(message.c_str());
   } else {
     disp->setFont(&FreeMonoBold12pt7b);
     disp->setCursor(0, 0);
     int16_t x, y;
     uint16_t w, h;
-    String text = "ERROR";
+    const char *text = "ERROR";
     disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
     disp->setCursor(WIDTH / 2 - w / 2, 20);
     disp->print(text);
     disp->setFont(&FreeMono9pt7b);
     disp->setCursor(0, 60);
-    disp->print(message);
+    disp->print(message.c_str());
   }
   disp->display();
 }
@@ -256,7 +256,6 @@ void Display::draw_main() {
   const uint8_t num_buttons = 6;
   const uint16_t min_btn_clearance = 14;
   const uint16_t h_padding = 5;
-  const uint16_t W = WIDTH / 2;
   const uint16_t heights[] = {
       static_cast<uint16_t>(round(HEIGHT / 12.)),
       static_cast<uint16_t>(round(HEIGHT / 12. + HEIGHT / 6.)),
@@ -264,8 +263,6 @@ void Display::draw_main() {
       static_cast<uint16_t>(round(HEIGHT / 12. + 3 * HEIGHT / 6.)),
       static_cast<uint16_t>(round(HEIGHT / 12. + 4 * HEIGHT / 6.)),
       static_cast<uint16_t>(round(HEIGHT / 12. + 5 * HEIGHT / 6.))};
-
-  uint16_t w, h;
 
   disp->setRotation(0);
   disp->setFullWindow();
@@ -277,13 +274,14 @@ void Display::draw_main() {
   disp->fillScreen(bg_color);
 
   // charging line
-  if (device_state.sensors().charging) {
+  if (device_state_.sensors().charging) {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
   // Loop through buttons
   for (uint16_t i = 0; i < num_buttons; i++) {
-    String t = device_state.get_btn_label(i);
+    uint16_t w, h;
+    UIState::MessageType t{device_state_.get_btn_label(i).c_str()};
 
     u8g2.setFont(u8g2_font_helvB24_te);
     w = u8g2.getUTF8Width(t.c_str());
@@ -313,7 +311,7 @@ void Display::draw_main() {
     }
     h_pos = heights[i] + h / 2;
     u8g2.setCursor(w_pos, h_pos);
-    u8g2.print(t);
+    u8g2.print(t.c_str());
   }
   disp->display();
 }
@@ -329,53 +327,53 @@ void Display::draw_info() {
 
   int16_t x, y;
   uint16_t w, h;
-  String text;
+  UIState::MessageType text;
 
   text = "- Temp -";
   disp->setFont(&FreeMono9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 30);
-  disp->print(text);
+  disp->print(text.c_str());
 
-  text = String(device_state.sensors().temperature, 1) + String(" C");
+  text = UIState::MessageType("%.1f C", device_state_.sensors().temperature);
   disp->setFont(&FreeSansBold18pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
-  disp->print(text);
+  disp->print(text.c_str());
 
   text = "- Humd -";
   disp->setFont(&FreeMono9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 129);
-  disp->print(text);
+  disp->print(text.c_str());
 
-  text = String(device_state.sensors().humidity, 0) + String(" %");
+  text = UIState::MessageType("%.0f %", device_state_.sensors().humidity);
   disp->setFont(&FreeSansBold18pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
-  disp->print(text);
+  disp->print(text.c_str());
 
   text = "- Batt -";
   disp->setFont(&FreeMono9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 228);
-  disp->print(text);
+  disp->print(text.c_str());
 
-  if (device_state.sensors().battery_present) {
-    text = String(device_state.sensors().battery_pct) + String(" %");
+  if (device_state_.sensors().battery_present) {
+    text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
   } else {
     text = "-";
   }
   disp->setFont(&FreeSansBold18pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
+  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 268);
-  disp->print(text);
+  disp->print(text.c_str());
 
   // device name
   disp->setFont();
   disp->setTextSize(1);
   disp->setCursor(0, 288);
-  disp->print(device_state.device_name());
+  disp->print(device_state_.device_name().c_str());
 
   disp->display();
 }
@@ -391,9 +389,7 @@ void Display::draw_welcome() {
 
   int16_t x, y;
   uint16_t w, h;
-  String text;
-
-  text = "Home Buttons";
+  const char *text = "Home Buttons";
   disp->setFont(&FreeSansBold9pt7b);
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 40);
@@ -419,12 +415,12 @@ void Display::draw_welcome() {
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 165;
-  for (uint8_t y = 0; y < qrcode.size; y++) {
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
     // Each horizontal module
-    for (uint8_t x = 0; x < qrcode.size; x++) {
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
       // Display each module
-      if (qrcode_getModule(&qrcode, x, y)) {
-        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
       }
     }
   }
@@ -433,23 +429,27 @@ void Display::draw_welcome() {
   disp->setTextSize(1);
 
   disp->setCursor(0, 265);
-  String sw_ver = String("Software: ") + SW_VERSION;
-  disp->print(sw_ver);
+  UIState::MessageType sw_ver = UIState::MessageType("Software: ") + SW_VERSION;
+  disp->print(sw_ver.c_str());
 
   disp->setCursor(0, 275);
-  String model_info = String("Model: ") + device_state.factory().model_id +
-                      " rev " + device_state.factory().hw_version;
-  disp->print(model_info);
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  disp->print(model_info.c_str());
 
   disp->setCursor(0, 285);
-  disp->print(device_state.factory().unique_id);
+  disp->print(device_state_.factory().unique_id.c_str());
 
   disp->display();
 }
 
 void Display::draw_ap_config() {
-  String contents = String("WIFI:T:WPA;S:") + device_state.network().ap_ssid +
-                    ";P:" + device_state.network().ap_password + ";;";
+  UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") +
+                                  device_state_.get_ap_ssid().c_str() +
+                                  ";P:" + device_state_.get_ap_password() +
+                                  ";;";
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -466,21 +466,19 @@ void Display::draw_ap_config() {
 
   int16_t x, y;
   uint16_t w, h;
-  String text;
-
-  text = "Scan:";
+  const char *text = "Scan:";
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 20);
   disp->print(text);
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 35;
-  for (uint8_t y = 0; y < qrcode.size; y++) {
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
     // Each horizontal module
-    for (uint8_t x = 0; x < qrcode.size; x++) {
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
       // Display each module
-      if (qrcode_getModule(&qrcode, x, y)) {
-        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
       }
     }
   }
@@ -500,20 +498,21 @@ void Display::draw_ap_config() {
   disp->print("Wi-Fi:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 235);
-  disp->print(device_state.network().ap_ssid.c_str());
+  disp->print(device_state_.get_ap_ssid().c_str());
 
   disp->setFont(&FreeSans9pt7b);
   disp->setCursor(0, 260);
   disp->print("Password:");
   disp->setFont(&FreeSansBold9pt7b);
   disp->setCursor(0, 275);
-  disp->print(device_state.network().ap_password.c_str());
+  disp->print(device_state_.get_ap_password());
 
   disp->display();
 }
 
 void Display::draw_web_config() {
-  String contents = String("http://") + device_state.network().ip;
+  UIState::MessageType contents =
+      UIState::MessageType("http://") + device_state_.ip();
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -530,9 +529,7 @@ void Display::draw_web_config() {
 
   int16_t x, y;
   uint16_t w, h;
-  String text;
-
-  text = "Scan:";
+  const char *text = "Scan:";
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2, 20);
   disp->print(text);
@@ -540,12 +537,12 @@ void Display::draw_web_config() {
   uint16_t qr_x = 23;
   uint16_t qr_y = 35;
 
-  for (uint8_t y = 0; y < qrcode.size; y++) {
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
     // Each horizontal module
-    for (uint8_t x = 0; x < qrcode.size; x++) {
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
       // Display each module
-      if (qrcode_getModule(&qrcode, x, y)) {
-        disp->drawRect(qr_x + x * 2, qr_y + y * 2, 2, 2, GxEPD_BLACK);
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
       }
     }
   }
@@ -565,7 +562,7 @@ void Display::draw_web_config() {
   disp->setCursor(0, 240);
   disp->print("http://");
   disp->setCursor(0, 260);
-  disp->print(device_state.network().ip.c_str());
+  disp->print(device_state_.ip());
 
   disp->display();
 }
@@ -590,9 +587,8 @@ void Display::draw_test(bool invert) {
 
   int16_t x, y;
   uint16_t w, h;
-  String text;
+  const char *text = "TEST";
 
-  text = "TEST";
   disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
 
   disp->setCursor(WIDTH / 2 - w / 2, 90);

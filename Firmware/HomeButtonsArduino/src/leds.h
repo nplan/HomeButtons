@@ -3,18 +3,23 @@
 
 #include "Arduino.h"
 #include "config.h"
+#include "logger.h"
 
-class LEDs {
+struct HardwareDefinition;
+
+class LEDs : public Logger {
  public:
   enum class State { IDLE, ACTIVE };
+
+  LEDs() : Logger("LEDs") {}
 
   void begin();
   void end();
   void blink(uint8_t led_num, uint8_t num_blinks, bool hold = false,
              uint8_t brightness = LED_DFLT_BRIGHT);
-  State get_state();
+  State get_state() const;
 
-  void update();
+  void update(HardwareDefinition& HW);
 
  private:
   enum class CMDState { NONE, CMD_END };
@@ -32,7 +37,5 @@ class LEDs {
   bool new_cmd_blink = false;
   Blink current_blink = {};
 };
-
-extern LEDs leds;
 
 #endif  // HOMEBUTTONS_LEDS_H

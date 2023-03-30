@@ -13,7 +13,7 @@ void Button::begin(uint8_t pin, uint16_t id, bool active_high) {
   this->active_high = active_high;
   attachInterrupt(pin, std::bind(&Button::isr, this), CHANGE);
   begun = true;
-  log_d("[BTN] id %d begun", id);
+  debug("id %d begun", id);
 }
 
 void Button::init_press() {
@@ -27,7 +27,7 @@ void Button::end() {
   detachInterrupt(pin);
   reset();
   begun = false;
-  log_d("[BTN] id %d ended", id);
+  debug("id %d ended", id);
 }
 
 void Button::update() {
@@ -68,7 +68,7 @@ void Button::update() {
           case LONG_2:
           case LONG_3:
           case LONG_4:
-            log_d("[BTN] id %d press: %s", id, get_action_name(action));
+            debug("id %d press: %s", id, get_action_name(action));
             press_finished = true;
             release_start_time = millis();
             state_machine_state = 8;
@@ -100,7 +100,7 @@ void Button::update() {
         press_start_time = millis();
         state_machine_state = 5;
       } else if (since_press_start >= PRESS_TIMEOUT) {
-        log_d("[BTN] id %d press: %s", id, get_action_name(action));
+        debug("id %d press: %s", id, get_action_name(action));
         press_finished = true;
         state_machine_state = 0;
       }
@@ -123,7 +123,7 @@ void Button::update() {
           }
           state_machine_state = 6;
         } else {
-          log_d("[BTN] id %d press: %s", id, get_action_name(action));
+          debug("id %d press: %s", id, get_action_name(action));
           press_finished = true;
           release_start_time = millis();
           state_machine_state = 8;
@@ -148,48 +148,39 @@ void Button::update() {
   }
 }
 
-Button::ButtonAction Button::get_action() { return action; }
+Button::ButtonAction Button::get_action() const { return action; }
 
-bool Button::is_press_finished() { return press_finished; }
+bool Button::is_press_finished() const { return press_finished; }
 
 void Button::clear() { reset(); }
 
-uint8_t Button::get_pin() { return pin; }
+uint8_t Button::get_pin() const { return pin; }
 
-uint16_t Button::get_id() { return id; }
+uint16_t Button::get_id() const { return id; }
 
-String Button::get_action_name(ButtonAction action) {
-  String press;
+const char* Button::get_action_name(ButtonAction action) {
   switch (action) {
     case IDLE:
-      press = "IDLE";
-      break;
+      return "IDLE";
     case SINGLE:
-      press = "SINGLE";
-      break;
+      return "SINGLE";
     case DOUBLE:
-      press = "DOUBLE";
-      break;
+      return "DOUBLE";
     case TRIPLE:
-      press = "TRIPLE";
-      break;
+      return "TRIPLE";
     case QUAD:
-      press = "QUAD";
-      break;
+      return "QUAD";
     case LONG_1:
-      press = "LONG_1";
-      break;
+      return "LONG_1";
     case LONG_2:
-      press = "LONG_2";
-      break;
+      return "LONG_2";
     case LONG_3:
-      press = "LONG_3";
-      break;
+      return "LONG_3";
     case LONG_4:
-      press = "LONG_4";
-      break;
+      return "LONG_4";
+    default:
+      return "";
   }
-  return press;
 }
 
 uint8_t Button::get_action_multi_count(ButtonAction action) {
@@ -221,7 +212,7 @@ void Button::isr() {
   }
 }
 
-bool Button::read_pin() {
+bool Button::read_pin() const {
   if (active_high) {
     return digitalRead(pin);
   } else {

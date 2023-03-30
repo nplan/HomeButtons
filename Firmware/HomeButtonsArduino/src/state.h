@@ -2,28 +2,35 @@
 #define HOMEBUTTONS_STATE_H
 
 #include <Preferences.h>
+
 #include "buttons.h"
 #include "config.h"
+#include "types.h"
+#include "logger.h"
 #include <IPAddress.h>
 
-class State {
+class DeviceState : public Logger {
  private:
   struct Factory {
-    String serial_number = "";  // len = 8
-    String random_id = "";      // len = 6
-    String model_name = "";     // 1 < len < 20
-    String model_id = "";       // len = 2
-    String hw_version = "";     // len = 3
-    String unique_id = "";      // len = 20
-  } m_factory;
+    SerialNumber serial_number;  // len = 8
+    RandomID random_id;          // len = 6
+    ModelName model_name;        // 1 <= len <= 20
+    ModelID model_id;            // len = 2
+    HWVersion hw_version;        // len = 3
+    UniqueID unique_id;          // len = 21
+  } factory_;
 
-  struct Network {
-    String ip = "";
-    String ap_ssid = "";
-    String ap_password = "";
-    IPAddress static_ip;
-    IPAddress gateway;
-    IPAddress subnet;
+  struct UserPreferences {
+    DeviceName device_name;
+    ButtonLabel btn_labels[NUM_BUTTONS];
+    uint16_t sensor_interval = 0;  // minutes
+
+    struct {
+      IPAddress static_ip;
+      IPAddress gateway;
+      IPAddress subnet;
+    } network;
+
     struct {
       String server = "";
       int32_t port = 0;
@@ -32,32 +39,7 @@ class State {
       String base_topic = "";
       String discovery_prefix = "";
     } mqtt;
-  } m_network;
-
-  struct Personalization {
-    String device_name = "";
-    String btn_labels[NUM_BUTTONS];
-    uint16_t sensor_interval = 0;  // minutes
-  } m_personalization;
-
-  struct Topics {
-    String t_common = "";
-    String t_cmd = "";
-    String t_btn_press[NUM_BUTTONS];
-    String t_btn_press_double[NUM_BUTTONS];
-    String t_btn_press_triple[NUM_BUTTONS];
-    String t_btn_press_quad[NUM_BUTTONS];
-    String t_temperature = "";
-    String t_humidity = "";
-    String t_battery = "";
-    String t_sensor_interval_cmd = "";
-    String t_sensor_interval_state = "";
-    String t_btn_label_state[NUM_BUTTONS];
-    String t_btn_label_cmd[NUM_BUTTONS];
-    String t_awake_mode_state = "";
-    String t_awake_mode_cmd = "";
-    String t_awake_mode_avlb = "";
-  } m_topics;
+  } user_preferences_;
 
   struct Persisted {
     // Vars
@@ -77,12 +59,12 @@ class State {
     bool restart_to_setup = false;
     bool send_discovery_config = false;
     bool silent_restart = false;
-  } m_persisted;
+  } persisted_;
 
   struct Flags {
     bool display_redraw = false;
     bool awake_mode = false;
-  } m_flags;
+  } flags_;
 
   struct Sensors {
     float temperature = 0;
@@ -92,65 +74,67 @@ class State {
     bool dc_connected = false;
     bool battery_present = false;
     bool battery_low = false;
-  } m_sensors;
+  } sensors_;
 
  public:
-  const Factory& factory() const { return m_factory; }
-  void set_serial_number(const String& str) { m_factory.serial_number = str; }
-  void set_random_id(const String& str) { m_factory.random_id = str; }
-  void set_model_name(const String& str) { m_factory.model_name = str; }
-  void set_model_id(const String& str) { m_factory.model_id = str; }
-  void set_hw_version(const String& str) { m_factory.hw_version = str; }
-  void set_unique_id(const String& str) { m_factory.unique_id = str; }
+  DeviceState() : Logger("State") {}
+  DeviceState(const DeviceState&) = delete;
 
-  const Network& network() const { return m_network; }
-  void set_ip(const String& str) { m_network.ip = str; }
-  void set_ap_ssid_and_password(const String& ssid, const String& pwd) {
-    m_network.ap_ssid = ssid;
-    m_network.ap_password = pwd;
+  // Factory
+  const Factory& factory() const { return factory_; }
+  void set_serial_number(const SerialNumber& str) {
+    factory_.serial_number = str;
   }
-  void set_mqtt_parameters(const String& server, int32_t port,
-                           const String& user, const String& password,
-                           const String& base_topic,
-                           const String& discovery_prefix) {
-    m_network.mqtt = {server,   port,       user,
-                      password, base_topic, discovery_prefix};
-  }
-  void set_static_ip_config(const IPAddress& static_ip,
-                            const IPAddress& gateway, const IPAddress& subnet) {
-    m_network.static_ip = static_ip;
-    m_network.gateway = gateway;
-    m_network.subnet = subnet;
-  }
+  void set_random_id(const RandomID& str) { factory_.random_id = str; }
+  void set_model_name(const ModelName& str) { factory_.model_name = str; }
+  void set_model_id(const ModelID& str) { factory_.model_id = str; }
+  void set_hw_version(const HWVersion& str) { factory_.hw_version = str; }
+  void set_unique_id(const UniqueID& str) { factory_.unique_id = str; }
 
-  const String& device_name() const { return m_personalization.device_name; }
-  void set_device_name(const String& device_name) {
-    m_personalization.device_name = device_name;
-  }
-  uint16_t sensor_interval() const { return m_personalization.sensor_interval; }
-  void set_sensor_interval(uint16_t interval_min) {
-    m_personalization.sensor_interval = interval_min;
-  }
-  String get_btn_label(uint8_t i);
-  void set_btn_label(uint8_t i, String label);
-
-  const Topics& topics() const { return m_topics; }
-
-  const Persisted& persisted() const { return m_persisted; }
-  Persisted& persisted() { return m_persisted; }
-  const Flags& flags() const { return m_flags; }
-  Flags& flags() { return m_flags; }
-  const Sensors& sensors() const { return m_sensors; }
-  Sensors& sensors() { return m_sensors; }
-
-  // functions
   void save_factory();
   void load_factory();
   void clear_factory();
 
+  // User preferences
+  const UserPreferences& user_preferences() const { return user_preferences_; }
+  void set_mqtt_parameters(const String& server, int32_t port,
+                           const String& user, const String& password,
+                           const String& base_topic,
+                           const String& discovery_prefix) {
+    user_preferences_.mqtt = {server,   port,       user,
+                              password, base_topic, discovery_prefix};
+  }
+  void set_static_ip_config(const IPAddress& static_ip,
+                            const IPAddress& gateway, const IPAddress& subnet) {
+    user_preferences_.network.static_ip = static_ip;
+    user_preferences_.network.gateway = gateway;
+    user_preferences_.network.subnet = subnet;
+  }
+
+  const DeviceName& device_name() const {
+    return user_preferences_.device_name;
+  }
+  void set_device_name(const DeviceName& device_name) {
+    user_preferences_.device_name = device_name;
+  }
+  uint16_t sensor_interval() const { return user_preferences_.sensor_interval; }
+  void set_sensor_interval(uint16_t interval_min) {
+    user_preferences_.sensor_interval = interval_min;
+  }
+  const ButtonLabel& get_btn_label(uint8_t i) const;
+  void set_btn_label(uint8_t i, const char* label);
+
   void save_user();
   void load_user();
   void clear_user();
+
+  // Others
+  const Persisted& persisted() const { return persisted_; }
+  Persisted& persisted() { return persisted_; }
+  const Flags& flags() const { return flags_; }
+  Flags& flags() { return flags_; }
+  const Sensors& sensors() const { return sensors_; }
+  Sensors& sensors() { return sensors_; }
 
   void save_persisted();
   void load_persisted();
@@ -161,13 +145,36 @@ class State {
   void load_all();
   void clear_all();
 
-  void set_topics();
-  String get_button_topic(uint8_t btn_idx, Button::ButtonAction action);
+  // TODO: maybe should be somewhere else
+  StaticString<32> get_ap_ssid() const {
+    return StaticString<32>("HB-") + factory_.random_id.c_str();
+  }
+  const char* get_ap_password() const { return SETUP_AP_PASSWORD; }
+
+  void set_ip(const IPAddress& ip_address) {
+    ip_address_.set("%u.%u.%u.%u", ip_address[0], ip_address[1], ip_address[2],
+                    ip_address[3]);
+  }
+
+  const char* ip() const { return ip_address_.c_str(); }
 
  private:
-  Preferences preferences;
-};
+  template <std::size_t MAX_SIZE>
+  void _load_to_static_string(StaticString<MAX_SIZE>& destination,
+                              const char* key, const char* defaultValue) {
+    char buffer[MAX_SIZE + 1];  // +1 for '\0' at the end
+    auto ret = preferences_.getString(key, buffer, MAX_SIZE + 1);
+    if (ret == 0)
+      destination.set(defaultValue);
+    else
+      destination.set(buffer);
+  }
 
-extern State device_state;
+  void _load_to_ip_address(IPAddress& destination, const char* key,
+                           const char* defaultValue);
+
+  Preferences preferences_;
+  StaticString<15> ip_address_;
+};
 
 #endif  // HOMEBUTTONS_STATE_H
