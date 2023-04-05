@@ -45,6 +45,7 @@ class StaticString {
 
   size_t length() const { return strlen(data_); }
   bool empty() const { return strlen(data_) == 0; }
+  StaticString substring(size_t i) { return substring(i, length()); }
   StaticString substring(size_t i, size_t j) {
     StaticString output;
     if (i < MAX_SIZE) {
