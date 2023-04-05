@@ -1,14 +1,18 @@
 #ifndef HOMEBUTTONS_DISPLAY_H
 #define HOMEBUTTONS_DISPLAY_H
 
-#include "state.h"
 #include <GxEPD2.h>
 #include "static_string.h"
+#include "state.h"
 #include "logger.h"
 
-struct HardwareDefinition;
-class DeviceState;
+// parameters for draw_bmp()
+static constexpr uint16_t input_buffer_pixels = 800;
+static constexpr uint16_t max_palette_pixels = 256;
 
+struct HardwareDefinition;
+
+class DeviceState;
 enum class DisplayPage {
   EMPTY,
   MAIN,
@@ -73,6 +77,17 @@ class Display : public Logger {
 
   const DeviceState& device_state_;
 
+  // ### buffers for draw_bmp()
+  // up to depth 24
+  uint8_t input_buffer[3 * input_buffer_pixels];
+  // palette buffer for depth <= 8 b/w
+  uint8_t mono_palette_buffer[max_palette_pixels / 8];
+  // palette buffer for depth <= 8 c/w
+  uint8_t color_palette_buffer[max_palette_pixels / 8];
+  // palette buffer for depth <= 8 for buffered graphics, needed for 7-color
+  // display
+  uint16_t rgb_palette_buffer[max_palette_pixels];
+
   void set_cmd_state(UIState cmd);
 
   void draw_message(const UIState::MessageType& message, bool error = false,
@@ -85,6 +100,7 @@ class Display : public Logger {
   void draw_test(bool invert = false);
   void draw_white();
   void draw_black();
+  bool draw_bmp_spiffs(const char* filename, int16_t x, int16_t y);
 };
 
 #endif  // HOMEBUTTONS_DISPLAY_H

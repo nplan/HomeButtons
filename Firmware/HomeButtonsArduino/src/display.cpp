@@ -9,15 +9,35 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
 #include <Fonts/FreeSansBold9pt7b.h>
+#include <SPIFFS.h>
 #include <U8g2_for_Adafruit_GFX.h>
 #include <qrcode.h>
 
 #include "bitmaps.h"
 #include "config.h"
 #include "hardware.h"
+#include "types.h"
 
-const int WIDTH = 128;
-const int HEIGHT = 296;
+static constexpr uint16_t WIDTH = 128;
+static constexpr uint16_t HEIGHT = 296;
+
+uint16_t read16(File &f) {
+  // BMP data is stored little-endian, same as Arduino.
+  uint16_t result;
+  ((uint8_t *)&result)[0] = f.read();  // LSB
+  ((uint8_t *)&result)[1] = f.read();  // MSB
+  return result;
+}
+
+uint32_t read32(File &f) {
+  // BMP data is stored little-endian, same as Arduino.
+  uint32_t result;
+  ((uint8_t *)&result)[0] = f.read();  // LSB
+  ((uint8_t *)&result)[1] = f.read();
+  ((uint8_t *)&result)[2] = f.read();
+  ((uint8_t *)&result)[3] = f.read();  // MSB
+  return result;
+}
 
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
@@ -253,7 +273,6 @@ void Display::draw_message(const UIState::MessageType &message, bool error,
 }
 
 void Display::draw_main() {
-  const uint8_t num_buttons = 6;
   const uint16_t min_btn_clearance = 14;
   const uint16_t h_padding = 5;
   const uint16_t heights[] = {
@@ -278,41 +297,62 @@ void Display::draw_main() {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
+  SPIFFS.begin();
   // Loop through buttons
-  for (uint16_t i = 0; i < num_buttons; i++) {
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
     uint16_t w, h;
-    UIState::MessageType t{device_state_.get_btn_label(i).c_str()};
+    ButtonLabel label{device_state_.get_btn_label(i).c_str()};
 
-    u8g2.setFont(u8g2_font_helvB24_te);
-    w = u8g2.getUTF8Width(t.c_str());
-    h = u8g2.getFontAscent();
-    if (w >= WIDTH - min_btn_clearance) {
-      u8g2.setFont(u8g2_font_helvB18_te);
-      w = u8g2.getUTF8Width(t.c_str());
+    // check if label is mdi icon
+    if (label.substring(0, 4) == "mdi:") {
+      StaticString<64> icon = label.substring(4) + ".bmp";
+      // calculate icon position on display
+      uint16_t x = i % 2 == 0 ? 0 : WIDTH / 2;
+      uint16_t y;
+      if (i < 2) {
+        y = 17;
+      } else if (i < 4) {
+        y = 116;
+      } else {
+        y = 215;
+      }
+      bool draw_ok = draw_bmp_spiffs(icon.c_str(), x, y);
+      if (!draw_ok) {
+        disp->drawXBitmap(x, y, square_off_outline_64x64, 64, 64, text_color);
+      }
+    } else {
+      u8g2.setFont(u8g2_font_helvB24_te);
+      w = u8g2.getUTF8Width(label.c_str());
       h = u8g2.getFontAscent();
       if (w >= WIDTH - min_btn_clearance) {
-        t = t.substring(0, t.length() - 1) + ".";
-        while (1) {
-          w = u8g2.getUTF8Width(t.c_str());
-          h = u8g2.getFontAscent();
-          if (w >= WIDTH - min_btn_clearance) {
-            t = t.substring(0, t.length() - 2) + ".";
-          } else {
-            break;
+        u8g2.setFont(u8g2_font_helvB18_te);
+        w = u8g2.getUTF8Width(label.c_str());
+        h = u8g2.getFontAscent();
+        if (w >= WIDTH - min_btn_clearance) {
+          label = label.substring(0, label.length() - 1) + ".";
+          while (1) {
+            w = u8g2.getUTF8Width(label.c_str());
+            h = u8g2.getFontAscent();
+            if (w >= WIDTH - min_btn_clearance) {
+              label = label.substring(0, label.length() - 2) + ".";
+            } else {
+              break;
+            }
           }
         }
       }
+      int16_t w_pos, h_pos;
+      if (i % 2 == 0) {
+        w_pos = h_padding;
+      } else {
+        w_pos = WIDTH - w - h_padding;
+      }
+      h_pos = heights[i] + h / 2;
+      u8g2.setCursor(w_pos, h_pos);
+      u8g2.print(label.c_str());
     }
-    int16_t w_pos, h_pos;
-    if (i % 2 == 0) {
-      w_pos = h_padding;
-    } else {
-      w_pos = WIDTH - w - h_padding;
-    }
-    h_pos = heights[i] + h / 2;
-    u8g2.setCursor(w_pos, h_pos);
-    u8g2.print(t.c_str());
   }
+  SPIFFS.end();
   disp->display();
 }
 
@@ -613,4 +653,169 @@ void Display::draw_black() {
   disp->setFullWindow();
   disp->fillScreen(GxEPD_BLACK);
   disp->display();
+}
+
+// based on GxEPD2_Spiffs_Example.ino - drawBitmapFromSpiffs_Buffered()
+// Warning - SPIFFS.begin() must be called before this function
+bool Display::draw_bmp_spiffs(const char *filename, int16_t x, int16_t y) {
+  uint32_t startTime = millis();
+  if (!SPIFFS.exists(String("/") + filename)) {
+    error("File '%s' not found", filename);
+    return false;
+  }
+  File file;
+  bool valid = false;  // valid format to be handled
+  bool flip = true;    // bitmap is stored bottom-to-top
+  if ((x >= disp->width()) || (y >= disp->height())) return false;
+  debug("Loading file: '%s'", filename);
+  file = SPIFFS.open(String("/") + filename, "r");
+  if (!file) {
+    error("File '%s' error loading", filename);
+    return false;
+  }
+  // Parse BMP header
+  if (read16(file) == 0x4D42) {
+    debug("BMP signature detected");
+    uint32_t fileSize = read32(file);
+    uint32_t creatorBytes = read32(file);
+    (void)creatorBytes;                   // unused
+    uint32_t imageOffset = read32(file);  // Start of image data
+    uint32_t headerSize = read32(file);
+    uint32_t width = read32(file);
+    int32_t height = (int32_t)read32(file);
+    uint16_t planes = read16(file);
+    uint16_t depth = read16(file);  // bits per pixel
+    uint32_t format = read32(file);
+    if ((planes == 1) && ((format == 0) || (format == 3))) {
+      debug("BMP Image Offset: %d", imageOffset);
+      debug("BMP Header size: %d", headerSize);
+      debug("BMP File size: %d", fileSize);
+      debug("BMP Bit Depth: %d", depth);
+      debug("BMP Image size: %d x %d", width, height);
+      // BMP rows are padded (if needed) to 4-byte boundary
+      uint32_t rowSize = (width * depth / 8 + 3) & ~3;
+      if (depth < 8) rowSize = ((width * depth + 8 - depth) / 8 + 3) & ~3;
+      if (height < 0) {
+        height = -height;
+        flip = false;
+      }
+      uint16_t w = width;
+      uint16_t h = height;
+      if ((x + w - 1) >= disp->width()) w = disp->width() - x;
+      if ((y + h - 1) >= disp->height()) h = disp->height() - y;
+      valid = true;
+      uint8_t bitmask = 0xFF;
+      uint8_t bitshift = 8 - depth;
+      uint16_t red, green, blue;
+      bool whitish = false;
+      bool colored = false;
+      if (depth <= 8) {
+        if (depth < 8) bitmask >>= depth;
+        file.seek(imageOffset - (4 << depth));
+        for (uint16_t pn = 0; pn < (1 << depth); pn++) {
+          blue = file.read();
+          green = file.read();
+          red = file.read();
+          file.read();
+          whitish = (red + green + blue) > 3 * 0x80;
+          // reddish or yellowish?
+          colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));
+          if (0 == pn % 8) mono_palette_buffer[pn / 8] = 0;
+          mono_palette_buffer[pn / 8] |= whitish << pn % 8;
+          if (0 == pn % 8) color_palette_buffer[pn / 8] = 0;
+          color_palette_buffer[pn / 8] |= colored << pn % 8;
+          rgb_palette_buffer[pn] = ((red & 0xF8) << 8) | ((green & 0xFC) << 3) |
+                                   ((blue & 0xF8) >> 3);
+        }
+      }
+      uint32_t rowPosition =
+          flip ? imageOffset + (height - h) * rowSize : imageOffset;
+      for (uint16_t row = 0; row < h;
+           row++, rowPosition += rowSize)  // for each line
+      {
+        uint32_t in_remain = rowSize;
+        uint32_t in_idx = 0;
+        uint32_t in_bytes = 0;
+        uint8_t in_byte = 0;  // for depth <= 8
+        uint8_t in_bits = 0;  // for depth <= 8
+        uint16_t color = GxEPD_WHITE;
+        file.seek(rowPosition);
+        for (uint16_t col = 0; col < w; col++)  // for each pixel
+        {
+          // Time to read more pixel data?
+          if (in_idx >= in_bytes)  // ok, exact match for 24bit also (size
+                                   // IS multiple of 3)
+          {
+            in_bytes = file.read(input_buffer, in_remain > sizeof(input_buffer)
+                                                   ? sizeof(input_buffer)
+                                                   : in_remain);
+            in_remain -= in_bytes;
+            in_idx = 0;
+          }
+          switch (depth) {
+            case 24:
+              blue = input_buffer[in_idx++];
+              green = input_buffer[in_idx++];
+              red = input_buffer[in_idx++];
+              whitish = (red + green + blue) > 3 * 0x80;
+              // reddish or yellowish?
+              colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));
+              color = ((red & 0xF8) << 8) | ((green & 0xFC) << 3) |
+                      ((blue & 0xF8) >> 3);
+              break;
+            case 16: {
+              uint8_t lsb = input_buffer[in_idx++];
+              uint8_t msb = input_buffer[in_idx++];
+              if (format == 0)  // 555
+              {
+                blue = (lsb & 0x1F) << 3;
+                green = ((msb & 0x03) << 6) | ((lsb & 0xE0) >> 2);
+                red = (msb & 0x7C) << 1;
+                color = ((red & 0xF8) << 8) | ((green & 0xFC) << 3) |
+                        ((blue & 0xF8) >> 3);
+              } else  // 565
+              {
+                blue = (lsb & 0x1F) << 3;
+                green = ((msb & 0x07) << 5) | ((lsb & 0xE0) >> 3);
+                red = (msb & 0xF8);
+                color = (msb << 8) | lsb;
+              }
+              whitish = (red + green + blue) > 3 * 0x80;
+              // reddish or yellowish?
+              colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));
+            } break;
+            case 1:
+            case 4:
+            case 8: {
+              if (0 == in_bits) {
+                in_byte = input_buffer[in_idx++];
+                in_bits = 8;
+              }
+              uint16_t pn = (in_byte >> bitshift) & bitmask;
+              whitish = mono_palette_buffer[pn / 8] & (0x1 << pn % 8);
+              colored = color_palette_buffer[pn / 8] & (0x1 << pn % 8);
+              in_byte <<= depth;
+              in_bits -= depth;
+              color = rgb_palette_buffer[pn];
+            } break;
+          }
+          if (whitish) {
+            color = GxEPD_WHITE;
+          } else if (colored) {
+            color = GxEPD_COLORED;
+          } else {
+            color = GxEPD_BLACK;
+          }
+          uint16_t yrow = y + (flip ? h - row - 1 : row);
+          disp->drawPixel(x + col, yrow, color);
+        }  // end pixel
+      }    // end line
+    }
+  }
+  file.close();
+  if (!valid) {
+    error("BMP format not valid.");
+  }
+  debug("BMP loaded in %lu ms", millis() - startTime);
+  return valid;
 }
