@@ -71,6 +71,11 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 *Home Buttons* requires an MQTT broker. If you don't already use it, you should install one now.
 See this [page](https://www.home-assistant.io/integrations/mqtt/){:target="_blank"} for more information.
 Usually, the simplest way is to install *Mosquitto MQTT* as a *Home Assistant* add-on.
+
+If you don't have or want Home Assistant, see [the MQTT instructions](mqtt.md).
+This documentation can also be helpful in troubleshooting with the simplest
+possible configuration.
+
 ## Set Up MQTT connection
 
 When connected to the Wi-Fi, *Home Buttons* can be configured using any device on your local network.
