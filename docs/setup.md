@@ -37,7 +37,7 @@ The length of the cell must not exceed 65.5 mm. Button top cells might not fit p
 
 3. Keep the back cover off for now. You will install it when mounting *Home Buttons* to the wall.
 
-## Set Up Wi-Fi Connection
+## Set Up Wi-Fi Connection {#setup_wifi}
 
 After inserting the battery, press any button to wake the device and start Wi-Fi setup procedure.
 
@@ -71,7 +71,10 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 *Home Buttons* requires an MQTT broker. If you don't already use it, you should install one now.
 See this [page](https://www.home-assistant.io/integrations/mqtt/){:target="_blank"} for more information.
 Usually, the simplest way is to install *Mosquitto MQTT* as a *Home Assistant* add-on.
-## Set Up MQTT connection
+
+If you don't have or want *Home Assistant*, see [Minimal Setup](minimal.md) guide.
+
+## Set Up MQTT connection {#setup_mqtt}
 
 When connected to the Wi-Fi, *Home Buttons* can be configured using any device on your local network.
 

@@ -12,6 +12,7 @@ nav:
   - MQTT Topics: mqtt_topics.md
   - Soldering: soldering.md
   - Hardware Hacks: hardware_hacks.md
+  - Minimal Setup: minimal.md
   - Help: help.md
 
 theme:
