@@ -64,7 +64,6 @@ void HardwareDefinition::begin() {
   ledcAttachPin(LED6_PIN, LED6_CH);
 
   // battery voltage adc
-  analogReadResolution(BAT_RES_BITS);
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
 }
 
@@ -154,15 +153,14 @@ void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
 }
 
 float HardwareDefinition::read_battery_voltage() {
-  return analogRead(VBAT_ADC) / 4095.0 * BATT_ADC_REF_VOLT / BATT_DIVIDER;
+  return (analogReadMilliVolts(VBAT_ADC)/1000.)/BATT_DIVIDER;
 }
 
 uint8_t HardwareDefinition::read_battery_percent() {
   if (!is_battery_present()) return 0;
-  float pct = 100 * (read_battery_voltage() - BATT_EMPTY_VOLT) /
-              (BATT_FULL_VOLT - BATT_EMPTY_VOLT);
-  if (pct < 0.0)
-    pct = 0;
+  float pct = BATT_SOC_EST_K*read_battery_voltage() + BATT_SOC_EST_N;
+  if (pct < 1.0)
+    pct = 1;
   else if (pct > 100.0)
     pct = 100;
   return (uint8_t)round(pct);
@@ -254,7 +252,6 @@ void HardwareDefinition::load_hw_rev_1_0() {  // ------ PIN definitions ------
   LED_BRIGHT_DFLT = 20;
 
   // ------ battery reading ------“
-  BAT_RES_BITS = 12;
   BATT_DIVIDER = 0.5;
   BATT_ADC_REF_VOLT = 2.6;
   MIN_BATT_VOLT = 3.3;
@@ -265,6 +262,8 @@ void HardwareDefinition::load_hw_rev_1_0() {  // ------ PIN definitions ------
   BATT_PRESENT_VOLT = 2.7;
   DC_DETECT_VOLT = 4.5;
   CHARGE_HYSTERESIS_VOLT = 4.0;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x7E;
@@ -312,7 +311,6 @@ void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
   LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
-  BAT_RES_BITS = 12;
   BATT_DIVIDER = 0.5;
   BATT_ADC_REF_VOLT = 2.6;
   MIN_BATT_VOLT = 3.3;
@@ -323,6 +321,8 @@ void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
   BATT_PRESENT_VOLT = 2.7;
   DC_DETECT_VOLT = 4.5;
   CHARGE_HYSTERESIS_VOLT = 4.0;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x20007A;
@@ -370,7 +370,6 @@ void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
   LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
-  BAT_RES_BITS = 12;
   BATT_DIVIDER = 0.5;
   BATT_ADC_REF_VOLT = 2.6;
   MIN_BATT_VOLT = 3.3;
@@ -381,6 +380,8 @@ void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
   BATT_PRESENT_VOLT = 2.7;
   DC_DETECT_VOLT = 4.5;
   CHARGE_HYSTERESIS_VOLT = 4.0;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x20007A;
@@ -428,7 +429,6 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
   LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
-  BAT_RES_BITS = 12;
   BATT_DIVIDER = 0.5;
   BATT_ADC_REF_VOLT = 2.6;
   MIN_BATT_VOLT = 3.3;
@@ -439,6 +439,8 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
   BATT_PRESENT_VOLT = 2.7;
   DC_DETECT_VOLT = 4.5;
   CHARGE_HYSTERESIS_VOLT = 4.0;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x204072;

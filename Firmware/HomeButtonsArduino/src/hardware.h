@@ -55,7 +55,6 @@ struct HardwareDefinition : public Logger {
   uint8_t LED_BRIGHT_DFLT;
 
   // ------ battery reading ------
-  uint8_t BAT_RES_BITS;
   float BATT_DIVIDER;
   float BATT_ADC_REF_VOLT;
   float MIN_BATT_VOLT;
@@ -66,6 +65,10 @@ struct HardwareDefinition : public Logger {
   float BATT_PRESENT_VOLT;
   float DC_DETECT_VOLT;
   float CHARGE_HYSTERESIS_VOLT;
+
+  // battery SoC linear approximation coeficients
+  float BATT_SOC_EST_K;
+  float BATT_SOC_EST_N;
 
   // ------ wakeup ------
   uint64_t WAKE_BITMASK;
