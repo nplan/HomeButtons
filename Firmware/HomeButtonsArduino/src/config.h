@@ -56,6 +56,6 @@ static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
 static constexpr uint8_t LED_DFLT_BRIGHT = 225;
 
 // ------ other ------
-static constexpr uint32_t MIN_FREE_HEAP = 20000UL;
+static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
 
 #endif  // HOMEBUTTONS_CONFIG_H

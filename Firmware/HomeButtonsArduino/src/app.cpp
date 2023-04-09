@@ -18,7 +18,7 @@ void App::setup() {
   info("starting...");
   xTaskCreate(_main_task_helper,  // Function that should be called
               "MAIN",             // Name of the task (for debugging)
-              20000,              // Stack size (bytes)
+              10000,              // Stack size (bytes)
               this,               // Parameter to pass
               tskIDLE_PRIORITY,   // Task priority
               &main_task_h_       // Task handle
@@ -184,7 +184,7 @@ void App::_start_network_task() {
   debug("network task started.");
   xTaskCreate(_network_task,    // Function that should be called
               "NETWORK",        // Name of the task (for debugging)
-              20000,            // Stack size (bytes)
+              15000,            // Stack size (bytes)
               this,             // Parameter to pass
               1,                // Task priority
               &network_task_h_  // Task handle
