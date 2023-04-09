@@ -327,6 +327,7 @@ void App::_main_task() {
   switch (boot_cause) {
     case BootCause::RESET: {
       if (!device_state_.persisted().silent_restart) {
+        hw_.set_all_leds(LED_DFLT_BRIGHT);
         display_.disp_message("RESTART...", 0);
         display_.update();
       }
@@ -354,6 +355,7 @@ void App::_main_task() {
       }
       if (device_state_.flags().awake_mode) {
         // proceed with awake mode
+        hw_.set_all_leds(0);
         sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
       } else {
         display_.end();
