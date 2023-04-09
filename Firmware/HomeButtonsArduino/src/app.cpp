@@ -353,6 +353,8 @@ void App::_main_task() {
         display_.disp_main();
         display_.update();
       }
+      device_state_.persisted().send_discovery_config = true;
+      device_state_.save_all();
       if (device_state_.flags().awake_mode) {
         // proceed with awake mode
         hw_.set_all_leds(0);

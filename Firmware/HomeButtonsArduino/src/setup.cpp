@@ -256,7 +256,6 @@ void start_setup(DeviceState& device_state, Display& display,
   mqtt_client.disconnect();
   WiFi.disconnect(true);
   device_state.persisted().setup_done = true;
-  device_state.persisted().send_discovery_config = true;
   device_state.save_all();
 
   setupLogger.info("setup successful");
