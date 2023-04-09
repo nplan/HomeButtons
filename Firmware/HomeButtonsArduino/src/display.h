@@ -60,6 +60,7 @@ class Display : public Logger {
   UIState get_ui_state();
   void init_ui_state(UIState ui_state);  // used after wakeup
   State get_state();
+  bool busy() { return redraw_in_progress; }
 
  private:
   State state = State::IDLE;

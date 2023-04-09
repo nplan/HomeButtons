@@ -572,7 +572,8 @@ void App::_main_task() {
           break;
         }
         case StateMachineState::AWAIT_NET_DISCONNECT: {
-          if (network_.get_state() == Network::State::DISCONNECTED) {
+          if (network_.get_state() == Network::State::DISCONNECTED &&
+              !display_.busy()) {
             if (device_state_.flags().display_redraw) {
               device_state_.flags().display_redraw = false;
               display_.disp_main();
@@ -813,7 +814,8 @@ void App::_main_task() {
           break;
         }
         case StateMachineState::AWAIT_NET_DISCONNECT: {
-          if (network_.get_state() == Network::State::DISCONNECTED) {
+          if (network_.get_state() == Network::State::DISCONNECTED &&
+              !display_.busy()) {
             if (device_state_.flags().display_redraw) {
               device_state_.flags().display_redraw = false;
               display_.disp_main();
