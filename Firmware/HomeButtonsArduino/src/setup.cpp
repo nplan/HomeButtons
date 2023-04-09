@@ -79,6 +79,7 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
   if (wifi_connected) {
     device_state.persisted().wifi_done = true;
     device_state.persisted().restart_to_setup = true;
+    device_state.persisted().silent_restart = true;
     device_state.save_all();
     setupLogger.info("Wi-Fi connected.");
     display.disp_message_large("Wi-Fi\nconnected\n:)");
@@ -87,6 +88,7 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
     ESP.restart();
   } else {
     device_state.persisted().wifi_done = false;
+    device_state.persisted().silent_restart = true;
     device_state.save_all();
     setupLogger.warning("Wi-Fi error.");
     display.disp_error("Wi-Fi\nconnection\nerror");
@@ -205,6 +207,7 @@ void start_setup(DeviceState& device_state, Display& display,
       delay(1000);
     } else {
       device_state.persisted().wifi_done = false;
+      device_state.persisted().silent_restart = true;
       device_state.save_all();
       setupLogger.warning("Wi-Fi error.");
       display.disp_error("Wi-Fi\nerror");
@@ -266,6 +269,7 @@ void start_setup(DeviceState& device_state, Display& display,
   mqtt_client.disconnect();
   WiFi.disconnect(true);
   device_state.persisted().setup_done = true;
+  device_state.persisted().silent_restart = true;
   device_state.save_all();
 
   setupLogger.info("setup successful");

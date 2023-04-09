@@ -497,11 +497,13 @@ void App::_main_task() {
                 break;
               case Button::LONG_2:
                 device_state_.persisted().restart_to_setup = true;
+                device_state_.persisted().silent_restart = true;
                 device_state_.save_all();
                 ESP.restart();
                 break;
               case Button::LONG_3:
                 device_state_.persisted().restart_to_wifi_setup = true;
+                device_state_.persisted().silent_restart = true;
                 device_state_.save_all();
                 ESP.restart();
                 break;
@@ -777,11 +779,13 @@ void App::_main_task() {
                 break;
               case Button::LONG_2:
                 device_state_.persisted().restart_to_setup = true;
+                device_state_.persisted().silent_restart = true;
                 device_state_.save_all();
                 ESP.restart();
                 break;
               case Button::LONG_3:
                 device_state_.persisted().restart_to_wifi_setup = true;
+                device_state_.persisted().silent_restart = true;
                 device_state_.save_all();
                 ESP.restart();
                 break;
