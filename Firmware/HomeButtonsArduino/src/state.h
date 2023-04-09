@@ -29,6 +29,8 @@ class DeviceState : public Logger {
       IPAddress static_ip;
       IPAddress gateway;
       IPAddress subnet;
+      IPAddress dns;
+      IPAddress dns2;
     } network;
 
     struct {
@@ -106,10 +108,14 @@ class DeviceState : public Logger {
                               password, base_topic, discovery_prefix};
   }
   void set_static_ip_config(const IPAddress& static_ip,
-                            const IPAddress& gateway, const IPAddress& subnet) {
+                            const IPAddress& gateway, const IPAddress& subnet,
+                            const IPAddress& dns = IPAddress(),
+                            const IPAddress& dns2 = IPAddress()) {
     user_preferences_.network.static_ip = static_ip;
     user_preferences_.network.gateway = gateway;
     user_preferences_.network.subnet = subnet;
+    user_preferences_.network.dns = dns;
+    user_preferences_.network.dns2 = dns2;
   }
 
   const DeviceName& device_name() const {

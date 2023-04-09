@@ -299,14 +299,17 @@ void Network::_pre_wifi_connect() {
   const auto &static_ip = device_state_.user_preferences().network.static_ip;
   const auto &gateway = device_state_.user_preferences().network.gateway;
   const auto &subnet = device_state_.user_preferences().network.subnet;
+  const auto &dns = device_state_.user_preferences().network.dns;
+  const auto &dns2 = device_state_.user_preferences().network.dns2;
   bool ip_ok = static_ip != IPAddress(0, 0, 0, 0);
   bool gw_ok = gateway != IPAddress(0, 0, 0, 0);
   bool sn_ok = subnet != IPAddress(0, 0, 0, 0);
   if (ip_ok && gw_ok && sn_ok) {
-    info("Using static IP %s, Gateway %s, Subnet %s",
+    info("Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
          static_ip.toString().c_str(), gateway.toString().c_str(),
-         subnet.toString().c_str());
-    WiFi.config(static_ip, gateway, subnet);
+         subnet.toString().c_str(), dns.toString().c_str(),
+         dns2.toString().c_str());
+    WiFi.config(static_ip, gateway, subnet, dns, dns2);
   } else {
     info("Using DHCP. Static IP not set or not valid.");
   }

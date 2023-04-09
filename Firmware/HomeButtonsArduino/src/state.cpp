@@ -56,6 +56,12 @@ void DeviceState::save_user() {
   preferences_.putString(
       "s_net",
       ip_address_to_static_string(user_preferences_.network.subnet).c_str());
+  preferences_.putString(
+      "dns",
+      ip_address_to_static_string(user_preferences_.network.dns).c_str());
+  preferences_.putString(
+      "dns2",
+      ip_address_to_static_string(user_preferences_.network.dns2).c_str());
   preferences_.end();
 }
 
@@ -93,6 +99,8 @@ void DeviceState::load_user() {
   _load_to_ip_address(user_preferences_.network.static_ip, "sta_ip", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.gateway, "g_way", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.subnet, "s_net", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.dns, "dns", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.dns2, "dns2", "0.0.0.0");
 
   preferences_.end();
 }

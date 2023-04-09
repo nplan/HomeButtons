@@ -28,6 +28,8 @@ static WiFiManagerParameter discovery_prefix_param("disc_prefix",
 static WiFiManagerParameter static_ip_param("static_ip", "Static IP", "", 16);
 static WiFiManagerParameter gateway_param("gateway", "Gateway", "", 16);
 static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 16);
+static WiFiManagerParameter dns_param("dns", "Primary DNS Server", "", 16);
+static WiFiManagerParameter dns2_param("dns2", "Secondary DNS Server", "", 16);
 static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
@@ -107,11 +109,13 @@ void save_params_callback(DeviceState* device_state) {
   device_state->set_btn_label(4, btn5_label_param.getValue());
   device_state->set_btn_label(5, btn6_label_param.getValue());
 
-  IPAddress static_ip, gateway, subnet;
+  IPAddress static_ip, gateway, subnet, dns, dns2;
   static_ip.fromString(static_ip_param.getValue());
   gateway.fromString(gateway_param.getValue());
   subnet.fromString(subnet_param.getValue());
-  device_state->set_static_ip_config(static_ip, gateway, subnet);
+  dns.fromString(dns_param.getValue());
+  dns2.fromString(dns2_param.getValue());
+  device_state->set_static_ip_config(static_ip, gateway, subnet, dns, dns2);
   web_portal_saved = true;
 }
 
@@ -148,6 +152,10 @@ void start_setup(DeviceState& device_state, Display& display,
       device_state.user_preferences().network.gateway.toString().c_str(), 16);
   subnet_param.setValue(
       device_state.user_preferences().network.subnet.toString().c_str(), 16);
+  dns_param.setValue(
+      device_state.user_preferences().network.dns.toString().c_str(), 16);
+  dns2_param.setValue(
+      device_state.user_preferences().network.dns2.toString().c_str(), 16);
   btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
   btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
   btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
@@ -164,6 +172,8 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&static_ip_param);
   wifi_manager.addParameter(&gateway_param);
   wifi_manager.addParameter(&subnet_param);
+  wifi_manager.addParameter(&dns_param);
+  wifi_manager.addParameter(&dns2_param);
   wifi_manager.addParameter(&btn1_label_param);
   wifi_manager.addParameter(&btn2_label_param);
   wifi_manager.addParameter(&btn3_label_param);
