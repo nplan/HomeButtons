@@ -421,7 +421,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 129);
   disp->print(text.c_str());
 
-  text = UIState::MessageType("%.0f %", device_state_.sensors().humidity);
+  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
