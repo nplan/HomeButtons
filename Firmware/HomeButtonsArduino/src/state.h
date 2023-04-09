@@ -59,6 +59,7 @@ class DeviceState : public Logger {
     bool restart_to_setup = false;
     bool send_discovery_config = false;
     bool silent_restart = false;
+    bool download_mdi_icons = false;
   } persisted_;
 
   struct Flags {

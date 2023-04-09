@@ -5,6 +5,7 @@
 #include "static_string.h"
 #include "state.h"
 #include "logger.h"
+#include "mdi_helper.h"
 
 // parameters for draw_bmp()
 static constexpr uint16_t input_buffer_pixels = 800;
@@ -41,8 +42,8 @@ struct UIState {
 class Display : public Logger {
  public:
   enum class State { IDLE, ACTIVE, CMD_END, ENDING };
-  explicit Display(const DeviceState& device_state)
-      : Logger("Display"), device_state_(device_state) {}
+  explicit Display(const DeviceState& device_state, MDIHelper& mdi_helper)
+      : Logger("Display"), device_state_(device_state), mdi_(mdi_helper) {}
   void begin(HardwareDefinition& HW);
   void end();
   void update();
@@ -77,6 +78,7 @@ class Display : public Logger {
   uint16_t bg_color = GxEPD_WHITE;
 
   const DeviceState& device_state_;
+  MDIHelper& mdi_;
 
   // ### buffers for draw_bmp()
   // up to depth 24
@@ -101,7 +103,7 @@ class Display : public Logger {
   void draw_test(bool invert = false);
   void draw_white();
   void draw_black();
-  bool draw_bmp_spiffs(const char* filename, int16_t x, int16_t y);
+  bool draw_bmp(File& file, int16_t x, int16_t y);
 };
 
 #endif  // HOMEBUTTONS_DISPLAY_H

@@ -10,6 +10,7 @@
 #include "mqtt_helper.h"
 #include "logger.h"
 #include "hardware.h"
+#include "mdi_helper.h"
 
 enum class BootCause { RESET, TIMER, BUTTON };
 
@@ -47,6 +48,7 @@ class App : public Logger {
   void _publish_awake_mode_avlb();
   void _mqtt_callback(const char* topic, const char* payload);
   void _net_on_connect();
+  void _download_mdi_icons();
 
   enum class StateMachineState {
     AWAIT_NET_CONNECT,
@@ -71,6 +73,7 @@ class App : public Logger {
   Display display_;
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
+  MDIHelper mdi_;
 };
 
 #endif  // HOMEBUTTONS_APP_H

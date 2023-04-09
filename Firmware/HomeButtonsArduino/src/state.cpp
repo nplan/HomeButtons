@@ -119,6 +119,7 @@ void DeviceState::save_persisted() {
   preferences_.putBool("rst_to_stp", persisted_.restart_to_setup);
   preferences_.putBool("send_adisc", persisted_.send_discovery_config);
   preferences_.putBool("silent_rst", persisted_.silent_restart);
+  preferences_.putBool("dl_mdi", persisted_.download_mdi_icons);
   preferences_.end();
 }
 
@@ -140,6 +141,7 @@ void DeviceState::load_persisted() {
   persisted_.restart_to_setup = preferences_.getBool("rst_to_stp", false);
   persisted_.send_discovery_config = preferences_.getBool("send_adisc", false);
   persisted_.silent_restart = preferences_.getBool("silent_rst", false);
+  persisted_.download_mdi_icons = preferences_.getBool("dl_mdi", false);
   preferences_.end();
 }
 
@@ -158,6 +160,7 @@ void DeviceState::clear_persisted_flags() {
   persisted_.restart_to_wifi_setup = false;
   persisted_.restart_to_setup = false;
   persisted_.silent_restart = false;
+  persisted_.download_mdi_icons = false;
   save_all();
 }
 

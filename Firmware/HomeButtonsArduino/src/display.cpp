@@ -297,15 +297,21 @@ void Display::draw_main() {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
-  SPIFFS.begin();
+  mdi_.begin();
+  bool is_mdi[NUM_BUTTONS] = {false};
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+    if (label.substring(0, 4) == "mdi:") {
+      is_mdi[i] = true;
+    }
+  }
   // Loop through buttons
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
     uint16_t w, h;
-    ButtonLabel label{device_state_.get_btn_label(i).c_str()};
+    ButtonLabel label = device_state_.get_btn_label(i);
 
-    // check if label is mdi icon
-    if (label.substring(0, 4) == "mdi:") {
-      StaticString<64> icon = label.substring(4) + ".bmp";
+    if (is_mdi[i]) {
+      StaticString<64> icon = label.substring(4);
       // calculate icon position on display
       uint16_t x = i % 2 == 0 ? 0 : WIDTH / 2;
       uint16_t y;
@@ -316,24 +322,52 @@ void Display::draw_main() {
       } else {
         y = 215;
       }
-      bool draw_ok = draw_bmp_spiffs(icon.c_str(), x, y);
-      if (!draw_ok) {
+      bool draw_placeholder = false;
+      File file;
+      if (mdi_.exists(icon.c_str())) {
+        File file = mdi_.get_file(icon.c_str());
+        if (!draw_bmp(file, x, y)) {
+          error("Could not draw icon: %s", icon.c_str());
+          // file might be corrupted - remove so it will be downloaded again
+          mdi_.remove(icon.c_str());
+          draw_placeholder = true;
+        }
+      } else {
+        error("Icon not found: %s", icon.c_str());
+        draw_placeholder = true;
+      }
+      if (draw_placeholder) {
         disp->drawXBitmap(x, y, square_off_outline_64x64, 64, 64, text_color);
       }
     } else {
+      // determine max width of label based on if next button is icon
+      uint16_t max_label_width;
+      if (i % 2 == 0) {
+        if (is_mdi[i + 1]) {
+          max_label_width = WIDTH / 2 - h_padding;
+        } else {
+          max_label_width = WIDTH - min_btn_clearance;
+        }
+      } else {
+        if (is_mdi[i - 1]) {
+          max_label_width = WIDTH / 2 - h_padding;
+        } else {
+          max_label_width = WIDTH - min_btn_clearance;
+        }
+      }
       u8g2.setFont(u8g2_font_helvB24_te);
       w = u8g2.getUTF8Width(label.c_str());
       h = u8g2.getFontAscent();
-      if (w >= WIDTH - min_btn_clearance) {
+      if (w >= max_label_width) {
         u8g2.setFont(u8g2_font_helvB18_te);
         w = u8g2.getUTF8Width(label.c_str());
         h = u8g2.getFontAscent();
-        if (w >= WIDTH - min_btn_clearance) {
+        if (w >= max_label_width) {
           label = label.substring(0, label.length() - 1) + ".";
           while (1) {
             w = u8g2.getUTF8Width(label.c_str());
             h = u8g2.getFontAscent();
-            if (w >= WIDTH - min_btn_clearance) {
+            if (w >= max_label_width) {
               label = label.substring(0, label.length() - 2) + ".";
             } else {
               break;
@@ -352,7 +386,7 @@ void Display::draw_main() {
       u8g2.print(label.c_str());
     }
   }
-  SPIFFS.end();
+  mdi_.end();
   disp->display();
 }
 
@@ -657,22 +691,16 @@ void Display::draw_black() {
 
 // based on GxEPD2_Spiffs_Example.ino - drawBitmapFromSpiffs_Buffered()
 // Warning - SPIFFS.begin() must be called before this function
-bool Display::draw_bmp_spiffs(const char *filename, int16_t x, int16_t y) {
+bool Display::draw_bmp(File &file, int16_t x, int16_t y) {
   uint32_t startTime = millis();
-  if (!SPIFFS.exists(String("/") + filename)) {
-    error("File '%s' not found", filename);
+  if (!file) {
+    error("error opening file");
     return false;
   }
-  File file;
   bool valid = false;  // valid format to be handled
   bool flip = true;    // bitmap is stored bottom-to-top
   if ((x >= disp->width()) || (y >= disp->height())) return false;
-  debug("Loading file: '%s'", filename);
-  file = SPIFFS.open(String("/") + filename, "r");
-  if (!file) {
-    error("File '%s' error loading", filename);
-    return false;
-  }
+
   // Parse BMP header
   if (read16(file) == 0x4D42) {
     debug("BMP signature detected");

@@ -2,16 +2,19 @@
 
 #include <Arduino.h>
 #include <esp_task_wdt.h>
+#include <SPIFFS.h>
 
 #include "config.h"
 #include "factory.h"
 #include "setup.h"
 #include "hardware.h"
 
+#include "mdi_helper.h"
+
 App::App()
     : Logger("APP"),
       network_(device_state_),
-      display_(device_state_),
+      display_(device_state_, mdi_),
       mqtt_(device_state_, network_) {}
 
 void App::setup() {
@@ -332,6 +335,17 @@ void App::_main_task() {
         display_.update();
       }
 
+      // format SPIFFS if needed
+      if (!SPIFFS.begin()) {
+        info("Formatting SPIFFS...");
+        display_.disp_message("Formatting\nSPIFFS...", 0);
+        display_.update();
+        SPIFFS.format();
+      } else {
+        SPIFFS.end();
+        debug("SPIFFS test mount OK");
+      }
+
       if (device_state_.persisted().restart_to_wifi_setup) {
         device_state_.clear_persisted_flags();
         info("staring Wi-Fi setup...");
@@ -353,6 +367,7 @@ void App::_main_task() {
         display_.disp_main();
         display_.update();
       }
+      device_state_.persisted().download_mdi_icons = true;
       device_state_.persisted().send_discovery_config = true;
       device_state_.save_all();
       if (device_state_.flags().awake_mode) {
@@ -567,6 +582,10 @@ void App::_main_task() {
           break;
         }
         case StateMachineState::CMD_SHUTDOWN: {
+          if (device_state_.persisted().download_mdi_icons) {
+            _download_mdi_icons();
+            device_state_.persisted().download_mdi_icons = false;
+          }
           _end_buttons();
           leds_.end();
           network_.disconnect();
@@ -674,6 +693,10 @@ void App::_main_task() {
                      AWAKE_REDRAW_INTERVAL) {
             if (device_state_.flags().display_redraw) {
               device_state_.flags().display_redraw = false;
+              if (device_state_.persisted().download_mdi_icons) {
+                _download_mdi_icons();
+                device_state_.persisted().download_mdi_icons = false;
+              }
               if (device_state_.persisted().info_screen_showing) {
                 display_.disp_info();
               } else {
@@ -808,6 +831,10 @@ void App::_main_task() {
           break;
         }
         case StateMachineState::CMD_SHUTDOWN: {
+          if (device_state_.persisted().download_mdi_icons) {
+            _download_mdi_icons();
+            device_state_.persisted().download_mdi_icons = false;
+          }
           device_state_.persisted().info_screen_showing = false;
           _end_buttons();
           leds_.end();
@@ -884,6 +911,7 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       network_.publish(mqtt_.t_sensor_interval_state(),
                        PayloadType("%u", device_state_.sensor_interval()),
                        true);
+      info("Updading discovery config...");
       mqtt_.update_discovery_config();
       debug("sensor interval set to %d minutes", mins);
       _publish_sensors();
@@ -901,6 +929,12 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
                        device_state_.get_btn_label(i), true);
       network_.publish(mqtt_.t_btn_label_cmd(i), "", true);
       device_state_.flags().display_redraw = true;
+
+      ButtonLabel label(device_state_.get_btn_label(i).c_str());
+
+      if (label.substring(0, 4) == "mdi:") {
+        device_state_.persisted().download_mdi_icons = true;
+      }
       return;
     }
   }
@@ -939,6 +973,66 @@ void App::_net_on_connect() {
 
   if (device_state_.persisted().send_discovery_config) {
     device_state_.persisted().send_discovery_config = false;
+    info("Sending discovery config...");
     mqtt_.send_discovery_config();
   }
+}
+
+void App::_download_mdi_icons() {
+  bool download_required = false;
+  mdi_.begin();
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label(device_state_.get_btn_label(i).c_str());
+    if (label.substring(0, 4) == "mdi:") {
+      StaticString<64> icon = label.substring(4);
+      if (!mdi_.exists(icon.c_str())) {
+        download_required = true;
+        break;
+      }
+    }
+  }
+  if (!download_required) {
+    info("no icons to download");
+    mdi_.end();
+    return;
+  }
+
+  display_.disp_message("Downloading\nicons...");
+
+  // check if server is reachable
+  if (mdi_.check_connection()) {
+    info("icon server reachable");
+  } else {
+    warning("icon server NOT reachable");
+    mdi_.end();
+    delay(100);
+    display_.disp_error("Icon\nserver\nNOT\nreachable");
+    device_state_.flags().display_redraw = true;
+    return;
+  }
+
+  // free up space if needed
+  size_t free = mdi_.get_free_space();
+  info("SPIFFS free space: %d", free);
+  if (free < 100000UL) {
+    info("making space...");
+    if (!mdi_.make_space(100000UL)) {
+      error("failed to make space");
+      mdi_.end();
+      return;
+    }
+  }
+
+  info("Downloading icons...");
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label(device_state_.get_btn_label(i).c_str());
+    if (label.substring(0, 4) == "mdi:") {
+      StaticString<64> icon = label.substring(4);
+      if (!mdi_.exists(icon.c_str())) {
+        mdi_.download(icon.c_str());
+      }
+    }
+  }
+  mdi_.end();
+  device_state_.flags().display_redraw = true;
 }
