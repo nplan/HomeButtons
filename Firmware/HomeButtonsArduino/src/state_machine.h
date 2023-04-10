@@ -20,7 +20,7 @@ class State {
   explicit State(Base &base) : base_(base) {}
 
   virtual void entry() {}
-  virtual void execute_once() {}
+  virtual void loop() {}
   virtual void exit() {}
 
   virtual const char *get_name() = 0;
@@ -61,8 +61,8 @@ class StateMachine {
     std::visit([](auto statePtr) { statePtr->entry(); }, current_state_);
   }
 
-  void execute_once() {
-    std::visit([](auto statePtr) { statePtr->execute_once(); }, current_state_);
+  void loop() {
+    std::visit([](auto statePtr) { statePtr->loop(); }, current_state_);
   }
 
   template <typename State>

@@ -16,7 +16,7 @@ String mac2String(uint8_t ar[]) {
   return s;
 }
 
-void NetworkSMStates::IdleState::execute_once() {
+void NetworkSMStates::IdleState::loop() {
   if (sm().command_ == Network::Command::CONNECT) {
     if (sm().device_state_.persisted().wifi_quick_connect) {
       transition_to<QuickConnectState>();
@@ -35,7 +35,7 @@ void NetworkSMStates::QuickConnectState::entry() {
   WiFi.begin();
 }
 
-void NetworkSMStates::QuickConnectState::execute_once() {
+void NetworkSMStates::QuickConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
@@ -71,7 +71,7 @@ void NetworkSMStates::NormalConnectState::entry() {
   await_confirm_quick_wifi_settings_ = false;
 }
 
-void NetworkSMStates::NormalConnectState::execute_once() {
+void NetworkSMStates::NormalConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
@@ -119,7 +119,7 @@ void NetworkSMStates::MQTTConnectState::entry() {
   sm()._connect_mqtt();
 }
 
-void NetworkSMStates::MQTTConnectState::execute_once() {
+void NetworkSMStates::MQTTConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (sm().mqtt_client_.connected()) {
@@ -142,7 +142,7 @@ void NetworkSMStates::MQTTConnectState::execute_once() {
   }
 }
 
-void NetworkSMStates::WifiConnectedState::execute_once() {
+void NetworkSMStates::WifiConnectedState::loop() {
   sm().state_ = Network::State::W_CONNECTED;
   sm().device_state_.set_ip(WiFi.localIP());
   sm().info("Wi-Fi connected.");
@@ -167,7 +167,7 @@ void NetworkSMStates::DisconnectState::entry() {
   delay(500);
 }
 
-void NetworkSMStates::DisconnectState::execute_once() {
+void NetworkSMStates::DisconnectState::loop() {
   return transition_to<IdleState>();
 }
 
@@ -179,7 +179,7 @@ void NetworkSMStates::FullyConnectedState::entry() {
   sm().state_ = Network::State::M_CONNECTED;
 }
 
-void NetworkSMStates::FullyConnectedState::execute_once() {
+void NetworkSMStates::FullyConnectedState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (millis() - last_conn_check_time_ > NET_CONN_CHECK_INTERVAL) {
@@ -235,7 +235,7 @@ void Network::disconnect(bool erase) {
 
 void Network::update() {
   mqtt_client_.loop();
-  execute_once();
+  loop();
 }
 
 void Network::setup() { network_task_handle_ = xTaskGetCurrentTaskHandle(); }
