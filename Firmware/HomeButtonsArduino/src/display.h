@@ -22,6 +22,7 @@ enum class DisplayPage {
   MESSAGE_LARGE,
   ERROR,
   WELCOME,
+  SETTINGS,
   AP_CONFIG,
   WEB_CONFIG,
   TEST,
@@ -54,6 +55,7 @@ class Display : public Logger {
   void disp_main();
   void disp_info();
   void disp_welcome();
+  void disp_settings();
   void disp_ap_config();
   void disp_web_config();
   void disp_test(bool invert = false);
@@ -98,6 +100,7 @@ class Display : public Logger {
   void draw_main();
   void draw_info();
   void draw_welcome();
+  void draw_settings();
   void draw_ap_config();
   void draw_web_config();
   void draw_test(bool invert = false);

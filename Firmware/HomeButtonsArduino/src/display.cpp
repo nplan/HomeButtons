@@ -139,6 +139,9 @@ void Display::update() {
     case DisplayPage::WELCOME:
       draw_welcome();
       break;
+    case DisplayPage::SETTINGS:
+      draw_settings();
+      break;
     case DisplayPage::AP_CONFIG:
       draw_ap_config();
       break;
@@ -206,6 +209,10 @@ void Display::disp_welcome() {
   set_cmd_state(new_cmd_state);
 }
 
+void Display::disp_settings() {
+  UIState new_cmd_state{DisplayPage::SETTINGS};
+  set_cmd_state(new_cmd_state);
+}
 void Display::disp_ap_config() {
   UIState new_cmd_state{DisplayPage::AP_CONFIG};
   set_cmd_state(new_cmd_state);
@@ -337,7 +344,8 @@ void Display::draw_main() {
         draw_placeholder = true;
       }
       if (draw_placeholder) {
-        disp->drawXBitmap(x, y, square_off_outline_64x64, 64, 64, text_color);
+        disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64,
+                          text_color);
       }
     } else {
       // determine max width of label based on if next button is icon
@@ -443,12 +451,6 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 268);
   disp->print(text.c_str());
 
-  // device name
-  disp->setFont();
-  disp->setTextSize(1);
-  disp->setCursor(0, 288);
-  disp->print(device_state_.device_name().c_str());
-
   disp->display();
 }
 
@@ -511,6 +513,43 @@ void Display::draw_welcome() {
                                     device_state_.factory().model_id.c_str() +
                                     " rev " +
                                     device_state_.factory().hw_version.c_str();
+  disp->print(model_info.c_str());
+
+  disp->setCursor(0, 285);
+  disp->print(device_state_.factory().unique_id.c_str());
+
+  disp->display();
+}
+
+void Display::draw_settings() {
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(false);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(0, 17, account_cog_64x64, 64, 64, text_color);
+  disp->drawXBitmap(WIDTH / 2, 17, wifi_cog_64x64, 64, 64, text_color);
+  disp->drawXBitmap(0, 116, cog_counterclockwise_64x64, 64, 64, text_color);
+  disp->drawXBitmap(WIDTH / 2, 116, close_64x64, 64, 64, text_color);
+
+  disp->drawXBitmap(40, 200, hb_logo_48x48, 48, 48, text_color);
+
+  disp->setFont();
+  disp->setTextSize(1);
+  disp->setCursor(0, 255);
+  disp->print(device_state_.device_name().c_str());
+
+  disp->setCursor(0, 265);
+  UIState::MessageType sw_ver =
+      UIState::MessageType("Software: %s", SW_VERSION);
+  disp->print(sw_ver.c_str());
+
+  disp->setCursor(0, 275);
+  UIState::MessageType model_info = UIState::MessageType(
+      "Model: %s rev %s", device_state_.factory().model_id.c_str(),
+      device_state_.factory().hw_version.c_str());
   disp->print(model_info.c_str());
 
   disp->setCursor(0, 285);
