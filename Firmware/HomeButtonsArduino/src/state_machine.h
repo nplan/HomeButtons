@@ -62,6 +62,13 @@ class StateMachine {
   }
 
   void loop() {
+    if (first_run_) {
+      first_run_ = false;
+      base_.info("Entering state %s::%s", name_,
+                 std::visit([](auto statePtr) { return statePtr->get_name(); },
+                            current_state_));
+      std::visit([](auto statePtr) { statePtr->entry(); }, current_state_);
+    }
     std::visit([](auto statePtr) { statePtr->loop(); }, current_state_);
   }
 
@@ -76,6 +83,7 @@ class StateMachine {
   static constexpr size_t MAX_NAME_LENGTH = 32;
   char name_[MAX_NAME_LENGTH];
   Base &base_;
+  bool first_run_ = true;
 };
 
 #endif  // HOMEBUTTONS_STATEMACHINE_H
