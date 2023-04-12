@@ -257,6 +257,7 @@ void start_setup(DeviceState& device_state, Display& display,
     delay(10);
     if (millis() - mqtt_start_time >= MQTT_TIMEOUT) {
       device_state.persisted().setup_done = false;
+      device_state.persisted().silent_restart = true;
       device_state.save_all();
       setupLogger.warning("MQTT error.");
       display.disp_error("MQTT\nerror");

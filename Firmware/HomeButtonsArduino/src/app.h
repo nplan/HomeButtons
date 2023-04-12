@@ -12,9 +12,95 @@
 #include "hardware.h"
 #include "mdi_helper.h"
 
+class App;
+
 enum class BootCause { RESET, TIMER, BUTTON };
 
-class App : public Logger {
+namespace AppSMStates {
+
+class InitState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void entry() override;
+
+  const char* get_name() override { return "InitState"; }
+};
+
+class AwakeModeIdleState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void loop() override;
+
+  const char* get_name() override { return "AwakeModeIdleState"; }
+};
+
+class UserInputFinishState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void loop() override;
+
+  const char* get_name() override { return "UserInputFinishState"; }
+};
+
+class NetConnectingState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void loop() override;
+
+  const char* get_name() override { return "NetConnectingState"; }
+};
+};
+
+class CmdShutdownState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void entry() override;
+
+  const char* get_name() override { return "CmdShutdownState"; }
+};
+
+class NetDisconnectingState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void loop() override;
+
+  const char* get_name() override { return "NetDisconnectingState"; }
+};
+
+class ShuttingDownState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void loop() override;
+
+  const char* get_name() override { return "ShuttingDownState"; }
+};
+
+class FactoryResetState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void entry() override;
+  void loop() override;
+
+  const char* get_name() override { return "FactoryResetState"; }
+};
+
+}  // namespace AppSMStates
+
+using AppStateMachine = StateMachine<
+    App, AppSMStates::InitState, AppSMStates::AwakeModeIdleState,
+    AppSMStates::UserInputFinishState, AppSMStates::NetConnectingState,
+    AppSMStates::NetDisconnectingState, AppSMStates::ShuttingDownState,
+    AppSMStates::FactoryResetState>;
+
+class App : public AppStateMachine, public Logger {
  public:
   App();
   App(const App&) = delete;
@@ -51,9 +137,9 @@ class App : public Logger {
   void _download_mdi_icons();
 
   enum class StateMachineState {
-    AWAIT_NET_CONNECT,
     AWAIT_USER_INPUT_START,
     AWAIT_USER_INPUT_FINISH,
+    AWAIT_NET_CONNECT,
     CMD_SHUTDOWN,
     AWAIT_NET_DISCONNECT,
     AWAIT_SHUTDOWN,
@@ -74,6 +160,24 @@ class App : public Logger {
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
   MDIHelper mdi_;
+
+  Button* active_button_;
+  Button::ButtonAction btn_action_ = Button::IDLE;
+  Button::ButtonAction prev_action_ = Button::IDLE;
+  BootCause boot_cause_;
+
+  uint32_t last_sensor_publish_ = 0;
+  uint32_t last_m_display_redraw_ = 0;
+  uint32_t info_screen_start_time_ = 0;
+
+  friend class AppSMStates::InitState;
+  friend class AppSMStates::AwakeModeIdleState;
+  friend class AppSMStates::UserInputFinishState;
+  friend class AppSMStates::NetConnectingState;
+  friend class AppSMStates::CmdShutdownState;
+  friend class AppSMStates::NetDisconnectingState;
+  friend class AppSMStates::ShuttingDownState;
+  friend class AppSMStates::FactoryResetState;
 };
 
 #endif  // HOMEBUTTONS_APP_H

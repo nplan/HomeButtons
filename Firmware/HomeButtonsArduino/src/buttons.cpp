@@ -224,5 +224,6 @@ void Button::reset() {
   rising_flag = false;
   falling_flag = false;
   press_finished = false;
+  state_machine_state = 0;
   action = IDLE;
 }
