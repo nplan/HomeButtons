@@ -787,17 +787,7 @@ void AppSMStates::UserInputFinishState::loop() {
           sm().display_.disp_info();
           break;
         case Button::LONG_2:
-          sm().display_.disp_message(
-              "Release\nfor\nSETUP\n\nKeep\nholding\nfor\nWi-Fi "
-              "SETUP");
-          break;
-        case Button::LONG_3:
-          sm().display_.disp_message(
-              "Release\nfor\nWi-Fi SETUP\n\nKeep\n"
-              "holding\nfor\nFACTORY\nRESET");
-          break;
-        case Button::LONG_4:
-          sm().display_.disp_message("Release\nfor\nFACTORY\nRESET");
+          transition_to<SettingsMenuState>();
           break;
         default:
           break;
@@ -837,8 +827,78 @@ void AppSMStates::NetConnectingState::loop() {
       }
     }
     transition_to<CmdShutdownState>();
+  }
+}
+
+void AppSMStates::SettingsMenuState::entry() {
+  sm().settings_menu_start_time_ = millis();
+  sm().device_state_.persisted().info_screen_showing = false;
+  sm().display_.disp_settings();
+  for (auto& b : sm().buttons_) {
+    b.clear();
+  }
+  sm().active_button_ = nullptr;
+}
+
+void AppSMStates::SettingsMenuState::loop() {
+  bool awake_mode = sm().device_state_.flags().awake_mode;
+  for (auto& b : sm().buttons_) {
+    if (b.get_action() != Button::IDLE) {
+      sm().active_button_ = &b;
+      sm().btn_action_ = sm().active_button_->get_action();
+      break;  // for
+    }
+  }
+  if (sm().active_button_ != nullptr &&
+      sm().active_button_->is_press_finished()) {
+    if (sm().btn_action_ == Button::SINGLE) {
+      switch (sm().active_button_->get_id()) {
+        case 1:
+          // setup
+          sm().device_state_.persisted().restart_to_setup = true;
+          sm().device_state_.persisted().silent_restart = true;
+          sm().device_state_.save_all();
+          ESP.restart();
+          break;
+        case 2:
+          // Wi-Fi setup
+          sm().device_state_.persisted().restart_to_wifi_setup = true;
+          sm().device_state_.persisted().silent_restart = true;
+          sm().device_state_.save_all();
+          ESP.restart();
+          break;
+        case 3:
+          // restart
+          ESP.restart();
+          break;
+        case 4:
+          // cancel
+          sm().display_.disp_main();
+          if (awake_mode) {
+            transition_to<AwakeModeIdleState>();
+          } else {
+            transition_to<CmdShutdownState>();
+          }
+          break;
+        default:
+          break;
+      }
+    } else if (sm().btn_action_ == Button::LONG_3) {
+      if (sm().active_button_->get_id() == 3) {
+        // factory reset
+        transition_to<FactoryResetState>();
+      }
+    }
+    for (auto& b : sm().buttons_) {
+      b.clear();
+    }
+    sm().active_button_ = nullptr;
+  }
+  if (!awake_mode &&
+      millis() - sm().settings_menu_start_time_ > SETTINGS_MENU_TIMEOUT &&
+      (sm().active_button_ == nullptr || sm().btn_action_ == Button::IDLE)) {
+    sm().debug("settings menu timeout");
     sm().display_.disp_main();
-    delay(100);
     transition_to<CmdShutdownState>();
   }
 }

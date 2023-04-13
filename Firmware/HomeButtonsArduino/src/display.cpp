@@ -531,7 +531,7 @@ void Display::draw_settings() {
 
   disp->drawXBitmap(0, 17, account_cog_64x64, 64, 64, text_color);
   disp->drawXBitmap(WIDTH / 2, 17, wifi_cog_64x64, 64, 64, text_color);
-  disp->drawXBitmap(0, 116, cog_counterclockwise_64x64, 64, 64, text_color);
+  disp->drawXBitmap(0, 116, restore_64x64, 64, 64, text_color);
   disp->drawXBitmap(WIDTH / 2, 116, close_64x64, 64, 64, text_color);
 
   disp->drawXBitmap(40, 200, hb_logo_48x48, 48, 48, text_color);
