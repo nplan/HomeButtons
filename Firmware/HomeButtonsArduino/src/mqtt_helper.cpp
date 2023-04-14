@@ -125,7 +125,8 @@ void MQTTHelper::send_discovery_config() {
         FormatterType{} + _device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = t_temperature();
     temp_conf["dev_cla"] = "temperature";
-    temp_conf["unit_of_meas"] = "°C";
+    temp_conf["unit_of_meas"] =
+        _device_state.get_use_fahrenheit() ? "°F" : "°C";
     temp_conf["exp_aft"] = expire_after;
     temp_conf["dev"] = device_short;
     serializeJson(temp_conf, buffer, sizeof(buffer));
@@ -252,7 +253,8 @@ void MQTTHelper::update_discovery_config() {
         FormatterType{} + _device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = t_temperature();
     temp_conf["dev_cla"] = "temperature";
-    temp_conf["unit_of_meas"] = "°C";
+    temp_conf["unit_of_meas"] =
+        _device_state.get_use_fahrenheit() ? "°F" : "°C";
     temp_conf["exp_aft"] = expire_after;
     temp_conf["dev"] = device_short;
     serializeJson(temp_conf, buffer, sizeof(buffer));

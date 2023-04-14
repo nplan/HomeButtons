@@ -24,6 +24,7 @@ class DeviceState : public Logger {
     DeviceName device_name;
     ButtonLabel btn_labels[NUM_BUTTONS];
     uint16_t sensor_interval = 0;  // minutes
+    bool use_fahrenheit = false;
 
     struct {
       IPAddress static_ip;
@@ -130,6 +131,15 @@ class DeviceState : public Logger {
   }
   const ButtonLabel& get_btn_label(uint8_t i) const;
   void set_btn_label(uint8_t i, const char* label);
+
+  bool get_use_fahrenheit() const { return user_preferences_.use_fahrenheit; }
+  StaticString<1> get_temp_unit() const {
+    return StaticString<1>(user_preferences_.use_fahrenheit ? "F" : "C");
+  }
+  void set_temp_unit(StaticString<1> unit) {
+    bool f = unit == "F" || unit == "f";
+    user_preferences_.use_fahrenheit = f;
+  }
 
   void save_user();
   void load_user();

@@ -166,7 +166,8 @@ uint8_t HardwareDefinition::read_battery_percent() {
   return (uint8_t)round(pct);
 }
 
-void HardwareDefinition::read_temp_hmd(float &temp, float &hmd) {
+void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
+                                       const bool fahrenheit) {
   shtc3_wire.begin(
       (int)SDA,
       (int)SCL);  // must be cast to int otherwise wrong begin() is called
@@ -174,7 +175,11 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd) {
   sensors_event_t humidity_event, temp_event;
   shtc3.getEvent(&humidity_event, &temp_event);
   shtc3.sleep(true);
-  temp = temp_event.temperature;
+  if (fahrenheit) {
+    temp = temp_event.temperature * 1.8 + 32;
+  } else {
+    temp = temp_event.temperature;
+  }
   hmd = humidity_event.relative_humidity;
 }
 

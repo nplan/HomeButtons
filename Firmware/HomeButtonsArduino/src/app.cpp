@@ -322,7 +322,8 @@ void App::_main_task() {
 
   // ------ read sensors ------
   hw_.read_temp_hmd(device_state_.sensors().temperature,
-                    device_state_.sensors().humidity);
+                    device_state_.sensors().humidity,
+                    device_state_.get_use_fahrenheit());
   device_state_.sensors().battery_pct = hw_.read_battery_percent();
 
   // ------ boot cause ------
@@ -654,7 +655,8 @@ void AppSMStates::AwakeModeIdleState::loop() {
     transition_to<UserInputFinishState>();
   } else if (millis() - sm().last_sensor_publish_ >= AWAKE_SENSOR_INTERVAL) {
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
-                           sm().device_state_.sensors().humidity);
+                           sm().device_state_.sensors().humidity,
+                           sm().device_state_.get_use_fahrenheit());
     sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
     sm()._publish_sensors();
     sm().last_sensor_publish_ = millis();
@@ -807,7 +809,8 @@ void AppSMStates::NetConnectingState::loop() {
           BTN_PRESS_PAYLOAD);
     }
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
-                           sm().device_state_.sensors().humidity);
+                           sm().device_state_.sensors().humidity,
+                           sm().device_state_.get_use_fahrenheit());
     sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
     sm()._publish_sensors();
     sm().device_state_.persisted().failed_connections = 0;

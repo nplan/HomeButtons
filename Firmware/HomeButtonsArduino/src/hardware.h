@@ -93,7 +93,7 @@ struct HardwareDefinition : public Logger {
 
   uint8_t read_battery_percent();
 
-  void read_temp_hmd(float &tempe, float &hmd);
+  void read_temp_hmd(float &tempe, float &hmd, const bool fahrenheit = false);
 
   bool is_charger_in_standby();
 

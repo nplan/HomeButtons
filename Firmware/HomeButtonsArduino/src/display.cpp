@@ -417,7 +417,8 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 30);
   disp->print(text.c_str());
 
-  text = UIState::MessageType("%.1f C", device_state_.sensors().temperature);
+  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
+                              device_state_.get_temp_unit().c_str());
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);

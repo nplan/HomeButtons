@@ -42,6 +42,8 @@ static WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
                                              BTN_LABEL_MAXLEN);
+static WiFiManagerParameter temp_unit_param("temp_unit", "Temperature Unit", "",
+                                            1);
 
 static bool web_portal_saved = false;
 
@@ -110,6 +112,7 @@ void save_params_callback(DeviceState* device_state) {
   device_state->set_btn_label(3, btn4_label_param.getValue());
   device_state->set_btn_label(4, btn5_label_param.getValue());
   device_state->set_btn_label(5, btn6_label_param.getValue());
+  device_state->set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
 
   IPAddress static_ip, gateway, subnet, dns, dns2;
   static_ip.fromString(static_ip_param.getValue());
@@ -164,6 +167,7 @@ void start_setup(DeviceState& device_state, Display& display,
   btn4_label_param.setValue(device_state.get_btn_label(3).c_str(), 20);
   btn5_label_param.setValue(device_state.get_btn_label(4).c_str(), 20);
   btn6_label_param.setValue(device_state.get_btn_label(5).c_str(), 20);
+  temp_unit_param.setValue(device_state.get_temp_unit().c_str(), 1);
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
   wifi_manager.addParameter(&mqtt_port_param);
@@ -182,6 +186,7 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&btn4_label_param);
   wifi_manager.addParameter(&btn5_label_param);
   wifi_manager.addParameter(&btn6_label_param);
+  wifi_manager.addParameter(&temp_unit_param);
 
   // connect Wi-Fi
   WiFi.mode(WIFI_STA);
