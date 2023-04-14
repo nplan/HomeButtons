@@ -507,6 +507,7 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
                        device_state_.get_btn_label(i), true);
       network_.publish(mqtt_.t_btn_label_cmd(i), "", true);
       device_state_.flags().display_redraw = true;
+      device_state_.save_all();
 
       ButtonLabel label(device_state_.get_btn_label(i).c_str());
 
