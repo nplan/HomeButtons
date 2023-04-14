@@ -161,12 +161,18 @@ void start_setup(DeviceState& device_state, Display& display,
       device_state.user_preferences().network.dns.toString().c_str(), 16);
   dns2_param.setValue(
       device_state.user_preferences().network.dns2.toString().c_str(), 16);
-  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(), 20);
-  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(), 20);
-  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(), 20);
-  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(), 20);
-  btn5_label_param.setValue(device_state.get_btn_label(4).c_str(), 20);
-  btn6_label_param.setValue(device_state.get_btn_label(5).c_str(), 20);
+  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn5_label_param.setValue(device_state.get_btn_label(4).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn6_label_param.setValue(device_state.get_btn_label(5).c_str(),
+                            BTN_LABEL_MAXLEN);
   temp_unit_param.setValue(device_state.get_temp_unit().c_str(), 1);
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
