@@ -566,7 +566,8 @@ void App::_download_mdi_icons() {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     ButtonLabel label(device_state_.get_btn_label(i).c_str());
     if (label.substring(0, 4) == "mdi:") {
-      StaticString<64> icon = label.substring(4);
+      MDIName icon = label.substring(
+          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
       if (!mdi_.exists(icon.c_str())) {
         download_required = true;
         break;
@@ -609,7 +610,8 @@ void App::_download_mdi_icons() {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     ButtonLabel label(device_state_.get_btn_label(i).c_str());
     if (label.substring(0, 4) == "mdi:") {
-      StaticString<64> icon = label.substring(4);
+      MDIName icon = label.substring(
+          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
       if (!mdi_.exists(icon.c_str())) {
         mdi_.download(icon.c_str());
       }
@@ -626,6 +628,9 @@ void AppSMStates::InitState::entry() {
   sm()._start_leds_task();
   sm()._start_display_task();
   sm()._start_network_task();
+
+  sm().mdi_.add_size(64);
+  sm().mdi_.add_size(48);
 
   if (!sm().device_state_.flags().awake_mode) {
     esp_task_wdt_init(WDT_TIMEOUT_SLEEP, true);
