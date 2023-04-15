@@ -107,6 +107,7 @@ class Display : public Logger {
   void draw_white();
   void draw_black();
   bool draw_bmp(File& file, int16_t x, int16_t y);
+  void draw_mdi(const char* name, uint16_t size, int16_t x, int16_t y);
 };
 
 #endif  // HOMEBUTTONS_DISPLAY_H

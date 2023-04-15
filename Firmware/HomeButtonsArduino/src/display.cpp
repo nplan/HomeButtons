@@ -282,13 +282,6 @@ void Display::draw_message(const UIState::MessageType &message, bool error,
 void Display::draw_main() {
   const uint16_t min_btn_clearance = 14;
   const uint16_t h_padding = 5;
-  const uint16_t heights[] = {
-      static_cast<uint16_t>(round(HEIGHT / 12.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 2 * HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 3 * HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 4 * HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 5 * HEIGHT / 6.))};
 
   disp->setRotation(0);
   disp->setFullWindow();
@@ -305,65 +298,121 @@ void Display::draw_main() {
   }
 
   mdi_.begin();
-  bool is_mdi[NUM_BUTTONS] = {false};
+  // 0 text, 1 icon, 2 mixed
+  uint8_t label_type[NUM_BUTTONS] = {0};
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
     ButtonLabel label = device_state_.get_btn_label(i);
     if (label.substring(0, 4) == "mdi:") {
-      is_mdi[i] = true;
-    }
-  }
-  // Loop through buttons
-  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
-    uint16_t w, h;
-    ButtonLabel label = device_state_.get_btn_label(i);
-
-    if (is_mdi[i]) {
-      StaticString<64> icon = label.substring(4);
-      // calculate icon position on display
-      uint16_t x = i % 2 == 0 ? 0 : WIDTH / 2;
-      uint16_t y;
-      if (i < 2) {
-        y = 17;
-      } else if (i < 4) {
-        y = 116;
+      if (label.index_of(' ') > 0) {
+        label_type[i] = 2;
       } else {
-        y = 215;
-      }
-      bool draw_placeholder = false;
-      File file;
-      if (mdi_.exists(icon.c_str())) {
-        File file = mdi_.get_file(icon.c_str());
-        if (!draw_bmp(file, x, y)) {
-          error("Could not draw icon: %s", icon.c_str());
-          // file might be corrupted - remove so it will be downloaded again
-          mdi_.remove(icon.c_str());
-          draw_placeholder = true;
-        }
-      } else {
-        error("Icon not found: %s", icon.c_str());
-        draw_placeholder = true;
-      }
-      if (draw_placeholder) {
-        disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64,
-                          text_color);
+        label_type[i] = 1;
       }
     } else {
-      // determine max width of label based on if next button is icon
-      uint16_t max_label_width;
+      label_type[i] = 0;
+    }
+  }
+
+  // Loop through buttons
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+
+    if (label_type[i] == 1) {
+      // ICON
+      MDIName icon = label.substring(
+          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
+
+      // make smaller if opposite is text or mixed
+      uint16_t size;
+      bool small;
       if (i % 2 == 0) {
-        if (is_mdi[i + 1]) {
-          max_label_width = WIDTH / 2 - h_padding;
+        if (label_type[i + 1] == 0 || label_type[i + 1] == 2) {
+          size = 48;
+          small = true;
         } else {
-          max_label_width = WIDTH - min_btn_clearance;
+          size = 64;
+          small = false;
         }
       } else {
-        if (is_mdi[i - 1]) {
-          max_label_width = WIDTH / 2 - h_padding;
+        if (label_type[i - 1] == 0 || label_type[i - 1] == 2) {
+          size = 48;
+          small = true;
         } else {
-          max_label_width = WIDTH - min_btn_clearance;
+          size = 64;
+          small = false;
         }
       }
+
+      // calculate icon position on display
+      uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
+      uint16_t y;
+      if (i < 2) {
+        if (small) {
+          y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+              size / 2;
+        } else {
+          y = 17;
+        }
+      } else if (i < 4) {
+        if (small) {
+          y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+              size / 2;
+        } else {
+          y = 116;
+        }
+      } else {
+        if (small) {
+          y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+              size / 2;
+        } else {
+          y = 215;
+        }
+      }
+      draw_mdi(icon.c_str(), size, x, y);
+    } else if (label_type[i] == 2) {
+      // MIXED
+      MDIName icon = label.substring(4, label.index_of(' '));
+      StaticString<56> text = label.substring(label.index_of(' ') + 1);
+      uint16_t icon_size = 48;
+      uint16_t x = i % 2 == 0 ? 0 : WIDTH - icon_size;
+      uint16_t y =
+          static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+          icon_size / 2;
+
+      draw_mdi(icon.c_str(), icon_size, x, y);
+      // draw text
+      uint16_t max_text_width = WIDTH - icon_size - h_padding;
       u8g2.setFont(u8g2_font_helvB24_te);
+      uint16_t w, h;
+      w = u8g2.getUTF8Width(text.c_str());
+      h = u8g2.getFontAscent();
+      if (w >= max_text_width) {
+        u8g2.setFont(u8g2_font_helvB18_te);
+        w = u8g2.getUTF8Width(text.c_str());
+        h = u8g2.getFontAscent();
+        if (w >= max_text_width) {
+          text = text.substring(0, text.length() - 1) + ".";
+          while (1) {
+            w = u8g2.getUTF8Width(text.c_str());
+            h = u8g2.getFontAscent();
+            if (w >= max_text_width) {
+              text = text.substring(0, text.length() - 2) + ".";
+            } else {
+              break;
+            }
+          }
+        }
+      }
+      x = i % 2 == 0 ? icon_size + h_padding
+                     : WIDTH - icon_size - w - h_padding;
+      y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) + h / 2;
+      u8g2.setCursor(x, y);
+      u8g2.print(text.c_str());
+    } else {
+      // TEXT
+      uint16_t max_label_width = WIDTH - min_btn_clearance;
+      u8g2.setFont(u8g2_font_helvB24_te);
+      uint16_t w, h;
       w = u8g2.getUTF8Width(label.c_str());
       h = u8g2.getFontAscent();
       if (w >= max_label_width) {
@@ -383,14 +432,14 @@ void Display::draw_main() {
           }
         }
       }
-      int16_t w_pos, h_pos;
+      int16_t x, y;
       if (i % 2 == 0) {
-        w_pos = h_padding;
+        x = h_padding;
       } else {
-        w_pos = WIDTH - w - h_padding;
+        x = WIDTH - w - h_padding;
       }
-      h_pos = heights[i] + h / 2;
-      u8g2.setCursor(w_pos, h_pos);
+      y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) + h / 2;
+      u8g2.setCursor(x, y);
       u8g2.print(label.c_str());
     }
   }
@@ -886,4 +935,24 @@ bool Display::draw_bmp(File &file, int16_t x, int16_t y) {
   }
   debug("BMP loaded in %lu ms", millis() - startTime);
   return valid;
+}
+
+void Display::draw_mdi(const char *name, uint16_t size, int16_t x, int16_t y) {
+  bool draw_placeholder = false;
+  File file;
+  if (mdi_.exists(name, size)) {
+    File file = mdi_.get_file(name, size);
+    if (!draw_bmp(file, x, y)) {
+      error("Could not draw icon: %s", name);
+      // file might be corrupted - remove so it will be downloaded again
+      mdi_.remove(name, size);
+      draw_placeholder = true;
+    }
+  } else {
+    error("Icon not found: %s", name);
+    draw_placeholder = true;
+  }
+  if (draw_placeholder) {
+    disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
+  }
 }
