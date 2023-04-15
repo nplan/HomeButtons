@@ -501,9 +501,11 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
 
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     if (strcmp(topic, mqtt_.t_btn_label_cmd(i).c_str()) == 0) {
-      device_state_.set_btn_label(i, payload);
-      debug("button %d label changed to: %s", i + 1,
-            device_state_.get_btn_label(i).c_str());
+      ButtonLabel new_label(payload);
+      new_label.trim();
+      debug("button %d label changed to: %s", i + 1, new_label.c_str());
+      device_state_.set_btn_label(i, new_label.c_str());
+
       network_.publish(mqtt_.t_btn_label_state(i),
                        device_state_.get_btn_label(i), true);
       network_.publish(mqtt_.t_btn_label_cmd(i), "", true);
