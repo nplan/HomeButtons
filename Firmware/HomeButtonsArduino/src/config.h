@@ -15,7 +15,7 @@ static constexpr char SETUP_AP_PASSWORD[] = "password123";
 // ------ buttons ------
 static constexpr uint8_t NUM_BUTTONS = 6;
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
-static constexpr uint8_t BTN_LABEL_MAXLEN = 48;
+static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
 
 // ------ defaults ------
 static constexpr char DEVICE_NAME_DFLT[] = "Home Buttons";
