@@ -48,12 +48,47 @@ class StaticString {
   StaticString substring(size_t i) { return substring(i, length()); }
   StaticString substring(size_t i, size_t j) {
     StaticString output;
-    if (i < MAX_SIZE) {
-      auto n =
-          std::snprintf(output.data_, std::min(MAX_SIZE, j - i + 1), data_ + i);
-      _check_snprintf_return_value(n);
+    if (i > j || i >= length()) {
+      return output;
     }
+    if (j > length()) {
+      j = length();
+    }
+    auto n =
+        std::snprintf(output.data_, std::min(MAX_SIZE, j - i + 1), data_ + i);
+    _check_snprintf_return_value(n);
     return output;
+  }
+
+  // removes any leading or trailing spaces
+  void trim(void) {
+    if (empty()) {
+      return;
+    }
+    auto start = data_;
+    while (isspace(*start)) {
+      start++;
+    }
+    auto end = data_ + length() - 1;
+    while (end > start && isspace(*end)) {
+      end--;
+    }
+    auto n = std::snprintf(data_, std::min(MAX_SIZE, (size_t)(end - start) + 2),
+                           "%s", start);
+    _check_snprintf_return_value(n);
+  }
+
+  // returns index of first occurrence of c, or -1 if not found
+  int index_of(char c, unsigned int start = 0) const {
+    if (start >= length()) {
+      return -1;
+    }
+    for (unsigned int i = start; i < length(); i++) {
+      if (data_[i] == c) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   template <typename T>
