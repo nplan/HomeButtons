@@ -113,16 +113,16 @@ struct HardwareDefinition : public Logger {
   bool factory_params_ok();
 
   void set_serial_number(const char *serial_number) {
-    strncpy(factory_params_.serial_number, serial_number, 8);
+    memcpy(factory_params_.serial_number, serial_number, 8);
   }
   void set_random_id(const char *random_id) {
-    strncpy(factory_params_.random_id, random_id, 6);
+    memcpy(factory_params_.random_id, random_id, 6);
   }
   void set_model_id(const char *model_id) {
-    strncpy(factory_params_.model_id, model_id, 2);
+    memcpy(factory_params_.model_id, model_id, 2);
   }
   void set_hw_version(const char *hw_version) {
-    strncpy(factory_params_.hw_version, hw_version, 3);
+    memcpy(factory_params_.hw_version, hw_version, 3);
   }
 
   void write_factory_params() { _write_efuse(); }
