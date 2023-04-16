@@ -1,7 +1,10 @@
 #include "hardware.h"
 #include "logger.h"
+#include "esp_efuse.h"
+#include "esp_efuse_custom_table.h"
 
 #include <Wire.h>
+#include <Preferences.h>
 
 #include "Adafruit_SHTC3.h"
 
@@ -9,25 +12,50 @@
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
-void HardwareDefinition::init(const HWVersion &hw_version) {
-  if (hw_version == "1.0") {
+bool HardwareDefinition::init() {
+  if (factory_params_ok()) {
+    debug("factory params already set");
+  } else {
+    if (!_efuse_burned()) {
+      _nvs_2_efuse();
+    }
+    _read_efuse();
+  }
+
+  if (!factory_params_ok()) {
+    error("factory params empty");
+    return false;
+  }
+
+  if (strcmp(get_model_id(), "A1") == 0) {
+    strncpy(model_name_, "Home Buttons", sizeof(model_name_));
+  }
+
+  snprintf(unique_id_, sizeof(unique_id_), "HBTNS-%s-%s", get_serial_number(),
+           get_random_id());
+
+  auto hw_ver = get_hw_version();
+
+  if (strcmp(hw_ver, "1.0") == 0) {
     load_hw_rev_1_0();
     info("configured for hw version: 1.0");
-  } else if (hw_version == "2.0") {
+  } else if (strcmp(hw_ver, "2.0") == 0) {
     load_hw_rev_2_0();
     info("configured for hw version: 2.0");
-  } else if (hw_version == "2.1") {
+  } else if (strcmp(hw_ver, "2.1") == 0) {
     load_hw_rev_2_0();
     info("configured for hw version: 2.1");
-  } else if (hw_version == "2.2") {
+  } else if (strcmp(hw_ver, "2.2") == 0) {
     load_hw_rev_2_2();
     info("configured for hw version: 2.2");
-  } else if (hw_version == "2.3") {
+  } else if (strcmp(hw_ver, "2.3") == 0) {
     load_hw_rev_2_3();
     info("configured for hw version: 2.3");
   } else {
-    error("HW rev %s not supported", hw_version.c_str());
+    error("HW rev %s not supported", hw_ver);
+    return false;
   }
+  return true;
 }
 
 void HardwareDefinition::begin() {
@@ -153,12 +181,12 @@ void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
 }
 
 float HardwareDefinition::read_battery_voltage() {
-  return (analogReadMilliVolts(VBAT_ADC)/1000.)/BATT_DIVIDER;
+  return (analogReadMilliVolts(VBAT_ADC) / 1000.) / BATT_DIVIDER;
 }
 
 uint8_t HardwareDefinition::read_battery_percent() {
   if (!is_battery_present()) return 0;
-  float pct = BATT_SOC_EST_K*read_battery_voltage() + BATT_SOC_EST_N;
+  float pct = BATT_SOC_EST_K * read_battery_voltage() + BATT_SOC_EST_N;
   if (pct < 1.0)
     pct = 1;
   else if (pct > 100.0)
@@ -212,6 +240,71 @@ bool HardwareDefinition::is_battery_present() {
   } else {
     // hardware hack for powering v2.1 with USB-C
     return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
+  }
+}
+
+bool HardwareDefinition::factory_params_ok() {
+  return factory_params_.serial_number[0] != 0 &&
+         factory_params_.random_id[0] != 0 &&
+         factory_params_.model_id[0] != 0 && factory_params_.hw_version[0] != 0;
+}
+
+bool HardwareDefinition::_efuse_burned() {
+  uint8_t buf[8];
+  ESP_ERROR_CHECK(
+      esp_efuse_read_field_blob(ESP_EFUSE_USER_DATA_SERIAL_NUMBER, &buf, 8));
+  return buf[0] != 0;
+}
+
+void HardwareDefinition::_read_efuse() {
+  factory_params_ = {};
+  ESP_ERROR_CHECK(esp_efuse_read_field_blob(
+      ESP_EFUSE_USER_DATA_SERIAL_NUMBER, &factory_params_.serial_number, 64));
+  ESP_ERROR_CHECK(esp_efuse_read_field_blob(ESP_EFUSE_USER_DATA_RANDOM_ID,
+                                            &factory_params_.random_id, 48));
+  ESP_ERROR_CHECK(esp_efuse_read_field_blob(ESP_EFUSE_USER_DATA_MODEL_ID,
+                                            &factory_params_.model_id, 16));
+  ESP_ERROR_CHECK(esp_efuse_read_field_blob(ESP_EFUSE_USER_DATA_HW_VERSION,
+                                            &factory_params_.hw_version, 24));
+  info("read efuse factory params: SN=%s, RID=%s, M=%s, HW=%s",
+       factory_params_.serial_number, factory_params_.random_id,
+       factory_params_.model_id, factory_params_.hw_version);
+}
+
+void HardwareDefinition::_write_efuse() {
+  ESP_ERROR_CHECK(esp_efuse_batch_write_begin());
+  ESP_ERROR_CHECK(esp_efuse_write_field_blob(
+      ESP_EFUSE_USER_DATA_SERIAL_NUMBER, &factory_params_.serial_number, 64));
+  ESP_ERROR_CHECK(esp_efuse_write_field_blob(ESP_EFUSE_USER_DATA_RANDOM_ID,
+                                             &factory_params_.random_id, 48));
+  ESP_ERROR_CHECK(esp_efuse_write_field_blob(ESP_EFUSE_USER_DATA_MODEL_ID,
+                                             &factory_params_.model_id, 16));
+  ESP_ERROR_CHECK(esp_efuse_write_field_blob(ESP_EFUSE_USER_DATA_HW_VERSION,
+                                             &factory_params_.hw_version, 24));
+  ESP_ERROR_CHECK(esp_efuse_batch_write_commit());
+  info("wrote efuse factory params.");
+}
+
+void HardwareDefinition::_nvs_2_efuse() {
+  info("migrating factory params from nvs to efuse");
+  Preferences preferences;
+  preferences.begin("factory", true);
+  bool success = true;
+  success = success && preferences.getString("serial_number",
+                                             factory_params_.serial_number, 64);
+  success = success &&
+            preferences.getString("random_id", factory_params_.random_id, 48);
+  success = success &&
+            preferences.getString("model_id", factory_params_.model_id, 16);
+  success = success &&
+            preferences.getString("hw_version", factory_params_.hw_version, 24);
+  if (success) {
+    debug("read factory params from nvs: SN=%s, RID=%s, M=%s, HW=%s",
+          factory_params_.serial_number, factory_params_.random_id,
+          factory_params_.model_id, factory_params_.hw_version);
+    _write_efuse();
+  } else {
+    error("failed to read factory params from nvs");
   }
 }
 

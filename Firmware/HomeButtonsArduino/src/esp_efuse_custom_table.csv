@@ -1,0 +1,4 @@
+USER_DATA.SERIAL_NUMBER,        EFUSE_BLK3,     0,      64,     Serial number - YYWW1234
+USER_DATA.RANDOM_ID,            EFUSE_BLK3,     64,     48,     Random ID - 123XYZ
+USER_DATA.MODEL_ID,             EFUSE_BLK3,     112,    16,     Model ID - AA
+USER_DATA.HW_VERSION,           EFUSE_BLK3,     128,    24,      Hardware version - 1.1

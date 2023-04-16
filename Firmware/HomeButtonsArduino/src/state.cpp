@@ -2,34 +2,6 @@
 #include "utils.h"
 #include "config.h"
 
-void DeviceState::save_factory() {
-  preferences_.begin("factory", false);
-  preferences_.putString("serial_number", factory_.serial_number.c_str());
-  preferences_.putString("random_id", factory_.random_id.c_str());
-  preferences_.putString("model_name", factory_.model_name.c_str());
-  preferences_.putString("model_id", factory_.model_id.c_str());
-  preferences_.putString("hw_version", factory_.hw_version.c_str());
-  preferences_.putString("unique_id", factory_.unique_id.c_str());
-  preferences_.end();
-}
-
-void DeviceState::load_factory() {
-  preferences_.begin("factory", true);
-  _load_to_static_string(factory_.serial_number, "serial_number", "");
-  _load_to_static_string(factory_.random_id, "random_id", "");
-  _load_to_static_string(factory_.model_name, "model_name", "");
-  _load_to_static_string(factory_.model_id, "model_id", "");
-  _load_to_static_string(factory_.hw_version, "hw_version", "");
-  _load_to_static_string(factory_.unique_id, "unique_id", "");
-  preferences_.end();
-}
-
-void DeviceState::clear_factory() {
-  preferences_.begin("factory", false);
-  preferences_.clear();
-  preferences_.end();
-}
-
 void DeviceState::save_user() {
   preferences_.begin("user", false);
   preferences_.putString("device_name", user_preferences_.device_name.c_str());
@@ -174,15 +146,24 @@ void DeviceState::clear_persisted_flags() {
   save_all();
 }
 
+void DeviceState::_load_factory(HardwareDefinition& hw) {
+  factory_.serial_number = hw.get_serial_number();
+  factory_.random_id = hw.get_random_id();
+  factory_.model_name = hw.get_model_name();
+  factory_.model_id = hw.get_model_id();
+  factory_.hw_version = hw.get_hw_version();
+  factory_.unique_id = hw.get_unique_id();
+}
+
 void DeviceState::save_all() {
   debug("state save all");
   save_user();
   save_persisted();
 }
 
-void DeviceState::load_all() {
+void DeviceState::load_all(HardwareDefinition& hw) {
   debug("state load all");
-  load_factory();
+  _load_factory(hw);
   load_user();
   load_persisted();
 }

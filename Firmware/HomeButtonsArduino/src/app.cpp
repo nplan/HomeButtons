@@ -213,12 +213,13 @@ void App::_main_task() {
   info("woke up.");
   info("cpu freq: %d MHz", getCpuFrequencyMhz());
   info("SW version: %s", SW_VERSION);
-  device_state_.load_all();
 
-  // ------ factory mode ------
-  if (device_state_.factory().serial_number.length() < 1) {
+  // ------ init hardware ------
+  if (!hw_.init()) {
     info("first boot, starting factory mode...");
-    factory::factory_mode(hw_, device_state_, display_);
+    factory::factory_mode(hw_, display_);
+    hw_.init();
+    device_state_.load_all(hw_);
     display_.begin(hw_);
     display_.disp_welcome();
     display_.update();
@@ -227,9 +228,8 @@ void App::_main_task() {
     _start_esp_sleep();
   }
 
-  // ------ init hardware ------
-  info("HW version: %s", device_state_.factory().hw_version.c_str());
-  hw_.init(device_state_.factory().hw_version);
+  device_state_.load_all(hw_);
+
   // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   display_.begin(hw_);
   hw_.begin();

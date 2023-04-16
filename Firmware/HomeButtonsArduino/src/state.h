@@ -7,6 +7,7 @@
 #include "config.h"
 #include "types.h"
 #include "logger.h"
+#include "hardware.h"
 #include <IPAddress.h>
 
 class DeviceState : public Logger {
@@ -86,18 +87,6 @@ class DeviceState : public Logger {
 
   // Factory
   const Factory& factory() const { return factory_; }
-  void set_serial_number(const SerialNumber& str) {
-    factory_.serial_number = str;
-  }
-  void set_random_id(const RandomID& str) { factory_.random_id = str; }
-  void set_model_name(const ModelName& str) { factory_.model_name = str; }
-  void set_model_id(const ModelID& str) { factory_.model_id = str; }
-  void set_hw_version(const HWVersion& str) { factory_.hw_version = str; }
-  void set_unique_id(const UniqueID& str) { factory_.unique_id = str; }
-
-  void save_factory();
-  void load_factory();
-  void clear_factory();
 
   // User preferences
   const UserPreferences& user_preferences() const { return user_preferences_; }
@@ -159,7 +148,7 @@ class DeviceState : public Logger {
   void clear_persisted_flags();
 
   void save_all();
-  void load_all();
+  void load_all(HardwareDefinition& hw);
   void clear_all();
 
   // TODO: maybe should be somewhere else
@@ -176,6 +165,8 @@ class DeviceState : public Logger {
   const char* ip() const { return ip_address_.c_str(); }
 
  private:
+  void _load_factory(HardwareDefinition& hw);
+
   template <std::size_t MAX_SIZE>
   void _load_to_static_string(StaticString<MAX_SIZE>& destination,
                               const char* key, const char* defaultValue) {
