@@ -2,16 +2,14 @@
 
 #include "hardware.h"
 
-LEDs leds = {};
-
 void LEDs::begin() {
   state = State::ACTIVE;
-  log_i("[LEDS] begin");
+  info("begin");
 }
 
 void LEDs::end() {
   cmd_state = CMDState::CMD_END;
-  log_d("[LEDS] cmd end");
+  debug("cmd end");
 }
 
 void LEDs::blink(uint8_t led_num, uint8_t num_blinks, bool hold,
@@ -26,13 +24,13 @@ void LEDs::blink(uint8_t led_num, uint8_t num_blinks, bool hold,
               .hold = hold};
   cmd_blink = blink;
   new_cmd_blink = true;
-  log_d("[LEDS] blink - led: %d, blinks: %d, bri: %d, hold: %d", led_num,
-        num_blinks, brightness, hold);
+  debug("blink - led: %d, blinks: %d, bri: %d, hold: %d", led_num, num_blinks,
+        brightness, hold);
 }
 
-LEDs::State LEDs::get_state() { return state; }
+LEDs::State LEDs::get_state() const { return state; }
 
-void LEDs::update() {
+void LEDs::update(HardwareDefinition& HW) {
   if (state != State::ACTIVE) {
     return;
   }
@@ -77,6 +75,6 @@ void LEDs::update() {
   if (cmd_state == CMDState::CMD_END) {
     cmd_state = CMDState::NONE;
     state = State::IDLE;
-    log_i("[LEDS] ended");
+    info("ended");
   }
 }

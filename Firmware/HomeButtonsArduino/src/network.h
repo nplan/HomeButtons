@@ -2,8 +2,109 @@
 #define HOMEBUTTONS_NETWORK_H
 
 #include <Arduino.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
 
-class Network {
+#include "state_machine.h"
+#include "mqtt_helper.h"  // For TopicType
+#include "freertos/queue.h"
+#include "logger.h"
+
+class DeviceState;
+class Network;
+
+namespace NetworkSMStates {
+class IdleState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void execute_once() override;
+
+  const char *get_name() override { return "IdleState"; }
+};
+
+class QuickConnectState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void entry() override;
+  void execute_once() override;
+
+  const char *get_name() override { return "QuickConnectState"; }
+
+ private:
+  uint32_t start_time_ = 0;
+};
+
+class NormalConnectState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void entry() override;
+  void execute_once() override;
+
+  const char *get_name() override { return "NormalConnectState"; }
+
+ private:
+  uint32_t start_time_ = 0;
+  bool await_confirm_quick_wifi_settings_ = false;
+};
+
+class MQTTConnectState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void entry() override;
+  void execute_once() override;
+
+  const char *get_name() override { return "MQTTConnectState"; }
+
+ private:
+  uint32_t start_time_ = 0;
+};
+
+class WifiConnectedState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void execute_once() override;
+
+  const char *get_name() override { return "WifiConnectedState"; }
+};
+
+class DisconnectState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void entry() override;
+  void execute_once() override;
+
+  const char *get_name() override { return "DisconnectState"; }
+};
+
+class FullyConnectedState : public State<Network> {
+ public:
+  using State<Network>::State;
+
+  void entry() override;
+  void execute_once() override;
+
+  const char *get_name() override { return "FullyConnectedState"; }
+
+ private:
+  uint32_t last_conn_check_time_ = 0;
+};
+}  // namespace NetworkSMStates
+
+class Network;
+
+using NetworkStateMachine = StateMachine<
+    Network, NetworkSMStates::IdleState, NetworkSMStates::QuickConnectState,
+    NetworkSMStates::NormalConnectState, NetworkSMStates::MQTTConnectState,
+    NetworkSMStates::WifiConnectedState, NetworkSMStates::DisconnectState,
+    NetworkSMStates::FullyConnectedState>;
+
+class Network : public NetworkStateMachine, public Logger {
  public:
   enum class State {
     DISCONNECTED,
@@ -11,55 +112,62 @@ class Network {
     M_CONNECTED,
   };
 
-  enum class CMDState { NONE, CONNECT, DISCONNECT };
+  enum class Command { NONE, CONNECT, DISCONNECT };
+
+  explicit Network(DeviceState &device_state);
+  Network(const Network &) = delete;
+  ~Network();
 
   void connect();
   void disconnect(bool erase = false);
   void update();
+  void setup();  // Warning: must be called from same task (thread) as update()
 
   State get_state();
 
-  bool publish(const char* topic, const char* payload, bool retained = false);
-  bool subscribe(String topic);
-  void set_callback(std::function<void(String, String)> callback);
+  void publish(const TopicType &topic, const PayloadType &payload,
+               bool retained = false);
+  void publish(const TopicType &topic, const char *payload,
+               bool retained = false);
+  bool subscribe(const TopicType &topic);
+  void set_mqtt_callback(
+      std::function<void(const char *, const char *)> callback);
   void set_on_connect(std::function<void()> on_connect);
 
-  uint32_t get_cmd_connect_time();
-
  private:
-  State state = State::DISCONNECTED;
-  CMDState cmd_state = CMDState::NONE;
+  State state_ = State::DISCONNECTED;
+  Command command_ = Command::NONE;
+  uint32_t cmd_connect_time_ = 0;
+  bool erase_ = false;
 
-  uint32_t wifi_start_time = 0;
-  uint32_t mqtt_start_time = 0;
-  uint32_t last_conn_check_time = 0;
-  uint32_t disconnect_start_time = 0;
-  uint32_t cmd_connect_time = 0;
+  DeviceState &device_state_;
+  WiFiClient wifi_client_;
+  PubSubClient mqtt_client_;
+  QueueHandle_t mqtt_publish_queue_ = nullptr;
+  TaskHandle_t network_task_handle_ = nullptr;
 
-  bool erase = false;
-
-  enum StateMachineState {
-    IDLE,
-    AWAIT_QUICK_WIFI_CONNECTION,
-    BEGIN_WIFI_NORMAL_CONNECTION,
-    AWAIT_NORMAL_WIFI_CONNECTION,
-    AWAIT_CONFIRM_QUICK_WIFI_SETTINGS,
-    AWAIT_MQTT_CONNECTION,
-    CONNECTED,
-    AWAIT_DISCONNECTING_TIMEOUT,
-    DISCONNECT
+  struct PublishQueueElement {
+    TopicType topic;
+    PayloadType payload;
+    bool retained;
   };
 
-  StateMachineState sm_state = IDLE;
-  StateMachineState prev_sm_state = IDLE;
+  std::function<void(const char *, const char *)> usr_callback_;
+  std::function<void()> on_connect_callback_;
 
-  std::function<void(String, String)> usr_callback = NULL;
-  std::function<void()> on_connect = NULL;
+  void _pre_wifi_connect();
+  bool _connect_mqtt();
+  void _mqtt_callback(const char *topic, uint8_t *payload, uint32_t length);
+  void _publish_unsafe(const TopicType &topic, const char *payload,
+                       bool retained = false);
 
-  bool connect_mqtt();
-  void callback(const char* topic, uint8_t* payload, uint32_t length);
+  friend class NetworkSMStates::IdleState;
+  friend class NetworkSMStates::QuickConnectState;
+  friend class NetworkSMStates::NormalConnectState;
+  friend class NetworkSMStates::MQTTConnectState;
+  friend class NetworkSMStates::WifiConnectedState;
+  friend class NetworkSMStates::DisconnectState;
+  friend class NetworkSMStates::FullyConnectedState;
 };
-
-extern Network network;
 
 #endif  // HOMEBUTTONS_NETWORK_H

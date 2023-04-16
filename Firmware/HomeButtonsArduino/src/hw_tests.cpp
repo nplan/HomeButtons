@@ -1,10 +1,12 @@
 #include "hw_tests.h"
+#include "logger.h"
 
-void hw_tests::blink_leds(String hw_version) {
+void hw_tests::blink_leds(const Logger& logger, const HWVersion& hw_version) {
+  HardwareDefinition HW;
   HW.init(hw_version);
   HW.begin();
   while (1) {
-    for (int n = 0; n < 10; n++) {
+    for (int m = 0; m < 10; m++) {
       for (int n = 0; n <= 255; n++) {
         ledcWrite(HW.LED1_CH, n);
         ledcWrite(HW.LED2_CH, n);
@@ -27,7 +29,9 @@ void hw_tests::blink_leds(String hw_version) {
   }
 }
 
-void hw_tests::led_on_button(String hw_version) {
+void hw_tests::led_on_button(const Logger& logger,
+                             const HWVersion& hw_version) {
+  HardwareDefinition HW;
   HW.init(hw_version);
   HW.begin();
   while (1) {
@@ -40,7 +44,8 @@ void hw_tests::led_on_button(String hw_version) {
   }
 }
 
-void hw_tests::wifi_stress(String hw_version) {
+void hw_tests::wifi_stress(const Logger& logger, const HWVersion& hw_version) {
+  HardwareDefinition HW;
   HW.init(hw_version);
   HW.begin();
   WiFi.mode(WIFI_STA);

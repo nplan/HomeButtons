@@ -5,7 +5,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.0.6";
+static constexpr char SW_VERSION[] = "v2.0.7-beta";
 static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
 
 // ------ wifi AP ------
@@ -45,13 +45,12 @@ static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;   // ms
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 static constexpr uint32_t WIFI_TIMEOUT = 20000L;
+static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 5;
 static constexpr uint32_t MQTT_TIMEOUT = 15000L;
 static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
 static constexpr uint32_t NET_CONNECT_TIMEOUT = 45000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
-static constexpr uint16_t MQTT_PYLD_SIZE = 512;
-static constexpr uint16_t MQTT_BUFFER_SIZE = 777;
 
 // ------ LEDs ------
 static constexpr uint8_t LED_DFLT_BRIGHT = 225;

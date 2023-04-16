@@ -5,9 +5,13 @@
 
 #include <semver.hpp>
 
+#include "types.h"
 #include "config.h"
+#include "logger.h"
 
-struct HardwareDefinition {
+struct HardwareDefinition : public Logger {
+ public:
+  HardwareDefinition() : Logger("HW") {}
   semver::version version;
 
   // ------ PIN definitions ------
@@ -67,11 +71,11 @@ struct HardwareDefinition {
   uint64_t WAKE_BITMASK;
 
   // ------ functions ------
-  void init(String hw_version);
+  void init(const HWVersion &hw_version);
 
   void begin();
 
-  bool digitalReadAny();
+  bool any_button_pressed();
 
   void set_led(uint8_t ch, uint8_t brightness);
 
@@ -95,233 +99,11 @@ struct HardwareDefinition {
   void enable_charger(bool enable);
 
   bool is_battery_present();
+
+  void load_hw_rev_1_0();
+  void load_hw_rev_2_0();
+  void load_hw_rev_2_2();
+  void load_hw_rev_2_3();
 };
-
-const HardwareDefinition hw_rev_1_0{// ------ PIN definitions ------
-                                    .version = semver::version{1, 0, 0},
-                                    .BTN1_PIN = 1,
-                                    .BTN2_PIN = 2,
-                                    .BTN3_PIN = 3,
-                                    .BTN4_PIN = 4,
-                                    .BTN5_PIN = 5,
-                                    .BTN6_PIN = 6,
-
-                                    .LED1_PIN = 15,
-                                    .LED2_PIN = 16,
-                                    .LED3_PIN = 17,
-                                    .LED4_PIN = 37,
-                                    .LED5_PIN = 38,
-                                    .LED6_PIN = 45,
-
-                                    .SDA = 10,
-                                    .SCL = 11,
-                                    .VBAT_ADC = 14,
-                                    .CHARGER_STDBY = 12,
-                                    .BOOST_EN = 13,
-
-                                    .EINK_CS = 5,
-                                    .EINK_DC = 8,
-                                    .EINK_RST = 9,
-                                    .EINK_BUSY = 7,
-
-                                    // ------ LED analog parameters ------
-                                    .LED1_CH = 0,
-                                    .LED2_CH = 1,
-                                    .LED3_CH = 2,
-                                    .LED4_CH = 3,
-                                    .LED5_CH = 4,
-                                    .LED6_CH = 5,
-
-                                    .LED_RES = 8,
-                                    .LED_FREQ = 1000,
-                                    .LED_BRIGHT_DFLT = 20,
-
-                                    // ------ battery reading ------“
-                                    .BAT_RES_BITS = 12,
-                                    .BATT_DIVIDER = 0.5,
-                                    .BATT_ADC_REF_VOLT = 2.6,
-                                    .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HYSTERESIS_VOLT = 3.5,
-                                    .WARN_BATT_VOLT = 3.5,
-                                    .BATT_FULL_VOLT = 4.2,
-                                    .BATT_EMPTY_VOLT = 3.3,
-                                    .BATT_PRESENT_VOLT = 2.7,
-                                    .DC_DETECT_VOLT = 4.5,
-                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
-
-                                    // ------ wakeup ------
-                                    .WAKE_BITMASK = 0x7E};
-
-const HardwareDefinition hw_rev_2_0{// ------ PIN definitions ------
-                                    .version = semver::version{2, 0, 0},
-                                    .BTN1_PIN = 5,
-                                    .BTN2_PIN = 6,
-                                    .BTN3_PIN = 21,
-                                    .BTN4_PIN = 1,
-                                    .BTN5_PIN = 3,
-                                    .BTN6_PIN = 4,
-
-                                    .LED1_PIN = 15,
-                                    .LED2_PIN = 16,
-                                    .LED3_PIN = 17,
-                                    .LED4_PIN = 2,
-                                    .LED5_PIN = 38,
-                                    .LED6_PIN = 37,
-
-                                    .SDA = 10,
-                                    .SCL = 11,
-                                    .VBAT_ADC = 14,
-                                    .CHARGER_STDBY = 12,
-                                    .BOOST_EN = 13,
-
-                                    .EINK_CS = 34,
-                                    .EINK_DC = 8,
-                                    .EINK_RST = 9,
-                                    .EINK_BUSY = 7,
-
-                                    // ------ LED analog parameters ------
-                                    .LED1_CH = 0,
-                                    .LED2_CH = 1,
-                                    .LED3_CH = 2,
-                                    .LED4_CH = 3,
-                                    .LED5_CH = 4,
-                                    .LED6_CH = 5,
-
-                                    .LED_RES = 8,
-                                    .LED_FREQ = 1000,
-                                    .LED_BRIGHT_DFLT = 100,
-
-                                    // ------ battery reading ------“
-                                    .BAT_RES_BITS = 12,
-                                    .BATT_DIVIDER = 0.5,
-                                    .BATT_ADC_REF_VOLT = 2.6,
-                                    .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HYSTERESIS_VOLT = 3.4,
-                                    .WARN_BATT_VOLT = 3.5,
-                                    .BATT_FULL_VOLT = 4.2,
-                                    .BATT_EMPTY_VOLT = 3.3,
-                                    .BATT_PRESENT_VOLT = 2.7,
-                                    .DC_DETECT_VOLT = 4.5,
-                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
-
-                                    // ------ wakeup ------
-                                    .WAKE_BITMASK = 0x20007A};
-
-const HardwareDefinition hw_rev_2_2{// ------ PIN definitions ------
-                                    .version = semver::version{2, 2, 0},
-                                    .BTN1_PIN = 5,
-                                    .BTN2_PIN = 6,
-                                    .BTN3_PIN = 21,
-                                    .BTN4_PIN = 1,
-                                    .BTN5_PIN = 3,
-                                    .BTN6_PIN = 4,
-
-                                    .LED1_PIN = 15,
-                                    .LED2_PIN = 16,
-                                    .LED3_PIN = 17,
-                                    .LED4_PIN = 2,
-                                    .LED5_PIN = 38,
-                                    .LED6_PIN = 37,
-
-                                    .SDA = 10,
-                                    .SCL = 11,
-                                    .VBAT_ADC = 14,
-                                    .CHARGER_STDBY = 12,
-                                    .BOOST_EN = 13,
-                                    .DC_IN_DETECT = 33,
-                                    .CHG_ENABLE = 45,
-
-                                    .EINK_CS = 34,
-                                    .EINK_DC = 8,
-                                    .EINK_RST = 9,
-                                    .EINK_BUSY = 7,
-
-                                    // ------ LED analog parameters ------
-                                    .LED1_CH = 0,
-                                    .LED2_CH = 1,
-                                    .LED3_CH = 2,
-                                    .LED4_CH = 3,
-                                    .LED5_CH = 4,
-                                    .LED6_CH = 5,
-
-                                    .LED_RES = 8,
-                                    .LED_FREQ = 1000,
-                                    .LED_BRIGHT_DFLT = 100,
-
-                                    // ------ battery reading ------“
-                                    .BAT_RES_BITS = 12,
-                                    .BATT_DIVIDER = 0.5,
-                                    .BATT_ADC_REF_VOLT = 2.6,
-                                    .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HYSTERESIS_VOLT = 3.4,
-                                    .WARN_BATT_VOLT = 3.5,
-                                    .BATT_FULL_VOLT = 4.2,
-                                    .BATT_EMPTY_VOLT = 3.3,
-                                    .BATT_PRESENT_VOLT = 2.7,
-                                    .DC_DETECT_VOLT = 4.5,
-                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
-
-                                    // ------ wakeup ------
-                                    .WAKE_BITMASK = 0x20007A};
-
-const HardwareDefinition hw_rev_2_3{// ------ PIN definitions ------
-                                    .version = semver::version{2, 3, 0},
-                                    .BTN1_PIN = 5,
-                                    .BTN2_PIN = 6,
-                                    .BTN3_PIN = 21,
-                                    .BTN4_PIN = 1,
-                                    .BTN5_PIN = 14,
-                                    .BTN6_PIN = 4,
-
-                                    .LED1_PIN = 15,
-                                    .LED2_PIN = 16,
-                                    .LED3_PIN = 17,
-                                    .LED4_PIN = 2,
-                                    .LED5_PIN = 38,
-                                    .LED6_PIN = 37,
-
-                                    .SDA = 10,
-                                    .SCL = 11,
-                                    .VBAT_ADC = 3,
-                                    .CHARGER_STDBY = 12,
-                                    .BOOST_EN = 13,
-                                    .DC_IN_DETECT = 33,
-                                    .CHG_ENABLE = 45,
-
-                                    .EINK_CS = 34,
-                                    .EINK_DC = 8,
-                                    .EINK_RST = 9,
-                                    .EINK_BUSY = 7,
-
-                                    // ------ LED analog parameters ------
-                                    .LED1_CH = 0,
-                                    .LED2_CH = 1,
-                                    .LED3_CH = 2,
-                                    .LED4_CH = 3,
-                                    .LED5_CH = 4,
-                                    .LED6_CH = 5,
-
-                                    .LED_RES = 8,
-                                    .LED_FREQ = 1000,
-                                    .LED_BRIGHT_DFLT = 100,
-
-                                    // ------ battery reading ------“
-                                    .BAT_RES_BITS = 12,
-                                    .BATT_DIVIDER = 0.5,
-                                    .BATT_ADC_REF_VOLT = 2.6,
-                                    .MIN_BATT_VOLT = 3.3,
-                                    .BATT_HYSTERESIS_VOLT = 3.4,
-                                    .WARN_BATT_VOLT = 3.5,
-                                    .BATT_FULL_VOLT = 4.2,
-                                    .BATT_EMPTY_VOLT = 3.3,
-                                    .BATT_PRESENT_VOLT = 2.7,
-                                    .DC_DETECT_VOLT = 4.5,
-                                    .CHARGE_HYSTERESIS_VOLT = 4.0,
-
-                                    // ------ wakeup ------
-                                    .WAKE_BITMASK = 0x204072};
-
-// Struct containing current hardware configuration
-extern HardwareDefinition HW;
 
 #endif  // HOMEBUTTONS_HARDWARE_H
