@@ -31,6 +31,7 @@ class AwakeModeIdleState : public State<App> {
  public:
   using State<App>::State;
 
+  void entry() override;
   void loop() override;
 
   const char* get_name() override { return "AwakeModeIdleState"; }

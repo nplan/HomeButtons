@@ -651,6 +651,13 @@ void AppSMStates::InitState::entry() {
   }
 }
 
+void AppSMStates::AwakeModeIdleState::entry() {
+  for (auto& b : sm().buttons_) {
+    b.clear();
+  }
+  sm().active_button_ = nullptr;
+}
+
 void AppSMStates::AwakeModeIdleState::loop() {
   for (auto& b : sm().buttons_) {
     if (b.get_action() != Button::IDLE) {
@@ -784,10 +791,6 @@ void AppSMStates::UserInputFinishState::loop() {
         }
         break;
     }
-    for (auto& b : sm().buttons_) {
-      b.clear();
-    }
-    sm().active_button_ = nullptr;
   } else {  // button press not finished
     Button::ButtonAction new_action = sm().active_button_->get_action();
     if (new_action != sm().prev_action_) {
