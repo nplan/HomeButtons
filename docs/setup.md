@@ -102,13 +102,23 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
     - `Discovery Prefix` - *Home Assistant* parameter for MQTT discovery. The default is `homeassistant`.
     Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
-4. Enter static IP details (**optional, use only if you know what you're doing**):
+4. Enter static IP details (optional):
 
     - `Static IP` - IP of *Home Buttons*. Must be outside the DHCP address range of your router.
 
     - `Gateway` - The IP address of your router.
 
-    - `Subnet Mask` Usually `255.255.255.0.`
+    - `Subnet Mask` - Usually `255.255.255.0.`
+
+    - `Primary DNS Server` - If left empty, `Gateway` IP will be used.
+
+    - `Secondary DNS Server` - If left empty, `1.1.1.1` will be used.
+
+    - `Temperature Unit` - Either `C` - Celsius  or `F` - Fahrenheit.
+
+    > This parameters are optional, but highly recommended, to reduce the response time and increase the battery life. Especially if you use a WPA-3 network.
+
+    > Please double check that the IP address you enter is not already in use by another device on your network.
 
 5. Enter button labels
 
@@ -136,10 +146,27 @@ Here you can see **device info**, **sensor readings** and **battery level**. You
 
 In the *Controls* card, enter the button labels that you want to be shown on the e-paper display. The buttons are ordered from top to bottom. Labels will be updated next time you press a button or on the next sensor update interval.
 
-> *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
-Labels over **7** letters will be clipped. Choose what you want to display wisely :)
+Labels can be:
 
-> Labels support UTF-8 with special characters. If a character is not available in the display font, it will be skipped.
+1. `Text`
+2. *Icon* :material-home:
+3. Mixed - `Text` and *Icon* :material-home:
+
+#### Text
+
+Enter any text you want. Labels support UTF-8 with special characters. *Home Buttons* will choose between two font sizes automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
+
+#### Icons :material-home:
+
+You can choose any of the [Material Design Icons](https://materialdesignicons.com/){:target="_blank"}. Enter the icon name in the label field in the format `mdi:{icon name}`. For example, `mdi:lightbulb-auto-outline`.
+
+Icons are downloaded from a *Github* repository. For that purpose an internet connection is required. Once downloaded, the icons are stored permanently on the device. If you do not wish to have *Home Buttons* connected to the internet, you can set up the icons once and then disable internet access.
+
+#### Mixed
+
+In label field, enter: `mdi:{icon name} {text}`. For example, `mdi:lightbulb Bedroom`. There must be a single space separating the icon name and the text. Label name must always be first. The actual position of the icon will be before or after the text, based on the location of the button.
+
+>Icons are slightly smaller in this mode.
 
 ### Configure Button Actions
 

@@ -10,6 +10,7 @@ Works seamlessly with *Home Assistant*.
 **Features:**
 - 2.9" e-paper display
 - 6 trigger buttons, multiple press support
+- Supports *Material Design Icons*
 - Wi-Fi connectivity
 - Less than 1 second from button press to triggered action
 - Temperature & humidity sensor
