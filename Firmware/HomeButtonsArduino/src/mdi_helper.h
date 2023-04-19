@@ -20,7 +20,7 @@ class MDIHelper : public Logger {
   bool exists(const char* name);
   File get_file(const char* name, uint16_t size);
   size_t get_free_space();
-  bool make_space(size_t size = 10000UL);
+  bool make_space(size_t size);
   bool remove(const char* name, uint16_t size);
   void end();
 

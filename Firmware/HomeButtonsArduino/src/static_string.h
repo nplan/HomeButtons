@@ -45,14 +45,11 @@ class StaticString {
 
   size_t length() const { return strlen(data_); }
   bool empty() const { return strlen(data_) == 0; }
-  StaticString substring(size_t i) { return substring(i, length()); }
-  StaticString substring(size_t i, size_t j) {
+  StaticString substring(size_t i) const { return substring(i, length()); }
+  StaticString substring(size_t i, size_t j) const {
     StaticString output;
     if (i > j || i >= length()) {
       return output;
-    }
-    if (j > length()) {
-      j = length();
     }
     auto n =
         std::snprintf(output.data_, std::min(MAX_SIZE, j - i + 1), data_ + i);
@@ -61,9 +58,10 @@ class StaticString {
   }
 
   // removes any leading or trailing spaces
-  void trim(void) {
+  StaticString trim(void) {
+    StaticString output;
     if (empty()) {
-      return;
+      return output;
     }
     auto start = data_;
     while (isspace(*start)) {
@@ -73,9 +71,10 @@ class StaticString {
     while (end > start && isspace(*end)) {
       end--;
     }
-    auto n = std::snprintf(data_, std::min(MAX_SIZE, (size_t)(end - start) + 2),
+    auto n = std::snprintf(output.data_, static_cast<size_t>(end - start + 2),
                            "%s", start);
     _check_snprintf_return_value(n);
+    return output;
   }
 
   // returns index of first occurrence of c, or -1 if not found

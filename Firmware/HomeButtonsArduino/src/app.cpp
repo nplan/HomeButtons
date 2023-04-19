@@ -11,6 +11,8 @@
 
 #include "mdi_helper.h"
 
+static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
+
 App::App()
     : AppStateMachine("AppSM", *this),
       Logger("APP"),
@@ -376,7 +378,6 @@ void App::_main_task() {
       if (device_state_.flags().awake_mode) {
         // proceed with awake mode
         hw_.set_all_leds(0);
-        sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
       } else {
         display_.end();
         display_.update();
@@ -387,7 +388,6 @@ void App::_main_task() {
     case BootCause::TIMER: {
       if (device_state_.flags().awake_mode) {
         // proceed with awake mode
-        sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
       } else {
         if (device_state_.persisted().info_screen_showing) {
           device_state_.persisted().info_screen_showing = false;
@@ -401,7 +401,6 @@ void App::_main_task() {
           }
         }
         // proceed with sensor publish
-        sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
       }
       break;
     }
@@ -437,14 +436,12 @@ void App::_main_task() {
         } else {
           if (active_button_ != nullptr) {
             active_button_->init_press();
-            sm_state_ = StateMachineState::AWAIT_USER_INPUT_FINISH;
           } else {
             _go_to_sleep();
           }
         }
       } else {
         // proceed with awake mode
-        sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
       }
       break;
     }
@@ -490,7 +487,7 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       network_.publish(mqtt_.t_sensor_interval_state(),
                        PayloadType("%u", device_state_.sensor_interval()),
                        true);
-      info("Updading discovery config...");
+      info("Updating discovery config...");
       mqtt_.update_discovery_config();
       debug("sensor interval set to %d minutes", mins);
       _publish_sensors();
@@ -502,7 +499,7 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     if (strcmp(topic, mqtt_.t_btn_label_cmd(i).c_str()) == 0) {
       ButtonLabel new_label(payload);
-      new_label.trim();
+      new_label = new_label.trim();
       debug("button %d label changed to: %s", i + 1, new_label.c_str());
       device_state_.set_btn_label(i, new_label.c_str());
 
@@ -597,9 +594,9 @@ void App::_download_mdi_icons() {
   // free up space if needed
   size_t free = mdi_.get_free_space();
   info("SPIFFS free space: %d", free);
-  if (free < 100000UL) {
+  if (free < MDI_FREE_SPACE_THRESHOLD) {
     info("making space...");
-    if (!mdi_.make_space(100000UL)) {
+    if (!mdi_.make_space(MDI_FREE_SPACE_THRESHOLD)) {
       error("failed to make space");
       mdi_.end();
       return;
@@ -636,9 +633,9 @@ void AppSMStates::InitState::entry() {
     esp_task_wdt_init(WDT_TIMEOUT_SLEEP, true);
     esp_task_wdt_add(NULL);
     if (sm().boot_cause_ == BootCause::TIMER) {
-      transition_to<NetConnectingState>();
+      return transition_to<NetConnectingState>();
     } else {  // button
-      transition_to<UserInputFinishState>();
+      return transition_to<UserInputFinishState>();
     }
   } else {
     sm().device_state_.persisted().info_screen_showing = false;
@@ -647,7 +644,7 @@ void AppSMStates::InitState::entry() {
     esp_task_wdt_init(WDT_TIMEOUT_AWAKE, true);
     esp_task_wdt_add(NULL);
     sm().display_.disp_main();
-    transition_to<AwakeModeIdleState>();
+    return transition_to<AwakeModeIdleState>();
   }
 }
 
@@ -666,7 +663,7 @@ void AppSMStates::AwakeModeIdleState::loop() {
     }
   }
   if (sm().active_button_ != nullptr) {
-    transition_to<UserInputFinishState>();
+    return transition_to<UserInputFinishState>();
   } else if (millis() - sm().last_sensor_publish_ >= AWAKE_SENSOR_INTERVAL) {
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
                            sm().device_state_.sensors().humidity,
@@ -696,19 +693,19 @@ void AppSMStates::AwakeModeIdleState::loop() {
   } else if (!sm().hw_.is_dc_connected()) {
     sm()._publish_awake_mode_avlb();
     sm().device_state_.sensors().charging = false;
-    transition_to<CmdShutdownState>();
+    return transition_to<CmdShutdownState>();
   }
   if (sm().device_state_.sensors().charging) {
     if (sm().hw_.is_charger_in_standby()) {
       sm().device_state_.sensors().charging = false;
       sm().display_.disp_main();
       if (!sm().device_state_.persisted().user_awake_mode) {
-        transition_to<CmdShutdownState>();
+        return transition_to<CmdShutdownState>();
       }
     }
   } else {
     if (!sm().device_state_.persisted().user_awake_mode) {
-      transition_to<CmdShutdownState>();
+      return transition_to<CmdShutdownState>();
     }
   }
 }
@@ -720,10 +717,10 @@ void AppSMStates::UserInputFinishState::loop() {
       for (auto& b : sm().buttons_) {
         b.clear();
       }
-      transition_to<AwakeModeIdleState>();
+      return transition_to<AwakeModeIdleState>();
     } else {
       sm().error("active_button = nullptr");
-      transition_to<CmdShutdownState>();
+      return transition_to<CmdShutdownState>();
     }
   } else if (sm().active_button_->is_press_finished()) {
     sm().btn_action_ = sm().active_button_->get_action();
@@ -745,7 +742,7 @@ void AppSMStates::UserInputFinishState::loop() {
               sm().mqtt_.get_button_topic(sm().active_button_->get_id(),
                                           sm().btn_action_),
               BTN_PRESS_PAYLOAD);
-          transition_to<AwakeModeIdleState>();
+          return transition_to<AwakeModeIdleState>();
         } else {
           sm().leds_.blink(sm().active_button_->get_id(),
                            Button::get_action_multi_count(sm().btn_action_),
@@ -754,7 +751,7 @@ void AppSMStates::UserInputFinishState::loop() {
             sm().display_.disp_message_large(
                 "Battery\nLOW\n\nPlease\nrecharge\nsoon!", 3000);
           }
-          transition_to<NetConnectingState>();
+          return transition_to<NetConnectingState>();
         }
         break;
       case Button::LONG_1:
@@ -763,9 +760,9 @@ void AppSMStates::UserInputFinishState::loop() {
         sm().info_screen_start_time_ = millis();
         sm().debug("displayed info screen");
         if (awake_mode) {
-          transition_to<AwakeModeIdleState>();
+          return transition_to<AwakeModeIdleState>();
         } else {
-          transition_to<NetConnectingState>();
+          return transition_to<NetConnectingState>();
         }
         break;
       case Button::LONG_2:
@@ -781,13 +778,13 @@ void AppSMStates::UserInputFinishState::loop() {
         ESP.restart();
         break;
       case Button::LONG_4:
-        transition_to<FactoryResetState>();
+        return transition_to<FactoryResetState>();
         break;
       default:
         if (awake_mode) {
-          transition_to<AwakeModeIdleState>();
+          return transition_to<AwakeModeIdleState>();
         } else {
-          transition_to<CmdShutdownState>();
+          return transition_to<CmdShutdownState>();
         }
         break;
     }
@@ -800,7 +797,7 @@ void AppSMStates::UserInputFinishState::loop() {
           sm().display_.disp_info();
           break;
         case Button::LONG_2:
-          transition_to<SettingsMenuState>();
+          return transition_to<SettingsMenuState>();
           break;
         default:
           break;
@@ -824,7 +821,7 @@ void AppSMStates::NetConnectingState::loop() {
     sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
     sm()._publish_sensors();
     sm().device_state_.persisted().failed_connections = 0;
-    transition_to<CmdShutdownState>();
+    return transition_to<CmdShutdownState>();
   } else if (millis() >= NET_CONNECT_TIMEOUT) {
     sm().warning("network connect timeout.");
     if (sm().boot_cause_ == BootCause::BUTTON) {
@@ -840,7 +837,7 @@ void AppSMStates::NetConnectingState::loop() {
         delay(100);
       }
     }
-    transition_to<CmdShutdownState>();
+    return transition_to<CmdShutdownState>();
   }
 }
 
@@ -889,9 +886,9 @@ void AppSMStates::SettingsMenuState::loop() {
           // cancel
           sm().display_.disp_main();
           if (awake_mode) {
-            transition_to<AwakeModeIdleState>();
+            return transition_to<AwakeModeIdleState>();
           } else {
-            transition_to<CmdShutdownState>();
+            return transition_to<CmdShutdownState>();
           }
           break;
         default:
@@ -900,7 +897,7 @@ void AppSMStates::SettingsMenuState::loop() {
     } else if (sm().btn_action_ == Button::LONG_3) {
       if (sm().active_button_->get_id() == 3) {
         // factory reset
-        transition_to<FactoryResetState>();
+        return transition_to<FactoryResetState>();
       }
     }
     for (auto& b : sm().buttons_) {
@@ -913,7 +910,7 @@ void AppSMStates::SettingsMenuState::loop() {
       (sm().active_button_ == nullptr || sm().btn_action_ == Button::IDLE)) {
     sm().debug("settings menu timeout");
     sm().display_.disp_main();
-    transition_to<CmdShutdownState>();
+    return transition_to<CmdShutdownState>();
   }
 }
 
@@ -930,7 +927,7 @@ void AppSMStates::CmdShutdownState::entry() {
   sm()._end_buttons();
   sm().leds_.end();
   sm().network_.disconnect();
-  transition_to<NetDisconnectingState>();
+  return transition_to<NetDisconnectingState>();
 }
 
 void AppSMStates::NetDisconnectingState::loop() {
@@ -942,7 +939,7 @@ void AppSMStates::NetDisconnectingState::loop() {
       delay(100);
     }
     sm().display_.end();
-    transition_to<ShuttingDownState>();
+    return transition_to<ShuttingDownState>();
   }
 }
 

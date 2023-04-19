@@ -19,9 +19,9 @@ String mac2String(uint8_t ar[]) {
 void NetworkSMStates::IdleState::loop() {
   if (sm().command_ == Network::Command::CONNECT) {
     if (sm().device_state_.persisted().wifi_quick_connect) {
-      transition_to<QuickConnectState>();
+      return transition_to<QuickConnectState>();
     } else {
-      transition_to<NormalConnectState>();
+      return transition_to<NormalConnectState>();
     }
   }
 }
@@ -37,11 +37,11 @@ void NetworkSMStates::QuickConnectState::entry() {
 
 void NetworkSMStates::QuickConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
-    transition_to<DisconnectState>();
+    return transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
     sm().info("Wi-Fi connected (quick mode) in %lu ms.",
               millis() - start_time_);
-    transition_to<WifiConnectedState>();
+    return transition_to<WifiConnectedState>();
   } else if (millis() - start_time_ > QUICK_WIFI_TIMEOUT) {
     // try again with normal mode
     sm().info(
@@ -153,7 +153,7 @@ void NetworkSMStates::WifiConnectedState::loop() {
   int32_t ch = WiFi.channel();
   sm().info("SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
             mac2String(bssid).c_str(), ch);
-  transition_to<MQTTConnectState>();
+  return transition_to<MQTTConnectState>();
 }
 
 void NetworkSMStates::DisconnectState::entry() {

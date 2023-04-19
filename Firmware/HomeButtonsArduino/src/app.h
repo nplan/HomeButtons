@@ -147,16 +147,6 @@ class App : public AppStateMachine, public Logger {
   void _net_on_connect();
   void _download_mdi_icons();
 
-  enum class StateMachineState {
-    AWAIT_USER_INPUT_START,
-    AWAIT_USER_INPUT_FINISH,
-    AWAIT_NET_CONNECT,
-    CMD_SHUTDOWN,
-    AWAIT_NET_DISCONNECT,
-    AWAIT_SHUTDOWN,
-    AWAIT_FACTORY_RESET,
-  };
-  StateMachineState sm_state_ = StateMachineState::AWAIT_NET_CONNECT;
   DeviceState device_state_;
   TaskHandle_t button_task_h_ = nullptr;
   TaskHandle_t display_task_h_ = nullptr;
