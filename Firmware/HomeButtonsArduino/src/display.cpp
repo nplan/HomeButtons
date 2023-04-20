@@ -298,18 +298,17 @@ void Display::draw_main() {
   }
 
   mdi_.begin();
-  // 0 text, 1 icon, 2 mixed
-  uint8_t label_type[NUM_BUTTONS] = {0};
+  LabelType label_type[NUM_BUTTONS] = {};
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
     ButtonLabel label = device_state_.get_btn_label(i);
     if (label.substring(0, 4) == "mdi:") {
       if (label.index_of(' ') > 0) {
-        label_type[i] = 2;
+        label_type[i] = LabelType::Mixed;
       } else {
-        label_type[i] = 1;
+        label_type[i] = LabelType::Icon;
       }
     } else {
-      label_type[i] = 0;
+      label_type[i] = LabelType::Text;
     }
   }
 
@@ -317,8 +316,7 @@ void Display::draw_main() {
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
     ButtonLabel label = device_state_.get_btn_label(i);
 
-    if (label_type[i] == 1) {
-      // ICON
+    if (label_type[i] == LabelType::Icon) {
       MDIName icon = label.substring(
           4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
 
@@ -326,7 +324,8 @@ void Display::draw_main() {
       uint16_t size;
       bool small;
       if (i % 2 == 0) {
-        if (label_type[i + 1] == 0 || label_type[i + 1] == 2) {
+        if (label_type[i + 1] == LabelType::Text ||
+            label_type[i + 1] == LabelType::Mixed) {
           size = 48;
           small = true;
         } else {
@@ -334,7 +333,8 @@ void Display::draw_main() {
           small = false;
         }
       } else {
-        if (label_type[i - 1] == 0 || label_type[i - 1] == 2) {
+        if (label_type[i - 1] == LabelType::Text ||
+            label_type[i - 1] == LabelType::Mixed) {
           size = 48;
           small = true;
         } else {
@@ -369,8 +369,7 @@ void Display::draw_main() {
         }
       }
       draw_mdi(icon.c_str(), size, x, y);
-    } else if (label_type[i] == 2) {
-      // MIXED
+    } else if (label_type[i] == LabelType::Mixed) {
       MDIName icon = label.substring(4, label.index_of(' '));
       StaticString<56> text = label.substring(label.index_of(' ') + 1);
       uint16_t icon_size = 48;
@@ -409,7 +408,6 @@ void Display::draw_main() {
       u8g2.setCursor(x, y);
       u8g2.print(text.c_str());
     } else {
-      // TEXT
       uint16_t max_label_width = WIDTH - min_btn_clearance;
       u8g2.setFont(u8g2_font_helvB24_te);
       uint16_t w, h;

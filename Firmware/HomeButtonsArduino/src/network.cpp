@@ -312,9 +312,11 @@ void Network::_pre_wifi_connect() {
   }
   if (ip_ok && gw_ok && sn_ok) {
     info("Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
-         static_ip.toString().c_str(), gateway.toString().c_str(),
-         subnet.toString().c_str(), dns.toString().c_str(),
-         dns2.toString().c_str());
+         ip_address_to_static_string(static_ip).c_str(),
+         ip_address_to_static_string(gateway).c_str(),
+         ip_address_to_static_string(subnet).c_str(),
+         ip_address_to_static_string(dns).c_str(),
+         ip_address_to_static_string(dns2).c_str());
     WiFi.config(static_ip, gateway, subnet, dns, dns2);
   } else {
     info("Using DHCP. Static IP not set or not valid.");

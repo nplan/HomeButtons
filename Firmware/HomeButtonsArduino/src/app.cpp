@@ -565,7 +565,7 @@ void App::_download_mdi_icons() {
     if (label.substring(0, 4) == "mdi:") {
       MDIName icon = label.substring(
           4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
-      if (!mdi_.exists(icon.c_str())) {
+      if (!mdi_.exists_all_sizes(icon.c_str())) {
         download_required = true;
         break;
       }
@@ -609,7 +609,7 @@ void App::_download_mdi_icons() {
     if (label.substring(0, 4) == "mdi:") {
       MDIName icon = label.substring(
           4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
-      if (!mdi_.exists(icon.c_str())) {
+      if (!mdi_.exists_all_sizes(icon.c_str())) {
         mdi_.download(icon.c_str());
       }
     }

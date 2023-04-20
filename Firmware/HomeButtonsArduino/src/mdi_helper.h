@@ -8,6 +8,8 @@
 
 static constexpr uint8_t MAX_NUM_SIZES = 3;
 
+static constexpr size_t MAX_PATH_LEN = 56;
+
 class MDIHelper : public Logger {
  public:
   MDIHelper() : Logger("MDI") {}
@@ -17,7 +19,7 @@ class MDIHelper : public Logger {
   bool download(const char* name);
   bool check_connection();
   bool exists(const char* name, uint16_t size);
-  bool exists(const char* name);
+  bool exists_all_sizes(const char* name);
   File get_file(const char* name, uint16_t size);
   size_t get_free_space();
   bool make_space(size_t size);
@@ -28,7 +30,7 @@ class MDIHelper : public Logger {
   bool spiffs_mounted_ = false;
   uint16_t sizes_[MAX_NUM_SIZES] = {0};
   uint8_t num_sizes_ = 0;
-  void _get_path(char* out, const char* name, uint16_t size);
+  StaticString<MAX_PATH_LEN> _get_path(const char* name, uint16_t size);
 };
 
 #endif

@@ -13,8 +13,6 @@ static constexpr char TEST_URL[] =
 
 static constexpr char FOLDER[] = "/mdi";
 
-static constexpr size_t MAX_PATH_LEN = 56;
-
 bool MDIHelper::begin() {
   if (spiffs_mounted_) {
     return true;
@@ -46,9 +44,9 @@ void MDIHelper::end() {
   debug("Unmounted SPIFFS file system");
 }
 
-void MDIHelper::_get_path(char* out, const char* name, uint16_t size) {
-  StaticString<MAX_PATH_LEN> path("%s/%d/%s.bmp", FOLDER, size, name);
-  strncpy(out, path.c_str(), MAX_PATH_LEN + 1);
+StaticString<MAX_PATH_LEN> MDIHelper::_get_path(const char* name,
+                                                uint16_t size) {
+  return StaticString<MAX_PATH_LEN>("%s/%d/%s.bmp", FOLDER, size, name);
 }
 
 bool MDIHelper::check_connection() {
@@ -62,19 +60,18 @@ bool MDIHelper::download(const char* name, uint16_t size) {
     return false;
   }
 
-  char path[MAX_PATH_LEN + 1];
-  _get_path(path, name, size);
+  auto path = _get_path(name, size);
 
-  if (SPIFFS.exists(path)) {
+  if (SPIFFS.exists(path.c_str())) {
     info("'%s' already exists", name);
     return true;
   }
 
-  debug("Downloading '%s' to '%s'", name, path);
+  debug("Downloading '%s' to '%s'", name, path.c_str());
 
-  File file = SPIFFS.open(path, FILE_WRITE, true);
+  File file = SPIFFS.open(path.c_str(), FILE_WRITE, true);
   if (!file) {
-    error("Failed to open '%s' for writing", path);
+    error("Failed to open '%s' for writing", path.c_str());
     return false;
   }
 
@@ -87,7 +84,7 @@ bool MDIHelper::download(const char* name, uint16_t size) {
     return true;
   } else {
     error("Failed to download '%s'", name);
-    SPIFFS.remove(path);
+    SPIFFS.remove(path.c_str());
     return false;
   }
 }
@@ -111,12 +108,11 @@ bool MDIHelper::exists(const char* name, uint16_t size) {
     error("SPIFFS not mounted");
     return false;
   }
-  char path[MAX_PATH_LEN + 1];
-  _get_path(path, name, size);
-  return SPIFFS.exists(path);
+  auto path = _get_path(name, size);
+  return SPIFFS.exists(path.c_str());
 }
 
-bool MDIHelper::exists(const char* name) {
+bool MDIHelper::exists_all_sizes(const char* name) {
   if (!spiffs_mounted_) {
     error("SPIFFS not mounted");
     return false;
@@ -140,10 +136,9 @@ File MDIHelper::get_file(const char* name, uint16_t size) {
     return File();
   }
 
-  char path[MAX_PATH_LEN + 1];
-  _get_path(path, name, size);
-  debug("Opening '%s'", path);
-  return SPIFFS.open(path, FILE_READ);
+  auto path = _get_path(name, size);
+  debug("Opening '%s'", path.c_str());
+  return SPIFFS.open(path.c_str(), FILE_READ);
 }
 
 size_t MDIHelper::get_free_space() {
@@ -180,7 +175,7 @@ bool MDIHelper::make_space(size_t size) {
     File file = root.openNextFile();
     if (!file) {
       error("Failed to open next file");
-      continue;
+      return false;
     }
     size_t len = strlen(file.path());
     char path[len + 1];
@@ -201,8 +196,7 @@ bool MDIHelper::remove(const char* name, uint16_t size) {
     error("SPIFFS not mounted");
     return false;
   }
-  char path[MAX_PATH_LEN + 1];
-  _get_path(path, name, size);
-  debug("Removing '%s'", path);
-  return SPIFFS.remove(path);
+  auto path = _get_path(name, size);
+  debug("Removing '%s'", path.c_str());
+  return SPIFFS.remove(path.c_str());
 }

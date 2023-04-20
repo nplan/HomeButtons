@@ -66,6 +66,8 @@ class Display : public Logger {
   bool busy() { return redraw_in_progress; }
 
  private:
+  enum class LabelType : uint8_t { Text, Icon, Mixed };
+
   State state = State::IDLE;
 
   UIState current_ui_state = {};
