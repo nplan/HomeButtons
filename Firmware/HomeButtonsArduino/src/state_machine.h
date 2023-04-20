@@ -48,10 +48,7 @@ class StateMachine {
 
   template <typename NextState>
   void transition_to() {
-    base_.info("Leaving state %s::%s", name_,
-               std::visit([](auto statePtr) { return statePtr->get_name(); },
-                          current_state_));
-    std::visit([](auto statePtr) { statePtr->exit(); }, current_state_);
+    _exit_state(current_state_);
 
     current_state_ = &std::get<NextState>(states_);
 
@@ -64,10 +61,7 @@ class StateMachine {
   void loop() {
     if (first_run_) {
       first_run_ = false;
-      base_.info("Entering state %s::%s", name_,
-                 std::visit([](auto statePtr) { return statePtr->get_name(); },
-                            current_state_));
-      std::visit([](auto statePtr) { statePtr->entry(); }, current_state_);
+      _enter_state(current_state_);
     }
     std::visit([](auto statePtr) { statePtr->loop(); }, current_state_);
   }
@@ -75,6 +69,20 @@ class StateMachine {
   template <typename State>
   bool is_current_state() const {
     return std::holds_alternative<State *>(current_state_);
+  }
+
+  void _enter_state(std::variant<States *...> state) {
+    base_.info(
+        "Entering state %s::%s", name_,
+        std::visit([](auto statePtr) { return statePtr->get_name(); }, state));
+    std::visit([](auto statePtr) { statePtr->entry(); }, state);
+  }
+
+  void _exit_state(std::variant<States *...> state) {
+    base_.info(
+        "Leaving state %s::%s", name_,
+        std::visit([](auto statePtr) { return statePtr->get_name(); }, state));
+    std::visit([](auto statePtr) { statePtr->exit(); }, state);
   }
 
  protected:
