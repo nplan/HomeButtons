@@ -63,11 +63,11 @@ bool MDIHelper::download(const char* name, uint16_t size) {
   auto path = _get_path(name, size);
 
   if (SPIFFS.exists(path.c_str())) {
-    info("'%s' already exists", name);
+    info("'%s' size %d already exists", name, size);
     return true;
   }
 
-  debug("Downloading '%s' to '%s'", name, path.c_str());
+  debug("Downloading '%s' size %d to '%s'", name, size, path.c_str());
 
   File file = SPIFFS.open(path.c_str(), FILE_WRITE, true);
   if (!file) {
@@ -80,10 +80,10 @@ bool MDIHelper::download(const char* name, uint16_t size) {
       HOST, url.c_str(), file,
       github_raw_cert::cert_DigiCert_TLS_RSA_SHA256_2020_CA1);
   if (ret) {
-    info("Downloaded '%s'", name);
+    info("Downloaded '%s' size: %d", name, size);
     return true;
   } else {
-    error("Failed to download '%s'", name);
+    error("Failed to download '%s' size: %d", name, size);
     SPIFFS.remove(path.c_str());
     return false;
   }
@@ -132,7 +132,7 @@ File MDIHelper::get_file(const char* name, uint16_t size) {
   }
 
   if (!exists(name, size)) {
-    error("'%s' does not exist", name);
+    error("'%s' size %d does not exist", name, size);
     return File();
   }
 
@@ -179,7 +179,7 @@ bool MDIHelper::make_space(size_t size) {
     }
     size_t len = strlen(file.path());
     char path[len + 1];
-    strncpy(path, file.path(), len);
+    strncpy(path, file.path(), len + 1);
     file.close();
     SPIFFS.remove(path);
     count++;
