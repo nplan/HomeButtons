@@ -4,6 +4,9 @@
 #include "state.h"
 #include "utils.h"
 
+static constexpr uint8_t MQTT_QUEUE_SIZE = 4;
+static constexpr uint8_t MQTT_QUEUE_ITEMS_PER_LOOP = 5;
+
 String mac2String(uint8_t ar[]) {
   String s;
   for (uint8_t i = 0; i < 6; ++i) {
@@ -180,7 +183,8 @@ void NetworkSMStates::FullyConnectedState::entry() {
 }
 
 void NetworkSMStates::FullyConnectedState::loop() {
-  if (sm().command_ == Network::Command::DISCONNECT) {
+  if (sm().command_ == Network::Command::DISCONNECT &&
+      uxQueueMessagesWaiting(sm().mqtt_publish_queue_) == 0) {
     return transition_to<DisconnectState>();
   } else if (millis() - last_conn_check_time_ > NET_CONN_CHECK_INTERVAL) {
     if (WiFi.status() != WL_CONNECTED) {
@@ -194,7 +198,7 @@ void NetworkSMStates::FullyConnectedState::loop() {
     last_conn_check_time_ = millis();
   } else {
     SM::PublishQueueElement element;
-    uint8_t max_element_to_process = 5;
+    uint8_t max_element_to_process = MQTT_QUEUE_ITEMS_PER_LOOP;
     while (max_element_to_process > 0 && sm().mqtt_publish_queue_ != nullptr &&
            xQueueReceive(sm().mqtt_publish_queue_, &element, 0)) {
       sm().debug("received payload (topic: %s)", element.topic.c_str());
@@ -210,7 +214,8 @@ Network::Network(DeviceState &device_state)
       Logger("NET"),
       device_state_(device_state),
       mqtt_client_(wifi_client_) {
-  mqtt_publish_queue_ = xQueueCreate(4, sizeof(PublishQueueElement));
+  mqtt_publish_queue_ =
+      xQueueCreate(MQTT_QUEUE_SIZE, sizeof(PublishQueueElement));
   if (mqtt_publish_queue_ == nullptr) error("Failed to create publish queue");
 }
 
