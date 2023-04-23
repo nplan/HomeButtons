@@ -46,7 +46,7 @@ static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;  // ms
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 static constexpr uint32_t WIFI_TIMEOUT = 20000L;
-static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 5;
+static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 2;
 static constexpr uint32_t MQTT_TIMEOUT = 15000L;
 static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
