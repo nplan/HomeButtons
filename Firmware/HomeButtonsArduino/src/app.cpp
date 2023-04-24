@@ -342,8 +342,8 @@ void App::_main_task() {
 
       // format SPIFFS if needed
       if (!SPIFFS.begin()) {
-        info("Formatting SPIFFS...");
-        display_.disp_message("Formatting\nSPIFFS...", 0);
+        info("Formatting icon storage...");
+        display_.disp_message("Formatting\nIcon\nStorage...", 0);
         display_.update();
         SPIFFS.format();
       } else {
@@ -898,11 +898,11 @@ void AppSMStates::SettingsMenuState::loop() {
           default:
             break;
         }
-        for (auto& b : sm().buttons_) {
-          b.clear();
-        }
-        sm().active_button_ = nullptr;
       }
+      for (auto& b : sm().buttons_) {
+        b.clear();
+      }
+      sm().active_button_ = nullptr;
     } else if (sm().active_button_->get_action() == Button::LONG_3 &&
                sm().active_button_->get_id() == 3) {
       // factory reset

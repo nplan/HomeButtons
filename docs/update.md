@@ -83,10 +83,12 @@ Scan the QR code or enter the local IP into a web browser.
 
     Copy the path of the correct port.
  
-7. Flash the firmware using *esptool*. Run this command in *Terminal* or *Command Prompt*:
+7. Flash the firmware using *esptool*. Run this two commands in *Terminal* or *Command Prompt*:
 
     ``` { .yaml .copy }
-    python -m esptool --port PORT erase_region 0xe000 0x2000 &&
+    python -m esptool --port PORT --after no_reset erase_region 0xe000 0x2000
+    ```
+    ``` { .yaml .copy }
     python -m esptool --port PORT --after no_reset write_flash 0x10000 BIN_FILE_PATH
     ```
 
