@@ -2,34 +2,6 @@
 #include "utils.h"
 #include "config.h"
 
-void DeviceState::save_factory() {
-  preferences_.begin("factory", false);
-  preferences_.putString("serial_number", factory_.serial_number.c_str());
-  preferences_.putString("random_id", factory_.random_id.c_str());
-  preferences_.putString("model_name", factory_.model_name.c_str());
-  preferences_.putString("model_id", factory_.model_id.c_str());
-  preferences_.putString("hw_version", factory_.hw_version.c_str());
-  preferences_.putString("unique_id", factory_.unique_id.c_str());
-  preferences_.end();
-}
-
-void DeviceState::load_factory() {
-  preferences_.begin("factory", true);
-  _load_to_static_string(factory_.serial_number, "serial_number", "");
-  _load_to_static_string(factory_.random_id, "random_id", "");
-  _load_to_static_string(factory_.model_name, "model_name", "");
-  _load_to_static_string(factory_.model_id, "model_id", "");
-  _load_to_static_string(factory_.hw_version, "hw_version", "");
-  _load_to_static_string(factory_.unique_id, "unique_id", "");
-  preferences_.end();
-}
-
-void DeviceState::clear_factory() {
-  preferences_.begin("factory", false);
-  preferences_.clear();
-  preferences_.end();
-}
-
 void DeviceState::save_user() {
   preferences_.begin("user", false);
   preferences_.putString("device_name", user_preferences_.device_name.c_str());
@@ -47,6 +19,7 @@ void DeviceState::save_user() {
   preferences_.putString("btn5_txt", user_preferences_.btn_labels[4].c_str());
   preferences_.putString("btn6_txt", user_preferences_.btn_labels[5].c_str());
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
+  preferences_.putBool("use_f", user_preferences_.use_fahrenheit);
   preferences_.putString(
       "sta_ip",
       ip_address_to_static_string(user_preferences_.network.static_ip).c_str());
@@ -56,6 +29,12 @@ void DeviceState::save_user() {
   preferences_.putString(
       "s_net",
       ip_address_to_static_string(user_preferences_.network.subnet).c_str());
+  preferences_.putString(
+      "dns",
+      ip_address_to_static_string(user_preferences_.network.dns).c_str());
+  preferences_.putString(
+      "dns2",
+      ip_address_to_static_string(user_preferences_.network.dns2).c_str());
   preferences_.end();
 }
 
@@ -89,10 +68,13 @@ void DeviceState::load_user() {
 
   user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
+  user_preferences_.use_fahrenheit = preferences_.getBool("use_f", false);
 
   _load_to_ip_address(user_preferences_.network.static_ip, "sta_ip", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.gateway, "g_way", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.subnet, "s_net", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.dns, "dns", "0.0.0.0");
+  _load_to_ip_address(user_preferences_.network.dns2, "dns2", "0.0.0.0");
 
   preferences_.end();
 }
@@ -119,6 +101,7 @@ void DeviceState::save_persisted() {
   preferences_.putBool("rst_to_stp", persisted_.restart_to_setup);
   preferences_.putBool("send_adisc", persisted_.send_discovery_config);
   preferences_.putBool("silent_rst", persisted_.silent_restart);
+  preferences_.putBool("dl_mdi", persisted_.download_mdi_icons);
   preferences_.end();
 }
 
@@ -140,6 +123,7 @@ void DeviceState::load_persisted() {
   persisted_.restart_to_setup = preferences_.getBool("rst_to_stp", false);
   persisted_.send_discovery_config = preferences_.getBool("send_adisc", false);
   persisted_.silent_restart = preferences_.getBool("silent_rst", false);
+  persisted_.download_mdi_icons = preferences_.getBool("dl_mdi", false);
   preferences_.end();
 }
 
@@ -158,7 +142,17 @@ void DeviceState::clear_persisted_flags() {
   persisted_.restart_to_wifi_setup = false;
   persisted_.restart_to_setup = false;
   persisted_.silent_restart = false;
+  persisted_.download_mdi_icons = false;
   save_all();
+}
+
+void DeviceState::_load_factory(HardwareDefinition& hw) {
+  factory_.serial_number = hw.get_serial_number();
+  factory_.random_id = hw.get_random_id();
+  factory_.model_name = hw.get_model_name();
+  factory_.model_id = hw.get_model_id();
+  factory_.hw_version = hw.get_hw_version();
+  factory_.unique_id = hw.get_unique_id();
 }
 
 void DeviceState::save_all() {
@@ -167,9 +161,9 @@ void DeviceState::save_all() {
   save_persisted();
 }
 
-void DeviceState::load_all() {
+void DeviceState::load_all(HardwareDefinition& hw) {
   debug("state load all");
-  load_factory();
+  _load_factory(hw);
   load_user();
   load_persisted();
 }

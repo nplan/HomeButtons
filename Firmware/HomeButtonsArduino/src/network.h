@@ -18,7 +18,7 @@ class IdleState : public State<Network> {
  public:
   using State<Network>::State;
 
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "IdleState"; }
 };
@@ -28,7 +28,7 @@ class QuickConnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "QuickConnectState"; }
 
@@ -41,7 +41,7 @@ class NormalConnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "NormalConnectState"; }
 
@@ -55,7 +55,7 @@ class MQTTConnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "MQTTConnectState"; }
 
@@ -67,7 +67,7 @@ class WifiConnectedState : public State<Network> {
  public:
   using State<Network>::State;
 
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "WifiConnectedState"; }
 };
@@ -77,7 +77,7 @@ class DisconnectState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "DisconnectState"; }
 };
@@ -87,7 +87,7 @@ class FullyConnectedState : public State<Network> {
   using State<Network>::State;
 
   void entry() override;
-  void execute_once() override;
+  void loop() override;
 
   const char *get_name() override { return "FullyConnectedState"; }
 

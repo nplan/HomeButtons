@@ -55,7 +55,6 @@ struct HardwareDefinition : public Logger {
   uint8_t LED_BRIGHT_DFLT;
 
   // ------ battery reading ------
-  uint8_t BAT_RES_BITS;
   float BATT_DIVIDER;
   float BATT_ADC_REF_VOLT;
   float MIN_BATT_VOLT;
@@ -67,11 +66,15 @@ struct HardwareDefinition : public Logger {
   float DC_DETECT_VOLT;
   float CHARGE_HYSTERESIS_VOLT;
 
+  // battery SoC linear approximation coeficients
+  float BATT_SOC_EST_K;
+  float BATT_SOC_EST_N;
+
   // ------ wakeup ------
   uint64_t WAKE_BITMASK;
 
   // ------ functions ------
-  void init(const HWVersion &hw_version);
+  bool init();
 
   void begin();
 
@@ -90,7 +93,7 @@ struct HardwareDefinition : public Logger {
 
   uint8_t read_battery_percent();
 
-  void read_temp_hmd(float &tempe, float &hmd);
+  void read_temp_hmd(float &tempe, float &hmd, const bool fahrenheit = false);
 
   bool is_charger_in_standby();
 
@@ -100,10 +103,51 @@ struct HardwareDefinition : public Logger {
 
   bool is_battery_present();
 
+  const char *get_serial_number() { return factory_params_.serial_number; }
+  const char *get_random_id() { return factory_params_.random_id; }
+  const char *get_model_id() { return factory_params_.model_id; }
+  const char *get_hw_version() { return factory_params_.hw_version; }
+  const char *get_model_name() const { return model_name_; }
+  const char *get_unique_id() const { return unique_id_; }
+
+  bool factory_params_ok();
+
+  void set_serial_number(const char *serial_number) {
+    memcpy(factory_params_.serial_number, serial_number, 8);
+  }
+  void set_random_id(const char *random_id) {
+    memcpy(factory_params_.random_id, random_id, 6);
+  }
+  void set_model_id(const char *model_id) {
+    memcpy(factory_params_.model_id, model_id, 2);
+  }
+  void set_hw_version(const char *hw_version) {
+    memcpy(factory_params_.hw_version, hw_version, 3);
+  }
+
+  void write_factory_params() { _write_efuse(); }
+
   void load_hw_rev_1_0();
   void load_hw_rev_2_0();
   void load_hw_rev_2_2();
   void load_hw_rev_2_3();
+
+ private:
+  struct {
+    // members have length +1 for null terminator
+    char serial_number[9];
+    char random_id[7];
+    char model_id[3];
+    char hw_version[4];
+  } factory_params_{};
+
+  char model_name_[21] = "";
+  char unique_id_[22] = "";
+
+  bool _efuse_burned();
+  void _read_efuse();
+  void _write_efuse();
+  void _nvs_2_efuse();
 };
 
 #endif  // HOMEBUTTONS_HARDWARE_H

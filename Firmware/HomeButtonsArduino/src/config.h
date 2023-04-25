@@ -5,7 +5,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.0.7-beta";
+static constexpr char SW_VERSION[] = "v2.1.0";
 static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
 
 // ------ wifi AP ------
@@ -15,7 +15,7 @@ static constexpr char SETUP_AP_PASSWORD[] = "password123";
 // ------ buttons ------
 static constexpr uint8_t NUM_BUTTONS = 6;
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
-static constexpr uint8_t BTN_LABEL_MAXLEN = 15;
+static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
 
 // ------ defaults ------
 static constexpr char DEVICE_NAME_DFLT[] = "Home Buttons";
@@ -41,11 +41,12 @@ static constexpr uint32_t AWAKE_SENSOR_INTERVAL = 60000L;  // ms
 static constexpr uint32_t WDT_TIMEOUT_AWAKE = 60;          // s
 static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;          // s
 static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;   // ms
+static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;  // ms
 
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 static constexpr uint32_t WIFI_TIMEOUT = 20000L;
-static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 5;
+static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 2;
 static constexpr uint32_t MQTT_TIMEOUT = 15000L;
 static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
@@ -56,6 +57,6 @@ static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
 static constexpr uint8_t LED_DFLT_BRIGHT = 225;
 
 // ------ other ------
-static constexpr uint32_t MIN_FREE_HEAP = 20000UL;
+static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
 
 #endif  // HOMEBUTTONS_CONFIG_H

@@ -11,11 +11,12 @@ import paho.mqtt.client as mqtt
 
 test_topic = "homebuttons-factory/test"
 test_payload = "OK"
+
+
 @dataclass
 class FactorySettings:
     serial_number: str = ""
     random_id: str = ""
-    model_name: str = ""
     model_id: str = ""
     hw_version: str = ""
 
@@ -23,7 +24,6 @@ class FactorySettings:
         return f"Factory settings:\n"\
             f"    serial_number: {self.serial_number}\n"\
             f"    random_id: {self.random_id}\n"\
-            f"    model_name: {self.model_name}\n"\
             f"    model_id: {self.model_id}\n"\
             f"    hw_version: {self.hw_version}\n"
 
@@ -37,10 +37,12 @@ class NetworkSettings:
     mqtt_password: str = ""
     mqtt_port: int = 0
 
+
 @dataclass
 class SensorTargets:
     temperature: float = 0.0
     humidity: float = 0.0
+
 
 class FactoryHandler:
 
@@ -77,19 +79,6 @@ class FactoryHandler:
         assert len(random_id) == 6
         print("Setting random id...", end="", flush=True)
         self.serial.write(b"RI-" + random_id.encode("ascii") + b"\r")
-        ret = self.serial.readline().decode().strip()
-        if ret == "OK":
-            print("OK")
-            return True
-        else:
-            print("FAIL")
-            return False
-
-    def set_model_name(self, model_name: str) -> bool:
-        assert type(model_name) is str
-        assert 0 < len(model_name) <= 20
-        print("Setting model name...", end="", flush=True)
-        self.serial.write(b"MN-" + model_name.encode("ascii") + b"\r")
         ret = self.serial.readline().decode().strip()
         if ret == "OK":
             print("OK")
@@ -219,8 +208,10 @@ class FactoryHandler:
         client.on_message = on_message
 
         if network_settings.mqtt_user and network_settings.mqtt_password:
-            client.username_pw_set(network_settings.mqtt_user, network_settings.mqtt_password)
-        client.connect(network_settings.mqtt_server, network_settings.mqtt_port, 60)
+            client.username_pw_set(
+                network_settings.mqtt_user, network_settings.mqtt_password)
+        client.connect(network_settings.mqtt_server,
+                       network_settings.mqtt_port, 60)
         client.loop_start()
 
         while not success:
@@ -229,7 +220,7 @@ class FactoryHandler:
         client.loop_stop()
         print("OK")
         return True
-    
+
     def set_temperature_target(self, target: float) -> bool:
         print("Setting temperature sensor target...", end="", flush=True)
         self.serial.write(b"TT-" + str(target).encode("ascii") + b"\r")
@@ -253,23 +244,21 @@ class FactoryHandler:
             return False
 
     def run_factory_setup(self, port, baud, settings: FactorySettings, sensor_targets: SensorTargets,
-                          network_settings: NetworkSettings=None):
+                          network_settings: NetworkSettings = None):
         with Serial(port, baudrate=baud) as self.serial:
             if not self.set_hw_version(settings.hw_version):
+                return
+            if not self.set_serial_number(settings.serial_number):
+                return
+            if not self.set_random_id(settings.random_id):
+                return
+            if not self.set_model_id(settings.model_id):
                 return
             if not self.set_temperature_target(sensor_targets.temperature):
                 return
             if not self.set_humidity_target(sensor_targets.humidity):
                 return
             if not self.run_hw_test():
-                return
-            if not self.set_serial_number(settings.serial_number):
-                return
-            if not self.set_random_id(settings.random_id):
-                return
-            if not self.set_model_name(settings.model_name):
-                return
-            if not self.set_model_id(settings.model_id):
                 return
 
             if network_settings:
@@ -310,7 +299,6 @@ if __name__ == "__main__":
     required.add_argument("-b", "--baud", type=int, required=True)
     required.add_argument("--serial", type=str, required=True)
     optional.add_argument("--random_id", type=str, required=False)
-    required.add_argument("--model_name", type=str, required=True)
     required.add_argument("--model_id", type=str, required=True)
     required.add_argument("--hw_version", type=str, required=True)
 
@@ -330,7 +318,6 @@ if __name__ == "__main__":
         serial_number=args.serial,
         random_id=args.random_id if args.random_id else str(uuid4())[
             :6].upper(),
-        model_name=args.model_name,
         model_id=args.model_id,
         hw_version=args.hw_version
     )
@@ -350,4 +337,5 @@ if __name__ == "__main__":
     )
 
     factory = FactoryHandler()
-    factory.run_factory_setup(args.port, args.baud, settings, sensor_targets, network_settings)
+    factory.run_factory_setup(args.port, args.baud,
+                              settings, sensor_targets, network_settings)

@@ -10,7 +10,7 @@ Topic | Description | Retained
 {BASE_TOPIC}/{DEVICE_NAME}/button_{1-6}_double | When button {1-6} is pressed 2 times, "PRESS is published to this topic. | No
 {BASE_TOPIC}/{DEVICE_NAME}/button_{1-6}_triple | When button {1-6} is pressed 3 times, "PRESS is published to this topic. | No
 {BASE_TOPIC}/{DEVICE_NAME}/button_{1-6}_quad | When button {1-6} is pressed 4 times, "PRESS is published to this topic. | No
-{BASE_TOPIC}/{DEVICE_NAME}/temperature | Temperature in °C. Published on button press and every  N minutes, specified by *Sensor Interval*. | No
+{BASE_TOPIC}/{DEVICE_NAME}/temperature | Temperature in °C or °F, depending on the setup choice. Published on button press and every N minutes, specified by *Sensor Interval*. | No
 {BASE_TOPIC}/{DEVICE_NAME}/humidity | Relative humidity in %. Published on button press and  every  N minutes, specified by *Sensor Interval*. | No
 {BASE_TOPIC}/{DEVICE_NAME}/battery | Battery charge in %. Published on button press and  every  N minutes, specified by *Sensor Interval*. | No
 {BASE_TOPIC}/{DEVICE_NAME}/btn_{1-6}_label | Current label of button {1-6}.| Yes

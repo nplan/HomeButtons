@@ -20,7 +20,7 @@ class State {
   explicit State(Base &base) : base_(base) {}
 
   virtual void entry() {}
-  virtual void execute_once() {}
+  virtual void loop() {}
   virtual void exit() {}
 
   virtual const char *get_name() = 0;
@@ -48,10 +48,7 @@ class StateMachine {
 
   template <typename NextState>
   void transition_to() {
-    base_.info("Leaving state %s::%s", name_,
-               std::visit([](auto statePtr) { return statePtr->get_name(); },
-                          current_state_));
-    std::visit([](auto statePtr) { statePtr->exit(); }, current_state_);
+    _exit_state(current_state_);
 
     current_state_ = &std::get<NextState>(states_);
 
@@ -61,13 +58,31 @@ class StateMachine {
     std::visit([](auto statePtr) { statePtr->entry(); }, current_state_);
   }
 
-  void execute_once() {
-    std::visit([](auto statePtr) { statePtr->execute_once(); }, current_state_);
+  void loop() {
+    if (first_run_) {
+      first_run_ = false;
+      _enter_state(current_state_);
+    }
+    std::visit([](auto statePtr) { statePtr->loop(); }, current_state_);
   }
 
   template <typename State>
   bool is_current_state() const {
     return std::holds_alternative<State *>(current_state_);
+  }
+
+  void _enter_state(std::variant<States *...> state) {
+    base_.info(
+        "Entering state %s::%s", name_,
+        std::visit([](auto statePtr) { return statePtr->get_name(); }, state));
+    std::visit([](auto statePtr) { statePtr->entry(); }, state);
+  }
+
+  void _exit_state(std::variant<States *...> state) {
+    base_.info(
+        "Leaving state %s::%s", name_,
+        std::visit([](auto statePtr) { return statePtr->get_name(); }, state));
+    std::visit([](auto statePtr) { statePtr->exit(); }, state);
   }
 
  protected:
@@ -76,6 +91,7 @@ class StateMachine {
   static constexpr size_t MAX_NAME_LENGTH = 32;
   char name_[MAX_NAME_LENGTH];
   Base &base_;
+  bool first_run_ = true;
 };
 
 #endif  // HOMEBUTTONS_STATEMACHINE_H

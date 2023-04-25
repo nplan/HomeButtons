@@ -7,6 +7,7 @@
 #include "config.h"
 #include "types.h"
 #include "logger.h"
+#include "hardware.h"
 #include <IPAddress.h>
 
 class DeviceState : public Logger {
@@ -24,11 +25,14 @@ class DeviceState : public Logger {
     DeviceName device_name;
     ButtonLabel btn_labels[NUM_BUTTONS];
     uint16_t sensor_interval = 0;  // minutes
+    bool use_fahrenheit = false;
 
     struct {
       IPAddress static_ip;
       IPAddress gateway;
       IPAddress subnet;
+      IPAddress dns;
+      IPAddress dns2;
     } network;
 
     struct {
@@ -59,6 +63,7 @@ class DeviceState : public Logger {
     bool restart_to_setup = false;
     bool send_discovery_config = false;
     bool silent_restart = false;
+    bool download_mdi_icons = false;
   } persisted_;
 
   struct Flags {
@@ -82,18 +87,6 @@ class DeviceState : public Logger {
 
   // Factory
   const Factory& factory() const { return factory_; }
-  void set_serial_number(const SerialNumber& str) {
-    factory_.serial_number = str;
-  }
-  void set_random_id(const RandomID& str) { factory_.random_id = str; }
-  void set_model_name(const ModelName& str) { factory_.model_name = str; }
-  void set_model_id(const ModelID& str) { factory_.model_id = str; }
-  void set_hw_version(const HWVersion& str) { factory_.hw_version = str; }
-  void set_unique_id(const UniqueID& str) { factory_.unique_id = str; }
-
-  void save_factory();
-  void load_factory();
-  void clear_factory();
 
   // User preferences
   const UserPreferences& user_preferences() const { return user_preferences_; }
@@ -105,10 +98,14 @@ class DeviceState : public Logger {
                               password, base_topic, discovery_prefix};
   }
   void set_static_ip_config(const IPAddress& static_ip,
-                            const IPAddress& gateway, const IPAddress& subnet) {
+                            const IPAddress& gateway, const IPAddress& subnet,
+                            const IPAddress& dns = IPAddress(),
+                            const IPAddress& dns2 = IPAddress()) {
     user_preferences_.network.static_ip = static_ip;
     user_preferences_.network.gateway = gateway;
     user_preferences_.network.subnet = subnet;
+    user_preferences_.network.dns = dns;
+    user_preferences_.network.dns2 = dns2;
   }
 
   const DeviceName& device_name() const {
@@ -123,6 +120,15 @@ class DeviceState : public Logger {
   }
   const ButtonLabel& get_btn_label(uint8_t i) const;
   void set_btn_label(uint8_t i, const char* label);
+
+  bool get_use_fahrenheit() const { return user_preferences_.use_fahrenheit; }
+  StaticString<1> get_temp_unit() const {
+    return StaticString<1>(user_preferences_.use_fahrenheit ? "F" : "C");
+  }
+  void set_temp_unit(StaticString<1> unit) {
+    bool f = unit == "F" || unit == "f";
+    user_preferences_.use_fahrenheit = f;
+  }
 
   void save_user();
   void load_user();
@@ -142,7 +148,7 @@ class DeviceState : public Logger {
   void clear_persisted_flags();
 
   void save_all();
-  void load_all();
+  void load_all(HardwareDefinition& hw);
   void clear_all();
 
   // TODO: maybe should be somewhere else
@@ -159,6 +165,8 @@ class DeviceState : public Logger {
   const char* ip() const { return ip_address_.c_str(); }
 
  private:
+  void _load_factory(HardwareDefinition& hw);
+
   template <std::size_t MAX_SIZE>
   void _load_to_static_string(StaticString<MAX_SIZE>& destination,
                               const char* key, const char* defaultValue) {

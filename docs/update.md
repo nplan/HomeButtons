@@ -71,26 +71,31 @@ Scan the QR code or enter the local IP into a web browser.
 
     *macOS*
 
-    ```
+    ``` { .yaml .copy }
     ls /dev/cu*
     ```    
 
     *Linux*
 
-    ```
+    ``` { .yaml .copy }
     ls /dev/tty*
     ```
 
     Copy the path of the correct port.
  
-7. Flash the firmware using *esptool*. Run this command in *Terminal* or *Command Prompt*:
+7. Flash the firmware using *esptool*. Run this two commands in *Terminal* or *Command Prompt*:
 
+    ``` { .yaml .copy }
+    python -m esptool --port PORT --after no_reset erase_region 0xe000 0x2000
     ```
+    ``` { .yaml .copy }
     python -m esptool --port PORT --after no_reset write_flash 0x10000 BIN_FILE_PATH
     ```
 
     Substitute `PORT` with port that you determined in previous step.
     Substitute `BIN_FILE_PATH` with the path of downloaded firmware *.bin* file.
+
+    > The `erase_region` command resets the app partition boot switch. It's required to make sure the device will boot to the newly flashed firmware.
 
 8. Wait a few seconds for firmware to flash. When done, you will see a confirmation in *Terminal* or *Command Prompt* window.
 

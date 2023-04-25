@@ -13,5 +13,6 @@ using UniqueID = StaticString<21>;
 
 using DeviceName = StaticString<20>;
 using ButtonLabel = StaticString<BTN_LABEL_MAXLEN>;
+using MDIName = StaticString<48>;
 
 #endif  // HOMEBUTTONS_TYPES_H;

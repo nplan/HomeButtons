@@ -9,15 +9,35 @@
 #include <Fonts/FreeSansBold18pt7b.h>
 #include <Fonts/FreeSansBold24pt7b.h>
 #include <Fonts/FreeSansBold9pt7b.h>
+#include <SPIFFS.h>
 #include <U8g2_for_Adafruit_GFX.h>
 #include <qrcode.h>
 
 #include "bitmaps.h"
 #include "config.h"
 #include "hardware.h"
+#include "types.h"
 
-const int WIDTH = 128;
-const int HEIGHT = 296;
+static constexpr uint16_t WIDTH = 128;
+static constexpr uint16_t HEIGHT = 296;
+
+uint16_t read16(File &f) {
+  // BMP data is stored little-endian, same as Arduino.
+  uint16_t result;
+  ((uint8_t *)&result)[0] = f.read();  // LSB
+  ((uint8_t *)&result)[1] = f.read();  // MSB
+  return result;
+}
+
+uint32_t read32(File &f) {
+  // BMP data is stored little-endian, same as Arduino.
+  uint32_t result;
+  ((uint8_t *)&result)[0] = f.read();  // LSB
+  ((uint8_t *)&result)[1] = f.read();
+  ((uint8_t *)&result)[2] = f.read();
+  ((uint8_t *)&result)[3] = f.read();  // MSB
+  return result;
+}
 
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
@@ -119,6 +139,9 @@ void Display::update() {
     case DisplayPage::WELCOME:
       draw_welcome();
       break;
+    case DisplayPage::SETTINGS:
+      draw_settings();
+      break;
     case DisplayPage::AP_CONFIG:
       draw_ap_config();
       break;
@@ -186,6 +209,10 @@ void Display::disp_welcome() {
   set_cmd_state(new_cmd_state);
 }
 
+void Display::disp_settings() {
+  UIState new_cmd_state{DisplayPage::SETTINGS};
+  set_cmd_state(new_cmd_state);
+}
 void Display::disp_ap_config() {
   UIState new_cmd_state{DisplayPage::AP_CONFIG};
   set_cmd_state(new_cmd_state);
@@ -253,16 +280,8 @@ void Display::draw_message(const UIState::MessageType &message, bool error,
 }
 
 void Display::draw_main() {
-  const uint8_t num_buttons = 6;
   const uint16_t min_btn_clearance = 14;
   const uint16_t h_padding = 5;
-  const uint16_t heights[] = {
-      static_cast<uint16_t>(round(HEIGHT / 12.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 2 * HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 3 * HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 4 * HEIGHT / 6.)),
-      static_cast<uint16_t>(round(HEIGHT / 12. + 5 * HEIGHT / 6.))};
 
   disp->setRotation(0);
   disp->setFullWindow();
@@ -278,41 +297,151 @@ void Display::draw_main() {
     disp->fillRect(12, HEIGHT - 3, WIDTH - 24, 3, text_color);
   }
 
-  // Loop through buttons
-  for (uint16_t i = 0; i < num_buttons; i++) {
-    uint16_t w, h;
-    UIState::MessageType t{device_state_.get_btn_label(i).c_str()};
+  mdi_.begin();
+  LabelType label_type[NUM_BUTTONS] = {};
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+    if (label.substring(0, 4) == "mdi:") {
+      if (label.index_of(' ') > 0) {
+        label_type[i] = LabelType::Mixed;
+      } else {
+        label_type[i] = LabelType::Icon;
+      }
+    } else {
+      label_type[i] = LabelType::Text;
+    }
+  }
 
-    u8g2.setFont(u8g2_font_helvB24_te);
-    w = u8g2.getUTF8Width(t.c_str());
-    h = u8g2.getFontAscent();
-    if (w >= WIDTH - min_btn_clearance) {
-      u8g2.setFont(u8g2_font_helvB18_te);
-      w = u8g2.getUTF8Width(t.c_str());
+  // Loop through buttons
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+
+    if (label_type[i] == LabelType::Icon) {
+      MDIName icon = label.substring(
+          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
+
+      // make smaller if opposite is text or mixed
+      uint16_t size;
+      bool small;
+      if (i % 2 == 0) {
+        if (label_type[i + 1] == LabelType::Text ||
+            label_type[i + 1] == LabelType::Mixed) {
+          size = 48;
+          small = true;
+        } else {
+          size = 64;
+          small = false;
+        }
+      } else {
+        if (label_type[i - 1] == LabelType::Text ||
+            label_type[i - 1] == LabelType::Mixed) {
+          size = 48;
+          small = true;
+        } else {
+          size = 64;
+          small = false;
+        }
+      }
+
+      // calculate icon position on display
+      uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
+      uint16_t y;
+      if (i < 2) {
+        if (small) {
+          y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+              size / 2;
+        } else {
+          y = 17;
+        }
+      } else if (i < 4) {
+        if (small) {
+          y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+              size / 2;
+        } else {
+          y = 116;
+        }
+      } else {
+        if (small) {
+          y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+              size / 2;
+        } else {
+          y = 215;
+        }
+      }
+      draw_mdi(icon.c_str(), size, x, y);
+    } else if (label_type[i] == LabelType::Mixed) {
+      MDIName icon = label.substring(4, label.index_of(' '));
+      StaticString<56> text = label.substring(label.index_of(' ') + 1);
+      uint16_t icon_size = 48;
+      uint16_t x = i % 2 == 0 ? 0 : WIDTH - icon_size;
+      uint16_t y =
+          static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) -
+          icon_size / 2;
+
+      draw_mdi(icon.c_str(), icon_size, x, y);
+      // draw text
+      uint16_t max_text_width = WIDTH - icon_size - h_padding;
+      u8g2.setFont(u8g2_font_helvB24_te);
+      uint16_t w, h;
+      w = u8g2.getUTF8Width(text.c_str());
       h = u8g2.getFontAscent();
-      if (w >= WIDTH - min_btn_clearance) {
-        t = t.substring(0, t.length() - 1) + ".";
-        while (1) {
-          w = u8g2.getUTF8Width(t.c_str());
-          h = u8g2.getFontAscent();
-          if (w >= WIDTH - min_btn_clearance) {
-            t = t.substring(0, t.length() - 2) + ".";
-          } else {
-            break;
+      if (w >= max_text_width) {
+        u8g2.setFont(u8g2_font_helvB18_te);
+        w = u8g2.getUTF8Width(text.c_str());
+        h = u8g2.getFontAscent();
+        if (w >= max_text_width) {
+          text = text.substring(0, text.length() - 1) + ".";
+          while (1) {
+            w = u8g2.getUTF8Width(text.c_str());
+            h = u8g2.getFontAscent();
+            if (w >= max_text_width) {
+              text = text.substring(0, text.length() - 2) + ".";
+            } else {
+              break;
+            }
           }
         }
       }
-    }
-    int16_t w_pos, h_pos;
-    if (i % 2 == 0) {
-      w_pos = h_padding;
+      x = i % 2 == 0 ? icon_size + h_padding
+                     : WIDTH - icon_size - w - h_padding;
+      y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) + h / 2;
+      u8g2.setCursor(x, y);
+      u8g2.print(text.c_str());
     } else {
-      w_pos = WIDTH - w - h_padding;
+      uint16_t max_label_width = WIDTH - min_btn_clearance;
+      u8g2.setFont(u8g2_font_helvB24_te);
+      uint16_t w, h;
+      w = u8g2.getUTF8Width(label.c_str());
+      h = u8g2.getFontAscent();
+      if (w >= max_label_width) {
+        u8g2.setFont(u8g2_font_helvB18_te);
+        w = u8g2.getUTF8Width(label.c_str());
+        h = u8g2.getFontAscent();
+        if (w >= max_label_width) {
+          label = label.substring(0, label.length() - 1) + ".";
+          while (1) {
+            w = u8g2.getUTF8Width(label.c_str());
+            h = u8g2.getFontAscent();
+            if (w >= max_label_width) {
+              label = label.substring(0, label.length() - 2) + ".";
+            } else {
+              break;
+            }
+          }
+        }
+      }
+      int16_t x, y;
+      if (i % 2 == 0) {
+        x = h_padding;
+      } else {
+        x = WIDTH - w - h_padding;
+      }
+      y = static_cast<uint16_t>(round(HEIGHT / 12. + i * HEIGHT / 6.)) + h / 2;
+      u8g2.setCursor(x, y);
+      u8g2.print(label.c_str());
     }
-    h_pos = heights[i] + h / 2;
-    u8g2.setCursor(w_pos, h_pos);
-    u8g2.print(t.c_str());
   }
+  mdi_.end();
   disp->display();
 }
 
@@ -335,7 +464,8 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 30);
   disp->print(text.c_str());
 
-  text = UIState::MessageType("%.1f C", device_state_.sensors().temperature);
+  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
+                              device_state_.get_temp_unit().c_str());
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
@@ -347,7 +477,7 @@ void Display::draw_info() {
   disp->setCursor(WIDTH / 2 - w / 2, 129);
   disp->print(text.c_str());
 
-  text = UIState::MessageType("%.0f %", device_state_.sensors().humidity);
+  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
   disp->setFont(&FreeSansBold18pt7b);
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
@@ -368,12 +498,6 @@ void Display::draw_info() {
   disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
   disp->setCursor(WIDTH / 2 - w / 2 - 2, 268);
   disp->print(text.c_str());
-
-  // device name
-  disp->setFont();
-  disp->setTextSize(1);
-  disp->setCursor(0, 288);
-  disp->print(device_state_.device_name().c_str());
 
   disp->display();
 }
@@ -437,6 +561,43 @@ void Display::draw_welcome() {
                                     device_state_.factory().model_id.c_str() +
                                     " rev " +
                                     device_state_.factory().hw_version.c_str();
+  disp->print(model_info.c_str());
+
+  disp->setCursor(0, 285);
+  disp->print(device_state_.factory().unique_id.c_str());
+
+  disp->display();
+}
+
+void Display::draw_settings() {
+  disp->setRotation(0);
+  disp->setTextColor(text_color);
+  disp->setTextWrap(false);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(0, 17, account_cog_64x64, 64, 64, text_color);
+  disp->drawXBitmap(WIDTH / 2, 17, wifi_cog_64x64, 64, 64, text_color);
+  disp->drawXBitmap(0, 116, restore_64x64, 64, 64, text_color);
+  disp->drawXBitmap(WIDTH / 2, 116, close_64x64, 64, 64, text_color);
+
+  disp->drawXBitmap(40, 200, hb_logo_48x48, 48, 48, text_color);
+
+  disp->setFont();
+  disp->setTextSize(1);
+  disp->setCursor(0, 255);
+  disp->print(device_state_.device_name().c_str());
+
+  disp->setCursor(0, 265);
+  UIState::MessageType sw_ver =
+      UIState::MessageType("Software: %s", SW_VERSION);
+  disp->print(sw_ver.c_str());
+
+  disp->setCursor(0, 275);
+  UIState::MessageType model_info = UIState::MessageType(
+      "Model: %s rev %s", device_state_.factory().model_id.c_str(),
+      device_state_.factory().hw_version.c_str());
   disp->print(model_info.c_str());
 
   disp->setCursor(0, 285);
@@ -613,4 +774,183 @@ void Display::draw_black() {
   disp->setFullWindow();
   disp->fillScreen(GxEPD_BLACK);
   disp->display();
+}
+
+// based on GxEPD2_Spiffs_Example.ino - drawBitmapFromSpiffs_Buffered()
+// Warning - SPIFFS.begin() must be called before this function
+bool Display::draw_bmp(File &file, int16_t x, int16_t y) {
+  uint32_t startTime = millis();
+  if (!file) {
+    error("error opening file");
+    return false;
+  }
+  bool valid = false;  // valid format to be handled
+  bool flip = true;    // bitmap is stored bottom-to-top
+  if ((x >= disp->width()) || (y >= disp->height())) return false;
+
+  // Parse BMP header
+  if (read16(file) == 0x4D42) {
+    debug("BMP signature detected");
+    uint32_t fileSize = read32(file);
+    uint32_t creatorBytes = read32(file);
+    (void)creatorBytes;                   // unused
+    uint32_t imageOffset = read32(file);  // Start of image data
+    uint32_t headerSize = read32(file);
+    uint32_t width = read32(file);
+    int32_t height = (int32_t)read32(file);
+    uint16_t planes = read16(file);
+    uint16_t depth = read16(file);  // bits per pixel
+    uint32_t format = read32(file);
+    if ((planes == 1) && ((format == 0) || (format == 3))) {
+      debug("BMP Image Offset: %d", imageOffset);
+      debug("BMP Header size: %d", headerSize);
+      debug("BMP File size: %d", fileSize);
+      debug("BMP Bit Depth: %d", depth);
+      debug("BMP Image size: %d x %d", width, height);
+      // BMP rows are padded (if needed) to 4-byte boundary
+      uint32_t rowSize = (width * depth / 8 + 3) & ~3;
+      if (depth < 8) rowSize = ((width * depth + 8 - depth) / 8 + 3) & ~3;
+      if (height < 0) {
+        height = -height;
+        flip = false;
+      }
+      uint16_t w = width;
+      uint16_t h = height;
+      if ((x + w - 1) >= disp->width()) w = disp->width() - x;
+      if ((y + h - 1) >= disp->height()) h = disp->height() - y;
+      valid = true;
+      uint8_t bitmask = 0xFF;
+      uint8_t bitshift = 8 - depth;
+      uint16_t red, green, blue;
+      bool whitish = false;
+      bool colored = false;
+      if (depth <= 8) {
+        if (depth < 8) bitmask >>= depth;
+        file.seek(imageOffset - (4 << depth));
+        for (uint16_t pn = 0; pn < (1 << depth); pn++) {
+          blue = file.read();
+          green = file.read();
+          red = file.read();
+          file.read();
+          whitish = (red + green + blue) > 3 * 0x80;
+          // reddish or yellowish?
+          colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));
+          if (0 == pn % 8) mono_palette_buffer[pn / 8] = 0;
+          mono_palette_buffer[pn / 8] |= whitish << pn % 8;
+          if (0 == pn % 8) color_palette_buffer[pn / 8] = 0;
+          color_palette_buffer[pn / 8] |= colored << pn % 8;
+          rgb_palette_buffer[pn] = ((red & 0xF8) << 8) | ((green & 0xFC) << 3) |
+                                   ((blue & 0xF8) >> 3);
+        }
+      }
+      uint32_t rowPosition =
+          flip ? imageOffset + (height - h) * rowSize : imageOffset;
+      for (uint16_t row = 0; row < h;
+           row++, rowPosition += rowSize)  // for each line
+      {
+        uint32_t in_remain = rowSize;
+        uint32_t in_idx = 0;
+        uint32_t in_bytes = 0;
+        uint8_t in_byte = 0;  // for depth <= 8
+        uint8_t in_bits = 0;  // for depth <= 8
+        uint16_t color = GxEPD_WHITE;
+        file.seek(rowPosition);
+        for (uint16_t col = 0; col < w; col++)  // for each pixel
+        {
+          // Time to read more pixel data?
+          if (in_idx >= in_bytes)  // ok, exact match for 24bit also (size
+                                   // IS multiple of 3)
+          {
+            in_bytes = file.read(input_buffer, in_remain > sizeof(input_buffer)
+                                                   ? sizeof(input_buffer)
+                                                   : in_remain);
+            in_remain -= in_bytes;
+            in_idx = 0;
+          }
+          switch (depth) {
+            case 24:
+              blue = input_buffer[in_idx++];
+              green = input_buffer[in_idx++];
+              red = input_buffer[in_idx++];
+              whitish = (red + green + blue) > 3 * 0x80;
+              // reddish or yellowish?
+              colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));
+              color = ((red & 0xF8) << 8) | ((green & 0xFC) << 3) |
+                      ((blue & 0xF8) >> 3);
+              break;
+            case 16: {
+              uint8_t lsb = input_buffer[in_idx++];
+              uint8_t msb = input_buffer[in_idx++];
+              if (format == 0)  // 555
+              {
+                blue = (lsb & 0x1F) << 3;
+                green = ((msb & 0x03) << 6) | ((lsb & 0xE0) >> 2);
+                red = (msb & 0x7C) << 1;
+                color = ((red & 0xF8) << 8) | ((green & 0xFC) << 3) |
+                        ((blue & 0xF8) >> 3);
+              } else  // 565
+              {
+                blue = (lsb & 0x1F) << 3;
+                green = ((msb & 0x07) << 5) | ((lsb & 0xE0) >> 3);
+                red = (msb & 0xF8);
+                color = (msb << 8) | lsb;
+              }
+              whitish = (red + green + blue) > 3 * 0x80;
+              // reddish or yellowish?
+              colored = (red > 0xF0) || ((green > 0xF0) && (blue > 0xF0));
+            } break;
+            case 1:
+            case 4:
+            case 8: {
+              if (0 == in_bits) {
+                in_byte = input_buffer[in_idx++];
+                in_bits = 8;
+              }
+              uint16_t pn = (in_byte >> bitshift) & bitmask;
+              whitish = mono_palette_buffer[pn / 8] & (0x1 << pn % 8);
+              colored = color_palette_buffer[pn / 8] & (0x1 << pn % 8);
+              in_byte <<= depth;
+              in_bits -= depth;
+              color = rgb_palette_buffer[pn];
+            } break;
+          }
+          if (whitish) {
+            color = GxEPD_WHITE;
+          } else if (colored) {
+            color = GxEPD_COLORED;
+          } else {
+            color = GxEPD_BLACK;
+          }
+          uint16_t yrow = y + (flip ? h - row - 1 : row);
+          disp->drawPixel(x + col, yrow, color);
+        }  // end pixel
+      }    // end line
+    }
+  }
+  file.close();
+  if (!valid) {
+    error("BMP format not valid.");
+  }
+  debug("BMP loaded in %lu ms", millis() - startTime);
+  return valid;
+}
+
+void Display::draw_mdi(const char *name, uint16_t size, int16_t x, int16_t y) {
+  bool draw_placeholder = false;
+  File file;
+  if (mdi_.exists(name, size)) {
+    File file = mdi_.get_file(name, size);
+    if (!draw_bmp(file, x, y)) {
+      error("Could not draw icon: %s", name);
+      // file might be corrupted - remove so it will be downloaded again
+      mdi_.remove(name, size);
+      draw_placeholder = true;
+    }
+  } else {
+    error("Icon not found: %s", name);
+    draw_placeholder = true;
+  }
+  if (draw_placeholder) {
+    disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
+  }
 }

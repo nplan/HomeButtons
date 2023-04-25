@@ -5,9 +5,9 @@
 #include "logger.h"
 
 const uint32_t LONG_1_TIME = 2000L;
-const uint32_t LONG_2_TIME = 10000L;
-const uint32_t LONG_3_TIME = 20000L;
-const uint32_t LONG_4_TIME = 30000L;
+const uint32_t LONG_2_TIME = 5000L;
+const uint32_t LONG_3_TIME = 10000L;
+const uint32_t LONG_4_TIME = 20000L;
 
 const uint32_t DEBOUNCE_TIMEOUT = 50L;
 const uint32_t PRESS_TIMEOUT = 500L;

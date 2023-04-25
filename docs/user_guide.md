@@ -6,9 +6,7 @@
 Press any button for:
 
 - 2 s - [Info Screen](#info_screen)
-- 10 s - [Setup](#setup)
-- 20 s - [Wi-Fi Setup](#wifi_setup)
-- 30 s - [Factory Reset](#factory_reset)
+- 5 s - [Settings Menu](#settings)
 
 ## Home Assistant
 
@@ -21,12 +19,27 @@ You can configure most of the devices settings directly in *Home Assistant*.
 ### Configure Button Labels
 
 In the *Controls* card, enter the button labels that you want to be shown on the e-paper display. The buttons are ordered from top to bottom. Labels will be updated next time you press a button or on the next sensor update interval.
+Labels can be:
 
-> *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
-Labels over **7** letters will be clipped. Choose what you want to display wisely :)
+1. `Text`
+2. *Icon* :material-home:
+3. Mixed - `Text` and *Icon* :material-home:
 
-> Labels support UTF-8 with special characters. If a character is not available in the display font, it will be skipped.
+#### Text
 
+Enter any text you want. Labels support UTF-8 with special characters. *Home Buttons* will choose between two font sizes automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
+
+#### Icons :material-home:
+
+You can choose any of the [Material Design Icons](https://materialdesignicons.com/){:target="_blank"}. Enter the icon name in the label field in the format `mdi:{icon name}`. For example, `mdi:lightbulb-auto-outline`.
+
+Icons are downloaded from a *Github* repository. For that purpose an internet connection is required. Once downloaded, the icons are stored permanently on the device. If you do not wish to have *Home Buttons* connected to the internet, you can set up the icons once and then disable internet access.
+
+#### Mixed
+
+In label field, enter: `mdi:{icon name} {text}`. For example, `mdi:lightbulb Bedroom`. There must be a single space separating the icon name and the text. Label name must always be first. The actual position of the icon will be before or after the text, based on the location of the button.
+
+>Icons are slightly smaller in this mode.
 ### Configure Button Actions
 
 To configure button actions, click "+" on the *Automations* card, select one of the buttons and set up an automation with *Home Assistant*'s editor.
@@ -60,14 +73,28 @@ The range is from 1 to 30 minutes. The default is 10 minutes.
 
 > *Awake Mode* is only available on *Home Buttons* hardware revision >= 2.2 by default. If you wish to enable it on earlier revisions, you must perform a [hardware hack](hardware_hacks.md#usb-power-without-battery).
 
+## Settings Menu {#settings}
+
+Open the settings menu by pressing any button for 5 seconds. The menu will show the following options:
+
+- :material-account-cog: - [Setup](#setup)
+- :material-wifi-cog: - [Wi-Fi Setup](#wifi_setup)
+- :material-restore: - Restart
+- :material-close: - Close settings menu
+
+To perform a factory reset, hold :material-restore: for 10 seconds. *Home Buttons* will restart and all user settings will be reset to default.
+You will have to set up the device again.
+
+> Restart triggers publishing MQTT discovery message and icon download. The first time after a restart, Wi-Fi connection
+will take a few seconds longer.
 
 ## Info Screen {#info_screen}
 
-Info screen displays current temperature, humidity and battery charge percentage.
+Info screen displays current **temperature**, **humidity** and **battery** charge percentage.
 
 !["Info Screen](assets/info_screen.png){width="125"}
 
-Bring it up by pressing any button for 2 seconds. *Home Buttons* will automatically revert to showing button labels in 30 seconds. Or do that manually by pressing any button again.
+Bring it up by pressing any button for 2 seconds. *Home Buttons* will automatically revert to showing button labels after 30 seconds. Or do that manually by pressing any button again.
 
 ## Setup {#setup}
 
@@ -107,12 +134,13 @@ Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
 - `Subnet Mask` Optional. Usually `255.255.255.0.`
 
+- `Primary DNS Server` - If left empty, `Gateway` IP will be used.
+
+- `Secondary DNS Server` - If left empty, `1.1.1.1` will be used.
+
 - `Button {1-6} Label` - Label that will be displayed next to each button. The order is from top to bottom.
 
-> *Home Buttons* will choose font size automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
-Labels over **7** letters will be clipped. Choose what you want to display wisely :)
-
-> ![Label Text Size Comparison](assets/text_sizes.png){width="125"}
+- `Temperature Unit` - Either `C` - Celsius  or `F` - Fahrenheit.
 
 When done, click `Save`. Device will exit the setup and display button labels.
 
@@ -143,13 +171,6 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 
 > If connection is not successful, `Wi-Fi error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
-
-## Factory Reset {#factory_reset}
-
-Factory reset deletes all user settings and returns the device to its initial state.
-
-Perform the factory reset by pressing any button for 30 seconds. `Factory RESET...` will appear on the display and *Home Buttons* will restart and display welcome screen.
-You can complete the setup again by following the [Getting Started](setup.md) guide. 
 
 ## Opening the case {#opening_case}
 

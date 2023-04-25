@@ -4,6 +4,9 @@
 #include "state.h"
 #include "utils.h"
 
+static constexpr uint8_t MQTT_QUEUE_SIZE = 4;
+static constexpr uint8_t MQTT_QUEUE_ITEMS_PER_LOOP = 5;
+
 String mac2String(uint8_t ar[]) {
   String s;
   for (uint8_t i = 0; i < 6; ++i) {
@@ -16,12 +19,12 @@ String mac2String(uint8_t ar[]) {
   return s;
 }
 
-void NetworkSMStates::IdleState::execute_once() {
+void NetworkSMStates::IdleState::loop() {
   if (sm().command_ == Network::Command::CONNECT) {
     if (sm().device_state_.persisted().wifi_quick_connect) {
-      transition_to<QuickConnectState>();
+      return transition_to<QuickConnectState>();
     } else {
-      transition_to<NormalConnectState>();
+      return transition_to<NormalConnectState>();
     }
   }
 }
@@ -35,13 +38,13 @@ void NetworkSMStates::QuickConnectState::entry() {
   WiFi.begin();
 }
 
-void NetworkSMStates::QuickConnectState::execute_once() {
+void NetworkSMStates::QuickConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
-    transition_to<DisconnectState>();
+    return transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
     sm().info("Wi-Fi connected (quick mode) in %lu ms.",
               millis() - start_time_);
-    transition_to<WifiConnectedState>();
+    return transition_to<WifiConnectedState>();
   } else if (millis() - start_time_ > QUICK_WIFI_TIMEOUT) {
     // try again with normal mode
     sm().info(
@@ -71,7 +74,7 @@ void NetworkSMStates::NormalConnectState::entry() {
   await_confirm_quick_wifi_settings_ = false;
 }
 
-void NetworkSMStates::NormalConnectState::execute_once() {
+void NetworkSMStates::NormalConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (WiFi.status() == WL_CONNECTED) {
@@ -119,7 +122,7 @@ void NetworkSMStates::MQTTConnectState::entry() {
   sm()._connect_mqtt();
 }
 
-void NetworkSMStates::MQTTConnectState::execute_once() {
+void NetworkSMStates::MQTTConnectState::loop() {
   if (sm().command_ == Network::Command::DISCONNECT) {
     return transition_to<DisconnectState>();
   } else if (sm().mqtt_client_.connected()) {
@@ -142,7 +145,7 @@ void NetworkSMStates::MQTTConnectState::execute_once() {
   }
 }
 
-void NetworkSMStates::WifiConnectedState::execute_once() {
+void NetworkSMStates::WifiConnectedState::loop() {
   sm().state_ = Network::State::W_CONNECTED;
   sm().device_state_.set_ip(WiFi.localIP());
   sm().info("Wi-Fi connected.");
@@ -153,7 +156,7 @@ void NetworkSMStates::WifiConnectedState::execute_once() {
   int32_t ch = WiFi.channel();
   sm().info("SSID: %s, BSSID: %s, CH: %d", ssid.c_str(),
             mac2String(bssid).c_str(), ch);
-  transition_to<MQTTConnectState>();
+  return transition_to<MQTTConnectState>();
 }
 
 void NetworkSMStates::DisconnectState::entry() {
@@ -167,7 +170,7 @@ void NetworkSMStates::DisconnectState::entry() {
   delay(500);
 }
 
-void NetworkSMStates::DisconnectState::execute_once() {
+void NetworkSMStates::DisconnectState::loop() {
   return transition_to<IdleState>();
 }
 
@@ -179,8 +182,9 @@ void NetworkSMStates::FullyConnectedState::entry() {
   sm().state_ = Network::State::M_CONNECTED;
 }
 
-void NetworkSMStates::FullyConnectedState::execute_once() {
-  if (sm().command_ == Network::Command::DISCONNECT) {
+void NetworkSMStates::FullyConnectedState::loop() {
+  if (sm().command_ == Network::Command::DISCONNECT &&
+      uxQueueMessagesWaiting(sm().mqtt_publish_queue_) == 0) {
     return transition_to<DisconnectState>();
   } else if (millis() - last_conn_check_time_ > NET_CONN_CHECK_INTERVAL) {
     if (WiFi.status() != WL_CONNECTED) {
@@ -194,7 +198,7 @@ void NetworkSMStates::FullyConnectedState::execute_once() {
     last_conn_check_time_ = millis();
   } else {
     SM::PublishQueueElement element;
-    uint8_t max_element_to_process = 5;
+    uint8_t max_element_to_process = MQTT_QUEUE_ITEMS_PER_LOOP;
     while (max_element_to_process > 0 && sm().mqtt_publish_queue_ != nullptr &&
            xQueueReceive(sm().mqtt_publish_queue_, &element, 0)) {
       sm().debug("received payload (topic: %s)", element.topic.c_str());
@@ -210,7 +214,8 @@ Network::Network(DeviceState &device_state)
       Logger("NET"),
       device_state_(device_state),
       mqtt_client_(wifi_client_) {
-  mqtt_publish_queue_ = xQueueCreate(4, sizeof(PublishQueueElement));
+  mqtt_publish_queue_ =
+      xQueueCreate(MQTT_QUEUE_SIZE, sizeof(PublishQueueElement));
   if (mqtt_publish_queue_ == nullptr) error("Failed to create publish queue");
 }
 
@@ -235,7 +240,7 @@ void Network::disconnect(bool erase) {
 
 void Network::update() {
   mqtt_client_.loop();
-  execute_once();
+  loop();
 }
 
 void Network::setup() { network_task_handle_ = xTaskGetCurrentTaskHandle(); }
@@ -299,14 +304,25 @@ void Network::_pre_wifi_connect() {
   const auto &static_ip = device_state_.user_preferences().network.static_ip;
   const auto &gateway = device_state_.user_preferences().network.gateway;
   const auto &subnet = device_state_.user_preferences().network.subnet;
+  auto dns = device_state_.user_preferences().network.dns;
+  auto dns2 = device_state_.user_preferences().network.dns2;
   bool ip_ok = static_ip != IPAddress(0, 0, 0, 0);
   bool gw_ok = gateway != IPAddress(0, 0, 0, 0);
   bool sn_ok = subnet != IPAddress(0, 0, 0, 0);
+  if (dns == IPAddress(0, 0, 0, 0)) {
+    dns = gateway;
+  }
+  if (dns2 == IPAddress(0, 0, 0, 0)) {
+    dns2 = IPAddress(1, 1, 1, 1);
+  }
   if (ip_ok && gw_ok && sn_ok) {
-    info("Using static IP %s, Gateway %s, Subnet %s",
-         static_ip.toString().c_str(), gateway.toString().c_str(),
-         subnet.toString().c_str());
-    WiFi.config(static_ip, gateway, subnet);
+    info("Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
+         ip_address_to_static_string(static_ip).c_str(),
+         ip_address_to_static_string(gateway).c_str(),
+         ip_address_to_static_string(subnet).c_str(),
+         ip_address_to_static_string(dns).c_str(),
+         ip_address_to_static_string(dns2).c_str());
+    WiFi.config(static_ip, gateway, subnet, dns, dns2);
   } else {
     info("Using DHCP. Static IP not set or not valid.");
   }
