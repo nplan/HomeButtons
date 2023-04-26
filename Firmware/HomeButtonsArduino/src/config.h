@@ -13,7 +13,11 @@ static constexpr char WIFI_MANAGER_TITLE[] = "Home Buttons";
 static constexpr char SETUP_AP_PASSWORD[] = "password123";
 
 // ------ buttons ------
+#ifdef HOME_BUTTONS_MINI
+static constexpr uint8_t NUM_BUTTONS = 4;
+#else
 static constexpr uint8_t NUM_BUTTONS = 6;
+#endif
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
 static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
 

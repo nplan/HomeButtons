@@ -36,6 +36,15 @@ bool HardwareDefinition::init() {
 
   auto hw_ver = get_hw_version();
 
+#ifdef HOME_BUTTONS_MINI
+  if (strcmp(hw_ver, "0.1") == 0) {
+    load_mini_hw_rev_0_1();
+    info("configured for hw version: 0.1");
+  } else {
+    error("HW rev %s not supported", hw_ver);
+    return false;
+  }
+#else
   if (strcmp(hw_ver, "1.0") == 0) {
     load_hw_rev_1_0();
     info("configured for hw version: 1.0");
@@ -55,6 +64,7 @@ bool HardwareDefinition::init() {
     error("HW rev %s not supported", hw_ver);
     return false;
   }
+#endif
   return true;
 }
 
@@ -63,15 +73,19 @@ void HardwareDefinition::begin() {
   pinMode(BTN2_PIN, INPUT);
   pinMode(BTN3_PIN, INPUT);
   pinMode(BTN4_PIN, INPUT);
+#ifndef HOME_BUTTONS_MINI
   pinMode(BTN5_PIN, INPUT);
   pinMode(BTN6_PIN, INPUT);
+#endif
 
+#ifndef HOME_BUTTONS_MINI
   pinMode(CHARGER_STDBY, INPUT_PULLUP);
 
   if (version >= semver::version{2, 2, 0}) {
     pinMode(DC_IN_DETECT, INPUT);
     pinMode(CHG_ENABLE, OUTPUT);
   }
+#endif
 
   ledcSetup(LED1_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED1_PIN, LED1_CH);
@@ -85,11 +99,13 @@ void HardwareDefinition::begin() {
   ledcSetup(LED4_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED4_PIN, LED4_CH);
 
+#ifndef HOME_BUTTONS_MINI
   ledcSetup(LED5_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED5_PIN, LED5_CH);
 
   ledcSetup(LED6_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED6_PIN, LED6_CH);
+#endif
 
   // battery voltage adc
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
@@ -135,9 +151,14 @@ bool HardwareDefinition::button_pressed(uint8_t num) {
 }
 
 bool HardwareDefinition::any_button_pressed() {
+#ifdef HOME_BUTTONS_MINI
+  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
+         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
+#else
   return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
          digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
          digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
+#endif
 }
 
 void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
@@ -147,6 +168,26 @@ void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
 void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
   num = map_button_num_hw_to_sw(num);
   uint8_t ch;
+
+#ifdef HOME_BUTTONS_MINI
+  switch (num) {
+    case 1:
+      ch = LED1_CH;
+      break;
+    case 2:
+      ch = LED2_CH;
+      break;
+    case 3:
+      ch = LED3_CH;
+      break;
+    case 4:
+      ch = LED4_CH;
+      break;
+    default:
+      return;
+  }
+#else
+
   switch (num) {
     case 1:
       ch = LED1_CH;
@@ -169,6 +210,7 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
     default:
       return;
   }
+#endif
   set_led(ch, brightness);
 }
 
@@ -177,8 +219,10 @@ void HardwareDefinition::set_all_leds(uint8_t brightness) {
   set_led(LED2_CH, brightness);
   set_led(LED3_CH, brightness);
   set_led(LED4_CH, brightness);
+#ifndef HOME_BUTTONS_MINI
   set_led(LED5_CH, brightness);
   set_led(LED6_CH, brightness);
+#endif
 }
 
 void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
@@ -252,28 +296,39 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
 }
 
 bool HardwareDefinition::is_charger_in_standby() {
-  return !digitalRead(CHARGER_STDBY);
+#ifndef HOME_BUTTONS_MINI
+  return !digitalRead(HW.CHARGER_STDBY);
+#else
+  return false;
+#endif
 }
 
 bool HardwareDefinition::is_dc_connected() {
-  if (version >= semver::version{2, 2, 0}) {
-    return digitalRead(DC_IN_DETECT);
+#ifndef HOME_BUTTONS_MINI
+  if (HW.version >= semver::version{2, 2, 0}) {
+    return digitalRead(HW.DC_IN_DETECT);
   } else {
     // hardware hack for powering v2.1 with USB-C
-    return HardwareDefinition::read_battery_voltage() >= DC_DETECT_VOLT;
+    return HardwareDefinition::read_battery_voltage() >= HW.DC_DETECT_VOLT;
   }
+#else
+  return false;
+#endif
 }
 
 void HardwareDefinition::enable_charger(bool enable) {
+#ifndef HOME_BUTTONS_MINI
   if (version >= semver::version{2, 2, 0}) {
     digitalWrite(CHG_ENABLE, enable);
     debug("charger enabled: %d", enable);
   } else {
     debug("this HW version doesn't support charger control.");
   }
+#endif
 }
 
 bool HardwareDefinition::is_battery_present() {
+#ifndef HOME_BUTTONS_MINI
   float volt = read_battery_voltage();
   if (version >= semver::version{2, 2, 0}) {
     return volt >= BATT_PRESENT_VOLT;
@@ -281,6 +336,9 @@ bool HardwareDefinition::is_battery_present() {
     // hardware hack for powering v2.1 with USB-C
     return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
   }
+#else
+  return true;
+#endif
 }
 
 bool HardwareDefinition::factory_params_ok() {
@@ -582,4 +640,50 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x204072;
+}
+
+void HardwareDefinition::load_mini_hw_rev_0_1() {
+  version = semver::version{0, 1, 0};
+  BTN1_PIN = 21;
+  BTN2_PIN = 1;
+  BTN3_PIN = 14;
+  BTN4_PIN = 4;
+
+  LED1_PIN = 17;
+  LED2_PIN = 2;
+  LED3_PIN = 15;
+  LED4_PIN = 5;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 3;
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 100;
+
+  // ------ battery reading ------“
+  BATT_DIVIDER = 0.333333;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 1.8;
+  BATT_HYSTERESIS_VOLT = 1.9;
+  WARN_BATT_VOLT = 2.0;
+  BATT_FULL_VOLT = 3.2;
+  BATT_EMPTY_VOLT = 1.8;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x204012;
 }

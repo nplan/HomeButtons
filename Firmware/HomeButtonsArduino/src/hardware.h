@@ -135,6 +135,8 @@ struct HardwareDefinition : public Logger {
   void load_hw_rev_2_2();
   void load_hw_rev_2_3();
 
+  void load_mini_hw_rev_0_1();
+
  private:
   struct {
     // members have length +1 for null terminator
