@@ -12,12 +12,10 @@ void DeviceState::save_user() {
   preferences_.putString("base_topic", user_preferences_.mqtt.base_topic);
   preferences_.putString("disc_prefix",
                          user_preferences_.mqtt.discovery_prefix);
-  preferences_.putString("btn1_txt", user_preferences_.btn_labels[0].c_str());
-  preferences_.putString("btn2_txt", user_preferences_.btn_labels[1].c_str());
-  preferences_.putString("btn3_txt", user_preferences_.btn_labels[2].c_str());
-  preferences_.putString("btn4_txt", user_preferences_.btn_labels[3].c_str());
-  preferences_.putString("btn5_txt", user_preferences_.btn_labels[4].c_str());
-  preferences_.putString("btn6_txt", user_preferences_.btn_labels[5].c_str());
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    preferences_.putString(StaticString<8>("btn%d_txt", i + 1).c_str(),
+                           user_preferences_.btn_labels[i].c_str());
+  }
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
   preferences_.putBool("use_f", user_preferences_.use_fahrenheit);
   preferences_.putString(
@@ -53,18 +51,12 @@ void DeviceState::load_user() {
   user_preferences_.mqtt.discovery_prefix =
       preferences_.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
 
-  _load_to_static_string(user_preferences_.btn_labels[0], "btn1_txt",
-                         BTN_1_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[1], "btn2_txt",
-                         BTN_2_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[2], "btn3_txt",
-                         BTN_3_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[3], "btn4_txt",
-                         BTN_4_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[4], "btn5_txt",
-                         BTN_5_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[5], "btn6_txt",
-                         BTN_6_LABEL_DFLT);
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    _load_to_static_string(
+        user_preferences_.btn_labels[i],
+        StaticString<8>("btn%d_txt", i + 1).c_str(),
+        StaticString<8>("%s%d", BNT_LABEL_DFLT_PREFIX, i + 1).c_str());
+  }
 
   user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);

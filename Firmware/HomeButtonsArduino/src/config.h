@@ -22,12 +22,7 @@ static constexpr char DEVICE_NAME_DFLT[] = "Home Buttons";
 static constexpr uint16_t MQTT_PORT_DFLT = 1883;
 static constexpr char BASE_TOPIC_DFLT[] = "homebuttons";
 static constexpr char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
-static constexpr char BTN_1_LABEL_DFLT[] = "B1";
-static constexpr char BTN_2_LABEL_DFLT[] = "B2";
-static constexpr char BTN_3_LABEL_DFLT[] = "B3";
-static constexpr char BTN_4_LABEL_DFLT[] = "B4";
-static constexpr char BTN_5_LABEL_DFLT[] = "B5";
-static constexpr char BTN_6_LABEL_DFLT[] = "B6";
+static constexpr char BNT_LABEL_DFLT_PREFIX[] = "B";
 
 // ------ sensors ------
 static constexpr uint16_t SEN_INTERVAL_DFLT = 10;  // min
