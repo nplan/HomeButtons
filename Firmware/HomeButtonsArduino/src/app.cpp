@@ -573,7 +573,7 @@ void App::_download_mdi_icons() {
   info("SPIFFS free space: %d", free);
   if (free < MDI_FREE_SPACE_THRESHOLD) {
     info("making space...");
-    if (!mdi_.make_space(MDI_FREE_SPACE_THRESHOLD)) {
+    if (!mdi_.make_space(2 * MDI_FREE_SPACE_THRESHOLD)) {
       error("failed to make space");
       mdi_.end();
       return;
