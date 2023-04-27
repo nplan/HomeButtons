@@ -130,6 +130,15 @@ class ButtonHandler : public Logger {
     }
   }
 
+  boolean is_button(uint16_t pin) {
+    for (auto& button : buttons_) {
+      if (button.get_pin() == pin) {
+        return true;
+      }
+    }
+    return false;
+  }
+
  private:
   std::array<Button, N_BTNS> buttons_;
   Button* active_button_ = nullptr;

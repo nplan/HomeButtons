@@ -65,9 +65,7 @@ std::pair<BootCause, int16_t> App::_determine_boot_cause() {
       uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
       wakeup_pin = (log(GPIO_reason)) / log(2);
       info("wakeup cause: PIN %d", wakeup_pin);
-      if (wakeup_pin == hw_.BTN1_PIN || wakeup_pin == hw_.BTN2_PIN ||
-          wakeup_pin == hw_.BTN3_PIN || wakeup_pin == hw_.BTN4_PIN ||
-          wakeup_pin == hw_.BTN5_PIN || wakeup_pin == hw_.BTN6_PIN) {
+      if (button_handler_.is_button(wakeup_pin)) {
         boot_cause = BootCause::BUTTON;
       } else {
         boot_cause = BootCause::RESET;
