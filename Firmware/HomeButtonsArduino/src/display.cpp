@@ -951,6 +951,10 @@ void Display::draw_mdi(const char *name, uint16_t size, int16_t x, int16_t y) {
     draw_placeholder = true;
   }
   if (draw_placeholder) {
-    disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
+    if (size == 64) {
+      disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
+    } else if (size == 48) {
+      disp->drawXBitmap(x, y, file_question_outline_48x48, 48, 48, text_color);
+    }
   }
 }
