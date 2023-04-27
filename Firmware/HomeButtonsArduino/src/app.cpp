@@ -563,7 +563,6 @@ void App::_download_mdi_icons() {
   } else {
     warning("icon server NOT reachable");
     mdi_.end();
-    delay(100);
     display_.disp_error("Icon\nserver\nNOT\nreachable");
     device_state_.flags().display_redraw = true;
     return;
@@ -781,7 +780,6 @@ void AppSMStates::NetConnectingState::loop() {
     sm().warning("network connect timeout.");
     if (sm().boot_cause_ == BootCause::BUTTON) {
       sm().display_.disp_error("Network\nconnection\nnot\nsuccessful", 3000);
-      delay(100);
     } else if (sm().boot_cause_ == BootCause::TIMER) {
       sm().device_state_.persisted().failed_connections++;
       if (sm().device_state_.persisted().failed_connections >=
@@ -789,7 +787,6 @@ void AppSMStates::NetConnectingState::loop() {
         sm().device_state_.persisted().failed_connections = 0;
         sm().device_state_.persisted().check_connection = true;
         sm().display_.disp_error("Check\nconnection!");
-        delay(100);
       }
     }
     return transition_to<CmdShutdownState>();
@@ -868,7 +865,6 @@ void AppSMStates::CmdShutdownState::entry() {
   if (sm().device_state_.flags().awake_mode) {
     sm().device_state_.persisted().info_screen_showing = false;
     sm().display_.disp_main();
-    delay(100);
   }
   sm().button_handler_.end();
   sm().leds_.end();
@@ -882,7 +878,6 @@ void AppSMStates::NetDisconnectingState::loop() {
     if (sm().device_state_.flags().display_redraw) {
       sm().device_state_.flags().display_redraw = false;
       sm().display_.disp_main();
-      delay(100);
     }
     sm().display_.end();
     return transition_to<ShuttingDownState>();

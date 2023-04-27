@@ -77,7 +77,7 @@ void Display::end() {
 void Display::update() {
   if (state == State::IDLE) return;
 
-  if (state == State::CMD_END) {
+  if (state == State::CMD_END && !new_ui_cmd) {
     state = State::ENDING;
     if (current_ui_state.disappearing) {
       draw_ui_state = pre_disappear_ui_state;
