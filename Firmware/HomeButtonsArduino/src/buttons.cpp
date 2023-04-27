@@ -6,12 +6,13 @@ void Button::begin(uint8_t pin, uint16_t id, bool active_high) {
   if (begun) return;
   if (!(LONG_1_TIME < LONG_3_TIME && LONG_2_TIME < LONG_3_TIME &&
         LONG_3_TIME < LONG_4_TIME)) {
+    debug("invalid press times");
     return;
   }
   this->pin = pin;
   this->id = id;
   this->active_high = active_high;
-  attachInterrupt(pin, std::bind(&Button::isr, this), CHANGE);
+  attachInterrupt(pin, std::bind(&Button::_isr, this), CHANGE);
   begun = true;
   debug("id %d begun", id);
 }
@@ -25,7 +26,7 @@ void Button::init_press() {
 void Button::end() {
   if (!begun) return;
   detachInterrupt(pin);
-  reset();
+  _reset();
   begun = false;
   debug("id %d ended", id);
 }
@@ -48,7 +49,7 @@ void Button::update() {
       break;
     case 1:  // debounce
       if (since_press_start >= DEBOUNCE_TIMEOUT) {
-        if (read_pin()) {
+        if (_read_pin()) {
           action = SINGLE;
           state_machine_state = 2;
         } else {
@@ -57,7 +58,7 @@ void Button::update() {
       }
       break;
     case 2:  // pin is high
-      if (falling_flag || !read_pin()) {
+      if (falling_flag || !_read_pin()) {
         falling_flag = false;
         switch (action) {
           case SINGLE:
@@ -107,7 +108,7 @@ void Button::update() {
       break;
     case 5:  // debounce next press
       if (since_press_start >= DEBOUNCE_TIMEOUT) {
-        if (read_pin()) {
+        if (_read_pin()) {
           switch (action) {
             case SINGLE:
               action = DOUBLE;
@@ -131,7 +132,7 @@ void Button::update() {
       }
       break;
     case 6:  // wait for release
-      if (!read_pin()) {
+      if (!_read_pin()) {
         release_start_time = millis();
         state_machine_state = 7;
       }
@@ -151,8 +152,6 @@ void Button::update() {
 Button::ButtonAction Button::get_action() const { return action; }
 
 bool Button::is_press_finished() const { return press_finished; }
-
-void Button::clear() { reset(); }
 
 uint8_t Button::get_pin() const { return pin; }
 
@@ -204,15 +203,15 @@ uint8_t Button::get_action_multi_count(ButtonAction action) {
   return count;
 }
 
-void Button::isr() {
-  if (read_pin()) {
+void Button::_isr() {
+  if (_read_pin()) {
     rising_flag = true;
   } else {
     falling_flag = true;
   }
 }
 
-bool Button::read_pin() const {
+bool Button::_read_pin() const {
   if (active_high) {
     return digitalRead(pin);
   } else {
@@ -220,7 +219,7 @@ bool Button::read_pin() const {
   }
 }
 
-void Button::reset() {
+void Button::_reset() {
   rising_flag = false;
   falling_flag = false;
   press_finished = false;

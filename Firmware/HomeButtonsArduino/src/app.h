@@ -120,7 +120,7 @@ class App : public AppStateMachine, public Logger {
  private:
   void _start_esp_sleep();
   void _go_to_sleep();
-  std::pair<BootCause, Button*> _determine_boot_cause();
+  std::pair<BootCause, int16_t> _determine_boot_cause();
   void _log_stack_status() const;
 
   void _begin_buttons();
@@ -154,17 +154,14 @@ class App : public AppStateMachine, public Logger {
   TaskHandle_t leds_task_h_ = nullptr;
   TaskHandle_t main_task_h_ = nullptr;
 
-  std::array<Button, NUM_BUTTONS> buttons_;
   LEDs leds_;
   Network network_;
   Display display_;
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
   MDIHelper mdi_;
-
-  Button* active_button_;
-  Button::ButtonAction btn_action_ = Button::IDLE;
-  Button::ButtonAction prev_action_ = Button::IDLE;
+  ButtonHandler<NUM_BUTTONS> button_handler_;
+  ButtonEvent btn_event_;
   BootCause boot_cause_;
 
   uint32_t last_sensor_publish_ = 0;

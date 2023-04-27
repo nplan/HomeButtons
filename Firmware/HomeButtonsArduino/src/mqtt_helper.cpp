@@ -294,18 +294,17 @@ void MQTTHelper::update_discovery_config() {
   }
 }
 
-TopicType MQTTHelper::get_button_topic(uint8_t btn_id,
-                                       Button::ButtonAction action) {
-  if (btn_id < 1 || btn_id > NUM_BUTTONS) return {};
+TopicType MQTTHelper::get_button_topic(ButtonEvent event) const {
+  if (event.id < 1 || event.id > NUM_BUTTONS) return {};
 
-  if (action == Button::SINGLE)
-    return t_common() + "button_" + btn_id;
-  else if (action == Button::DOUBLE)
-    return t_common() + "button_" + btn_id + "_double";
-  else if (action == Button::TRIPLE)
-    return t_common() + "button_" + btn_id + "_triple";
-  else if (action == Button::QUAD)
-    return t_common() + "button_" + btn_id + "_quad";
+  if (event.action == Button::SINGLE)
+    return t_common() + "button_" + event.id;
+  else if (event.action == Button::DOUBLE)
+    return t_common() + "button_" + event.id + "_double";
+  else if (event.action == Button::TRIPLE)
+    return t_common() + "button_" + event.id + "_triple";
+  else if (event.action == Button::QUAD)
+    return t_common() + "button_" + event.id + "_quad";
   else
     return {};
 }

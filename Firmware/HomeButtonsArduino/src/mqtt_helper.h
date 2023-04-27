@@ -20,7 +20,7 @@ class MQTTHelper {
   void update_discovery_config();
 
   // btn_id [1:NUM_BUTTONS]
-  TopicType get_button_topic(uint8_t btn_id, Button::ButtonAction action);
+  TopicType get_button_topic(ButtonEvent event) const;
 
   // btn_idx [0:NUM_BUTTONS-1]
   TopicType t_common() const;

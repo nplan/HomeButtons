@@ -57,10 +57,9 @@ void App::_go_to_sleep() {
   _start_esp_sleep();
 }
 
-std::pair<BootCause, Button*> App::_determine_boot_cause() {
+std::pair<BootCause, int16_t> App::_determine_boot_cause() {
   BootCause boot_cause = BootCause::RESET;
   int16_t wakeup_pin = 0;
-  Button* active_button = nullptr;
   switch (esp_sleep_get_wakeup_cause()) {
     case ESP_SLEEP_WAKEUP_EXT1: {
       uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
@@ -83,12 +82,7 @@ std::pair<BootCause, Button*> App::_determine_boot_cause() {
       boot_cause = BootCause::RESET;
       break;
   }
-  for (auto& b : buttons_) {
-    if (b.get_pin() == wakeup_pin) {
-      active_button = &b;
-    }
-  }
-  return std::make_pair(boot_cause, active_button);
+  return std::make_pair(boot_cause, wakeup_pin);
 }
 
 void App::_log_stack_status() const {
@@ -109,27 +103,10 @@ void App::_log_stack_status() const {
        esp_min_free_heap, rtos_free_heap);
 }
 
-void App::_begin_buttons() {
-  std::pair<uint8_t, uint16_t> button_map[NUM_BUTTONS] = {
-      {hw_.BTN1_PIN, 1}, {hw_.BTN6_PIN, 2}, {hw_.BTN2_PIN, 3},
-      {hw_.BTN5_PIN, 4}, {hw_.BTN3_PIN, 5}, {hw_.BTN4_PIN, 6}};
-  for (uint i = 0; i < NUM_BUTTONS; i++) {
-    buttons_[i].begin(button_map[i].first, button_map[i].second);
-  }
-}
-
-void App::_end_buttons() {
-  for (auto& b : buttons_) {
-    b.end();
-  }
-}
-
 void App::_button_task(void* param) {
   App* app = static_cast<App*>(param);
   while (true) {
-    for (auto& b : app->buttons_) {
-      b.update();
-    }
+    app->button_handler_.update();
     delay(20);
   }
 }
@@ -235,8 +212,12 @@ void App::_main_task() {
   // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
   display_.begin(hw_);
   hw_.begin();
-  _begin_buttons();
   leds_.begin();
+  std::tuple<uint8_t, uint16_t, boolean> button_map[NUM_BUTTONS] = {
+      {hw_.BTN1_PIN, 1, true}, {hw_.BTN6_PIN, 2, true},
+      {hw_.BTN2_PIN, 3, true}, {hw_.BTN5_PIN, 4, true},
+      {hw_.BTN3_PIN, 5, true}, {hw_.BTN4_PIN, 6, true}};
+  button_handler_.begin(button_map);
 
   // ------ after update handler ------
   if (device_state_.persisted().last_sw_ver != SW_VERSION) {
@@ -329,7 +310,8 @@ void App::_main_task() {
   device_state_.sensors().battery_pct = hw_.read_battery_percent();
 
   // ------ boot cause ------
-  std::tie(boot_cause_, active_button_) = _determine_boot_cause();
+  int16_t wakeup_pin;
+  std::tie(boot_cause_, wakeup_pin) = _determine_boot_cause();
 
   // ------ handle boot cause ------
   switch (boot_cause_) {
@@ -434,11 +416,7 @@ void App::_main_task() {
           display_.update();
           _go_to_sleep();
         } else {
-          if (active_button_ != nullptr) {
-            active_button_->init_press();
-          } else {
-            _go_to_sleep();
-          }
+          button_handler_.init_press(wakeup_pin);
         }
       } else {
         // proceed with awake mode
@@ -648,21 +626,10 @@ void AppSMStates::InitState::entry() {
   }
 }
 
-void AppSMStates::AwakeModeIdleState::entry() {
-  for (auto& b : sm().buttons_) {
-    b.clear();
-  }
-  sm().active_button_ = nullptr;
-}
+void AppSMStates::AwakeModeIdleState::entry() { sm().button_handler_.clear(); }
 
 void AppSMStates::AwakeModeIdleState::loop() {
-  for (auto& b : sm().buttons_) {
-    if (b.get_action() != Button::IDLE) {
-      sm().active_button_ = &b;
-      break;  // for
-    }
-  }
-  if (sm().active_button_ != nullptr) {
+  if (sm().button_handler_.is_press_in_in_progress()) {
     return transition_to<UserInputFinishState>();
   } else if (millis() - sm().last_sensor_publish_ >= AWAKE_SENSOR_INTERVAL) {
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
@@ -712,21 +679,13 @@ void AppSMStates::AwakeModeIdleState::loop() {
 
 void AppSMStates::UserInputFinishState::loop() {
   bool awake_mode = sm().device_state_.flags().awake_mode;
-  if (sm().active_button_ == nullptr) {
-    if (awake_mode) {
-      for (auto& b : sm().buttons_) {
-        b.clear();
-      }
-      return transition_to<AwakeModeIdleState>();
-    } else {
-      sm().error("active_button = nullptr");
-      return transition_to<CmdShutdownState>();
-    }
-  } else if (sm().active_button_->is_press_finished()) {
-    sm().btn_action_ = sm().active_button_->get_action();
-    sm().debug("BTN_%d pressed - state %s", sm().active_button_->get_id(),
-               sm().active_button_->get_action_name(sm().btn_action_));
-    switch (sm().btn_action_) {
+
+  ButtonEvent btn_event = sm().button_handler_.get_event();
+  if (sm().button_handler_.is_press_finished()) {
+    sm().debug("BTN_%d pressed - state %s", btn_event.id,
+               Button::get_action_name(btn_event.action));
+
+    switch (btn_event.action) {
       case Button::SINGLE:
       case Button::DOUBLE:
       case Button::TRIPLE:
@@ -736,21 +695,20 @@ void AppSMStates::UserInputFinishState::loop() {
             sm().display_.disp_main();
             sm().device_state_.persisted().info_screen_showing = false;
           }
-          sm().leds_.blink(sm().active_button_->get_id(),
-                           Button::get_action_multi_count(sm().btn_action_));
-          sm().network_.publish(
-              sm().mqtt_.get_button_topic(sm().active_button_->get_id(),
-                                          sm().btn_action_),
-              BTN_PRESS_PAYLOAD);
+          sm().leds_.blink(btn_event.id,
+                           Button::get_action_multi_count(btn_event.action));
+          sm().network_.publish(sm().mqtt_.get_button_topic(btn_event),
+                                BTN_PRESS_PAYLOAD);
           return transition_to<AwakeModeIdleState>();
         } else {
-          sm().leds_.blink(sm().active_button_->get_id(),
-                           Button::get_action_multi_count(sm().btn_action_),
+          sm().leds_.blink(btn_event.id,
+                           Button::get_action_multi_count(btn_event.action),
                            true);
           if (sm().device_state_.sensors().battery_low) {
             sm().display_.disp_message_large(
                 "Battery\nLOW\n\nPlease\nrecharge\nsoon!", 3000);
           }
+          sm().btn_event_ = btn_event;
           return transition_to<NetConnectingState>();
         }
         break;
@@ -789,9 +747,8 @@ void AppSMStates::UserInputFinishState::loop() {
         break;
     }
   } else {  // button press not finished
-    Button::ButtonAction new_action = sm().active_button_->get_action();
-    if (new_action != sm().prev_action_) {
-      switch (new_action) {
+    if (btn_event.action != sm().btn_event_.action) {
+      switch (btn_event.action) {
         case Button::LONG_1:
           // info screen
           sm().display_.disp_info();
@@ -802,18 +759,16 @@ void AppSMStates::UserInputFinishState::loop() {
         default:
           break;
       }
-      sm().prev_action_ = new_action;
+      sm().btn_event_ = btn_event;
     }
   }
 }
 
 void AppSMStates::NetConnectingState::loop() {
   if (sm().network_.get_state() == Network::State::M_CONNECTED) {
-    if (sm().active_button_ != nullptr && sm().btn_action_ != Button::IDLE) {
-      sm().network_.publish(
-          sm().mqtt_.get_button_topic(sm().active_button_->get_id(),
-                                      sm().btn_action_),
-          BTN_PRESS_PAYLOAD);
+    if (sm().btn_event_.action != Button::IDLE) {
+      sm().network_.publish(sm().mqtt_.get_button_topic(sm().btn_event_),
+                            BTN_PRESS_PAYLOAD);
     }
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
                            sm().device_state_.sensors().humidity,
@@ -849,25 +804,16 @@ void AppSMStates::SettingsMenuState::entry() {
   while (sm().hw_.any_button_pressed()) {
     delay(10);
   }
-  for (auto& b : sm().buttons_) {
-    b.clear();
-  }
-  sm().active_button_ = nullptr;
+  sm().button_handler_.clear();
 }
 
 void AppSMStates::SettingsMenuState::loop() {
   bool awake_mode = sm().device_state_.flags().awake_mode;
-  for (auto& b : sm().buttons_) {
-    if (b.get_action() != Button::IDLE) {
-      sm().active_button_ = &b;
-      sm().btn_action_ = sm().active_button_->get_action();
-      break;  // for
-    }
-  }
-  if (sm().active_button_ != nullptr) {
-    if (sm().active_button_->is_press_finished()) {
-      if (sm().btn_action_ == Button::SINGLE) {
-        switch (sm().active_button_->get_id()) {
+  ButtonEvent btn_event = sm().button_handler_.get_event();
+  if (sm().button_handler_.is_press_in_in_progress()) {
+    if (sm().button_handler_.is_press_finished()) {
+      if (btn_event.action == Button::SINGLE) {
+        switch (btn_event.id) {
           case 1:
             // setup
             sm().device_state_.persisted().restart_to_setup = true;
@@ -899,19 +845,15 @@ void AppSMStates::SettingsMenuState::loop() {
             break;
         }
       }
-      for (auto& b : sm().buttons_) {
-        b.clear();
-      }
-      sm().active_button_ = nullptr;
-    } else if (sm().active_button_->get_action() == Button::LONG_3 &&
-               sm().active_button_->get_id() == 3) {
+      sm().button_handler_.clear();
+    } else if (btn_event.action == Button::LONG_3 && btn_event.id == 3) {
       // factory reset
       return transition_to<FactoryResetState>();
     }
   }
   if (!awake_mode &&
       millis() - sm().settings_menu_start_time_ > SETTINGS_MENU_TIMEOUT &&
-      (sm().active_button_ == nullptr || sm().btn_action_ == Button::IDLE)) {
+      !sm().button_handler_.is_press_in_in_progress()) {
     sm().debug("settings menu timeout");
     sm().display_.disp_main();
     return transition_to<CmdShutdownState>();
@@ -928,7 +870,7 @@ void AppSMStates::CmdShutdownState::entry() {
     sm().display_.disp_main();
     delay(100);
   }
-  sm()._end_buttons();
+  sm().button_handler_.end();
   sm().leds_.end();
   sm().network_.disconnect();
   return transition_to<NetDisconnectingState>();
@@ -965,7 +907,7 @@ void AppSMStates::FactoryResetState::entry() {
   sm().display_.disp_message("Factory\nRESET...");
   sm().network_.disconnect(true);  // erase login data
   sm().display_.end();
-  sm()._end_buttons();
+  sm().button_handler_.end();
 }
 
 void AppSMStates::FactoryResetState::loop() {
