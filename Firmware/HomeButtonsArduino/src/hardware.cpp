@@ -297,7 +297,7 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
 
 bool HardwareDefinition::is_charger_in_standby() {
 #ifndef HOME_BUTTONS_MINI
-  return !digitalRead(HW.CHARGER_STDBY);
+  return !digitalRead(CHARGER_STDBY);
 #else
   return false;
 #endif
@@ -305,11 +305,11 @@ bool HardwareDefinition::is_charger_in_standby() {
 
 bool HardwareDefinition::is_dc_connected() {
 #ifndef HOME_BUTTONS_MINI
-  if (HW.version >= semver::version{2, 2, 0}) {
-    return digitalRead(HW.DC_IN_DETECT);
+  if (version >= semver::version{2, 2, 0}) {
+    return digitalRead(DC_IN_DETECT);
   } else {
     // hardware hack for powering v2.1 with USB-C
-    return HardwareDefinition::read_battery_voltage() >= HW.DC_DETECT_VOLT;
+    return HardwareDefinition::read_battery_voltage() >= DC_DETECT_VOLT;
   }
 #else
   return false;

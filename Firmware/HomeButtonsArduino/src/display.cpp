@@ -9,8 +9,13 @@
 #include "config.h"
 #include "hardware.h"
 
+#ifndef HOME_BUTTONS_MINI
 static constexpr uint16_t WIDTH = 128;
 static constexpr uint16_t HEIGHT = 296;
+#else
+static constexpr int WIDTH = 200;
+constexpr int HEIGHT = 200;
+#endif
 
 uint16_t read16(File &f) {
   // BMP data is stored little-endian, same as Arduino.
@@ -31,7 +36,13 @@ uint32_t read32(File &f) {
 }
 
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
+
+#ifndef HOME_BUTTONS_MINI
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
+#else
+#define GxEPD2_DRIVER_CLASS GxEPD2_154_D67
+#endif
+
 #define MAX_DISPLAY_BUFFER_SIZE 65536ul  // e.g.
 #define MAX_HEIGHT(EPD)                                      \
   (EPD::HEIGHT <= MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8) \
@@ -233,6 +244,7 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
+#ifndef HOME_BUTTONS_MINI
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
   disp->setRotation(0);
@@ -507,7 +519,7 @@ void Display::draw_welcome() {
   u8g2.setCursor(WIDTH / 2 - w / 2, 40);
   u8g2.print(text);
 
-  disp->drawBitmap(54, 52, hb_logo_20x21px, 20, 21, GxEPD_BLACK);
+  disp->drawXBitmap(52, 52, hb_logo_24x24, 24, 24, GxEPD_BLACK);
 
   text = "------------------------";
   u8g2.setFont(u8g2_font_helvB12_tr);
@@ -747,6 +759,260 @@ void Display::draw_test(const char *text, const char *mdi_name,
 
   disp->display();
 }
+#else
+void Display::draw_message(const UIState::MessageType &message, bool error,
+                           bool large) {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  if (!error) {
+    if (!large) {
+      u8g2.setFont(u8g2_font_courR18_tf);
+      u8g2.setCursor(0, 20);
+    } else {
+      u8g2.setFont(u8g2_font_helvB24_tr);
+      u8g2.setCursor(0, 30);
+    }
+    u8g2.print(message.c_str());
+  } else {
+    u8g2.setFont(u8g2_font_helvB18_tr);
+    const char *text = "ERROR";
+    uint16_t w = u8g2.getUTF8Width(text);
+    u8g2.setCursor(WIDTH / 2 - w / 2, 30);
+    u8g2.print(text);
+    u8g2.setFont(u8g2_font_courR18_tf);
+    u8g2.setCursor(0, 70);
+    u8g2.print(message.c_str());
+  }
+  disp->display();
+}
+
+void Display::draw_main() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+
+  mdi_.begin();
+
+  // Loop through buttons
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+    uint16_t size = 100;
+    uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
+    uint16_t y = i < 2 ? 0 : HEIGHT - size;
+    if (label.substring(0, 4) == "mdi:") {
+      MDIName icon = label.substring(
+          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
+      draw_mdi(icon.c_str(), size, x, y);
+    } else {
+      draw_mdi("x", size, x, y);
+    }
+  }
+  // disp->drawRect(WIDTH / 2 - 1, 0, 2, HEIGHT, GxEPD_BLACK);
+  // disp->drawRect(0, HEIGHT / 2 - 1, WIDTH, 2, GxEPD_BLACK);
+  mdi_.end();
+  disp->display();
+}
+
+void Display::draw_info() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  UIState::MessageType text;
+  u8g2.setFont(u8g2_font_helvB24_tr);
+
+  disp->drawXBitmap(5, 4, thermometer_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
+                              device_state_.get_temp_unit().c_str());
+  u8g2.setCursor(85, 50);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(5, 68, water_percent_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
+  u8g2.setCursor(85, 116);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(5, 132, battery_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
+  u8g2.setCursor(85, 180);
+  u8g2.print(text.c_str());
+
+  disp->display();
+}
+
+void Display::draw_welcome() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+  u8g2.setBackgroundColor(bg_color);
+  u8g2.setForegroundColor(text_color);
+  disp->fillScreen(bg_color);
+
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, hb_logo_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.factory().serial_number.c_str();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+  disp->display();
+}
+
+void Display::draw_settings() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(0, 0, account_cog_100x100, 100, 100, text_color);
+  disp->drawXBitmap(100, 0, wifi_cog_100x100, 100, 100, text_color);
+  disp->drawXBitmap(0, 100, restore_100x100, 100, 100, text_color);
+  disp->drawXBitmap(100, 100, close_100x100, 100, 100, text_color);
+
+  // disp->drawRect(WIDTH / 2 - 1, 0, 2, HEIGHT, GxEPD_BLACK);
+  // disp->drawRect(0, HEIGHT / 2 - 1, WIDTH, 2, GxEPD_BLACK);
+  disp->display();
+}
+
+void Display::draw_ap_config() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+  u8g2.setBackgroundColor(bg_color);
+  u8g2.setForegroundColor(text_color);
+  disp->fillScreen(bg_color);
+
+  UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") +
+                                  device_state_.get_ap_ssid().c_str() +
+                                  ";P:" + device_state_.get_ap_password() +
+                                  ";;";
+
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, wifi_cog_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.get_ap_ssid().c_str();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+  disp->display();
+}
+
+void Display::draw_web_config() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+  u8g2.setBackgroundColor(bg_color);
+  u8g2.setForegroundColor(text_color);
+  disp->fillScreen(bg_color);
+
+  UIState::MessageType contents =
+      UIState::MessageType("http://") + device_state_.ip();
+
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, account_cog_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.ip();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+  disp->display();
+}
+
+void Display::draw_test(const char *text, const char *mdi_name,
+                        uint16_t mdi_size) {
+  uint16_t fg, bg;
+  fg = GxEPD_BLACK;
+  bg = GxEPD_WHITE;
+
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(fg);
+  u8g2.setBackgroundColor(bg);
+
+  disp->fillScreen(bg);
+
+  mdi_.begin();
+  draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 20);
+  mdi_.end();
+
+  u8g2.setFont(u8g2_font_helvB24_te);
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 175);
+  u8g2.print(text);
+
+  disp->display();
+}
+#endif
 
 void Display::draw_white() {
   disp->setFullWindow();
@@ -939,6 +1205,9 @@ void Display::draw_mdi(const char *name, uint16_t size, int16_t x, int16_t y) {
       disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
     } else if (size == 48) {
       disp->drawXBitmap(x, y, file_question_outline_48x48, 48, 48, text_color);
+    } else if (size == 100) {
+      disp->drawXBitmap(x, y, file_question_outline_100x100, 100, 100,
+                        text_color);
     }
   }
 }

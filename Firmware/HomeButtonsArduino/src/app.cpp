@@ -222,10 +222,18 @@ void App::_main_task() {
   display_.begin(hw_);
   hw_.begin();
   leds_.begin();
+#ifndef HOME_BUTTONS_MINI
   std::tuple<uint8_t, uint16_t, boolean> button_map[NUM_BUTTONS] = {
       {hw_.BTN1_PIN, 1, true}, {hw_.BTN6_PIN, 2, true},
       {hw_.BTN2_PIN, 3, true}, {hw_.BTN5_PIN, 4, true},
       {hw_.BTN3_PIN, 5, true}, {hw_.BTN4_PIN, 6, true}};
+#else
+  std::tuple<uint8_t, uint16_t, boolean> button_map[NUM_BUTTONS] = {
+      {hw_.BTN1_PIN, 1, true},
+      {hw_.BTN2_PIN, 2, true},
+      {hw_.BTN3_PIN, 3, true},
+      {hw_.BTN4_PIN, 4, true}};
+#endif
   button_handler_.begin(button_map);
 
   // ------ after update handler ------
@@ -246,7 +254,8 @@ void App::_main_task() {
     }
   }
 
-  // ------ determine power mode ------
+// ------ determine power mode ------
+#ifndef HOME_BUTTONS_MINI
   device_state_.sensors().battery_present = hw_.is_battery_present();
   device_state_.sensors().dc_connected = hw_.is_dc_connected();
   info("batt present: %d, DC connected: %d",
@@ -311,6 +320,9 @@ void App::_main_task() {
   info("usr awake mode: %d, awake mode: %d",
        device_state_.persisted().user_awake_mode,
        device_state_.flags().awake_mode);
+#else
+  device_state_.flags().awake_mode = false;
+#endif
 
   // ------ read sensors ------
   hw_.read_temp_hmd(device_state_.sensors().temperature,
@@ -622,8 +634,12 @@ void AppSMStates::InitState::entry() {
   sm()._start_display_task();
   sm()._start_network_task();
 
+#ifndef HOME_BUTTONS_MINI
   sm().mdi_.add_size(64);
   sm().mdi_.add_size(48);
+#else
+  sm().mdi_.add_size(100);
+#endif
 
   if (!sm().device_state_.flags().awake_mode) {
     esp_task_wdt_init(WDT_TIMEOUT_SLEEP, true);

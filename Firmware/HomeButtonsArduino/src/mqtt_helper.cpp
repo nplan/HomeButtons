@@ -209,6 +209,7 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(button_label_config_topics, buffer, true);
   }
 
+#ifndef HOME_BUTTONS_MINI
   {
     TopicType awake_mode_config_topic =
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
@@ -227,6 +228,7 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(awake_mode_conf, buffer, sizeof(buffer));
     _network.publish(awake_mode_config_topic, buffer, true);
   }
+#endif
 }
 
 void MQTTHelper::update_discovery_config() {

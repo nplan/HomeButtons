@@ -55,7 +55,12 @@ void DeviceState::load_user() {
     _load_to_static_string(
         user_preferences_.btn_labels[i],
         StaticString<8>("btn%d_txt", i + 1).c_str(),
-        StaticString<8>("%s%d", BNT_LABEL_DFLT_PREFIX, i + 1).c_str());
+#ifndef HOME_BUTTONS_MINI
+        StaticString<8>("%s%d", BNT_LABEL_DFLT_PREFIX, i + 1).c_str(),
+#else
+        StaticString<16>("mdi:numeric-%d", i + 1).c_str()
+#endif
+    );
   }
 
   user_preferences_.sensor_interval =
