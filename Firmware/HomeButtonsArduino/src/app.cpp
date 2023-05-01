@@ -339,7 +339,17 @@ void App::_main_task() {
         device_state_.clear_persisted_flags();
         info("staring setup...");
         start_setup(device_state_, display_, hw_);  // resets ESP when done
+      } else if (device_state_.persisted().connect_on_restart) {
+        device_state_.clear_persisted_flags();
+        device_state_.persisted().download_mdi_icons = true;
+        device_state_.persisted().send_discovery_config = true;
+        device_state_.save_all();
+        display_.disp_message("Updating\nconfiguration\n...");
+        display_.update();
+        debug("connecting on restart...");
+        break;
       }
+
       device_state_.clear_persisted_flags();
       if (!device_state_.persisted().wifi_done ||
           !device_state_.persisted().setup_done) {
@@ -607,7 +617,8 @@ void AppSMStates::InitState::entry() {
   if (!sm().device_state_.flags().awake_mode) {
     esp_task_wdt_init(WDT_TIMEOUT_SLEEP, true);
     esp_task_wdt_add(NULL);
-    if (sm().boot_cause_ == BootCause::TIMER) {
+    if (sm().boot_cause_ == BootCause::TIMER ||
+        sm().boot_cause_ == BootCause::RESET) {
       return transition_to<NetConnectingState>();
     } else {  // button
       return transition_to<UserInputFinishState>();
@@ -859,6 +870,9 @@ void AppSMStates::CmdShutdownState::entry() {
   if (sm().device_state_.persisted().download_mdi_icons) {
     sm()._download_mdi_icons();
     sm().device_state_.persisted().download_mdi_icons = false;
+  }
+  if (sm().boot_cause_ == BootCause::RESET) {
+    sm().display_.disp_main();
   }
   if (sm().device_state_.flags().awake_mode) {
     sm().device_state_.persisted().info_screen_showing = false;

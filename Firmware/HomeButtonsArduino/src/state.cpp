@@ -94,6 +94,7 @@ void DeviceState::save_persisted() {
   preferences_.putBool("send_adisc", persisted_.send_discovery_config);
   preferences_.putBool("silent_rst", persisted_.silent_restart);
   preferences_.putBool("dl_mdi", persisted_.download_mdi_icons);
+  preferences_.putBool("con_on_r", persisted_.connect_on_restart);
   preferences_.end();
 }
 
@@ -116,6 +117,7 @@ void DeviceState::load_persisted() {
   persisted_.send_discovery_config = preferences_.getBool("send_adisc", false);
   persisted_.silent_restart = preferences_.getBool("silent_rst", false);
   persisted_.download_mdi_icons = preferences_.getBool("dl_mdi", false);
+  persisted_.connect_on_restart = preferences_.getBool("con_on_r", false);
   preferences_.end();
 }
 
@@ -135,6 +137,7 @@ void DeviceState::clear_persisted_flags() {
   persisted_.restart_to_setup = false;
   persisted_.silent_restart = false;
   persisted_.download_mdi_icons = false;
+  persisted_.connect_on_restart = false;
   save_all();
 }
 

@@ -292,6 +292,7 @@ void start_setup(DeviceState& device_state, Display& display,
   WiFi.disconnect(true);
   device_state.persisted().setup_done = true;
   device_state.persisted().silent_restart = true;
+  device_state.persisted().connect_on_restart = true;
   device_state.save_all();
 
   setupLogger.info("setup successful");
