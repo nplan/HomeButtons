@@ -193,16 +193,22 @@ void App::_main_task() {
 
   // ------ init hardware ------
   if (!hw_.init()) {
-    info("first boot, starting factory mode...");
-    factory::factory_mode(hw_, display_);
-    hw_.init();
-    device_state_.load_all(hw_);
-    display_.begin(hw_);
-    display_.disp_welcome();
-    display_.update();
-    display_.end();
-    info("factory settings complete. Going to sleep.");
+    error("HW init failed! Going to sleep.");
     _start_esp_sleep();
+  }
+
+  // ------ factory test ------
+  FactoryTest factory_test;
+  if (factory_test.is_test_required()) {
+    if (factory_test.run_test(hw_, display_)) {
+      device_state_.load_all(hw_);
+      display_.begin(hw_);
+      display_.disp_welcome();
+      display_.update();
+      display_.end();
+      info("factory test complete. Going to sleep.");
+      _start_esp_sleep();
+    }
   }
 
   device_state_.load_all(hw_);

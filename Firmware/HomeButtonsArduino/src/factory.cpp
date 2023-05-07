@@ -1,356 +1,253 @@
 #include "factory.h"
 
+#include "config.h"
+#include "static_string.h"
+
+#include <Preferences.h>
+#include <ArduinoJson.h>
+
 #include <PubSubClient.h>
-#include <USB.h>
-#include <USBCDC.h>
 #include <WiFi.h>
 
 #include "display.h"
 #include "hardware.h"
-#include "logger.h"
 
-namespace factory {
+static constexpr char FAC_TEST_BASE_TOPIC[] = "homebuttons-factory/devices";
+static constexpr uint16_t TEST_ICON_SIZE = 100;
+static constexpr uint32_t BUTTON_TEST_TIMEOUT = 60000L;
+static constexpr std::array<const char*, 8> TEST_SPEC_KEYS = {
+    "temp_ref",       "temp_tol",       "humd_ref", "humd_tol",
+    "batt_mvolt_ref", "batt_mvolt_tol", "mdi_name", "disp_text"};
 
-USBCDC usb_serial(0);
+void FactoryTest::_mqtt_callback(const char* topic, uint8_t* payload,
+                                 uint32_t length) {
+  StaticJsonDocument<512> doc;
+  DeserializationError json_error = deserializeJson(doc, payload);
 
-struct TestSettings {
-  float target_temp;
-  float target_humidity;
-};
+  if (json_error != DeserializationError::Ok) {
+    error("Failed to parse JSON: %s", json_error.c_str());
+    return;
+  }
 
-struct NetworkSettings {
-  String wifi_ssid = "";
-  String wifi_password = "";
-  String mqtt_server = "";
-  String mqtt_user = "";
-  String mqtt_password = "";
-  String mqtt_client_id = "";
-  int32_t mqtt_port = 0;
-};
+  if (!doc.containsKey("parameters")) {
+    error("Missing parameters");
+    return;
+  } else {
+    for (auto k : TEST_SPEC_KEYS) {
+      if (!doc["parameters"].containsKey(k)) {
+        error("Missing parameter %s", k);
+        return;
+      }
+    }
+  }
 
-void test_leds(HardwareDefinition& HW) {
-  HW.set_all_leds(255);
-  delay(250);
-  HW.set_all_leds(0);
-  delay(250);
+  JsonObject parameters = doc["parameters"].as<JsonObject>();
+  test_spec_.temp_ref = parameters["temp_ref"].as<float>();
+  test_spec_.temp_tol = parameters["temp_tol"].as<float>();
+  test_spec_.humd_ref = parameters["humd_ref"].as<float>();
+  test_spec_.humd_tol = parameters["humd_tol"].as<float>();
+  test_spec_.batt_mvolt_ref = parameters["batt_mvolt_ref"].as<unsigned int>();
+  test_spec_.batt_mvolt_tol = parameters["batt_mvolt_tol"].as<unsigned int>();
+  test_spec_.mdi_name = parameters["mdi_name"].as<const char*>();
+  test_spec_.disp_text = parameters["disp_text"].as<const char*>();
+
+  test_spec_.received = true;
+  info("Test spec received");
 }
 
-void test_buttons(HardwareDefinition& HW) {
-  HW.set_led(HW.LED1_CH, 255);
-  while (!digitalRead(HW.BTN1_PIN)) {
-    delay(10);
-  }
-  HW.set_led(HW.LED1_CH, 0);
+bool FactoryTest::is_test_required() {
+  Preferences prefs;
 
-  HW.set_led(HW.LED2_CH, 255);
-  while (!digitalRead(HW.BTN2_PIN)) {
-    delay(10);
-  }
-  HW.set_led(HW.LED2_CH, 0);
-
-  HW.set_led(HW.LED3_CH, 255);
-  while (!digitalRead(HW.BTN3_PIN)) {
-    delay(10);
-  }
-  HW.set_led(HW.LED3_CH, 0);
-
-  HW.set_led(HW.LED4_CH, 255);
-  while (!digitalRead(HW.BTN4_PIN)) {
-    delay(10);
-  }
-  HW.set_led(HW.LED4_CH, 0);
-
-  HW.set_led(HW.LED5_CH, 255);
-  while (!digitalRead(HW.BTN5_PIN)) {
-    delay(10);
-  }
-  HW.set_led(HW.LED5_CH, 0);
-
-  HW.set_led(HW.LED6_CH, 255);
-  while (!digitalRead(HW.BTN6_PIN)) {
-    delay(10);
-  }
-  HW.set_led(HW.LED6_CH, 0);
+  prefs.begin("fac_test", true);
+  bool do_test = prefs.getBool("do_test", false);
+  prefs.end();
+  return do_test;
 }
 
-void test_display(HardwareDefinition& HW, Display& display) {
-  display.disp_test(false);
+bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
+  Preferences prefs;
+  FacTestParams params = {};
+
+  prefs.begin("fac_test", true);
+  params.do_test = prefs.getBool("do_test", false);
+  params.wifi_ssid = prefs.getString("wifi_ssid", "");
+  params.wifi_password = prefs.getString("wifi_pass", "");
+  params.mqtt_server.fromString(prefs.getString("mqtt_srv", ""));
+  params.mqtt_port = prefs.getUInt("mqtt_port", 0);
+  params.mqtt_user = prefs.getString("mqtt_user", "");
+  params.mqtt_password = prefs.getString("mqtt_pass", "");
+  prefs.end();
+
+  info("Starting factory test...");
+  display.begin(HW);
+  HW.begin();
+  display.disp_message_large("FACTORY");
   display.update();
-  while (!HW.any_button_pressed()) {
-    delay(10);
-  }
-  display.disp_test(true);
-  display.update();
-  while (!HW.any_button_pressed()) {
-    delay(10);
-  }
-}
 
-void test_wifi(const Logger& logger, const NetworkSettings& settings) {
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
+  mqtt_client.setCallback(
+      std::bind(&FactoryTest::_mqtt_callback, this, std::placeholders::_1,
+                std::placeholders::_2, std::placeholders::_3));
+  mqtt_client.setBufferSize(1024);
 
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
 
-  logger.info("Connecting to WiFi...");
-  WiFi.begin(settings.wifi_ssid.c_str(), settings.wifi_password.c_str());
+  info("Connecting to WiFi...");
+  WiFi.begin(params.wifi_ssid.c_str(), params.wifi_password.c_str());
   while (true) {
     delay(100);
     if (WiFi.status() == WL_CONNECTED) {
       break;
     }
   }
-  logger.info("WiFi connected. IP: %s", WiFi.localIP().toString().c_str());
-  logger.info("Connecting to MQTT...");
-  mqtt_client.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
+  info("WiFi connected. IP: %s", WiFi.localIP().toString().c_str());
+  info("Connecting to MQTT...");
+  info("mqtt_server %s, port %d", params.mqtt_server.toString().c_str(),
+       params.mqtt_port);
+  mqtt_client.setServer(params.mqtt_server, params.mqtt_port);
   while (!mqtt_client.connected()) {
-    mqtt_client.connect(settings.mqtt_client_id.c_str(),
-                        settings.mqtt_user.c_str(),
-                        settings.mqtt_password.c_str());
+    mqtt_client.connect(HW.get_unique_id(), params.mqtt_user.c_str(),
+                        params.mqtt_password.c_str());
     delay(100);
   }
-  logger.info("MWTT connected");
-  mqtt_client.publish("homebuttons-factory/test", "OK");
-  logger.info("MQTT payload 'OK' sent to topic: homebuttons-factory/test");
-  // disconnect
-  unsigned long tm = millis();
-  while (millis() - tm < MQTT_DISCONNECT_TIMEOUT) {
+  info("MQTT connected");
+
+  StaticString<256> test_topic("%s/%s/test_start", FAC_TEST_BASE_TOPIC,
+                               HW.get_serial_number());
+  mqtt_client.subscribe(test_topic.c_str());
+
+  // send device discovery message
+  StaticJsonDocument<256> device_doc;
+  device_doc["serial"] = HW.get_serial_number();
+  device_doc["random_id"] = HW.get_random_id();
+  device_doc["model_id"] = HW.get_model_id();
+  device_doc["fw_version"] = SW_VERSION;
+  device_doc["hw_version"] = HW.get_hw_version();
+
+  char buffer[512];
+  serializeJson(device_doc, buffer, sizeof(buffer));
+
+  StaticString<256> topic("%s/%s", FAC_TEST_BASE_TOPIC, HW.get_serial_number());
+  mqtt_client.publish(topic.c_str(), buffer);
+
+  // wait for test start message
+  while (!test_spec_.received) {
     mqtt_client.loop();
     delay(10);
   }
-  // disconnect and wait until closed
-  mqtt_client.disconnect();
-  wifi_client.flush();
-  // wait until connection is closed completely
-  while (mqtt_client.state() != -1) {
-    mqtt_client.loop();
-    delay(10);
-  }
-  logger.info("MQTT disconnected");
-  WiFi.disconnect(true, true);
-  logger.info("WiFi disconnected");
-}
 
-bool test_sensors(HardwareDefinition& HW, const Logger& logger,
-                  const TestSettings& settings) {
-  if (settings.target_temp == 0. && settings.target_humidity == 0.) {
-    logger.error("target values not set");
-    return false;
+  // test display
+  info("Testing display");
+  bool display_passed = true;
+  MDIHelper mdi;
+  mdi.begin();
+
+  if (mdi.check_connection()) {
+    if (!mdi.download(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE)) {
+      error("MDI download failed");
+      display_passed = false;
+    }
+  } else {
+    error("MDI server connection failed");
+    display_passed = false;
+  }
+  mdi.end();
+
+  display.disp_test(test_spec_.disp_text.c_str(), test_spec_.mdi_name.c_str(),
+                    100);
+  display.update();
+
+  // test LEDs & buttons
+  info("Testing LEDs & buttons");
+  bool button_passed = true;
+  HW.set_all_leds(255);
+  bool pressed[NUM_BUTTONS] = {};
+  uint32_t start_time = millis();
+  while (true) {
+    if (millis() - start_time > BUTTON_TEST_TIMEOUT) {
+      error("button test timeout");
+      button_passed = false;
+      break;
+    }
+    for (int i = 0; i < NUM_BUTTONS; i++) {
+      if (HW.button_pressed(i + 1)) {
+        pressed[i] = true;
+        HW.set_led_num(i + 1, 0);
+      }
+    }
+    bool all_pressed = true;
+    for (int i = 0; i < NUM_BUTTONS; i++) {
+      all_pressed = pressed[i];
+      if (!all_pressed) {
+        break;
+      }
+    }
+    if (all_pressed) {
+      break;
+    }
   }
 
+  // test sensors
+  info("Testing sensors");
+  bool sensor_passed = true;
   float temp_val;
   float hmd_val;
   HW.read_temp_hmd(temp_val, hmd_val);
 
-  if (temp_val <= settings.target_temp - 5.0 ||
-      temp_val >= settings.target_temp + 5.0) {
-    logger.info("Temp test fail. Measured: %f deg C.", temp_val);
+  if (temp_val <= test_spec_.temp_ref - test_spec_.temp_tol ||
+      temp_val >= test_spec_.temp_ref + test_spec_.temp_tol) {
+    sensor_passed = false;
+    error("temp test fail. Measured: %f, expected: %f +/- %f", temp_val,
+          test_spec_.temp_ref, test_spec_.temp_tol);
+  }
+  if (hmd_val <= test_spec_.humd_ref - test_spec_.humd_tol ||
+      temp_val >= test_spec_.humd_ref + test_spec_.humd_tol) {
+    sensor_passed = false;
+    error("humidity test fail. Measured: %f, expected: %f +/- %f", hmd_val,
+          test_spec_.humd_ref, test_spec_.humd_tol);
+  }
+  uint16_t batt_v = HW.read_battery_voltage() * 1000.;
+  if (batt_v <= test_spec_.batt_mvolt_ref - test_spec_.batt_mvolt_tol ||
+      batt_v >= test_spec_.batt_mvolt_ref + test_spec_.batt_mvolt_tol) {
+    sensor_passed = false;
+    error("battery test fail. Measured: %d mV, expected: %d +/- %d mV", batt_v,
+          test_spec_.batt_mvolt_ref, test_spec_.batt_mvolt_tol);
+  }
+
+  bool passed = display_passed && button_passed && sensor_passed;
+
+  // send test results
+  StaticJsonDocument<1024> result_doc;
+
+  JsonObject device = result_doc.createNestedObject("device");
+  device["serial"] = HW.get_serial_number();
+  device["random_id"] = HW.get_random_id();
+  device["model_id"] = HW.get_model_id();
+  device["fw_version"] = SW_VERSION;
+  device["hw_version"] = HW.get_hw_version();
+  result_doc["passed"] = passed;
+
+  JsonObject parameters = result_doc.createNestedObject("parameters");
+  parameters["measured_temp"] = temp_val;
+  parameters["measured_humidity"] = hmd_val;
+  parameters["measured_battery"] = batt_v;
+
+  serializeJson(result_doc, buffer, sizeof(buffer));
+
+  StaticString<256> result_topic("%s/%s/test_result", FAC_TEST_BASE_TOPIC,
+                                 HW.get_serial_number());
+  mqtt_client.publish(result_topic.c_str(), buffer);
+
+  if (passed) {
+    info("factory test passed");
+    prefs.begin("fac_test", false);
+    prefs.clear();
+    prefs.end();
+    return true;
+  } else {
+    error("factory test failed");
     return false;
-  }
-  if (hmd_val <= settings.target_humidity - 10.0 ||
-      temp_val >= settings.target_humidity + 10.0) {
-    logger.info("Humidity test fail. Measured: %f %%.", hmd_val);
-    return false;
-  }
-  return true;
-}
-
-bool run_tests(HardwareDefinition& HW, const Logger& logger,
-               const TestSettings& settings, Display& display) {
-  if (HW.any_button_pressed()) {
-    logger.error("button pressed at start of test");
-    return false;
-  }
-  while (!HW.any_button_pressed()) {
-    test_leds(HW);
-  }
-  test_buttons(HW);
-  if (!test_sensors(HW, logger, settings)) {
-    return false;
-  }
-  test_display(HW, display);
-  return true;
-}
-
-void sendOK() { usb_serial.println("OK"); }
-
-void sendFAIL() { usb_serial.println("FAIL"); }
-
-void factory_mode(HardwareDefinition& HW, Display& display) {
-  NetworkSettings networkSettings = {};
-  TestSettings test_settings = {};
-  Logger logger("FACTORY");
-
-  USB.begin();
-  usb_serial.begin(115200);
-  delay(1000);
-
-  logger.info("factory mode active");
-
-  while (1) {
-    usb_serial.setTimeout(5000);
-    String msg = usb_serial.readStringUntil('\r');
-
-    if (msg.length() > 0) {
-      String cmd = msg.substring(0, 2);
-      String pld = msg.substring(3);
-      logger.info("received cmd: %s, pld: %s", cmd.c_str(), pld.c_str());
-
-      if (cmd == "ST") {
-        if (HW.factory_params_ok()) {
-          HW.init();
-          display.begin(HW);
-          HW.begin();
-          logger.info("starting hw test...");
-          if (run_tests(HW, logger, test_settings, display)) {
-            logger.info("test complete");
-            sendOK();
-          } else {
-            sendFAIL();
-          }
-        } else {
-          logger.warning("set factory params before running tests");
-        }
-      } else if (cmd == "SN") {
-        if (pld.length() == 8) {
-          HW.set_serial_number(pld.c_str());
-          logger.info("setting serial number to: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect serial number: %s", pld.c_str());
-          sendFAIL();
-        }
-      } else if (cmd == "RI") {
-        if (pld.length() == 6) {
-          HW.set_random_id(pld.c_str());
-          logger.info("setting random id to: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect random id: %s", pld.c_str());
-          sendFAIL();
-        }
-      } else if (cmd == "MI") {
-        if (pld.length() == 2) {
-          HW.set_model_id(pld.c_str());
-          logger.info("setting model id to: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect model id: %s", pld.c_str());
-          sendFAIL();
-        }
-      } else if (cmd == "HV") {
-        if (pld.length() == 3) {
-          HW.set_hw_version(pld.c_str());
-          logger.info("setting hw version to: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect hw version: %s", pld.c_str());
-          sendFAIL();
-        }
-      } else if (cmd == "WS") {
-        if (pld.length() > 0) {
-          networkSettings.wifi_ssid = pld;
-          logger.info("wifi ssid: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect wifi ssid");
-          sendFAIL();
-        }
-        sendOK();
-      } else if (cmd == "WP") {
-        if (pld.length() > 0) {
-          networkSettings.wifi_password = pld;
-          logger.info("wifi password: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect wifi password");
-          sendFAIL();
-        }
-      } else if (cmd == "MS") {
-        if (pld.length() > 0) {
-          networkSettings.mqtt_server = pld;
-          logger.info("mqtt server: %s", pld.c_str());
-          sendOK();
-        } else {
-          logger.warning("incorrect mqtt server");
-          sendFAIL();
-        }
-      } else if (cmd == "MU") {
-        networkSettings.mqtt_user = pld;
-        if (pld.length() > 0) {
-          logger.info("mqtt user: %s", pld.c_str());
-        } else {
-          logger.warning("no mqtt user");
-        }
-        sendOK();
-      } else if (cmd == "MP") {
-        networkSettings.mqtt_password = pld;
-        if (pld.length() > 0) {
-          logger.info("mqtt password: %s", pld.c_str());
-        } else {
-          logger.warning("no mqtt password");
-        }
-        sendOK();
-      } else if (cmd == "MT") {
-        if (pld.length() > 0) {
-          networkSettings.mqtt_port = pld.toInt();
-          logger.info("mqtt port: %d", networkSettings.mqtt_port);
-          sendOK();
-        } else {
-          logger.warning("incorrect mqtt port");
-          sendFAIL();
-        }
-      } else if (cmd == "TW") {
-        if (HW.get_serial_number()[0] > 0) {
-          networkSettings.mqtt_client_id =
-              String("HBTNS-") + HW.get_serial_number() + "-factory";
-          logger.info("starting wifi test...");
-          test_wifi(logger, networkSettings);
-          sendOK();
-        } else {
-          logger.warning("set serial number before wifi test");
-          sendFAIL();
-        }
-      } else if (cmd == "TT") {
-        if (pld.length() > 0) {
-          test_settings.target_temp = pld.toFloat();
-          logger.info("target temp set to: %f C", test_settings.target_temp);
-          sendOK();
-        } else {
-          logger.warning("incorrect target temp");
-          sendFAIL();
-        }
-      } else if (cmd == "TH") {
-        if (pld.length() > 0) {
-          test_settings.target_humidity = pld.toFloat();
-          logger.info("target humidity set to: %f C",
-                      test_settings.target_humidity);
-          sendOK();
-        } else {
-          logger.warning("incorrect target humidity");
-          sendFAIL();
-        }
-      } else if (cmd == "OK") {
-        if (HW.factory_params_ok()) {
-          logger.info("settings confirmed. saving to memory");
-          logger.info(
-              "settings: serial number: %s random id: %s device model id: %s "
-              "hw version: %s",
-              HW.get_serial_number(), HW.get_random_id(), HW.get_model_id(),
-              HW.get_hw_version());
-          sendOK();
-          HW.write_factory_params();
-          display.end();
-          display.update();
-          return;
-        } else {
-          logger.warning("settings missing or incorrect");
-          sendFAIL();
-        }
-      }
-    }
   }
 }
-
-} /* namespace factory */
