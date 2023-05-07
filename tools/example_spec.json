@@ -1,0 +1,14 @@
+{
+    "description": "test test spec",
+    "target_model_id": "A1",
+    "parameters": {
+        "temp_ref": 25,
+        "temp_tol": 10,
+        "humd_ref": 50,
+        "humd_tol": 10,
+        "batt_mvolt_ref": 1000,
+        "batt_mvolt_tol": 500,
+        "mdi_name": "beer",
+        "disp_text": "BLABLA"
+    }
+}
