@@ -8,7 +8,6 @@
 #include "bitmaps.h"
 #include "config.h"
 #include "hardware.h"
-#include "types.h"
 
 static constexpr uint16_t WIDTH = 128;
 static constexpr uint16_t HEIGHT = 296;
@@ -141,10 +140,8 @@ void Display::update() {
       draw_web_config();
       break;
     case DisplayPage::TEST:
-      draw_test();
-      break;
-    case DisplayPage::TEST_INV:
-      draw_test(true);
+      draw_test(draw_ui_state.message.c_str(), draw_ui_state.mdi_name.c_str(),
+                draw_ui_state.mdi_size);
       break;
   }
   current_ui_state = draw_ui_state;
@@ -215,13 +212,13 @@ void Display::disp_web_config() {
   set_cmd_state(new_cmd_state);
 }
 
-void Display::disp_test(bool invert) {
+void Display::disp_test(const char *text, const char *mdi_name,
+                        uint16_t mdi_size) {
   UIState new_cmd_state{};
-  if (!invert) {
-    new_cmd_state.page = DisplayPage::TEST;
-  } else {
-    new_cmd_state.page = DisplayPage::TEST_INV;
-  }
+  new_cmd_state.page = DisplayPage::TEST;
+  new_cmd_state.message = UIState::MessageType{text};
+  new_cmd_state.mdi_name = MDIName{mdi_name};
+  new_cmd_state.mdi_size = mdi_size;
   set_cmd_state(new_cmd_state);
 }
 
@@ -724,15 +721,11 @@ void Display::draw_web_config() {
   disp->display();
 }
 
-void Display::draw_test(bool invert) {
+void Display::draw_test(const char *text, const char *mdi_name,
+                        uint16_t mdi_size) {
   uint16_t fg, bg;
-  if (!invert) {
-    fg = GxEPD_BLACK;
-    bg = GxEPD_WHITE;
-  } else {
-    fg = GxEPD_WHITE;
-    bg = GxEPD_BLACK;
-  }
+  fg = GxEPD_BLACK;
+  bg = GxEPD_WHITE;
 
   disp->setRotation(0);
   disp->setFullWindow();
@@ -743,17 +736,12 @@ void Display::draw_test(bool invert) {
 
   disp->fillScreen(bg);
 
+  mdi_.begin();
+  draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 50);
+  mdi_.end();
+
   u8g2.setFont(u8g2_font_helvB24_te);
-
-  const char *text = "TEST";
   uint16_t w = u8g2.getUTF8Width(text);
-
-  u8g2.setCursor(WIDTH / 2 - w / 2, 90);
-  u8g2.print(text);
-
-  u8g2.setCursor(WIDTH / 2 - w / 2, 170);
-  u8g2.print(text);
-
   u8g2.setCursor(WIDTH / 2 - w / 2, 250);
   u8g2.print(text);
 
