@@ -78,6 +78,9 @@ struct HardwareDefinition : public Logger {
 
   void begin();
 
+  uint8_t map_button_num_hw_to_sw(uint8_t hw_num);
+
+  bool button_pressed(uint8_t num);
   bool any_button_pressed();
 
   void set_led(uint8_t ch, uint8_t brightness);

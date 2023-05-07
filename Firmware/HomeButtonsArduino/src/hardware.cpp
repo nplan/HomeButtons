@@ -95,6 +95,45 @@ void HardwareDefinition::begin() {
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
 }
 
+uint8_t HardwareDefinition::map_button_num_hw_to_sw(uint8_t hw_num) {
+  switch (hw_num) {
+    case 1:
+      return 1;
+    case 2:
+      return 6;
+    case 3:
+      return 2;
+    case 4:
+      return 5;
+    case 5:
+      return 3;
+    case 6:
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+bool HardwareDefinition::button_pressed(uint8_t num) {
+  num = map_button_num_hw_to_sw(num);
+  switch (num) {
+    case 1:
+      return digitalRead(BTN1_PIN);
+    case 2:
+      return digitalRead(BTN2_PIN);
+    case 3:
+      return digitalRead(BTN3_PIN);
+    case 4:
+      return digitalRead(BTN4_PIN);
+    case 5:
+      return digitalRead(BTN5_PIN);
+    case 6:
+      return digitalRead(BTN6_PIN);
+    default:
+      return false;
+  }
+}
+
 bool HardwareDefinition::any_button_pressed() {
   return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
          digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
@@ -106,25 +145,26 @@ void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
 }
 
 void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
+  num = map_button_num_hw_to_sw(num);
   uint8_t ch;
   switch (num) {
     case 1:
       ch = LED1_CH;
       break;
     case 2:
-      ch = LED6_CH;
-      break;
-    case 3:
       ch = LED2_CH;
       break;
-    case 4:
-      ch = LED5_CH;
-      break;
-    case 5:
+    case 3:
       ch = LED3_CH;
       break;
-    case 6:
+    case 4:
       ch = LED4_CH;
+      break;
+    case 5:
+      ch = LED5_CH;
+      break;
+    case 6:
+      ch = LED6_CH;
       break;
     default:
       return;
