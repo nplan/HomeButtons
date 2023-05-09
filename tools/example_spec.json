@@ -9,6 +9,6 @@
         "batt_mvolt_ref": 1000,
         "batt_mvolt_tol": 500,
         "mdi_name": "beer",
-        "disp_text": "BLABLA"
+        "disp_text": "TEST"
     }
 }
