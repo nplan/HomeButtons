@@ -40,6 +40,9 @@ bool HardwareDefinition::init() {
   if (strcmp(hw_ver, "0.1") == 0) {
     load_mini_hw_rev_0_1();
     info("configured for hw version: 0.1");
+  } else if (strcmp(hw_ver, "1.1") == 0) {
+    load_mini_hw_rev_1_1();
+    info("configured for hw version: 1.1");
   } else {
     error("HW rev %s not supported", hw_ver);
     return false;
@@ -643,6 +646,52 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
 }
 
 void HardwareDefinition::load_mini_hw_rev_0_1() {
+  version = semver::version{0, 1, 0};
+  BTN1_PIN = 21;
+  BTN2_PIN = 1;
+  BTN3_PIN = 14;
+  BTN4_PIN = 4;
+
+  LED1_PIN = 17;
+  LED2_PIN = 2;
+  LED3_PIN = 15;
+  LED4_PIN = 5;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 3;
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 100;
+
+  // ------ battery reading ------“
+  BATT_DIVIDER = 0.333333;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 1.8;
+  BATT_HYSTERESIS_VOLT = 1.9;
+  WARN_BATT_VOLT = 2.0;
+  BATT_FULL_VOLT = 3.2;
+  BATT_EMPTY_VOLT = 1.8;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x204012;
+}
+
+void HardwareDefinition::load_mini_hw_rev_1_1() {
   version = semver::version{0, 1, 0};
   BTN1_PIN = 21;
   BTN2_PIN = 1;

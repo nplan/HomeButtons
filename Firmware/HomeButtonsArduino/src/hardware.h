@@ -136,6 +136,7 @@ struct HardwareDefinition : public Logger {
   void load_hw_rev_2_3();
 
   void load_mini_hw_rev_0_1();
+  void load_mini_hw_rev_1_1();
 
  private:
   struct {
