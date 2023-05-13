@@ -2,7 +2,7 @@
 
 import os
 
-sdkconfig_files = ["sdkconfig.release", "sdkconfig.debug"]
+sdkconfig_files = ["sdkconfig.release", "sdkconfig.debug", "sdkconfig.mini_release", "sdkconfig.mini_debug"]
 
 def delete_sdkconfig_files():
     print("Deleting sdkconfig files...")
