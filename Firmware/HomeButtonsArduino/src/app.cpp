@@ -755,7 +755,7 @@ void AppSMStates::UserInputFinishState::loop() {
         if (awake_mode) {
           return transition_to<AwakeModeIdleState>();
         } else {
-          return transition_to<NetConnectingState>();
+          return transition_to<CmdShutdownState>();
         }
         break;
       case Button::LONG_2:
