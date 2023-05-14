@@ -78,7 +78,7 @@ struct HardwareDefinition : public Logger {
 
   void begin();
 
-  uint8_t map_button_num_hw_to_sw(uint8_t hw_num);
+  uint8_t map_button_num_sw_to_hw(uint8_t hw_num);
 
   bool button_pressed(uint8_t num);
   bool any_button_pressed();

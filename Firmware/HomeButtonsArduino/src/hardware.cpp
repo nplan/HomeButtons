@@ -114,8 +114,9 @@ void HardwareDefinition::begin() {
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
 }
 
-uint8_t HardwareDefinition::map_button_num_hw_to_sw(uint8_t hw_num) {
-  switch (hw_num) {
+uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
+#ifndef HOME_BUTTONS_MINI
+  switch (sw_num) {
     case 1:
       return 1;
     case 2:
@@ -131,10 +132,17 @@ uint8_t HardwareDefinition::map_button_num_hw_to_sw(uint8_t hw_num) {
     default:
       return 0;
   }
+#else
+  if (sw_num >= 1 && sw_num <= 4) {
+    return sw_num;
+  } else {
+    return 0;
+  }
+#endif
 }
 
 bool HardwareDefinition::button_pressed(uint8_t num) {
-  num = map_button_num_hw_to_sw(num);
+  num = map_button_num_sw_to_hw(num);
   switch (num) {
     case 1:
       return digitalRead(BTN1_PIN);
@@ -169,7 +177,7 @@ void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
 }
 
 void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
-  num = map_button_num_hw_to_sw(num);
+  num = map_button_num_sw_to_hw(num);
   uint8_t ch;
 
 #ifdef HOME_BUTTONS_MINI
