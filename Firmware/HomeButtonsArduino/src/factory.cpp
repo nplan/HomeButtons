@@ -81,6 +81,18 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
   info("Starting factory test...");
   display.begin(HW);
   HW.begin();
+
+  // format SPIFFS if needed
+  if (!SPIFFS.begin()) {
+    info("Formatting icon storage...");
+    display.disp_message("Formatting\nIcon\nStorage...", 0);
+    display.update();
+    SPIFFS.format();
+  } else {
+    SPIFFS.end();
+    debug("SPIFFS test mount OK");
+  }
+
   display.disp_message_large("FACTORY");
   display.update();
 
@@ -143,6 +155,8 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
   bool display_passed = true;
   MDIHelper mdi;
   mdi.begin();
+
+  mdi.remove(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE);
 
   if (mdi.check_connection()) {
     if (!mdi.download(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE)) {

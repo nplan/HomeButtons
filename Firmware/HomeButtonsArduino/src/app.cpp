@@ -208,6 +208,11 @@ void App::_main_task() {
       display_.end();
       info("factory test complete. Going to sleep.");
       _start_esp_sleep();
+    } else {
+      error("factory test failed! Going to sleep.");
+      display_.disp_error("Factory\nTest\nFailed");
+      display_.update();
+      _start_esp_sleep();
     }
   }
 
