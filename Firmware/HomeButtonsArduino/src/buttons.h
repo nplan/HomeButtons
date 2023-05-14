@@ -62,8 +62,8 @@ class Button : public Logger {
 };
 
 struct ButtonEvent {
-  uint16_t id;
-  Button::ButtonAction action;
+  uint16_t id = 0;
+  Button::ButtonAction action = Button::IDLE;
 };
 
 template <uint8_t N_BTNS>
