@@ -1,5 +1,29 @@
 #!/usr/bin/env python
 
+"""
+Factory test tool for Home Buttons.
+
+Used to run factory tests over MQTT.
+
+Requires a 'test spec' JSON file, which describes the test to be run.
+
+Optionally, a report output file (-o) can be specified.
+
+This tool runs in a loop and waits for devices to be discovered. When a device
+is discovered, it is checked against the test spec to see if it is the correct
+model. If so, the test is started on the device. When the test is complete, the
+result is written to the output file (if specified) and the device is removed
+from the list of devices.
+
+Example usage:
+python3 factory_test.py test_spec.json -o report.txt \
+    --mqtt_server 1.2.3.4 \
+    --mqtt_port 1883 \
+    --mqtt_user user \
+    --mqtt_password password
+
+"""
+
 from dataclasses import dataclass
 import json
 from time import sleep
