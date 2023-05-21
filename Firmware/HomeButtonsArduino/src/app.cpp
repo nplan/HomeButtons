@@ -282,7 +282,7 @@ void App::_main_task() {
           device_state_.persisted().low_batt_mode = false;
           device_state_.save_all();
           info("low batt mode disabled");
-          ESP.restart();  // to handle m_display update
+          ESP.restart();  // to handle display update
         } else {
           info("in low batt mode...");
           _go_to_sleep();
@@ -321,7 +321,39 @@ void App::_main_task() {
        device_state_.persisted().user_awake_mode,
        device_state_.flags().awake_mode);
 #else
+  float batt_voltage = hw_.read_battery_voltage();
+  info("batt volts: %f", batt_voltage);
+
+  if (device_state_.persisted().low_batt_mode) {
+    if (batt_voltage >= hw_.BATT_HYSTERESIS_VOLT) {
+      device_state_.persisted().low_batt_mode = false;
+      device_state_.save_all();
+      info("low batt mode disabled");
+      ESP.restart();  // to handle m_display update
+    } else {
+      info("in low batt mode...");
+      _go_to_sleep();
+    }
+  } else {  // low_batt_mode == false
+    if (batt_voltage < hw_.MIN_BATT_VOLT) {
+      // check again
+      delay(1000);
+      batt_voltage = hw_.read_battery_voltage();
+      if (batt_voltage < hw_.MIN_BATT_VOLT) {
+        device_state_.persisted().low_batt_mode = true;
+        warning("batt voltage too low, low bat mode enabled");
+        display_.disp_message_large(
+            "Turned\nOFF\n\nPlease\nreplace\nbatteries!");
+        display_.update();
+        _go_to_sleep();
+      }
+    } else if (batt_voltage <= hw_.WARN_BATT_VOLT) {
+      device_state_.sensors().battery_low = true;
+    }
+  }
+  // mini doesn't have awake mode
   device_state_.flags().awake_mode = false;
+
 #endif
 
   // ------ read sensors ------
@@ -740,8 +772,13 @@ void AppSMStates::UserInputFinishState::loop() {
                            Button::get_action_multi_count(btn_event.action),
                            true);
           if (sm().device_state_.sensors().battery_low) {
+#ifndef HOME_BUTTONS_MINI
             sm().display_.disp_message_large(
                 "Battery\nLOW\n\nPlease\nrecharge\nsoon!", 3000);
+#else
+            sm().display_.disp_message_large(
+                "Batteries\nLOW\n\nPlease\nreplace\nsoon!", 3000);
+#endif
           }
           sm().btn_event_ = btn_event;
           return transition_to<NetConnectingState>();
