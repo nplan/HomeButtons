@@ -29,9 +29,15 @@ static constexpr char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
 static constexpr char BNT_LABEL_DFLT_PREFIX[] = "B";
 
 // ------ sensors ------
+#ifndef HOME_BUTTONS_MINI
 static constexpr uint16_t SEN_INTERVAL_DFLT = 10;  // min
 static constexpr uint16_t SEN_INTERVAL_MIN = 1;    // min
 static constexpr uint16_t SEN_INTERVAL_MAX = 30;   // min
+#else
+static constexpr uint16_t SEN_INTERVAL_DFLT = 30;  // min
+static constexpr uint16_t SEN_INTERVAL_MIN = 5;    // min
+static constexpr uint16_t SEN_INTERVAL_MAX = 60;   // min
+#endif
 
 // ----- timing ------
 static constexpr uint32_t SETUP_TIMEOUT = 600;             // s
