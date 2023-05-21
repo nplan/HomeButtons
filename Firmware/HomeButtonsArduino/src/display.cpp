@@ -129,6 +129,9 @@ void Display::update() {
     case DisplayPage::INFO:
       draw_info();
       break;
+    case DisplayPage::DEVICE_INFO:
+      draw_device_info();
+      break;
     case DisplayPage::MESSAGE:
       draw_message(draw_ui_state.message);
       break;
@@ -201,6 +204,11 @@ void Display::disp_main() {
 
 void Display::disp_info() {
   UIState new_cmd_state{DisplayPage::INFO};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_device_info() {
+  UIState new_cmd_state{DisplayPage::DEVICE_INFO};
   set_cmd_state(new_cmd_state);
 }
 
@@ -501,6 +509,54 @@ void Display::draw_info() {
   disp->display();
 }
 
+void Display::draw_device_info() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(40, 0, hb_logo_48x48, 48, 48, text_color);
+
+  u8g2.setFont(u8g2_font_profont12_tr);
+
+  u8g2.setCursor(0, 70);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 82);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 94);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 106);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(0, 140);
+  u8g2.print(ip_info.c_str());
+
+  UIState::MessageType batt_volt;
+  if (device_state_.sensors().battery_present) {
+    batt_volt = UIState::MessageType("Battery: %.2f V",
+                                     device_state_.sensors().battery_voltage);
+  } else {
+    batt_volt = UIState::MessageType("Battery: -");
+  }
+  u8g2.setCursor(0, 152);
+  u8g2.print(batt_volt.c_str());
+  disp->display();
+}
+
 void Display::draw_welcome() {
   disp->setRotation(0);
   disp->setFullWindow();
@@ -551,7 +607,7 @@ void Display::draw_welcome() {
   }
 
   u8g2.setFont(u8g2_font_profont12_tr);
-  UIState::MessageType sw_ver = UIState::MessageType("Software: ") + SW_VERSION;
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
   u8g2.setCursor(0, 272);
   u8g2.print(sw_ver.c_str());
 
@@ -590,7 +646,7 @@ void Display::draw_settings() {
   u8g2.setCursor(0, 261);
   u8g2.print(device_state_.device_name().c_str());
 
-  UIState::MessageType sw_ver = UIState::MessageType("Software: ") + SW_VERSION;
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
   u8g2.setCursor(0, 272);
   u8g2.print(sw_ver.c_str());
 
@@ -850,6 +906,49 @@ void Display::draw_info() {
   u8g2.setCursor(85, 180);
   u8g2.print(text.c_str());
 
+  disp->display();
+}
+
+void Display::draw_device_info() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(76, 0, hb_logo_48x48, 48, 48, text_color);
+
+  u8g2.setFont(u8g2_font_profont17_tr);
+
+  u8g2.setCursor(0, 70);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 90);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 110);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 130);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(0, 160);
+  u8g2.print(ip_info.c_str());
+
+  UIState::MessageType batt_volt = UIState::MessageType(
+      "Battery: %.2f V", device_state_.sensors().battery_voltage);
+  u8g2.setCursor(0, 180);
+  u8g2.print(batt_volt.c_str());
   disp->display();
 }
 

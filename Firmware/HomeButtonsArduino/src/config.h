@@ -41,6 +41,7 @@ static constexpr uint32_t WDT_TIMEOUT_AWAKE = 60;          // s
 static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;          // s
 static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;   // ms
 static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;  // ms
+static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;    // ms
 
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;

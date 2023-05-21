@@ -110,9 +110,7 @@ class ButtonHandler : public Logger {
     return active_button_ && active_button_->is_press_finished();
   }
 
-  boolean is_press_in_in_progress() {
-    return get_event().action != Button::IDLE;
-  }
+  boolean is_press_in_progress() { return get_event().action != Button::IDLE; }
 
   ButtonEvent get_event() {
     if (!active_button_) {

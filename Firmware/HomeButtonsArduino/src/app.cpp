@@ -361,6 +361,7 @@ void App::_main_task() {
                     device_state_.sensors().humidity,
                     device_state_.get_use_fahrenheit());
   device_state_.sensors().battery_pct = hw_.read_battery_percent();
+  device_state_.sensors().battery_voltage = hw_.read_battery_voltage();
 
   // ------ boot cause ------
   int16_t wakeup_pin;
@@ -696,13 +697,15 @@ void AppSMStates::InitState::entry() {
 void AppSMStates::AwakeModeIdleState::entry() { sm().button_handler_.clear(); }
 
 void AppSMStates::AwakeModeIdleState::loop() {
-  if (sm().button_handler_.is_press_in_in_progress()) {
+  if (sm().button_handler_.is_press_in_progress()) {
     return transition_to<UserInputFinishState>();
   } else if (millis() - sm().last_sensor_publish_ >= AWAKE_SENSOR_INTERVAL) {
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
                            sm().device_state_.sensors().humidity,
                            sm().device_state_.get_use_fahrenheit());
     sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
+    sm().device_state_.sensors().battery_voltage =
+        sm().hw_.read_battery_voltage();
     sm()._publish_sensors();
     sm().last_sensor_publish_ = millis();
     sm()._log_stack_status();
@@ -880,7 +883,7 @@ void AppSMStates::SettingsMenuState::entry() {
 void AppSMStates::SettingsMenuState::loop() {
   bool awake_mode = sm().device_state_.flags().awake_mode;
   ButtonEvent btn_event = sm().button_handler_.get_event();
-  if (sm().button_handler_.is_press_in_in_progress()) {
+  if (sm().button_handler_.is_press_in_progress()) {
     if (sm().button_handler_.is_press_finished()) {
       if (btn_event.action == Button::SINGLE) {
         switch (btn_event.id) {
@@ -919,12 +922,51 @@ void AppSMStates::SettingsMenuState::loop() {
     } else if (btn_event.action == Button::LONG_3 && btn_event.id == 3) {
       // factory reset
       return transition_to<FactoryResetState>();
+    } else if (btn_event.action == Button::LONG_1 && btn_event.id == 1) {
+      // device info screen
+      return transition_to<DeviceInfoState>();
     }
   }
   if (!awake_mode &&
       millis() - sm().settings_menu_start_time_ > SETTINGS_MENU_TIMEOUT &&
-      !sm().button_handler_.is_press_in_in_progress()) {
+      !sm().button_handler_.is_press_in_progress()) {
     sm().debug("settings menu timeout");
+    sm().display_.disp_main();
+    return transition_to<CmdShutdownState>();
+  }
+}
+
+void AppSMStates::DeviceInfoState::entry() {
+  sm().device_info_start_time_ = millis();
+  sm().display_.disp_device_info();
+  // wait until button released. TODO: should be improved
+  while (sm().hw_.any_button_pressed()) {
+    delay(10);
+  }
+  sm().button_handler_.clear();
+}
+
+void AppSMStates::DeviceInfoState::loop() {
+  bool awake_mode = sm().device_state_.flags().awake_mode;
+  ButtonEvent btn_event = sm().button_handler_.get_event();
+  if (sm().button_handler_.is_press_in_progress()) {
+    if (sm().button_handler_.is_press_finished()) {
+      if (btn_event.action == Button::SINGLE) {
+        // cancel
+        sm().display_.disp_main();
+        sm().button_handler_.clear();
+        if (awake_mode) {
+          return transition_to<AwakeModeIdleState>();
+        } else {
+          return transition_to<CmdShutdownState>();
+        }
+      }
+      sm().button_handler_.clear();
+    }
+  }
+  if (!awake_mode &&
+      millis() - sm().settings_menu_start_time_ > DEVICE_INFO_TIMEOUT) {
+    sm().debug("device info timeout");
     sm().display_.disp_main();
     return transition_to<CmdShutdownState>();
   }

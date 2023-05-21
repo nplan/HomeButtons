@@ -19,6 +19,7 @@ enum class DisplayPage {
   EMPTY,
   MAIN,
   INFO,
+  DEVICE_INFO,
   MESSAGE,
   MESSAGE_LARGE,
   ERROR,
@@ -56,6 +57,7 @@ class Display : public Logger {
   void disp_error(const char* message, uint32_t duration = 0);
   void disp_main();
   void disp_info();
+  void disp_device_info();
   void disp_welcome();
   void disp_settings();
   void disp_ap_config();
@@ -103,6 +105,7 @@ class Display : public Logger {
                     bool large = false);
   void draw_main();
   void draw_info();
+  void draw_device_info();
   void draw_welcome();
   void draw_settings();
   void draw_ap_config();

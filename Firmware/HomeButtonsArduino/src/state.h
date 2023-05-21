@@ -76,6 +76,7 @@ class DeviceState : public Logger {
     float temperature = 0;
     float humidity = 0;
     uint8_t battery_pct = 0;
+    float battery_voltage = 0;
     bool charging = false;
     bool dc_connected = false;
     bool battery_present = false;

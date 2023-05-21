@@ -65,6 +65,16 @@ class SettingsMenuState : public State<App> {
   const char* get_name() override { return "SettingsMenuState"; }
 };
 
+class DeviceInfoState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void entry() override;
+  void loop() override;
+
+  const char* get_name() override { return "DeviceInfoState"; }
+};
+
 class CmdShutdownState : public State<App> {
  public:
   using State<App>::State;
@@ -107,9 +117,9 @@ class FactoryResetState : public State<App> {
 using AppStateMachine = StateMachine<
     App, AppSMStates::InitState, AppSMStates::AwakeModeIdleState,
     AppSMStates::UserInputFinishState, AppSMStates::NetConnectingState,
-    AppSMStates::SettingsMenuState, AppSMStates::CmdShutdownState,
-    AppSMStates::NetDisconnectingState, AppSMStates::ShuttingDownState,
-    AppSMStates::FactoryResetState>;
+    AppSMStates::SettingsMenuState, AppSMStates::DeviceInfoState,
+    AppSMStates::CmdShutdownState, AppSMStates::NetDisconnectingState,
+    AppSMStates::ShuttingDownState, AppSMStates::FactoryResetState>;
 
 class App : public AppStateMachine, public Logger {
  public:
@@ -168,12 +178,14 @@ class App : public AppStateMachine, public Logger {
   uint32_t last_m_display_redraw_ = 0;
   uint32_t info_screen_start_time_ = 0;
   uint32_t settings_menu_start_time_ = 0;
+  uint32_t device_info_start_time_ = 0;
 
   friend class AppSMStates::InitState;
   friend class AppSMStates::AwakeModeIdleState;
   friend class AppSMStates::UserInputFinishState;
   friend class AppSMStates::NetConnectingState;
   friend class AppSMStates::SettingsMenuState;
+  friend class AppSMStates::DeviceInfoState;
   friend class AppSMStates::CmdShutdownState;
   friend class AppSMStates::NetDisconnectingState;
   friend class AppSMStates::ShuttingDownState;
