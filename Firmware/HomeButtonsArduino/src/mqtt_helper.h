@@ -36,6 +36,7 @@ class MQTTHelper {
   TopicType t_awake_mode_state() const;
   TopicType t_awake_mode_cmd() const;
   TopicType t_awake_mode_avlb() const;
+  TopicType t_disp_msg_cmd() const;
 
  private:
   DeviceState& _device_state;

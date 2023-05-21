@@ -57,6 +57,7 @@ class DeviceState : public Logger {
     bool wifi_quick_connect = false;
     bool charge_complete_showing = false;
     bool info_screen_showing = false;
+    bool user_msg_showing = false;
     bool check_connection = false;
     uint8_t failed_connections = 0;
     bool restart_to_wifi_setup = false;

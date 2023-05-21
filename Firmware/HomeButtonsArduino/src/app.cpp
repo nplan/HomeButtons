@@ -472,6 +472,13 @@ void App::_main_task() {
           display_.end();
           display_.update();
           _go_to_sleep();
+        } else if (device_state_.persisted().user_msg_showing) {
+          device_state_.persisted().user_msg_showing = false;
+          display_.disp_main();
+          display_.update();
+          display_.end();
+          display_.update();
+          _go_to_sleep();
         } else if (device_state_.persisted().check_connection) {
           device_state_.persisted().check_connection = false;
           display_.disp_main();
@@ -576,6 +583,17 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
     }
     network_.publish(mqtt_.t_awake_mode_cmd(), "", true);
     return;
+  }
+
+  // user message
+  if (strcmp(topic, mqtt_.t_disp_msg_cmd().c_str()) == 0) {
+    if (display_.get_ui_state().page == DisplayPage::MAIN) {
+      UIState::MessageType msg(payload);
+      device_state_.persisted().user_msg_showing = true;
+      device_state_.save_all();
+      display_.disp_message_large(msg.c_str());
+    }
+    network_.publish(mqtt_.t_disp_msg_cmd(), "", true);
   }
 }
 
@@ -764,6 +782,11 @@ void AppSMStates::UserInputFinishState::loop() {
           if (sm().device_state_.persisted().info_screen_showing) {
             sm().display_.disp_main();
             sm().device_state_.persisted().info_screen_showing = false;
+            return transition_to<AwakeModeIdleState>();
+          } else if (sm().device_state_.persisted().user_msg_showing) {
+            sm().display_.disp_main();
+            sm().device_state_.persisted().user_msg_showing = false;
+            return transition_to<AwakeModeIdleState>();
           }
           sm().leds_.blink(btn_event.id,
                            Button::get_action_multi_count(btn_event.action));

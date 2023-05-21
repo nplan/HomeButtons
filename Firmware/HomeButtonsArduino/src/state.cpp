@@ -92,6 +92,7 @@ void DeviceState::save_persisted() {
   preferences_.putBool("wifi_qc", persisted_.wifi_quick_connect);
   preferences_.putBool("chg_cpt_shwn", persisted_.charge_complete_showing);
   preferences_.putBool("info_shwn", persisted_.info_screen_showing);
+  preferences_.putBool("u_msg_shwn", persisted_.user_msg_showing);
   preferences_.putBool("chk_conn", persisted_.check_connection);
   preferences_.putUInt("faild_cons", persisted_.failed_connections);
   preferences_.putBool("rst_to_w_stp", persisted_.restart_to_wifi_setup);
@@ -114,6 +115,7 @@ void DeviceState::load_persisted() {
   persisted_.charge_complete_showing =
       preferences_.getBool("chg_cpt_shwn", false);
   persisted_.info_screen_showing = preferences_.getBool("info_shwn", false);
+  persisted_.user_msg_showing = preferences_.getBool("u_msg_shwn", false);
   persisted_.check_connection = preferences_.getBool("chk_conn", false);
   persisted_.failed_connections = preferences_.getUInt("faild_cons", 0);
   persisted_.restart_to_wifi_setup =

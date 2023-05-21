@@ -354,9 +354,13 @@ TopicType MQTTHelper::t_sensor_interval_cmd() const {
 TopicType MQTTHelper::t_awake_mode_state() const {
   return t_common() + "awake_mode";
 }
+
 TopicType MQTTHelper::t_awake_mode_cmd() const {
   return t_cmd() + "awake_mode";
 }
+
 TopicType MQTTHelper::t_awake_mode_avlb() const {
   return t_awake_mode_state() + "/available";
 }
+
+TopicType MQTTHelper::t_disp_msg_cmd() const { return t_cmd() + "disp_msg"; }
