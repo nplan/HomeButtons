@@ -8,6 +8,8 @@
 
 #include "Adafruit_SHTC3.h"
 
+#include <math.h>
+
 // Temperature & humidity sensor
 TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
@@ -280,6 +282,7 @@ float HardwareDefinition::read_battery_voltage() {
 }
 
 uint8_t HardwareDefinition::read_battery_percent() {
+#ifndef HOME_BUTTONS_MINI
   if (!is_battery_present()) return 0;
   float pct = BATT_SOC_EST_K * read_battery_voltage() + BATT_SOC_EST_N;
   if (pct < 1.0)
@@ -287,6 +290,18 @@ uint8_t HardwareDefinition::read_battery_percent() {
   else if (pct > 100.0)
     pct = 100;
   return (uint8_t)round(pct);
+#else
+  float batvolt = read_battery_voltage();
+  float pct = (BAT_SOC_EST_ATAN_A *
+                   atan(BAT_SOC_EST_ATAN_B * batvolt + BAT_SOC_EST_ATAN_C) +
+               BAT_SOC_EST_ATAN_D) *
+              100;
+  if (pct < 1.0)
+    pct = 1;
+  else if (pct > 100.0)
+    pct = 100;
+  return (uint8_t)round(pct);
+#endif
 }
 
 void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
@@ -685,15 +700,18 @@ void HardwareDefinition::load_mini_hw_rev_0_1() {
   LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
-  BATT_DIVIDER = 0.333333;
+  BATT_DIVIDER = 0.6666667;
   BATT_ADC_REF_VOLT = 2.6;
-  MIN_BATT_VOLT = 1.8;
-  BATT_HYSTERESIS_VOLT = 1.9;
-  WARN_BATT_VOLT = 2.0;
-  BATT_FULL_VOLT = 3.2;
-  BATT_EMPTY_VOLT = 1.8;
-  BATT_SOC_EST_K = 126.58;
-  BATT_SOC_EST_N = -425.32;
+  MIN_BATT_VOLT = 2.15;
+  BATT_HYSTERESIS_VOLT = 2.25;
+  WARN_BATT_VOLT = 2.25;
+  BATT_FULL_VOLT = 3.25;
+  BATT_EMPTY_VOLT = 2.15;
+  BAT_SOC_EST_ATAN_A = 0.4294;
+  BAT_SOC_EST_ATAN_B = 4.8711;
+  BAT_SOC_EST_ATAN_C = -12.9462;
+  BAT_SOC_EST_ATAN_D = 0.4849;
+  // Measured on VARTA Industrial Pro AA Alkaline
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x204012;
@@ -731,15 +749,18 @@ void HardwareDefinition::load_mini_hw_rev_1_1() {
   LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
-  BATT_DIVIDER = 0.333333;
+  BATT_DIVIDER = 0.6666667;
   BATT_ADC_REF_VOLT = 2.6;
-  MIN_BATT_VOLT = 1.8;
-  BATT_HYSTERESIS_VOLT = 1.9;
-  WARN_BATT_VOLT = 2.0;
-  BATT_FULL_VOLT = 3.2;
-  BATT_EMPTY_VOLT = 1.8;
-  BATT_SOC_EST_K = 126.58;
-  BATT_SOC_EST_N = -425.32;
+  MIN_BATT_VOLT = 2.15;
+  BATT_HYSTERESIS_VOLT = 2.25;
+  WARN_BATT_VOLT = 2.25;
+  BATT_FULL_VOLT = 3.25;
+  BATT_EMPTY_VOLT = 2.15;
+  BAT_SOC_EST_ATAN_A = 0.4294;
+  BAT_SOC_EST_ATAN_B = 4.8711;
+  BAT_SOC_EST_ATAN_C = -12.9462;
+  BAT_SOC_EST_ATAN_D = 0.4849;
+  // Measured on VARTA Industrial Pro AA Alkaline
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x204012;

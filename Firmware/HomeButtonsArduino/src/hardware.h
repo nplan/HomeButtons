@@ -66,9 +66,15 @@ struct HardwareDefinition : public Logger {
   float DC_DETECT_VOLT;
   float CHARGE_HYSTERESIS_VOLT;
 
-  // battery SoC linear approximation coeficients
+  // battery SoC linear approximation coeficients (used for lithium cells)
   float BATT_SOC_EST_K;
   float BATT_SOC_EST_N;
+
+  // atan SoC approximation coeficients (used for alkaline cells)
+  float BAT_SOC_EST_ATAN_A;
+  float BAT_SOC_EST_ATAN_B;
+  float BAT_SOC_EST_ATAN_C;
+  float BAT_SOC_EST_ATAN_D;
 
   // ------ wakeup ------
   uint64_t WAKE_BITMASK;
