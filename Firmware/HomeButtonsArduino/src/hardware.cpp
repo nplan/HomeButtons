@@ -31,6 +31,11 @@ bool HardwareDefinition::init() {
 
   if (strcmp(get_model_id(), "A1") == 0) {
     strncpy(model_name_, "Home Buttons", sizeof(model_name_));
+  } else if (strcmp(get_model_id(), "B1") == 0) {
+    strncpy(model_name_, "Home Buttons Mini", sizeof(model_name_));
+  } else {
+    error("unknown model id: %s", get_model_id());
+    return false;
   }
 
   snprintf(unique_id_, sizeof(unique_id_), "HBTNS-%s-%s", get_serial_number(),
