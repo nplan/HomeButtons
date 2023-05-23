@@ -53,14 +53,18 @@ static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;    // ms
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 static constexpr uint32_t WIFI_TIMEOUT = 20000L;
 static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 2;
-static constexpr uint32_t MQTT_TIMEOUT = 15000L;
-static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 1000L;
+static constexpr uint32_t MQTT_TIMEOUT = 5000L;
+static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 500L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
-static constexpr uint32_t NET_CONNECT_TIMEOUT = 45000L;
+static constexpr uint32_t NET_CONNECT_TIMEOUT = 30000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
 
 // ------ LEDs ------
+#ifndef HOME_BUTTONS_MINI
 static constexpr uint8_t LED_DFLT_BRIGHT = 225;
+#else
+static constexpr uint8_t LED_DFLT_BRIGHT = 150;
+#endif
 
 // ------ other ------
 static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
