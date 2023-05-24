@@ -80,7 +80,6 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
 
 1. Scan the QR code or enter the local IP into a web browser. The setup page will load:
 
-    ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page](assets/setup_page.jpeg){width="250"}
 
 2. Click `Setup`
@@ -102,6 +101,8 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
     - `Discovery Prefix` - *Home Assistant* parameter for MQTT discovery. The default is `homeassistant`.
     Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
+    - `Temperature Unit` - Either `C` - Celsius  or `F` - Fahrenheit.
+
 4. Enter static IP details (optional):
 
     - `Static IP` - IP of *Home Buttons*. Must be outside the DHCP address range of your router.
@@ -114,9 +115,7 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
 
     - `Secondary DNS Server` - If left empty, `1.1.1.1` will be used.
 
-    - `Temperature Unit` - Either `C` - Celsius  or `F` - Fahrenheit.
-
-    > This parameters are optional, but highly recommended, to reduce the response time and increase the battery life. Especially if you use a WPA-3 network.
+    > This parameters are optional, but highly recommended, to reduce response time and increase battery life. Especially if you use a WPA-3 network.
 
     > Please double check that the IP address you enter is not already in use by another device on your network.
 
@@ -174,7 +173,7 @@ To configure button actions, click "+" on the *Automations* card, select one of 
 
 ![Home Assistant Triggers](assets/home_assistant_triggers.png){width="350"}
 
-> The expected delay from a button being pressed to the automation being triggered is around 1 second.
+> The expected delay from a button being pressed to the automation being triggered is around 1 second (depending on your network).
 
 ## Mount To The Wall
 

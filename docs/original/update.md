@@ -18,10 +18,9 @@ Firmware can be updated in two ways:
 
 1. Find the latest firmware *.bin* file [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"} and download it to your computer.
 
-2. Press any button for 10 seconds. Home Buttons will display instructions for connecting to a web interface.
+2. Enter *Setup* from the [*Settings Menu*](#settings). Home Buttons will display instructions for connecting to a web interface.
 Scan the QR code or enter the local IP into a web browser.
 
-    ![Setup Screen](assets/setup_screen.png){width="125"} 
     ![Setup Page Info](assets/setup_page_info.jpeg){width="250"}
 
 3. Click `Info` and scroll to the bottom of the *Info* screen. Click `Update`. The update menu will load:
@@ -49,10 +48,10 @@ Scan the QR code or enter the local IP into a web browser.
 
 3. Open the case. See instructions [here](user_guide.md#opening_case){:target="_blank"}.
 
-4. Place device into **boot mode**. Press and hold the `BOOT` button and then press the `RST` button.
+4. Place device into **programming mode**. Press and hold the `BOOT` button and then press the `RST` button.
 `BOOT LED` will light up. Release both buttons.
 
-    ![Boot Mode](assets/boot_mode.jpeg){width="350"}
+    ![programming Mode](assets/boot_mode.jpeg){width="350"}
 
 5. Connect *Home Buttons* to your computer using an USB-C cable.
 
@@ -100,5 +99,5 @@ Scan the QR code or enter the local IP into a web browser.
 8. Wait a few seconds for firmware to flash. When done, you will see a confirmation in *Terminal* or *Command Prompt* window.
 
 9. Disconnect USB-C cable and press the `RST` button.
-*Home Buttons* will display `Device RESET` and then return to showing button labels. Firmware is now successfully updated.
+*Home Buttons* will display `RESTART...` and then return to showing button labels. Firmware is now successfully updated.
 

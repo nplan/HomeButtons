@@ -5,8 +5,15 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.2.0-alpha";
-static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/setup";
+static constexpr char SW_VERSION[] = "v2.2.0-alpha2";
+
+// ------ URLs ------
+#ifndef HOMEBUTTONS_MINI
+static constexpr char DOCS_LINK[] =
+    "https://docs.home-buttons.com/original/setup/";
+#else
+static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/mini/setup/";
+#endif
 
 // ------ wifi AP ------
 static constexpr char WIFI_MANAGER_TITLE[] = "Home Buttons";

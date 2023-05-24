@@ -10,7 +10,7 @@ Press any button for:
 
 ## Home Assistant
 
-You can configure most of the devices settings directly in *Home Assistant*.
+You can configure most of the settings directly in *Home Assistant*.
 
 > To get to the device's page in *Home Assistant*, click settings in the left side bar, then open *Devices & Services*, move to the *Devices* tab and click on the name you gave your *Home Buttons* during setup.
 
@@ -75,22 +75,29 @@ The range is from 1 to 30 minutes. The default is 10 minutes.
 
 ## Settings Menu {#settings}
 
-Open the settings menu by pressing any button for 5 seconds. The menu will show the following options:
+Open the *Settings Menu* by pressing any button for 5 seconds. The menu will show the following options:
 
 - :material-account-cog: - [Setup](#setup)
 - :material-wifi-cog: - [Wi-Fi Setup](#wifi_setup)
 - :material-restore: - Restart
 - :material-close: - Close settings menu
 
-To perform a factory reset, hold :material-restore: for 10 seconds. *Home Buttons* will restart and all user settings will be reset to default.
-You will have to set up the device again.
-
 > Restart triggers publishing MQTT discovery message and icon download. The first time after a restart, Wi-Fi connection
 will take a few seconds longer.
 
+**Device Info**
+
+You can see details of you device like software version, hardware revision and IP address in the *Device Info* menu. To access it, hold :material-account-cog: for 2 seconds.
+
+**Factory Reset**
+
+To perform a factory reset, hold :material-restore: for 10 seconds. *Home Buttons* will restart and all user settings will be reset to default.
+You will have to set up the device again.
+
+
 ## Info Screen {#info_screen}
 
-Info screen displays current **temperature**, **humidity** and **battery** charge percentage.
+Info screen displays current **temperature**, **humidity** and **battery** percentage.
 
 !["Info Screen](assets/info_screen.png){width="125"}
 
@@ -100,9 +107,8 @@ Bring it up by pressing any button for 2 seconds. *Home Buttons* will automatica
 
 Setup allows you to change connection settings and button labels. *Home Buttons* establishes a web interface accessible within the network it is already connected to.
 
-Begin setup by pressing any button for 10 seconds. *Home Buttons* will display instructions for connecting to a web interface. Scan the QR code or enter the local IP into a web browser.
+Begin setup by going to [*Settings Menu*](#settings) and pressing :material-account-cog:. *Home Buttons* will display instructions for connecting to a web interface. Scan the QR code or enter the local IP into a web browser.
 
-![Setup Screen](assets/setup_screen.png){width="125"} 
 ![Setup Page](assets/setup_page.jpeg){width="250"}
 
 ### Change Wi-Fi settings
@@ -151,7 +157,7 @@ You can start the setup again by pressing any button. Please make sure to enter 
 
 If *Home Buttons* becomes inaccessible on the local network due to changed Wi-Fi settings, you can restart the Wi-Fi setup at any time.
 
-Press any button for 20 seconds.
+Open [*Settings Menu*](#settings) by holding any button for 5 s and press :material-wifi-cog:. Wi-Fi hotspot will be established and connection instructions will be displayed.
 
 1. *Home Buttons* will establish a Wi-Fi hotspot.
 Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
@@ -172,7 +178,11 @@ If it doesn't, open the web browser and navigate to any web page. You will be re
 > If connection is not successful, `Wi-Fi error` will be displayed and *Home Buttons* will return to welcome screen.
 You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.
 
-## Opening the case {#opening_case}
+## Display a Custom Message {#custom_message}
+
+A custom message can be shown on the e-paper display by publishing a retained payload to the `{base_topic}/{device_name}/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
+
+## Opening The Case {#opening_case}
 
 If you need to remove or replace the battery, or perform a manual firmware upgrade, you have to open the case. The back cover can stay mounted to the wall during the procedure.
 
