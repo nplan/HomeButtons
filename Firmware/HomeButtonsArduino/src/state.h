@@ -10,6 +10,15 @@
 #include "hardware.h"
 #include <IPAddress.h>
 
+struct StaticIPConfig {
+  bool valid;
+  IPAddress static_ip;
+  IPAddress gateway;
+  IPAddress subnet;
+  IPAddress dns;
+  IPAddress dns2;
+};
+
 class DeviceState : public Logger {
  private:
   struct Factory {
@@ -27,13 +36,7 @@ class DeviceState : public Logger {
     uint16_t sensor_interval = 0;  // minutes
     bool use_fahrenheit = false;
 
-    struct {
-      IPAddress static_ip;
-      IPAddress gateway;
-      IPAddress subnet;
-      IPAddress dns;
-      IPAddress dns2;
-    } network;
+    StaticIPConfig network;
 
     struct {
       String server = "";
@@ -104,11 +107,16 @@ class DeviceState : public Logger {
                             const IPAddress& gateway, const IPAddress& subnet,
                             const IPAddress& dns = IPAddress(),
                             const IPAddress& dns2 = IPAddress()) {
+    user_preferences_.network.valid = false;
     user_preferences_.network.static_ip = static_ip;
     user_preferences_.network.gateway = gateway;
     user_preferences_.network.subnet = subnet;
     user_preferences_.network.dns = dns;
     user_preferences_.network.dns2 = dns2;
+  }
+
+  const StaticIPConfig get_static_ip_config() const {
+    return user_preferences_.network;
   }
 
   const DeviceName& device_name() const {

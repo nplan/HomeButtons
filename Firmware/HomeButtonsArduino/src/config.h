@@ -2,6 +2,7 @@
 #define HOMEBUTTONS_CONFIG_H
 
 #include <WString.h>
+#include <IPAddress.h>
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
@@ -65,6 +66,7 @@ static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 500L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
 static constexpr uint32_t NET_CONNECT_TIMEOUT = 30000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
+static const IPAddress DEFAULT_DNS2 = IPAddress(1, 1, 1, 1);
 
 // ------ LEDs ------
 #ifndef HOME_BUTTONS_MINI

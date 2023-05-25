@@ -9,6 +9,7 @@
 #include "mqtt_helper.h"  // For TopicType
 #include "freertos/queue.h"
 #include "logger.h"
+#include "state.h"
 
 class DeviceState;
 class Network;
@@ -169,5 +170,7 @@ class Network : public NetworkStateMachine, public Logger {
   friend class NetworkSMStates::DisconnectState;
   friend class NetworkSMStates::FullyConnectedState;
 };
+
+StaticIPConfig validate_static_ip_config(StaticIPConfig config);
 
 #endif  // HOMEBUTTONS_NETWORK_H

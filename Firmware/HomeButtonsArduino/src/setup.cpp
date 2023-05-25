@@ -10,6 +10,8 @@
 #include "hardware.h"
 #include "state.h"
 #include "logger.h"
+#include "network.h"
+#include "utils.h"
 
 static WiFiManager wifi_manager;
 
@@ -204,6 +206,24 @@ void start_setup(DeviceState& device_state, Display& display,
 
   display.disp_message("Entering\nSETUP...");
   display.update();
+
+  // set static IP if configured
+  StaticIPConfig static_ip_config =
+      validate_static_ip_config(device_state.user_preferences().network);
+  if (static_ip_config.valid) {
+    WiFi.config(static_ip_config.static_ip, static_ip_config.gateway,
+                static_ip_config.subnet, static_ip_config.dns,
+                static_ip_config.dns2);
+    setupLogger.info(
+        "Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
+        ip_address_to_static_string(static_ip_config.static_ip).c_str(),
+        ip_address_to_static_string(static_ip_config.gateway).c_str(),
+        ip_address_to_static_string(static_ip_config.subnet).c_str(),
+        ip_address_to_static_string(static_ip_config.dns).c_str(),
+        ip_address_to_static_string(static_ip_config.dns2).c_str());
+  } else {
+    setupLogger.info("Using DHCP. Static IP not set or not valid.");
+  }
 
   // connect Wi-Fi
   WiFi.mode(WIFI_STA);
