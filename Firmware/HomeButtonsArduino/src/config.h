@@ -6,7 +6,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.2.0-alpha3";
+static constexpr char SW_VERSION[] = "v2.2.0-alpha4";
 
 // ------ URLs ------
 #ifndef HOMEBUTTONS_MINI
@@ -72,7 +72,7 @@ static const IPAddress DEFAULT_DNS2 = IPAddress(1, 1, 1, 1);
 #ifndef HOME_BUTTONS_MINI
 static constexpr uint8_t LED_DFLT_BRIGHT = 225;
 #else
-static constexpr uint8_t LED_DFLT_BRIGHT = 150;
+static constexpr uint8_t LED_DFLT_BRIGHT = 25;
 #endif
 
 // ------ other ------
