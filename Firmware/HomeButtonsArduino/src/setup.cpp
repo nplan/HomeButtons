@@ -228,7 +228,6 @@ void start_setup(DeviceState& device_state, Display& display,
       WiFi.disconnect();
       delay(1000);
     } else {
-      device_state.persisted().wifi_done = false;
       device_state.persisted().silent_restart = true;
       device_state.save_all();
       setupLogger.warning("Wi-Fi error.");

@@ -198,7 +198,13 @@ void Display::disp_error(const char *message, uint32_t duration) {
 }
 
 void Display::disp_main() {
-  UIState new_cmd_state{DisplayPage::MAIN};
+  UIState new_cmd_state;
+  if (device_state_.persisted().setup_done &&
+      device_state_.persisted().wifi_done) {
+    new_cmd_state = {DisplayPage::MAIN};
+  } else {
+    new_cmd_state = {DisplayPage::WELCOME};
+  }
   set_cmd_state(new_cmd_state);
 }
 

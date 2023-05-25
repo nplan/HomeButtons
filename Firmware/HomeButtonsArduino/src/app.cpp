@@ -451,12 +451,6 @@ void App::_main_task() {
       break;
     }
     case BootCause::BUTTON: {
-      if (!device_state_.persisted().wifi_done) {
-        start_wifi_setup(device_state_, display_);
-      } else if (!device_state_.persisted().setup_done) {
-        start_setup(device_state_, display_, hw_);
-      }
-
       if (!device_state_.flags().awake_mode) {
         if (device_state_.persisted().info_screen_showing) {
           device_state_.persisted().info_screen_showing = false;
@@ -778,6 +772,17 @@ void AppSMStates::UserInputFinishState::loop() {
       case Button::DOUBLE:
       case Button::TRIPLE:
       case Button::QUAD:
+        if (!sm().device_state_.persisted().wifi_done) {
+          sm().device_state_.persisted().restart_to_wifi_setup = true;
+          sm().device_state_.persisted().silent_restart = true;
+          sm().device_state_.save_all();
+          ESP.restart();
+        } else if (!sm().device_state_.persisted().setup_done) {
+          sm().device_state_.persisted().restart_to_setup = true;
+          sm().device_state_.persisted().silent_restart = true;
+          sm().device_state_.save_all();
+          ESP.restart();
+        }
         if (awake_mode) {
           if (sm().device_state_.persisted().info_screen_showing) {
             sm().display_.disp_main();
@@ -820,21 +825,6 @@ void AppSMStates::UserInputFinishState::loop() {
         } else {
           return transition_to<CmdShutdownState>();
         }
-        break;
-      case Button::LONG_2:
-        sm().device_state_.persisted().restart_to_setup = true;
-        sm().device_state_.persisted().silent_restart = true;
-        sm().device_state_.save_all();
-        ESP.restart();
-        break;
-      case Button::LONG_3:
-        sm().device_state_.persisted().restart_to_wifi_setup = true;
-        sm().device_state_.persisted().silent_restart = true;
-        sm().device_state_.save_all();
-        ESP.restart();
-        break;
-      case Button::LONG_4:
-        return transition_to<FactoryResetState>();
         break;
       default:
         if (awake_mode) {
