@@ -26,8 +26,6 @@ The labels and button actions can be easily configured directly in *Home Assista
 
 </div>
 
----
-
 ## Documentation
 
 Learn more [here](https://docs.home-buttons.com).
