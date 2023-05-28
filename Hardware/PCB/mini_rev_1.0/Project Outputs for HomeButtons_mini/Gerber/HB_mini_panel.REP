@@ -1,0 +1,300 @@
+*************************************************************
+FileName = HB_mini_panel.GBR
+AutoAperture = True
+*************************************************************
+Generating : Bottom Layer
+      File : HB_mini_panel.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D10
+    D51
+    D53
+    D55
+    D56
+    D57
+    D59
+    D63
+    D64
+    D65
+*************************************************************
+
+*************************************************************
+Generating : Top Layer
+      File : HB_mini_panel.GTL
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+    D18
+    D19
+    D20
+    D21
+    D22
+    D23
+    D24
+    D25
+    D26
+    D27
+    D28
+    D29
+    D30
+    D31
+    D32
+    D33
+    D34
+    D35
+    D36
+    D37
+    D38
+    D39
+    D40
+    D41
+    D42
+    D43
+    D44
+    D45
+    D46
+    D47
+    D48
+    D49
+    D50
+    D51
+    D52
+    D53
+    D54
+    D55
+    D56
+    D57
+    D58
+    D59
+    D60
+    D61
+    D62
+    D63
+    D64
+*************************************************************
+
+*************************************************************
+Generating : Top Overlay
+      File : HB_mini_panel.GTO
+
+    Adding Layer      : Top Overlay
+
+
+Used DCodes :
+    D51
+    D55
+    D62
+    D66
+    D67
+    D68
+*************************************************************
+
+*************************************************************
+Generating : Top Paste
+      File : HB_mini_panel.GTP
+
+    Adding Layer      : Top Paste
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D17
+    D19
+    D20
+    D29
+    D30
+    D31
+    D33
+    D35
+    D36
+    D41
+    D42
+    D43
+    D47
+    D50
+    D69
+    D70
+    D71
+    D72
+    D73
+    D74
+    D75
+    D76
+    D77
+    D78
+    D79
+    D80
+    D81
+    D82
+    D83
+    D84
+    D85
+    D86
+    D87
+    D88
+    D89
+    D90
+    D91
+    D92
+    D93
+*************************************************************
+
+*************************************************************
+Generating : Top Solder
+      File : HB_mini_panel.GTS
+
+    Adding Layer      : Top Solder
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+    D18
+    D19
+    D20
+    D21
+    D22
+    D23
+    D24
+    D25
+    D27
+    D28
+    D29
+    D30
+    D31
+    D32
+    D33
+    D34
+    D35
+    D36
+    D37
+    D38
+    D40
+    D41
+    D42
+    D43
+    D44
+    D45
+    D47
+    D48
+    D49
+    D50
+    D63
+    D94
+    D95
+    D96
+    D97
+    D98
+*************************************************************
+
+*************************************************************
+Generating : Bottom Solder
+      File : HB_mini_panel.GBS
+
+    Adding Layer      : Bottom Solder
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D10
+    D63
+    D99
+*************************************************************
+
+*************************************************************
+Generating : Bottom Paste
+      File : HB_mini_panel.GBP
+
+    Adding Layer      : Bottom Paste
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D100
+*************************************************************
+
+*************************************************************
+Generating : Bottom Overlay
+      File : HB_mini_panel.GBO
+
+    Adding Layer      : Bottom Overlay
+
+
+Used DCodes :
+    D51
+    D54
+    D59
+    D62
+    D67
+    D68
+    D101
+*************************************************************
+
+*************************************************************
+Generating : Route Tool Path
+      File : HB_mini_panel.GM44
+
+    Adding Layer      : Route Tool Path
+
+
+Used DCodes :
+    D55
+*************************************************************
+
+*************************************************************
+Generating : VCUT
+      File : HB_mini_panel.GM45
+
+    Adding Layer      : VCUT
+
+
+Used DCodes :
+    D55
+    D59
+*************************************************************
+
+*************************************************************
+Generating : Profile
+      File : HB_mini_alt_PCB.GM
+
+
+Used DCodes :
+    D102
+*************************************************************
+

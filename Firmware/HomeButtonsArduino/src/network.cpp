@@ -167,7 +167,7 @@ void NetworkSMStates::DisconnectState::entry() {
   WiFi.mode(WIFI_OFF);
   sm().state_ = Network::State::DISCONNECTED;
   sm().info("disconnected.");
-  delay(500);
+  delay(MQTT_DISCONNECT_TIMEOUT);
 }
 
 void NetworkSMStates::DisconnectState::loop() {
@@ -300,29 +300,20 @@ void Network::set_on_connect(std::function<void()> on_connect) {
 
 void Network::_pre_wifi_connect() {
   WiFi.useStaticBuffers(true);
-  // set static IP
-  const auto &static_ip = device_state_.user_preferences().network.static_ip;
-  const auto &gateway = device_state_.user_preferences().network.gateway;
-  const auto &subnet = device_state_.user_preferences().network.subnet;
-  auto dns = device_state_.user_preferences().network.dns;
-  auto dns2 = device_state_.user_preferences().network.dns2;
-  bool ip_ok = static_ip != IPAddress(0, 0, 0, 0);
-  bool gw_ok = gateway != IPAddress(0, 0, 0, 0);
-  bool sn_ok = subnet != IPAddress(0, 0, 0, 0);
-  if (dns == IPAddress(0, 0, 0, 0)) {
-    dns = gateway;
-  }
-  if (dns2 == IPAddress(0, 0, 0, 0)) {
-    dns2 = IPAddress(1, 1, 1, 1);
-  }
-  if (ip_ok && gw_ok && sn_ok) {
+
+  StaticIPConfig static_ip_config =
+      validate_static_ip_config(device_state_.user_preferences().network);
+
+  if (static_ip_config.valid) {
     info("Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
-         ip_address_to_static_string(static_ip).c_str(),
-         ip_address_to_static_string(gateway).c_str(),
-         ip_address_to_static_string(subnet).c_str(),
-         ip_address_to_static_string(dns).c_str(),
-         ip_address_to_static_string(dns2).c_str());
-    WiFi.config(static_ip, gateway, subnet, dns, dns2);
+         ip_address_to_static_string(static_ip_config.static_ip).c_str(),
+         ip_address_to_static_string(static_ip_config.gateway).c_str(),
+         ip_address_to_static_string(static_ip_config.subnet).c_str(),
+         ip_address_to_static_string(static_ip_config.dns).c_str(),
+         ip_address_to_static_string(static_ip_config.dns2).c_str());
+    WiFi.config(static_ip_config.static_ip, static_ip_config.gateway,
+                static_ip_config.subnet, static_ip_config.dns,
+                static_ip_config.dns2);
   } else {
     info("Using DHCP. Static IP not set or not valid.");
   }
@@ -368,4 +359,25 @@ void Network::_publish_unsafe(const TopicType &topic, const char *payload,
   } else {
     error("pub to: %s FAIL.", topic.c_str());
   }
+}
+
+StaticIPConfig validate_static_ip_config(StaticIPConfig config) {
+  bool ip_ok = config.static_ip != IPAddress(0, 0, 0, 0);
+  bool gw_ok = config.gateway != IPAddress(0, 0, 0, 0);
+  bool sn_ok = config.subnet != IPAddress(0, 0, 0, 0);
+
+  if (ip_ok && gw_ok && sn_ok) {
+    config.valid = true;
+  } else {
+    config.valid = false;
+    return config;
+  }
+
+  if (config.dns == IPAddress(0, 0, 0, 0)) {
+    config.dns = config.gateway;
+  }
+  if (config.dns2 == IPAddress(0, 0, 0, 0)) {
+    config.dns2 = DEFAULT_DNS2;
+  }
+  return config;
 }

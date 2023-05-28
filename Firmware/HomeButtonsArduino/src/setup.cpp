@@ -10,6 +10,8 @@
 #include "hardware.h"
 #include "state.h"
 #include "logger.h"
+#include "network.h"
+#include "utils.h"
 
 static WiFiManager wifi_manager;
 
@@ -38,10 +40,12 @@ static WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "",
                                              BTN_LABEL_MAXLEN);
+#ifndef HOME_BUTTONS_MINI
 static WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
                                              BTN_LABEL_MAXLEN);
+#endif
 static WiFiManagerParameter temp_unit_param("temp_unit", "Temperature Unit", "",
                                             1);
 
@@ -110,8 +114,10 @@ void save_params_callback(DeviceState* device_state) {
   device_state->set_btn_label(1, btn2_label_param.getValue());
   device_state->set_btn_label(2, btn3_label_param.getValue());
   device_state->set_btn_label(3, btn4_label_param.getValue());
+#ifndef HOME_BUTTONS_MINI
   device_state->set_btn_label(4, btn5_label_param.getValue());
   device_state->set_btn_label(5, btn6_label_param.getValue());
+#endif
   device_state->set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
 
   IPAddress static_ip, gateway, subnet, dns, dns2;
@@ -169,10 +175,12 @@ void start_setup(DeviceState& device_state, Display& display,
                             BTN_LABEL_MAXLEN);
   btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
                             BTN_LABEL_MAXLEN);
+#ifndef HOME_BUTTONS_MINI
   btn5_label_param.setValue(device_state.get_btn_label(4).c_str(),
                             BTN_LABEL_MAXLEN);
   btn6_label_param.setValue(device_state.get_btn_label(5).c_str(),
                             BTN_LABEL_MAXLEN);
+#endif
   temp_unit_param.setValue(device_state.get_temp_unit().c_str(), 1);
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
@@ -190,12 +198,32 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&btn2_label_param);
   wifi_manager.addParameter(&btn3_label_param);
   wifi_manager.addParameter(&btn4_label_param);
+#ifndef HOME_BUTTONS_MINI
   wifi_manager.addParameter(&btn5_label_param);
   wifi_manager.addParameter(&btn6_label_param);
+#endif
   wifi_manager.addParameter(&temp_unit_param);
 
   display.disp_message("Entering\nSETUP...");
   display.update();
+
+  // set static IP if configured
+  StaticIPConfig static_ip_config =
+      validate_static_ip_config(device_state.user_preferences().network);
+  if (static_ip_config.valid) {
+    WiFi.config(static_ip_config.static_ip, static_ip_config.gateway,
+                static_ip_config.subnet, static_ip_config.dns,
+                static_ip_config.dns2);
+    setupLogger.info(
+        "Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
+        ip_address_to_static_string(static_ip_config.static_ip).c_str(),
+        ip_address_to_static_string(static_ip_config.gateway).c_str(),
+        ip_address_to_static_string(static_ip_config.subnet).c_str(),
+        ip_address_to_static_string(static_ip_config.dns).c_str(),
+        ip_address_to_static_string(static_ip_config.dns2).c_str());
+  } else {
+    setupLogger.info("Using DHCP. Static IP not set or not valid.");
+  }
 
   // connect Wi-Fi
   WiFi.mode(WIFI_STA);
@@ -220,7 +248,6 @@ void start_setup(DeviceState& device_state, Display& display,
       WiFi.disconnect();
       delay(1000);
     } else {
-      device_state.persisted().wifi_done = false;
       device_state.persisted().silent_restart = true;
       device_state.save_all();
       setupLogger.warning("Wi-Fi error.");
@@ -292,6 +319,7 @@ void start_setup(DeviceState& device_state, Display& display,
   WiFi.disconnect(true);
   device_state.persisted().setup_done = true;
   device_state.persisted().silent_restart = true;
+  device_state.persisted().connect_on_restart = true;
   device_state.save_all();
 
   setupLogger.info("setup successful");

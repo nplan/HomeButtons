@@ -5,29 +5,40 @@ repo_name: nplan/HomeButtons
 
 nav:
   - Home: index.md
-  - Getting Started: setup.md
-  - User Guide: user_guide.md
-  - Tech Specs: specs.md
-  - Firmware Update: update.md
-  - MQTT Topics: mqtt_topics.md
-  - Soldering: soldering.md
-  - Hardware Hacks: hardware_hacks.md
-  - Minimal Setup: minimal.md
-  - Help: help.md
+  - Home Buttons Mini:
+      - mini/index.md
+      - Getting Started: mini/setup.md
+      - User Guide: mini/user_guide.md
+      - MQTT Topics: mini/mqtt_topics.md
+      - Firmware Update: mini/update.md
+  - Home Buttons:
+      - original/index.md
+      - Getting Started: original/setup.md
+      - User Guide: original/user_guide.md
+      - MQTT Topics: original/mqtt_topics.md
+      - Soldering: original/soldering.md
+      - Hardware Hacks: original/hardware_hacks.md
+      - Firmware Update: original/update.md
+  - Support:
+      - Common Issues: help.md
+      - Minimal Setup: minimal.md
 
 theme:
   name: material
   logo: assets/home_buttons_logo.svg
   favicon: assets/home_buttons_logo.svg
   features:
-    - content.code.annotate 
+    - content.code.annotate
     - navigation.indexes
-  
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+
     # Palette toggle for light mode
   palette:
     - scheme: default
       toggle:
-        icon: material/brightness-7 
+        icon: material/brightness-7
         name: Switch to dark mode
       primary: cyan
       accent: orange
@@ -39,7 +50,6 @@ theme:
         name: Switch to light mode
       primary: cyan
       accent: orange
-
 
 markdown_extensions:
   - attr_list
@@ -58,3 +68,4 @@ extra:
     provider: google
     property: G-F5LT7JQ5LS
 
+copyright: Copyright &copy; 2022 - 2023 PLab

@@ -1,14 +1,6 @@
 #include "display.h"
 
 #include <GxEPD2_BW.h>
-#include <Fonts/FreeMono9pt7b.h>
-#include <Fonts/FreeMonoBold12pt7b.h>
-#include <Fonts/FreeSans18pt7b.h>
-#include <Fonts/FreeSans9pt7b.h>
-#include <Fonts/FreeSansBold12pt7b.h>
-#include <Fonts/FreeSansBold18pt7b.h>
-#include <Fonts/FreeSansBold24pt7b.h>
-#include <Fonts/FreeSansBold9pt7b.h>
 #include <SPIFFS.h>
 #include <U8g2_for_Adafruit_GFX.h>
 #include <qrcode.h>
@@ -16,10 +8,14 @@
 #include "bitmaps.h"
 #include "config.h"
 #include "hardware.h"
-#include "types.h"
 
+#ifndef HOME_BUTTONS_MINI
 static constexpr uint16_t WIDTH = 128;
 static constexpr uint16_t HEIGHT = 296;
+#else
+static constexpr int WIDTH = 200;
+constexpr int HEIGHT = 200;
+#endif
 
 uint16_t read16(File &f) {
   // BMP data is stored little-endian, same as Arduino.
@@ -40,7 +36,13 @@ uint32_t read32(File &f) {
 }
 
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
+
+#ifndef HOME_BUTTONS_MINI
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
+#else
+#define GxEPD2_DRIVER_CLASS GxEPD2_154_D67
+#endif
+
 #define MAX_DISPLAY_BUFFER_SIZE 65536ul  // e.g.
 #define MAX_HEIGHT(EPD)                                      \
   (EPD::HEIGHT <= MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8) \
@@ -77,7 +79,7 @@ void Display::end() {
 void Display::update() {
   if (state == State::IDLE) return;
 
-  if (state == State::CMD_END) {
+  if (state == State::CMD_END && !new_ui_cmd) {
     state = State::ENDING;
     if (current_ui_state.disappearing) {
       draw_ui_state = pre_disappear_ui_state;
@@ -127,6 +129,9 @@ void Display::update() {
     case DisplayPage::INFO:
       draw_info();
       break;
+    case DisplayPage::DEVICE_INFO:
+      draw_device_info();
+      break;
     case DisplayPage::MESSAGE:
       draw_message(draw_ui_state.message);
       break;
@@ -149,10 +154,8 @@ void Display::update() {
       draw_web_config();
       break;
     case DisplayPage::TEST:
-      draw_test();
-      break;
-    case DisplayPage::TEST_INV:
-      draw_test(true);
+      draw_test(draw_ui_state.message.c_str(), draw_ui_state.mdi_name.c_str(),
+                draw_ui_state.mdi_size);
       break;
   }
   current_ui_state = draw_ui_state;
@@ -195,12 +198,23 @@ void Display::disp_error(const char *message, uint32_t duration) {
 }
 
 void Display::disp_main() {
-  UIState new_cmd_state{DisplayPage::MAIN};
+  UIState new_cmd_state;
+  if (device_state_.persisted().setup_done &&
+      device_state_.persisted().wifi_done) {
+    new_cmd_state = {DisplayPage::MAIN};
+  } else {
+    new_cmd_state = {DisplayPage::WELCOME};
+  }
   set_cmd_state(new_cmd_state);
 }
 
 void Display::disp_info() {
   UIState new_cmd_state{DisplayPage::INFO};
+  set_cmd_state(new_cmd_state);
+}
+
+void Display::disp_device_info() {
+  UIState new_cmd_state{DisplayPage::DEVICE_INFO};
   set_cmd_state(new_cmd_state);
 }
 
@@ -223,13 +237,13 @@ void Display::disp_web_config() {
   set_cmd_state(new_cmd_state);
 }
 
-void Display::disp_test(bool invert) {
+void Display::disp_test(const char *text, const char *mdi_name,
+                        uint16_t mdi_size) {
   UIState new_cmd_state{};
-  if (!invert) {
-    new_cmd_state.page = DisplayPage::TEST;
-  } else {
-    new_cmd_state.page = DisplayPage::TEST_INV;
-  }
+  new_cmd_state.page = DisplayPage::TEST;
+  new_cmd_state.message = UIState::MessageType{text};
+  new_cmd_state.mdi_name = MDIName{mdi_name};
+  new_cmd_state.mdi_size = mdi_size;
   set_cmd_state(new_cmd_state);
 }
 
@@ -244,37 +258,36 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
+#ifndef HOME_BUTTONS_MINI
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
   disp->setRotation(0);
-  disp->setTextColor(text_color);
-  disp->setTextWrap(true);
-  disp->setFont(&FreeMono9pt7b);
   disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
 
   if (!error) {
     if (!large) {
-      disp->setFont(&FreeMono9pt7b);
-      disp->setCursor(0, 20);
+      u8g2.setFont(u8g2_font_courR12_tr);
+      u8g2.setCursor(0, 20);
     } else {
-      disp->setFont(&FreeMonoBold12pt7b);
-      disp->setCursor(0, 30);
+      u8g2.setFont(u8g2_font_helvB18_te);
+      u8g2.setCursor(0, 30);
     }
-    disp->print(message.c_str());
+    u8g2.print(message.c_str());
   } else {
-    disp->setFont(&FreeMonoBold12pt7b);
-    disp->setCursor(0, 0);
-    int16_t x, y;
-    uint16_t w, h;
+    u8g2.setFont(u8g2_font_helvB12_tr);
     const char *text = "ERROR";
-    disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-    disp->setCursor(WIDTH / 2 - w / 2, 20);
-    disp->print(text);
-    disp->setFont(&FreeMono9pt7b);
-    disp->setCursor(0, 60);
-    disp->print(message.c_str());
+    uint16_t w = u8g2.getUTF8Width(text);
+    u8g2.setCursor(WIDTH / 2 - w / 2, 20);
+    u8g2.print(text);
+    u8g2.setFont(u8g2_font_courR12_tr);
+    u8g2.setCursor(0, 60);
+    u8g2.print(message.c_str());
   }
   disp->display();
 }
@@ -447,84 +460,134 @@ void Display::draw_main() {
 
 void Display::draw_info() {
   disp->setRotation(0);
-  disp->setTextColor(text_color);
-  disp->setTextWrap(false);
   disp->setFullWindow();
 
-  disp->fillScreen(bg_color);
-  disp->setCursor(0, 0);
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
-  int16_t x, y;
-  uint16_t w, h;
+  disp->fillScreen(bg_color);
+
+  uint16_t w;
   UIState::MessageType text;
 
   text = "- Temp -";
-  disp->setFont(&FreeMono9pt7b);
-  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 30);
-  disp->print(text.c_str());
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text.c_str());
+  u8g2.setCursor(WIDTH / 2 - w / 2, 30);
+  u8g2.print(text.c_str());
 
   text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
                               device_state_.get_temp_unit().c_str());
-  disp->setFont(&FreeSansBold18pt7b);
-  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2 - 2, 70);
-  disp->print(text.c_str());
+  u8g2.setFont(u8g2_font_helvB24_te);
+  w = u8g2.getUTF8Width(text.c_str());
+  u8g2.setCursor(WIDTH / 2 - w / 2 - 2, 70);
+  u8g2.print(text.c_str());
 
   text = "- Humd -";
-  disp->setFont(&FreeMono9pt7b);
-  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 129);
-  disp->print(text.c_str());
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text.c_str());
+  u8g2.setCursor(WIDTH / 2 - w / 2, 129);
+  u8g2.print(text.c_str());
 
   text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
-  disp->setFont(&FreeSansBold18pt7b);
-  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2 - 2, 169);
-  disp->print(text.c_str());
+  u8g2.setFont(u8g2_font_helvB24_te);
+  w = u8g2.getUTF8Width(text.c_str());
+  u8g2.setCursor(WIDTH / 2 - w / 2 - 2, 169);
+  u8g2.print(text.c_str());
 
   text = "- Batt -";
-  disp->setFont(&FreeMono9pt7b);
-  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 228);
-  disp->print(text.c_str());
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text.c_str());
+  u8g2.setCursor(WIDTH / 2 - w / 2, 228);
+  u8g2.print(text.c_str());
 
   if (device_state_.sensors().battery_present) {
     text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
   } else {
     text = "-";
   }
-  disp->setFont(&FreeSansBold18pt7b);
-  disp->getTextBounds(text.c_str(), 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2 - 2, 268);
-  disp->print(text.c_str());
+  u8g2.setFont(u8g2_font_helvB24_te);
+  w = u8g2.getUTF8Width(text.c_str());
+  u8g2.setCursor(WIDTH / 2 - w / 2 - 2, 268);
+  u8g2.print(text.c_str());
 
+  disp->display();
+}
+
+void Display::draw_device_info() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(40, 0, hb_logo_48x48, 48, 48, text_color);
+
+  u8g2.setFont(u8g2_font_profont12_tr);
+
+  u8g2.setCursor(0, 70);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 82);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 94);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 106);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(0, 140);
+  u8g2.print(ip_info.c_str());
+
+  UIState::MessageType batt_volt;
+  if (device_state_.sensors().battery_present) {
+    batt_volt = UIState::MessageType("Battery: %.2f V",
+                                     device_state_.sensors().battery_voltage);
+  } else {
+    batt_volt = UIState::MessageType("Battery: -");
+  }
+  u8g2.setCursor(0, 152);
+  u8g2.print(batt_volt.c_str());
   disp->display();
 }
 
 void Display::draw_welcome() {
   disp->setRotation(0);
-  disp->setTextColor(text_color);
-  disp->setTextWrap(false);
   disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
   disp->setCursor(0, 0);
 
-  int16_t x, y;
-  uint16_t w, h;
+  uint16_t w;
   const char *text = "Home Buttons";
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 40);
-  disp->print(text);
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 40);
+  u8g2.print(text);
 
-  disp->drawBitmap(54, 52, hb_logo_20x21px, 20, 21, GxEPD_BLACK);
+  disp->drawXBitmap(52, 52, hb_logo_24x24, 24, 24, GxEPD_BLACK);
 
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->getTextBounds("--------------------", 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 102);
-  disp->print("--------------------");
+  text = "------------------------";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 102);
+  u8g2.print(text);
 
   uint8_t version = 6;  // 41x41px
   QRCode qrcode;
@@ -532,10 +595,10 @@ void Display::draw_welcome() {
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
 
   text = "Setup guide:";
-  disp->setFont(&FreeSans9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 145);
-  disp->print(text);
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 145);
+  u8g2.print(text);
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 165;
@@ -549,31 +612,31 @@ void Display::draw_welcome() {
     }
   }
 
-  disp->setFont();
-  disp->setTextSize(1);
+  u8g2.setFont(u8g2_font_profont12_tr);
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 272);
+  u8g2.print(sw_ver.c_str());
 
-  disp->setCursor(0, 265);
-  UIState::MessageType sw_ver = UIState::MessageType("Software: ") + SW_VERSION;
-  disp->print(sw_ver.c_str());
-
-  disp->setCursor(0, 275);
   UIState::MessageType model_info = UIState::MessageType("Model: ") +
                                     device_state_.factory().model_id.c_str() +
                                     " rev " +
                                     device_state_.factory().hw_version.c_str();
-  disp->print(model_info.c_str());
+  u8g2.setCursor(0, 283);
+  u8g2.print(model_info.c_str());
 
-  disp->setCursor(0, 285);
-  disp->print(device_state_.factory().unique_id.c_str());
+  u8g2.setCursor(0, 294);
+  u8g2.print(device_state_.factory().unique_id.c_str());
 
   disp->display();
 }
 
 void Display::draw_settings() {
   disp->setRotation(0);
-  disp->setTextColor(text_color);
-  disp->setTextWrap(false);
   disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
 
@@ -584,24 +647,24 @@ void Display::draw_settings() {
 
   disp->drawXBitmap(40, 200, hb_logo_48x48, 48, 48, text_color);
 
-  disp->setFont();
-  disp->setTextSize(1);
-  disp->setCursor(0, 255);
-  disp->print(device_state_.device_name().c_str());
+  u8g2.setFont(u8g2_font_profont12_tr);
 
-  disp->setCursor(0, 265);
-  UIState::MessageType sw_ver =
-      UIState::MessageType("Software: %s", SW_VERSION);
-  disp->print(sw_ver.c_str());
+  u8g2.setCursor(0, 261);
+  u8g2.print(device_state_.device_name().c_str());
 
-  disp->setCursor(0, 275);
-  UIState::MessageType model_info = UIState::MessageType(
-      "Model: %s rev %s", device_state_.factory().model_id.c_str(),
-      device_state_.factory().hw_version.c_str());
-  disp->print(model_info.c_str());
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 272);
+  u8g2.print(sw_ver.c_str());
 
-  disp->setCursor(0, 285);
-  disp->print(device_state_.factory().unique_id.c_str());
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 283);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 294);
+  u8g2.print(device_state_.factory().unique_id.c_str());
 
   disp->display();
 }
@@ -618,19 +681,21 @@ void Display::draw_ap_config() {
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
   disp->setRotation(0);
-  disp->setTextColor(text_color);
-  disp->setTextWrap(false);
-  disp->setFont(&FreeSans9pt7b);
   disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
 
-  int16_t x, y;
-  uint16_t w, h;
+  u8g2.setFont(u8g2_font_courR12_tr);
+
+  uint16_t w;
   const char *text = "Scan:";
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 20);
-  disp->print(text);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 20);
+  u8g2.print(text);
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 35;
@@ -643,30 +708,30 @@ void Display::draw_ap_config() {
       }
     }
   }
-  text = "------ or ------";
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 153);
-  disp->print(text);
+  text = "--------- or ---------";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 153);
+  u8g2.print(text);
 
   text = "Connect to:";
-  disp->setFont(&FreeSans9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 190);
-  disp->print(text);
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 190);
+  u8g2.print(text);
 
-  disp->setCursor(0, 220);
-  disp->print("Wi-Fi:");
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->setCursor(0, 235);
-  disp->print(device_state_.get_ap_ssid().c_str());
+  u8g2.setCursor(0, 220);
+  u8g2.print("Wi-Fi:");
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  u8g2.setCursor(0, 235);
+  u8g2.print(device_state_.get_ap_ssid().c_str());
 
-  disp->setFont(&FreeSans9pt7b);
-  disp->setCursor(0, 260);
-  disp->print("Password:");
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->setCursor(0, 275);
-  disp->print(device_state_.get_ap_password());
+  u8g2.setFont(u8g2_font_courR12_tr);
+  u8g2.setCursor(0, 260);
+  u8g2.print("Password:");
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  u8g2.setCursor(0, 275);
+  u8g2.print(device_state_.get_ap_password());
 
   disp->display();
 }
@@ -681,19 +746,21 @@ void Display::draw_web_config() {
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
   disp->setRotation(0);
-  disp->setTextColor(text_color);
-  disp->setTextWrap(false);
-  disp->setFont(&FreeSans9pt7b);
   disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
 
-  int16_t x, y;
-  uint16_t w, h;
+  u8g2.setFont(u8g2_font_courR12_tr);
+
+  uint16_t w;
   const char *text = "Scan:";
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 20);
-  disp->print(text);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 20);
+  u8g2.print(text);
 
   uint16_t qr_x = 23;
   uint16_t qr_y = 35;
@@ -707,62 +774,350 @@ void Display::draw_web_config() {
       }
     }
   }
-  text = "------ or ------";
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 153);
-  disp->print(text);
+  text = "--------- or ---------";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 153);
+  u8g2.print(text);
 
   text = "Go to:";
-  disp->setFont(&FreeSans9pt7b);
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-  disp->setCursor(WIDTH / 2 - w / 2, 200);
-  disp->print(text);
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 200);
+  u8g2.print(text);
 
-  disp->setFont(&FreeSansBold9pt7b);
-  disp->setCursor(0, 240);
-  disp->print("http://");
-  disp->setCursor(0, 260);
-  disp->print(device_state_.ip());
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  u8g2.setCursor(0, 240);
+  u8g2.print("http://");
+  u8g2.setCursor(0, 260);
+  u8g2.print(device_state_.ip());
 
   disp->display();
 }
 
-void Display::draw_test(bool invert) {
+void Display::draw_test(const char *text, const char *mdi_name,
+                        uint16_t mdi_size) {
   uint16_t fg, bg;
-  if (!invert) {
-    fg = GxEPD_BLACK;
-    bg = GxEPD_WHITE;
-  } else {
-    fg = GxEPD_WHITE;
-    bg = GxEPD_BLACK;
-  }
+  fg = GxEPD_BLACK;
+  bg = GxEPD_WHITE;
 
   disp->setRotation(0);
-  disp->setTextColor(fg);
-  disp->setTextWrap(true);
-  disp->setFont(&FreeSansBold24pt7b);
   disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(fg);
+  u8g2.setBackgroundColor(bg);
 
   disp->fillScreen(bg);
 
-  int16_t x, y;
-  uint16_t w, h;
-  const char *text = "TEST";
+  mdi_.begin();
+  draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 50);
+  mdi_.end();
 
-  disp->getTextBounds(text, 0, 0, &x, &y, &w, &h);
-
-  disp->setCursor(WIDTH / 2 - w / 2, 90);
-  disp->print(text);
-
-  disp->setCursor(WIDTH / 2 - w / 2, 170);
-  disp->print(text);
-
-  disp->setCursor(WIDTH / 2 - w / 2, 250);
-  disp->print(text);
+  u8g2.setFont(u8g2_font_helvB24_te);
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 250);
+  u8g2.print(text);
 
   disp->display();
 }
+#else
+void Display::draw_message(const UIState::MessageType &message, bool error,
+                           bool large) {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  if (!error) {
+    if (!large) {
+      u8g2.setFont(u8g2_font_courR18_tf);
+      u8g2.setCursor(0, 20);
+    } else {
+      u8g2.setFont(u8g2_font_helvB24_tr);
+      u8g2.setCursor(0, 30);
+    }
+    u8g2.print(message.c_str());
+  } else {
+    u8g2.setFont(u8g2_font_helvB18_tr);
+    const char *text = "ERROR";
+    uint16_t w = u8g2.getUTF8Width(text);
+    u8g2.setCursor(WIDTH / 2 - w / 2, 30);
+    u8g2.print(text);
+    u8g2.setFont(u8g2_font_courR18_tf);
+    u8g2.setCursor(0, 70);
+    u8g2.print(message.c_str());
+  }
+  disp->display();
+}
+
+void Display::draw_main() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  disp->fillScreen(bg_color);
+
+  mdi_.begin();
+
+  // Loop through buttons
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+    uint16_t size = 100;
+    uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
+    uint16_t y = i < 2 ? 0 : HEIGHT - size;
+    if (label.substring(0, 4) == "mdi:") {
+      MDIName icon = label.substring(
+          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
+      draw_mdi(icon.c_str(), size, x, y);
+    } else {
+      draw_mdi("x", size, x, y);
+    }
+  }
+  // disp->drawRect(WIDTH / 2 - 1, 0, 2, HEIGHT, GxEPD_BLACK);
+  // disp->drawRect(0, HEIGHT / 2 - 1, WIDTH, 2, GxEPD_BLACK);
+  mdi_.end();
+  disp->display();
+}
+
+void Display::draw_info() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  UIState::MessageType text;
+  u8g2.setFont(u8g2_font_helvB24_tr);
+
+  disp->drawXBitmap(5, 4, thermometer_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
+                              device_state_.get_temp_unit().c_str());
+  u8g2.setCursor(85, 50);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(5, 68, water_percent_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
+  u8g2.setCursor(85, 116);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(5, 132, battery_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
+  u8g2.setCursor(85, 180);
+  u8g2.print(text.c_str());
+
+  disp->display();
+}
+
+void Display::draw_device_info() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(76, 0, hb_logo_48x48, 48, 48, text_color);
+
+  u8g2.setFont(u8g2_font_profont17_tr);
+
+  u8g2.setCursor(0, 70);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 90);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 110);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 130);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(0, 160);
+  u8g2.print(ip_info.c_str());
+
+  UIState::MessageType batt_volt = UIState::MessageType(
+      "Battery: %.2f V", device_state_.sensors().battery_voltage);
+  u8g2.setCursor(0, 180);
+  u8g2.print(batt_volt.c_str());
+  disp->display();
+}
+
+void Display::draw_welcome() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+  u8g2.setBackgroundColor(bg_color);
+  u8g2.setForegroundColor(text_color);
+  disp->fillScreen(bg_color);
+
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, hb_logo_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.factory().serial_number.c_str();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+  disp->display();
+}
+
+void Display::draw_settings() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(text_color);
+  u8g2.setBackgroundColor(bg_color);
+
+  disp->fillScreen(bg_color);
+
+  disp->drawXBitmap(0, 0, account_cog_100x100, 100, 100, text_color);
+  disp->drawXBitmap(100, 0, wifi_cog_100x100, 100, 100, text_color);
+  disp->drawXBitmap(0, 100, restore_100x100, 100, 100, text_color);
+  disp->drawXBitmap(100, 100, close_100x100, 100, 100, text_color);
+
+  // disp->drawRect(WIDTH / 2 - 1, 0, 2, HEIGHT, GxEPD_BLACK);
+  // disp->drawRect(0, HEIGHT / 2 - 1, WIDTH, 2, GxEPD_BLACK);
+  disp->display();
+}
+
+void Display::draw_ap_config() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+  u8g2.setBackgroundColor(bg_color);
+  u8g2.setForegroundColor(text_color);
+  disp->fillScreen(bg_color);
+
+  UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") +
+                                  device_state_.get_ap_ssid().c_str() +
+                                  ";P:" + device_state_.get_ap_password() +
+                                  ";;";
+
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, wifi_cog_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.get_ap_ssid().c_str();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+  disp->display();
+}
+
+void Display::draw_web_config() {
+  disp->setRotation(0);
+  disp->setFullWindow();
+  u8g2.setBackgroundColor(bg_color);
+  u8g2.setForegroundColor(text_color);
+  disp->fillScreen(bg_color);
+
+  UIState::MessageType contents =
+      UIState::MessageType("http://") + device_state_.ip();
+
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, account_cog_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.ip();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+  disp->display();
+}
+
+void Display::draw_test(const char *text, const char *mdi_name,
+                        uint16_t mdi_size) {
+  uint16_t fg, bg;
+  fg = GxEPD_BLACK;
+  bg = GxEPD_WHITE;
+
+  disp->setRotation(0);
+  disp->setFullWindow();
+
+  u8g2.setFontMode(1);
+  u8g2.setForegroundColor(fg);
+  u8g2.setBackgroundColor(bg);
+
+  disp->fillScreen(bg);
+
+  mdi_.begin();
+  draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 20);
+  mdi_.end();
+
+  u8g2.setFont(u8g2_font_helvB24_te);
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 175);
+  u8g2.print(text);
+
+  disp->display();
+}
+#endif
 
 void Display::draw_white() {
   disp->setFullWindow();
@@ -951,6 +1306,13 @@ void Display::draw_mdi(const char *name, uint16_t size, int16_t x, int16_t y) {
     draw_placeholder = true;
   }
   if (draw_placeholder) {
-    disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
+    if (size == 64) {
+      disp->drawXBitmap(x, y, file_question_outline_64x64, 64, 64, text_color);
+    } else if (size == 48) {
+      disp->drawXBitmap(x, y, file_question_outline_48x48, 48, 48, text_color);
+    } else if (size == 100) {
+      disp->drawXBitmap(x, y, file_question_outline_100x100, 100, 100,
+                        text_color);
+    }
   }
 }

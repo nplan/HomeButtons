@@ -10,6 +10,15 @@
 #include "hardware.h"
 #include <IPAddress.h>
 
+struct StaticIPConfig {
+  bool valid;
+  IPAddress static_ip;
+  IPAddress gateway;
+  IPAddress subnet;
+  IPAddress dns;
+  IPAddress dns2;
+};
+
 class DeviceState : public Logger {
  private:
   struct Factory {
@@ -27,13 +36,7 @@ class DeviceState : public Logger {
     uint16_t sensor_interval = 0;  // minutes
     bool use_fahrenheit = false;
 
-    struct {
-      IPAddress static_ip;
-      IPAddress gateway;
-      IPAddress subnet;
-      IPAddress dns;
-      IPAddress dns2;
-    } network;
+    StaticIPConfig network;
 
     struct {
       String server = "";
@@ -57,6 +60,7 @@ class DeviceState : public Logger {
     bool wifi_quick_connect = false;
     bool charge_complete_showing = false;
     bool info_screen_showing = false;
+    bool user_msg_showing = false;
     bool check_connection = false;
     uint8_t failed_connections = 0;
     bool restart_to_wifi_setup = false;
@@ -64,6 +68,7 @@ class DeviceState : public Logger {
     bool send_discovery_config = false;
     bool silent_restart = false;
     bool download_mdi_icons = false;
+    bool connect_on_restart = false;
   } persisted_;
 
   struct Flags {
@@ -75,6 +80,7 @@ class DeviceState : public Logger {
     float temperature = 0;
     float humidity = 0;
     uint8_t battery_pct = 0;
+    float battery_voltage = 0;
     bool charging = false;
     bool dc_connected = false;
     bool battery_present = false;
@@ -101,11 +107,16 @@ class DeviceState : public Logger {
                             const IPAddress& gateway, const IPAddress& subnet,
                             const IPAddress& dns = IPAddress(),
                             const IPAddress& dns2 = IPAddress()) {
+    user_preferences_.network.valid = false;
     user_preferences_.network.static_ip = static_ip;
     user_preferences_.network.gateway = gateway;
     user_preferences_.network.subnet = subnet;
     user_preferences_.network.dns = dns;
     user_preferences_.network.dns2 = dns2;
+  }
+
+  const StaticIPConfig get_static_ip_config() const {
+    return user_preferences_.network;
   }
 
   const DeviceName& device_name() const {

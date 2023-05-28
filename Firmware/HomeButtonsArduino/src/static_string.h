@@ -137,6 +137,10 @@ class StaticString {
   }
 
   StaticString& operator=(const char* other) {
+    if (!other) {
+      data_[0] = '\0';
+      return *this;
+    }
     auto n = std::snprintf(data_, MAX_SIZE, "%s", other);
     _check_snprintf_return_value(n);
     return *this;

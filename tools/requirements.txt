@@ -1,0 +1,6 @@
+mkdocs-material
+paho-mqtt
+pyserial
+requests
+esptool
+pyusb

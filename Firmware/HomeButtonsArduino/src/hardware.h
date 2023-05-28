@@ -66,9 +66,15 @@ struct HardwareDefinition : public Logger {
   float DC_DETECT_VOLT;
   float CHARGE_HYSTERESIS_VOLT;
 
-  // battery SoC linear approximation coeficients
+  // battery SoC linear approximation coeficients (used for lithium cells)
   float BATT_SOC_EST_K;
   float BATT_SOC_EST_N;
+
+  // atan SoC approximation coeficients (used for alkaline cells)
+  float BAT_SOC_EST_ATAN_A;
+  float BAT_SOC_EST_ATAN_B;
+  float BAT_SOC_EST_ATAN_C;
+  float BAT_SOC_EST_ATAN_D;
 
   // ------ wakeup ------
   uint64_t WAKE_BITMASK;
@@ -78,6 +84,9 @@ struct HardwareDefinition : public Logger {
 
   void begin();
 
+  uint8_t map_button_num_sw_to_hw(uint8_t hw_num);
+
+  bool button_pressed(uint8_t num);
   bool any_button_pressed();
 
   void set_led(uint8_t ch, uint8_t brightness);
@@ -131,6 +140,9 @@ struct HardwareDefinition : public Logger {
   void load_hw_rev_2_0();
   void load_hw_rev_2_2();
   void load_hw_rev_2_3();
+
+  void load_mini_hw_rev_0_1();
+  void load_mini_hw_rev_1_1();
 
  private:
   struct {

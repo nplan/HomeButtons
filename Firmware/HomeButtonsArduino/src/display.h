@@ -6,6 +6,7 @@
 #include "state.h"
 #include "logger.h"
 #include "mdi_helper.h"
+#include "types.h"
 
 // parameters for draw_bmp()
 static constexpr uint16_t input_buffer_pixels = 800;
@@ -18,6 +19,7 @@ enum class DisplayPage {
   EMPTY,
   MAIN,
   INFO,
+  DEVICE_INFO,
   MESSAGE,
   MESSAGE_LARGE,
   ERROR,
@@ -25,8 +27,7 @@ enum class DisplayPage {
   SETTINGS,
   AP_CONFIG,
   WEB_CONFIG,
-  TEST,
-  TEST_INV
+  TEST
 };
 
 struct UIState {
@@ -35,6 +36,8 @@ struct UIState {
 
   DisplayPage page = DisplayPage::EMPTY;
   MessageType message{};
+  MDIName mdi_name{};
+  uint16_t mdi_size = 0;
   bool disappearing = false;
   uint32_t appear_time = 0;
   uint32_t disappear_timeout = 0;
@@ -54,11 +57,12 @@ class Display : public Logger {
   void disp_error(const char* message, uint32_t duration = 0);
   void disp_main();
   void disp_info();
+  void disp_device_info();
   void disp_welcome();
   void disp_settings();
   void disp_ap_config();
   void disp_web_config();
-  void disp_test(bool invert = false);
+  void disp_test(const char* text, const char* mdi_name, uint16_t mdi_size);
 
   UIState get_ui_state();
   void init_ui_state(UIState ui_state);  // used after wakeup
@@ -101,11 +105,12 @@ class Display : public Logger {
                     bool large = false);
   void draw_main();
   void draw_info();
+  void draw_device_info();
   void draw_welcome();
   void draw_settings();
   void draw_ap_config();
   void draw_web_config();
-  void draw_test(bool invert = false);
+  void draw_test(const char* text, const char* mdi_name, uint16_t mdi_size);
   void draw_white();
   void draw_black();
   bool draw_bmp(File& file, int16_t x, int16_t y);

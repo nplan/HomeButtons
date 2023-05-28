@@ -1,0 +1,8 @@
+{
+  "wifi_ssid": "my_wifi",
+  "wifi_password": "password",
+  "mqtt_server": "192.168.1.2",
+  "mqtt_port": 1883,
+  "mqtt_username": "user",
+  "mqtt_password": "password"
+}

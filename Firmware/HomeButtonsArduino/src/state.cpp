@@ -12,12 +12,10 @@ void DeviceState::save_user() {
   preferences_.putString("base_topic", user_preferences_.mqtt.base_topic);
   preferences_.putString("disc_prefix",
                          user_preferences_.mqtt.discovery_prefix);
-  preferences_.putString("btn1_txt", user_preferences_.btn_labels[0].c_str());
-  preferences_.putString("btn2_txt", user_preferences_.btn_labels[1].c_str());
-  preferences_.putString("btn3_txt", user_preferences_.btn_labels[2].c_str());
-  preferences_.putString("btn4_txt", user_preferences_.btn_labels[3].c_str());
-  preferences_.putString("btn5_txt", user_preferences_.btn_labels[4].c_str());
-  preferences_.putString("btn6_txt", user_preferences_.btn_labels[5].c_str());
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    preferences_.putString(StaticString<8>("btn%d_txt", i + 1).c_str(),
+                           user_preferences_.btn_labels[i].c_str());
+  }
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
   preferences_.putBool("use_f", user_preferences_.use_fahrenheit);
   preferences_.putString(
@@ -53,18 +51,17 @@ void DeviceState::load_user() {
   user_preferences_.mqtt.discovery_prefix =
       preferences_.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
 
-  _load_to_static_string(user_preferences_.btn_labels[0], "btn1_txt",
-                         BTN_1_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[1], "btn2_txt",
-                         BTN_2_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[2], "btn3_txt",
-                         BTN_3_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[3], "btn4_txt",
-                         BTN_4_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[4], "btn5_txt",
-                         BTN_5_LABEL_DFLT);
-  _load_to_static_string(user_preferences_.btn_labels[5], "btn6_txt",
-                         BTN_6_LABEL_DFLT);
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    _load_to_static_string(
+        user_preferences_.btn_labels[i],
+        StaticString<8>("btn%d_txt", i + 1).c_str(),
+#ifndef HOME_BUTTONS_MINI
+        StaticString<8>("%s%d", BNT_LABEL_DFLT_PREFIX, i + 1).c_str()
+#else
+        StaticString<16>("mdi:numeric-%d", i + 1).c_str()
+#endif
+    );
+  }
 
   user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
@@ -95,6 +92,7 @@ void DeviceState::save_persisted() {
   preferences_.putBool("wifi_qc", persisted_.wifi_quick_connect);
   preferences_.putBool("chg_cpt_shwn", persisted_.charge_complete_showing);
   preferences_.putBool("info_shwn", persisted_.info_screen_showing);
+  preferences_.putBool("u_msg_shwn", persisted_.user_msg_showing);
   preferences_.putBool("chk_conn", persisted_.check_connection);
   preferences_.putUInt("faild_cons", persisted_.failed_connections);
   preferences_.putBool("rst_to_w_stp", persisted_.restart_to_wifi_setup);
@@ -102,6 +100,7 @@ void DeviceState::save_persisted() {
   preferences_.putBool("send_adisc", persisted_.send_discovery_config);
   preferences_.putBool("silent_rst", persisted_.silent_restart);
   preferences_.putBool("dl_mdi", persisted_.download_mdi_icons);
+  preferences_.putBool("con_on_r", persisted_.connect_on_restart);
   preferences_.end();
 }
 
@@ -116,6 +115,7 @@ void DeviceState::load_persisted() {
   persisted_.charge_complete_showing =
       preferences_.getBool("chg_cpt_shwn", false);
   persisted_.info_screen_showing = preferences_.getBool("info_shwn", false);
+  persisted_.user_msg_showing = preferences_.getBool("u_msg_shwn", false);
   persisted_.check_connection = preferences_.getBool("chk_conn", false);
   persisted_.failed_connections = preferences_.getUInt("faild_cons", 0);
   persisted_.restart_to_wifi_setup =
@@ -124,6 +124,7 @@ void DeviceState::load_persisted() {
   persisted_.send_discovery_config = preferences_.getBool("send_adisc", false);
   persisted_.silent_restart = preferences_.getBool("silent_rst", false);
   persisted_.download_mdi_icons = preferences_.getBool("dl_mdi", false);
+  persisted_.connect_on_restart = preferences_.getBool("con_on_r", false);
   preferences_.end();
 }
 
@@ -143,6 +144,7 @@ void DeviceState::clear_persisted_flags() {
   persisted_.restart_to_setup = false;
   persisted_.silent_restart = false;
   persisted_.download_mdi_icons = false;
+  persisted_.connect_on_restart = false;
   save_all();
 }
 

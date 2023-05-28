@@ -209,6 +209,7 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(button_label_config_topics, buffer, true);
   }
 
+#ifndef HOME_BUTTONS_MINI
   {
     TopicType awake_mode_config_topic =
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
@@ -227,6 +228,7 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(awake_mode_conf, buffer, sizeof(buffer));
     _network.publish(awake_mode_config_topic, buffer, true);
   }
+#endif
 }
 
 void MQTTHelper::update_discovery_config() {
@@ -294,18 +296,17 @@ void MQTTHelper::update_discovery_config() {
   }
 }
 
-TopicType MQTTHelper::get_button_topic(uint8_t btn_id,
-                                       Button::ButtonAction action) {
-  if (btn_id < 1 || btn_id > NUM_BUTTONS) return {};
+TopicType MQTTHelper::get_button_topic(ButtonEvent event) const {
+  if (event.id < 1 || event.id > NUM_BUTTONS) return {};
 
-  if (action == Button::SINGLE)
-    return t_common() + "button_" + btn_id;
-  else if (action == Button::DOUBLE)
-    return t_common() + "button_" + btn_id + "_double";
-  else if (action == Button::TRIPLE)
-    return t_common() + "button_" + btn_id + "_triple";
-  else if (action == Button::QUAD)
-    return t_common() + "button_" + btn_id + "_quad";
+  if (event.action == Button::SINGLE)
+    return t_common() + "button_" + event.id;
+  else if (event.action == Button::DOUBLE)
+    return t_common() + "button_" + event.id + "_double";
+  else if (event.action == Button::TRIPLE)
+    return t_common() + "button_" + event.id + "_triple";
+  else if (event.action == Button::QUAD)
+    return t_common() + "button_" + event.id + "_quad";
   else
     return {};
 }
@@ -353,9 +354,13 @@ TopicType MQTTHelper::t_sensor_interval_cmd() const {
 TopicType MQTTHelper::t_awake_mode_state() const {
   return t_common() + "awake_mode";
 }
+
 TopicType MQTTHelper::t_awake_mode_cmd() const {
   return t_cmd() + "awake_mode";
 }
+
 TopicType MQTTHelper::t_awake_mode_avlb() const {
   return t_awake_mode_state() + "/available";
 }
+
+TopicType MQTTHelper::t_disp_msg_cmd() const { return t_cmd() + "disp_msg"; }
