@@ -63,7 +63,7 @@ class FactoryData:
     def generate_random_id(cls):
         return str(uuid4())[:6].upper()
 
-    @classmethod    
+    @classmethod
     def verify_model_id(cls, model_id: str):
         # example model_id A1
         try:
@@ -75,7 +75,7 @@ class FactoryData:
         else:
             return True
 
-    @classmethod    
+    @classmethod
     def verify_hw_version(cls, hw_version: str):
         # example hw_version 1.1
         try:
@@ -87,7 +87,7 @@ class FactoryData:
             return False
         else:
             return True
-    
+
     @classmethod
     def verify_serial(cls, serial: str):
         # example serial 2301-001
@@ -100,7 +100,7 @@ class FactoryData:
             return False
         else:
             return True
-        
+
     @classmethod
     def verify_random_id(cls, random_id: str):
         # example random_id A1B2C3
@@ -111,7 +111,7 @@ class FactoryData:
             return False
         else:
             return True
-        
+
     def verify(self):
         return (self.verify_model_id(self.model_id) and
                 self.verify_hw_version(self.hw_version) and
@@ -139,7 +139,7 @@ class FactoryTestSetup:
     def from_json(cls, json_str: str):
         json_data = json.loads(json_str)
         return cls(**json_data)
-    
+
 
 @dataclass
 class HWModelData:
@@ -159,7 +159,8 @@ def append_inventory(inventory_path: str, factory_data: FactoryData):
             write.writerow(["model_id", "hw_version", "serial", "random_id"])
     with open(inventory_path, "a") as f:
         write = csv.writer(f)
-        write.writerow([factory_data.model_id, factory_data.hw_version, factory_data.serial, factory_data.random_id])
+        write.writerow([factory_data.model_id, factory_data.hw_version,
+                       factory_data.serial, factory_data.random_id])
 
 
 def increment_serial(serial: str):
@@ -325,7 +326,8 @@ if __name__ == "__main__":
                         help="Auto mode to use with test jig")
     parser.add_argument("--jig_serial", type=str,
                         help="Serial number of test jig")
-    parser.add_argument("--skip_efuse", action="store_true", help="Skip burning eFuses")
+    parser.add_argument("--skip_efuse", action="store_true",
+                        help="Skip burning eFuses")
 
     parser.add_argument("--series", action="store_true",
                         help="If flashing multiple devices in series")
@@ -354,7 +356,8 @@ if __name__ == "__main__":
     model_data_path = os.path.join(args.fw_dir, "model_data.json")
     if os.path.exists(model_data_path):
         if args.model_id or args.hw_version:
-            parser.error("'--model_id' and '--hw_version' are not allowed when 'model_data.json' exists")
+            parser.error(
+                "'--model_id' and '--hw_version' are not allowed when 'model_data.json' exists")
         try:
             with open(model_data_path, "r") as f:
                 model_data = HWModelData.from_json(f.read())
@@ -407,7 +410,6 @@ if __name__ == "__main__":
                     read = csv.reader(f)
                     rows = list(read)
                     serial = rows[-1][2]
-                    print(serial)
                     if (not FactoryData.verify_serial(serial)):
                         parser.error("Invalid last serial number")
                     factory_data.serial = increment_serial(serial)
@@ -415,13 +417,15 @@ if __name__ == "__main__":
                 print(e)
                 parser.error("Invalid inventory file")
             if args.serial:
-                parser.error("Inventory file already exists, '--serial' is not allowed")
+                parser.error(
+                    "Inventory file already exists, '--serial' is not allowed")
         else:
             if not args.serial:
-                parser.error("Inventory file not yet existing, '--serial' is required")
-            serial_num = args.serial
+                parser.error(
+                    "Inventory file not yet existing, '--serial' is required")
+            factory_data.serial = args.serial
     else:
-        serial_num = args.serial
+        factory_data.serial = args.serial
 
     # verify factory data
     if args.random_id:
@@ -436,6 +440,8 @@ if __name__ == "__main__":
     if not os.path.isfile(spiffs_image_path):
         spiffs_image_path = None
         print("No SPIFFS image found.")
+    else:
+        print("Found SPIFFS image")
 
     i = input(f"Flashing:\n{factory_data}\nConfirm? [Y/n] ")
     if i.lower() != "y":
@@ -457,7 +463,7 @@ if __name__ == "__main__":
 
         print("Flashing firmware...")
         flash_firmware(args.port, args.baud, firmware_path,
-                        test_setup, spiffs_image_path)
+                       test_setup, spiffs_image_path)
         if args.series:
             append_inventory(inventory_path, factory_data)
         print("DONE.")
@@ -469,12 +475,12 @@ if __name__ == "__main__":
         sleep(0.5)
         if not args.skip_efuse:
             print("Burning eFuses...")
-            # burn_efuses(args.port, args.baud, factory_data)
+            burn_efuses(args.port, args.baud, factory_data)
             jig.reset_to_bootloader()
             sleep(0.5)
         print("Flashing firmware...")
-        # flash_firmware(args.port, args.baud, firmware_path,
-        #                 test_setup, spiffs_image_path)
+        flash_firmware(args.port, args.baud, firmware_path,
+                       test_setup, spiffs_image_path)
         sleep(0.5)
         jig.green_led_on()
         if args.series:

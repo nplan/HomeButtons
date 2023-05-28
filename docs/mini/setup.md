@@ -114,7 +114,7 @@ When connected to the Wi-Fi, *Home Buttons* can be configured using any device o
 
     > This step is not necessary, you can do it later directly in *Home Assistant*.
 
-    - `Button {1-4} Label` - Label that will be displayed next to each button. The order is from top to bottom.
+    - `Button {1-4} Label` - Label that will be displayed next to each button.
     
 6. Confirm by clicking `Save`. Device will exit the setup and display button labels.
 

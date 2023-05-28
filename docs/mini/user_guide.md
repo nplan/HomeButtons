@@ -119,7 +119,7 @@ Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 
 - `Secondary DNS Server` - If left empty, `1.1.1.1` will be used.
 
-- `Button {1-4} Label` - Label that will be displayed next to each button. The order is from top to bottom.
+- `Button {1-4} Label` - Label that will be displayed next to each button.
 
 - `Temperature Unit` - Either `C` - Celsius  or `F` - Fahrenheit.
 

@@ -23,10 +23,14 @@ Set up you device with the help of [Getting Started](setup.md) guide.
 
 ---
 
-## License
+## Where To Get
 
-- The software is **open source** and licensed under the GNU GPLv3.  
-- The hardware is **open source** and licensed under the CERN-OHL-S-2.0.
+You can buy *Home Buttons* on [*Tindie*](https://www.tindie.com/products/plab/home-buttons-mini/?ref=offsite_badges&utm_source=sellers_nplan&utm_medium=badges&utm_campaign=badge_medium){:target="_blank"} or
+[*Lectronz*](https://www.lectronz.com/products/home-buttons-mini-smart-home-controller).
+
+<a href="https://www.tindie.com/products/plab/home-buttons-mini/?ref=offsite_badges&utm_source=sellers_nplan&utm_medium=badges&utm_campaign=badge_medium"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-mediums.png" alt="I sell on Tindie" width="150" height="78"></a>
+
+<a href="https://www.lectronz.com/products/home-buttons-mini-smart-home-controller"><img alt="I sell on Lectronz" src="https://www.lectronz.com/static/badges/i-sell-on-lectronz-medium.png" /></a>
 
 ---
 
@@ -39,13 +43,13 @@ Set up you device with the help of [Getting Started](setup.md) guide.
 * Width: 63.6 mm
 * Height: 63.6 mm
 * Depth: 20.0 mm
-* Weight: XX g (incl. batteries)
+* Weight: 90 g (incl. batteries)
 * Casing material: PETG (3D printed)
 
 ### User Interface
 
 * E-paper display
-* Four tactile buttons with LED illumination
+* 4 tactile buttons with LED illumination
 
 ### Display
 
@@ -76,6 +80,7 @@ Set up you device with the help of [Getting Started](setup.md) guide.
 ### Batteries
 
 Home Buttons mini uses two AA alkaline batteries. They prove to be a good compromise between capacity, size, price and availability. A pair should last you about **two years** for the following use case:
+
 * Varta Industrial Pro AA
 * 30 minutes sensor interval (for temperature / humidity reporting)
 * 20 button presses per day

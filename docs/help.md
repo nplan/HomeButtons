@@ -1,4 +1,4 @@
-# Common issues
+# Frequent Issues
 
 > If you encounter an issue contact us at [support@home-buttons.com](mailto:support@home-buttons.com)
  or create a new issue in the *Github* [repository](https://github.com/nplan/HomeButtons).
@@ -21,9 +21,9 @@ You can considerably decrease the reaction time by setting up static IP for your
 The expected average values for reaction time are:
 
 - WPA2 static IP: **0.5 s**
-- WPA2 DHCP: **1 s**
-- WPA3 static IP: **1.8 s**
-- WPA3 DHCP: **2.7 s**
+- WPA2 DHCP: **1.0 s**
+- WPA3 static IP: **2.0 s**
+- WPA3 DHCP: **3.0 s**
 
 ### 4. Device not appearing in Home Assistant
 

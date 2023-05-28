@@ -1,5 +1,9 @@
 {
-    "yaml.schemas": {
-        "https://squidfunk.github.io/mkdocs-material/schema.json": "mkdocs.yml"
-      } 
+  "yaml.schemas": {
+    "https://squidfunk.github.io/mkdocs-material/schema.json": "mkdocs.yml"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none"
 }

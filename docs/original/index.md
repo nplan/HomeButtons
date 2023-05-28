@@ -1,6 +1,6 @@
 # Home Buttons
 
-![Home Buttons](assets/promo_1.jpeg){width="350"} 
+![Home Buttons](assets/original_front.jpeg){width="350"} 
 
 **Features:**
 
@@ -24,10 +24,14 @@ Set up you device with the help of [Getting Started](setup.md) guide.
 
 ---
 
-## License
+## Where To Get
 
-- The software is **open source** and licensed under the GNU GPLv3.  
-- The hardware is **open source** and licensed under the CERN-OHL-S-2.0.
+You can buy *Home Buttons* on [*Tindie*](https://www.tindie.com/products/plab/home-buttons/?ref=offsite_badges&utm_source=sellers_nplan&utm_medium=badges&utm_campaign=badge_medium){:target="_blank"} or
+[*Lectronz*](https://www.lectronz.com/products/home-buttons-smart-home-controller).
+
+<a href="https://www.tindie.com/products/plab/home-buttons/?ref=offsite_badges&utm_source=sellers_nplan&utm_medium=badges&utm_campaign=badge_medium"><img src="https://d2ss6ovg47m0r5.cloudfront.net/badges/tindie-mediums.png" alt="I sell on Tindie" width="150" height="78"></a>
+
+<a href="https://www.lectronz.com/products/home-buttons-smart-home-controller"><img alt="I sell on Lectronz" src="https://www.lectronz.com/static/badges/i-sell-on-lectronz-medium.png" /></a>
 
 ---
 
@@ -46,7 +50,7 @@ Set up you device with the help of [Getting Started](setup.md) guide.
 ### User Interface
 
 * E-paper display
-* Six tactile buttons with LED illumination
+* 6 tactile buttons with LED illumination
 
 ### Display
 
