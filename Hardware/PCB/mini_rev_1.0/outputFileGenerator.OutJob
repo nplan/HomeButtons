@@ -1,0 +1,194 @@
+[OutputJobFile]
+Version=1.0
+Caption=
+Description=
+VaultGUID=
+ItemGUID=
+ItemHRID=
+RevisionGUID=
+RevisionId=
+VaultHRID=
+AutoItemHRID=
+NextRevId=
+FolderGUID=
+LifeCycleDefinitionGUID=
+RevisionNamingSchemeGUID=
+
+[OutputGroup1]
+Name=outputFileGenerator.OutJob
+Description=
+TargetOutputMedium=Folder Structure
+VariantName=[No Variations]
+VariantScope=1
+CurrentConfigurationName=
+TargetPrinter=Canon iP7200 series
+PrinterOptions=Record=PrinterOptions|Copies=1|Duplex=1|TrueTypeOptions=3|Collate=1|PrintJobKind=1|PrintWhat=1
+OutputMedium1=Print Job
+OutputMedium1_Type=Printer
+OutputMedium1_Printer=
+OutputMedium1_PrinterOptions=Record=PrinterOptions|Copies=1|Duplex=1|TrueTypeOptions=3|Collate=1|PrintJobKind=1|PrintWhat=1
+OutputMedium2=PDF
+OutputMedium2_Type=Publish
+OutputMedium3=Folder Structure
+OutputMedium3_Type=GeneratedFiles
+OutputMedium4=Video
+OutputMedium4_Type=Multimedia
+OutputType1=Gerber
+OutputName1=Gerber Files
+OutputCategory1=Fabrication
+OutputDocumentPath1=HB_mini_panel.PcbDoc
+OutputVariantName1=
+OutputEnabled1=1
+OutputEnabled1_OutputMedium1=0
+OutputEnabled1_OutputMedium2=0
+OutputEnabled1_OutputMedium3=2
+OutputEnabled1_OutputMedium4=0
+OutputDefault1=0
+Configuration1_Name1=OutputConfigurationParameter1
+Configuration1_Item1=AddToAllLayerClasses.Set= |AddToAllPlots.Set=SerializeLayerHash.Version~2,ClassName~TPlotLayerStateArray|BoardID=EERYOAVI|CentrePlots=False|DrillDrawingSymbol=GraphicsSymbol|DrillDrawingSymbolSize=200000|EmbeddedApertures=True|FilmBorderSize=10000000|FilmXSize=200000000|FilmYSize=160000000|FlashAllFills=False|FlashPadShapes=True|G54OnApertureChange=False|GenerateDRCRulesFile=True|GenerateDRCRulesFile=True|GenerateReliefShapes=True|GenerateReports=True|GerberUnit=Metric|GerberUnit=Metric|IncludeUnconnectedMidLayerPads=False|LayerClassesMirror.Set= |LayerClassesPlot.Set= |LeadingAndTrailingZeroesMode=SuppressLeadingZeroes|MaxApertureSize=2500000|MergePadAndRegion=False|MinusApertureTolerance=39|MinusApertureTolerance=39|Mirror.Set=SerializeLayerHash.Version~2,ClassName~TPlotLayerStateArray|MirrorDrillDrawingPlots=False|MirrorDrillGuidePlots=False|NoRegularPolygons=False|NumberOfDecimals=4|NumberOfDecimals=4|OptimizeChangeLocationCommands=True|OptimizeChangeLocationCommands=True|OriginPosition=Relative|Panelize=False|Plot.Set=SerializeLayerHash.Version~2,ClassName~TPlotLayerStateArray,16973830~1,16973832~1,16973834~1,16777217~1,16842751~1,16973835~1,16973833~1,16973831~1,16908333~1,16908332~1|PlotBoardProfile=True|PlotBoardProfileFileName=HB_mini_alt_PCB.GM|PlotPositivePlaneLayers=False|PlotUsedDrillDrawingLayerPairs=False|PlotUsedDrillGuideLayerPairs=False|PlusApertureTolerance=39|PlusApertureTolerance=39|Record=GerberView|SoftwareArcs=False|Sorted=False|Sorted=False|UncheckPlotDrillDrawingLayerPair0_Backdrill=False|UncheckPlotDrillDrawingLayerPair0_Checked=False|UncheckPlotDrillDrawingLayerPair0_DrillType=Regular|UncheckPlotDrillDrawingLayerPair0_FileName=HB_mini_panel.GD1|UncheckPlotDrillDrawingLayerPair0_HighLayer=Bottom Layer|UncheckPlotDrillDrawingLayerPair0_LowLayer=Top Layer|UncheckPlotDrillGuideLayerPair0_Backdrill=False|UncheckPlotDrillGuideLayerPair0_Checked=False|UncheckPlotDrillGuideLayerPair0_DrillType=Regular|UncheckPlotDrillGuideLayerPair0_FileName=HB_mini_panel.GG1|UncheckPlotDrillGuideLayerPair0_HighLayer=Bottom Layer|UncheckPlotDrillGuideLayerPair0_LowLayer=Top Layer|UserLayerName.Caption0=HB_mini_panel.GM23|UserLayerName.Caption1=HB_mini_panel.GTP|UserLayerName.Caption10=HB_mini_panel.GBS|UserLayerName.Caption11=HB_mini_panel.GM16|UserLayerName.Caption12=HB_mini_panel.GBL|UserLayerName.Caption13=HB_mini_panel.GM5|UserLayerName.Caption14=HB_mini_panel.GM15|UserLayerName.Caption15=HB_mini_panel.GM14|UserLayerName.Caption16=HB_mini_panel.GTL|UserLayerName.Caption17=HB_mini_panel.GM18|UserLayerName.Caption18=HB_mini_panel.GBO|UserLayerName.Caption19=HB_mini_panel.GPT|UserLayerName.Caption2=HB_mini_panel.GTO|UserLayerName.Caption20=HB_mini_panel.GM13|UserLayerName.Caption21=HB_mini_panel.GM21|UserLayerName.Caption22=HB_mini_panel.GM1|UserLayerName.Caption23=HB_mini_panel.GM24|UserLayerName.Caption24=HB_mini_panel.GM3|UserLayerName.Caption25=HB_mini_panel.GM20|UserLayerName.Caption26=HB_mini_panel.GBP|UserLayerName.Caption3=HB_mini_panel.GTS|UserLayerName.Caption4=HB_mini_panel.GM45|UserLayerName.Caption5=HB_mini_panel.GM44|UserLayerName.Caption6=HB_mini_panel.GM2|UserLayerName.Caption7=HB_mini_panel.GKO|UserLayerName.Caption8=HB_mini_panel.GPB|UserLayerName.Caption9=HB_mini_panel.GM69|UserLayerName.Count=27|UserLayerName.Layer0=16908311|UserLayerName.Layer1=16973832|UserLayerName.Layer10=16973835|UserLayerName.Layer11=16908304|UserLayerName.Layer12=16842751|UserLayerName.Layer13=16908293|UserLayerName.Layer14=16908303|UserLayerName.Layer15=16908302|UserLayerName.Layer16=16777217|UserLayerName.Layer17=16908306|UserLayerName.Layer18=16973831|UserLayerName.Layer19=16973848|UserLayerName.Layer2=16973830|UserLayerName.Layer20=16908301|UserLayerName.Layer21=16908309|UserLayerName.Layer22=16908289|UserLayerName.Layer23=16908312|UserLayerName.Layer24=16908291|UserLayerName.Layer25=16908308|UserLayerName.Layer26=16973833|UserLayerName.Layer3=16973834|UserLayerName.Layer4=16908333|UserLayerName.Layer5=16908332|UserLayerName.Layer6=16908290|UserLayerName.Layer7=16973837|UserLayerName.Layer8=16973849|UserLayerName.Layer9=16908357|DocumentPath=C:\Users\matej\Documents\Projects\HomeButtons\Hardware\PCB\mini_rev_1.0\HB_mini_panel.PcbDoc
+OutputType2=Pick Place
+OutputName2=Generates pick and place files
+OutputCategory2=Assembly
+OutputDocumentPath2=HB_mini_panel.PcbDoc
+OutputVariantName2=
+OutputEnabled2=1
+OutputEnabled2_OutputMedium1=0
+OutputEnabled2_OutputMedium2=0
+OutputEnabled2_OutputMedium3=1
+OutputEnabled2_OutputMedium4=0
+OutputDefault2=0
+Configuration2_Name1=OutputConfigurationParameter1
+Configuration2_Item1=Record=PickPlaceView|Units=Metric|GenerateCSVFormat=True|GenerateTextFormat=False|ShowUnits=False|Separator=.|ExcludeFilterParam=False|IncludeVariations=False|IncludeStandardNoBOM=True|Filter= |FilterActive=False|YFlip=False|Column#1=Name:Designator,Fixed:True,Metric:False,Visible:True,Sort:None,Position:0|Column#2=Name:Comment,Fixed:True,Metric:False,Visible:True,Sort:None,Position:1|Column#3=Name:Layer,Fixed:True,Metric:False,Visible:True,Sort:None,Position:2|Column#4=Name:Footprint,Fixed:True,Metric:False,Visible:True,Sort:None,Position:3|Column#5=Name:Footprint Description,Fixed:True,Metric:False,Visible:False,Sort:None,Position:4|Column#6=Name:Center-X,Fixed:True,Metric:True,Visible:True,Sort:None,Position:5|Column#7=Name:Center-Y,Fixed:True,Metric:True,Visible:True,Sort:None,Position:6|Column#8=Name:Rotation,Fixed:True,Metric:False,Visible:True,Sort:None,Position:7|Column#9=Name:Description,Fixed:True,Metric:False,Visible:True,Sort:None,Position:8|Column#10=Name:ComponentKind,Fixed:True,Metric:False,Visible:False,Sort:None,Position:9|Column#11=Name:Height,Fixed:True,Metric:True,Visible:False,Sort:None,Position:10|Column#12=Name:Ref-X,Fixed:True,Metric:True,Visible:False,Sort:None,Position:11|Column#13=Name:Ref-Y,Fixed:True,Metric:True,Visible:False,Sort:None,Position:12|Column#14=Name:Pad-X,Fixed:True,Metric:True,Visible:False,Sort:None,Position:13|Column#15=Name:Pad-Y,Fixed:True,Metric:True,Visible:False,Sort:None,Position:14|Column#16=Name:Variation,Fixed:True,Metric:False,Visible:False,Sort:None,Position:15|Column#17=Name:Manufacturer Part Number,Fixed:False,Metric:False,Visible:False,Sort:None,Position:48|Column#18=Name:Depth,Fixed:False,Metric:False,Visible:False,Sort:None,Position:32|Column#19=Name:Dielectric,Fixed:False,Metric:False,Visible:False,Sort:None,Position:36|Column#20=Name:Check_prices,Fixed:False,Metric:False,Visible:False,Sort:None,Position:25|Column#21=Name:Temperature,Fixed:False,Metric:False,Visible:False,Sort:None,Position:82|Column#22=Name:REACH SVHC,Fixed:False,Metric:False,Visible:False,Sort:None,Position:77|Column#23=Name:Resolution,Fixed:False,Metric:False,Visible:False,Sort:None,Position:78|Column#24=Name:Max Repetitive Reverse Voltage (Vrrm),Fixed:False,Metric:False,Visible:False,Sort:None,Position:52|Column#25=Name:Package Quantity,Fixed:False,Metric:False,Visible:False,Sort:None,Position:68|Column#26=Name:Case Code (Metric),Fixed:False,Metric:False,Visible:False,Sort:None,Position:22|Column#27=Name:SnapEDA_Link,Fixed:False,Metric:False,Visible:False,Sort:None,Position:81|Column#28=Name:Length,Fixed:False,Metric:False,Visible:False,Sort:None,Position:46|Column#29=Name:Sensor Output,Fixed:False,Metric:False,Visible:False,Sort:None,Position:80|Column#30=Name:Max Operating Temperature,Fixed:False,Metric:False,Visible:False,Sort:None,Position:51|Column#31=Name:Min Operating Temperature,Fixed:False,Metric:False,Visible:False,Sort:None,Position:58|Column#32=Name:Part Number,Fixed:False,Metric:False,Visible:False,Sort:None,Position:70|Column#33=Name:Thickness,Fixed:False,Metric:False,Visible:False,Sort:None,Position:87|Column#34=Name:Min Supply Voltage,Fixed:False,Metric:False,Visible:False,Sort:None,Position:59|Column#35=Name:Category,Fixed:False,Metric:False,Visible:False,Sort:None,Position:24|Column#36=Name:MP,Fixed:False,Metric:False,Visible:False,Sort:None,Position:62|Column#37=Name:Max Forward Surge Current (Ifsm),Fixed:False,Metric:False,Visible:False,Sort:None,Position:50|Column#38=Name:Mount,Fixed:False,Metric:False,Visible:False,Sort:None,Position:60|Column#39=Name:Packaging,Fixed:False,Metric:False,Visible:False,Sort:None,Position:69|Column#40=Name:Contact Plating,Fixed:False,Metric:False,Visible:False,Sort:None,Position:30|Column#41=Name:Max Surge Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:56|Column#42=Name:Number of Pins,Fixed:False,Metric:False,Visible:False,Sort:None,Position:63|Column#43=Name:Case/Package,Fixed:False,Metric:False,Visible:False,Sort:None,Position:23|Column#44=Name:Digikey Description,Fixed:False,Metric:False,Visible:False,Sort:None,Position:37|Column#45=Name:LCSC,Fixed:False,Metric:False,Visible:False,Sort:None,Position:44|Column#46=Name:Device Class L2,Fixed:False,Metric:False,Visible:False,Sort:None,Position:34|Column#47=Name:Octopart,Fixed:False,Metric:False,Visible:False,Sort:None,Position:64|Column#48=Name:Width,Fixed:False,Metric:False,Visible:False,Sort:None,Position:94|Column#49=Name:Polarity,Fixed:False,Metric:False,Visible:False,Sort:None,Position:73|Column#50=Name:Voltage Rating (DC),Fixed:False,Metric:False,Visible:False,Sort:None,Position:92|Column#51=Name:Availability,Fixed:False,Metric:False,Visible:False,Sort:None,Position:18|Column#52=Name:Tolerance,Fixed:False,Metric:False,Visible:False,Sort:None,Position:88|Column#53=Name:Temperature Range High,Fixed:False,Metric:False,Visible:False,Sort:None,Position:85|Column#54=Name:ComponentLink2URL,Fixed:False,Metric:False,Visible:False,Sort:None,Position:29|Column#55=Name:Forward Voltage,Fixed:False,Metric:False,Visible:False,Sort:None,Position:40|Column#56=Name:Forward Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:39|Column#57=Name:Manufacturer,Fixed:False,Metric:False,Visible:False,Sort:None,Position:47|Column#58=Name:Average Rectified Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:19|Column#59=Name:MF,Fixed:False,Metric:False,Visible:False,Sort:None,Position:57|Column#60=Name:Ipc Land Pattern Name,Fixed:False,Metric:False,Visible:False,Sort:None,Position:43|Column#61=Name:RoHS,Fixed:False,Metric:False,Visible:False,Sort:None,Position:79|Column#62=Name:Peak Reverse Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:72|Column#63=Name:Current Rating,Fixed:False,Metric:False,Visible:False,Sort:None,Position:31|Column#64=Name:Weight,Fixed:False,Metric:False,Visible:False,Sort:None,Position:93|Column#65=Name:Device Class L3,Fixed:False,Metric:False,Visible:False,Sort:None,Position:35|Column#66=Name:ComponentLink2Description,Fixed:False,Metric:False,Visible:False,Sort:None,Position:28|Column#67=Name:Lead Free,Fixed:False,Metric:False,Visible:False,Sort:None,Position:45|Column#68=Name:Max Reverse Leakage Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:53|Column#69=Name:Purchase-URL,Fixed:False,Metric:False,Visible:False,Sort:None,Position:75|Column#70=Name:Radiation Hardening,Fixed:False,Metric:False,Visible:False,Sort:None,Position:76|Column#71=Name:Temperature Coefficient,Fixed:False,Metric:False,Visible:False,Sort:None,Position:84|Column#72=Name:Device Class L1,Fixed:False,Metric:False,Visible:False,Sort:None,Position:33|Column#73=Name:Mouser Description,Fixed:False,Metric:False,Visible:False,Sort:None,Position:61|Column#74=Name:Accuracy,Fixed:False,Metric:False,Visible:False,Sort:None,Position:16|Column#75=Name:Interface,Fixed:False,Metric:False,Visible:False,Sort:None,Position:42|Column#76=Name:Temperature Range Low,Fixed:False,Metric:False,Visible:False,Sort:None,Position:86|Column#77=Name:ComponentLink1URL,Fixed:False,Metric:False,Visible:False,Sort:None,Position:27|Column#78=Name:Package,Fixed:False,Metric:False,Visible:False,Sort:None,Position:67|Column#79=Name:Value,Fixed:False,Metric:False,Visible:False,Sort:None,Position:89|Column#80=Name:Max Reverse Voltage (DC),Fixed:False,Metric:False,Visible:False,Sort:None,Position:54|Column#81=Name:Capacitance,Fixed:False,Metric:False,Visible:False,Sort:None,Position:20|Column#82=Name:Automotive,Fixed:False,Metric:False,Visible:False,Sort:None,Position:17|Column#83=Name:Max Supply Voltage,Fixed:False,Metric:False,Visible:False,Sort:None,Position:55|Column#84=Name:Output Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:66|Column#85=Name:Peak Non-Repetitive Surge Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:71|Column#86=Name:Temperature Characteristic,Fixed:False,Metric:False,Visible:False,Sort:None,Position:83|Column#87=Name:ComponentLink1Description,Fixed:False,Metric:False,Visible:False,Sort:None,Position:26|Column#88=Name:Voltage Rating,Fixed:False,Metric:False,Visible:False,Sort:None,Position:91|Column#89=Name:Element Configuration,Fixed:False,Metric:False,Visible:False,Sort:None,Position:38|Column#90=Name:Case Code (Imperial),Fixed:False,Metric:False,Visible:False,Sort:None,Position:21|Column#91=Name:Height,Fixed:False,Metric:False,Visible:False,Sort:None,Position:41|Column#92=Name:Material,Fixed:False,Metric:False,Visible:False,Sort:None,Position:49|Column#93=Name:Price,Fixed:False,Metric:False,Visible:False,Sort:None,Position:74|Column#94=Name:Operating Supply Current,Fixed:False,Metric:False,Visible:False,Sort:None,Position:65|Column#95=Name:Variant,Fixed:False,Metric:False,Visible:False,Sort:None,Position:90|DocumentPath=C:\Users\matej\Documents\Projects\HomeButtons\Hardware\PCB\mini_rev_1.0\HB_mini_alt_PCB.PcbDoc
+OutputType3=NC Drill
+OutputName3=NC Drill Files
+OutputCategory3=Fabrication
+OutputDocumentPath3=HB_mini_panel.PcbDoc
+OutputVariantName3=
+OutputEnabled3=1
+OutputEnabled3_OutputMedium1=0
+OutputEnabled3_OutputMedium2=0
+OutputEnabled3_OutputMedium3=3
+OutputEnabled3_OutputMedium4=0
+OutputDefault3=0
+Configuration3_Name1=OutputConfigurationParameter1
+Configuration3_Item1=BoardEdgeRoutToolDia=2000000|GenerateBoardEdgeRout=False|GenerateDrilledSlotsG85=False|GenerateEIADrillFile=False|GenerateSeparatePlatedNonPlatedFiles=False|GenerateSeparateViaTypeFiles=False|NumberOfDecimals=4|NumberOfUnits=4|OptimizeChangeLocationCommands=True|OriginPosition=Relative|Record=DrillView|Units=Metric|ZeroesMode=SuppressTrailingZeroes|DocumentPath=C:\Users\matej\Documents\Projects\HomeButtons\Hardware\PCB\mini_rev_1.0\HB_mini_alt_PCB.PcbDoc
+OutputType4=BOM_PartType
+OutputName4=Bill of Materials
+OutputCategory4=Report
+OutputDocumentPath4=HB_mini_alt_PCB.PcbDoc
+OutputVariantName4=
+OutputEnabled4=1
+OutputEnabled4_OutputMedium1=0
+OutputEnabled4_OutputMedium2=0
+OutputEnabled4_OutputMedium3=4
+OutputEnabled4_OutputMedium4=0
+OutputDefault4=0
+PageOptions4=Record=PageOptions|CenterHorizontal=True|CenterVertical=True|PrintScale=1.00|XCorrection=1.00|YCorrection=1.00|PrintKind=1|BorderSize=5000000|LeftOffset=0|BottomOffset=0|Orientation=2|PaperLength=1000|PaperWidth=1000|Scale=100|PaperSource=7|PrintQuality=-3|MediaType=1|DitherType=10|PrintScaleMode=1|PaperKind=Letter|PaperIndex=1
+Configuration4_Name1=ColumnNameFormat
+Configuration4_Item1=CaptionAsName
+Configuration4_Name2=General
+Configuration4_Item2=OpenExported=False|AddToProject=False|ReportBOMViolationsInMessages=False|ForceFit=False|NotFitted=False|Database=False|DatabasePriority=False|IncludePcbData=False|IncludeVaultData=False|IncludeCloudData=False|IncludeDocumentData=True|IncludeAlternatives=False|ShowExportOptions=True|TemplateFilename=|TemplateVaultGuid=|TemplateItemGuid=|TemplateRevisionGuid=|BatchMode=0|FormWidth=1642|FormHeight=881|SupplierProdQty=1|SupplierAutoQty=False|SupplierUseCachedPricing=False|SupplierCurrency=USD|SolutionsPerItem=1|SuppliersPerSolution=1|ViewType=1|UseDirectApi=False|BomSetName=
+Configuration4_Name3=GroupOrder
+Configuration4_Item3=Comment=True|Footprint=True
+Configuration4_Name4=SortOrder
+Configuration4_Item4=Quantity=Up
+Configuration4_Name5=VisibleOrder
+Configuration4_Item5=Comment=120|Designator=120|Footprint=120|Quantity=120|JLCPCB part #=100|Value=100
+Configuration4_Name6=VisibleOrder_Flat
+Configuration4_Item6=Comment=120|Designator=120|Footprint=120|Quantity=120|JLCPCB part #=100|Value=100
+
+[PublishSettings]
+OutputFilePath2=
+ReleaseManaged2=1
+OutputBasePath2=Project Outputs for HomeButtons_mini
+OutputPathMedia2=
+OutputPathMediaValue2=
+OutputPathOutputer2=[Output Type]
+OutputPathOutputerPrefix2=
+OutputPathOutputerValue2=
+OutputFileName2=outputFileGenerator.PDF
+OutputFileNameMulti2=
+UseOutputNameForMulti2=1
+OutputFileNameSpecial2=
+OpenOutput2=1
+PromptOverwrite2=1
+PublishMethod2=0
+ZoomLevel2=50
+FitSCHPrintSizeToDoc2=1
+FitPCBPrintSizeToDoc2=1
+GenerateNetsInfo2=1
+MarkPins2=1
+MarkNetLabels2=1
+MarkPortsId2=1
+GenerateTOC2=1
+ShowComponentParameters2=1
+GlobalBookmarks2=0
+PDFACompliance2=Disabled
+PDFVersion2=Default
+OutputFilePath3=C:\Users\matej\Documents\Projects\HomeButtons\Hardware\PCB\mini_rev_1.0\Project Outputs for HomeButtons_mini\
+ReleaseManaged3=1
+OutputBasePath3=Project Outputs for HomeButtons_mini
+OutputPathMedia3=
+OutputPathMediaValue3=
+OutputPathOutputer3=[Output Type]
+OutputPathOutputerPrefix3=
+OutputPathOutputerValue3=
+OutputFileName3=
+OutputFileNameMulti3=
+UseOutputNameForMulti3=1
+OutputFileNameSpecial3=
+OpenOutput3=1
+OutputFilePath4=
+ReleaseManaged4=1
+OutputBasePath4=Project Outputs for HomeButtons_mini
+OutputPathMedia4=
+OutputPathMediaValue4=
+OutputPathOutputer4=[Output Type]
+OutputPathOutputerPrefix4=
+OutputPathOutputerValue4=
+OutputFileName4=
+OutputFileNameMulti4=
+UseOutputNameForMulti4=1
+OutputFileNameSpecial4=
+OpenOutput4=1
+PromptOverwrite4=1
+PublishMethod4=5
+ZoomLevel4=50
+FitSCHPrintSizeToDoc4=1
+FitPCBPrintSizeToDoc4=1
+GenerateNetsInfo4=1
+MarkPins4=1
+MarkNetLabels4=1
+MarkPortsId4=1
+MediaFormat4=Windows Media file (*.wmv,*.wma,*.asf)
+FixedDimensions4=1
+Width4=352
+Height4=288
+MultiFile4=0
+FramesPerSecond4=25
+FramesPerSecondDenom4=1
+AviPixelFormat4=7
+AviCompression4=MP42 MS-MPEG4 V2
+AviQuality4=100
+FFmpegVideoCodecId4=12
+FFmpegPixelFormat4=0
+FFmpegQuality4=80
+WmvVideoCodecName4=Windows Media Video V7
+WmvQuality4=80
+
+[GeneratedFilesSettings]
+RelativeOutputPath2=
+OpenOutputs2=1
+RelativeOutputPath3=C:\Users\matej\Documents\Projects\HomeButtons\Hardware\PCB\mini_rev_1.0\Project Outputs for HomeButtons_mini\
+OpenOutputs3=1
+AddToProject3=1
+TimestampFolder3=0
+UseOutputName3=0
+OpenODBOutput3=0
+OpenGerberOutput3=0
+OpenNCDrillOutput3=0
+OpenIPCOutput3=0
+EnableReload3=0
+RelativeOutputPath4=
+OpenOutputs4=1
+

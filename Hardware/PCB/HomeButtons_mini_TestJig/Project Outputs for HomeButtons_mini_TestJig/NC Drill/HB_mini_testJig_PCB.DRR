@@ -1,0 +1,23 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: HB_mini_testJig_PCB.PcbDoc   4/14/2023  4:12:58 PM
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : HB_mini_testJig_PCB-RoundHoles.TXT
+ASCII SlotHoles File : HB_mini_testJig_PCB-SlotHoles.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.3mm (12mil)                                             Round             79        PTH        505.14mm (19.89inch)
+T2      0.6mm (24mil)                                             Slot              4         PTH        38.16mm (1.50inch)
+T3      0.7mm (28mil)                                             Slot              3         PTH        13.92mm (0.55inch)
+T4      0.711mm (28mil)                                           Round             2         PTH        5.80mm (0.23inch)
+T5      1mm (39mil)                                               Round             24        PTH        91.27mm (3.59inch)
+T6      0.6mm (24mil)                                             Round             12        NPTH       9.35mm (0.37inch)
+T7      0.65mm (26mil)                                            Round             2         NPTH       5.78mm (0.23inch)
+T8      1.7mm (67mil)                                             Slot              1         NPTH       10.90mm (0.43inch)
+T9      3.2mm (126mil)                                            Round             3         NPTH       98.15mm (3.86inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              130
+
+Total Processing Time (hh:mm:ss) : 00:00:01

@@ -1,0 +1,9 @@
+Output: Bill of Materials
+Type  : BOM
+From  : Variant [[No Variations]] of PCB Document [HB_mini_alt_PCB.PcbDoc]
+
+
+Files Generated   : 0
+Documents Printed : 0
+
+Finished Output Generation At 7:13:53 PM On 3/9/2023

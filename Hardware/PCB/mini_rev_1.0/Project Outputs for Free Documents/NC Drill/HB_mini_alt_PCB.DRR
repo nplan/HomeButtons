@@ -1,0 +1,18 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: HB_mini_alt_PCB.PcbDoc   3/9/2023  7:13:50 PM
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : HB_mini_alt_PCB-RoundHoles.TXT
+ASCII SlotHoles File : HB_mini_alt_PCB-SlotHoles.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.3mm (12mil)                                             Round             56        PTH        301.16mm (11.86inch)
+T2      1mm (39mil)                                               Round             6         PTH        12.86mm (0.51inch)
+T3      1.5mm (59mil)                                             Round             2         NPTH       11.00mm (0.43inch)
+T4      2mm (79mil)                                               Slot              4         NPTH       244.73mm (9.63inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              68
+
+Total Processing Time (hh:mm:ss) : 00:00:01
