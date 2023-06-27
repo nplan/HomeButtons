@@ -180,7 +180,25 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 
 ## Display a Custom Message {#custom_message}
 
-A custom message can be shown on the e-paper display by publishing a retained payload to the `{base_topic}/{device_name}/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
+A custom message can be shown on the e-paper display by publishing a retained payload to the `{base_topic}/{device_name}/cmd/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
+
+Message will not be wrapped automatically. You must include line breaks `\n` in the payload.
+
+Example *Home Assistant* publish service call YAML:
+
+```yaml
+service: mqtt.publish
+data:
+  topic: homebuttons/HB Mini 123/cmd/disp_msg
+  payload: "Line 1\nLine 2"
+  retain: true
+```
+
+`mosquitto_pub` example:
+
+```bash
+mosquitto_pub -h <broker_host> -t <topic> -m $'Line 1\nLine 2'
+```
 
 ## Opening The Case {#opening_case}
 
