@@ -394,7 +394,13 @@ void Display::draw_main() {
       draw_mdi(icon.c_str(), icon_size, x, y);
       // draw text
       uint16_t max_text_width = WIDTH - icon_size - h_padding;
-      u8g2.setFont(u8g2_font_helvB24_te);
+      if (text.index_of('_') == 0) {
+        // force small font
+        text = text.substring(1);
+        u8g2.setFont(u8g2_font_helvB18_te);
+      } else {
+        u8g2.setFont(u8g2_font_helvB24_te);
+      }
       uint16_t w, h;
       w = u8g2.getUTF8Width(text.c_str());
       h = u8g2.getFontAscent();
@@ -422,7 +428,13 @@ void Display::draw_main() {
       u8g2.print(text.c_str());
     } else {
       uint16_t max_label_width = WIDTH - min_btn_clearance;
-      u8g2.setFont(u8g2_font_helvB24_te);
+      if (label.index_of('_') == 0) {
+        // force small font
+        label = label.substring(1);
+        u8g2.setFont(u8g2_font_helvB18_te);
+      } else {
+        u8g2.setFont(u8g2_font_helvB24_te);
+      }
       uint16_t w, h;
       w = u8g2.getUTF8Width(label.c_str());
       h = u8g2.getFontAscent();

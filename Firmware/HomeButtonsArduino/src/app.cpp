@@ -812,6 +812,7 @@ void AppSMStates::UserInputFinishState::loop() {
 #endif
           }
           sm().btn_event_ = btn_event;
+          sm().button_handler_.clear();
           return transition_to<NetConnectingState>();
         }
         break;
@@ -865,6 +866,15 @@ void AppSMStates::NetConnectingState::loop() {
     sm()._publish_sensors();
     sm().device_state_.persisted().failed_connections = 0;
     return transition_to<CmdShutdownState>();
+  } else if (sm().button_handler_.is_press_finished()) {
+    // abort on button press
+    if (sm().button_handler_.get_event().action == Button::SINGLE) {
+      sm().info("button press - user cancelled, aborting...");
+      return transition_to<CmdShutdownState>();
+    } else {
+      sm().button_handler_.clear();
+    }
+
   } else if (millis() >= NET_CONNECT_TIMEOUT) {
     sm().warning("network connect timeout.");
     if (sm().boot_cause_ == BootCause::BUTTON) {

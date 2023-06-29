@@ -168,6 +168,8 @@ void DeviceState::load_all(HardwareDefinition& hw) {
   _load_factory(hw);
   load_user();
   load_persisted();
+  size_t free_entries = get_free_entries();
+  info("nvs free entries: %d", free_entries);
 }
 
 void DeviceState::clear_all() {
@@ -175,6 +177,8 @@ void DeviceState::clear_all() {
   clear_user();
   clear_persisted();
 }
+
+size_t DeviceState::get_free_entries() { return preferences_.freeEntries(); }
 
 const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
   static ButtonLabel noLabel;

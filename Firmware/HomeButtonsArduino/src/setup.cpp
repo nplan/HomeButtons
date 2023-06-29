@@ -18,15 +18,15 @@ static WiFiManager wifi_manager;
 static WiFiManagerParameter device_name_param("device_name", "Device Name", "",
                                               20);
 static WiFiManagerParameter mqtt_server_param("mqtt_server", "MQTT Server", "",
-                                              15);
+                                              32);
 static WiFiManagerParameter mqtt_port_param("mqtt_port", "MQTT Port", "", 6);
-static WiFiManagerParameter mqtt_user_param("mqtt_user", "MQTT User", "", 50);
+static WiFiManagerParameter mqtt_user_param("mqtt_user", "MQTT User", "", 64);
 static WiFiManagerParameter mqtt_password_param("mqtt_password",
-                                                "MQTT Password", "", 50);
+                                                "MQTT Password", "", 64);
 static WiFiManagerParameter base_topic_param("base_topic", "Base Topic", "",
-                                             50);
+                                             64);
 static WiFiManagerParameter discovery_prefix_param("disc_prefix",
-                                                   "Discovery Prefix", "", 50);
+                                                   "Discovery Prefix", "", 64);
 static WiFiManagerParameter static_ip_param("static_ip", "Static IP", "", 15);
 static WiFiManagerParameter gateway_param("gateway", "Gateway", "", 15);
 static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 15);
@@ -146,17 +146,17 @@ void start_setup(DeviceState& device_state, Display& display,
   // parameters
   device_name_param.setValue(device_state.device_name().c_str(), 20);
   mqtt_server_param.setValue(
-      device_state.user_preferences().mqtt.server.c_str(), 15);
+      device_state.user_preferences().mqtt.server.c_str(), 32);
   mqtt_port_param.setValue(
       String(device_state.user_preferences().mqtt.port).c_str(), 6);
   mqtt_user_param.setValue(device_state.user_preferences().mqtt.user.c_str(),
-                           50);
+                           64);
   mqtt_password_param.setValue(
-      device_state.user_preferences().mqtt.password.c_str(), 50);
+      device_state.user_preferences().mqtt.password.c_str(), 64);
   base_topic_param.setValue(
-      device_state.user_preferences().mqtt.base_topic.c_str(), 50);
+      device_state.user_preferences().mqtt.base_topic.c_str(), 64);
   discovery_prefix_param.setValue(
-      device_state.user_preferences().mqtt.discovery_prefix.c_str(), 50);
+      device_state.user_preferences().mqtt.discovery_prefix.c_str(), 64);
   static_ip_param.setValue(
       device_state.user_preferences().network.static_ip.toString().c_str(), 15);
   gateway_param.setValue(
