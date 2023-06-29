@@ -6,7 +6,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.2.1-beta2";
+static constexpr char SW_VERSION[] = "v2.2.1-beta4";
 
 // ------ URLs ------
 #ifndef HOMEBUTTONS_MINI

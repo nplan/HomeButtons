@@ -162,6 +162,8 @@ class DeviceState : public Logger {
   void load_all(HardwareDefinition& hw);
   void clear_all();
 
+  size_t get_free_entries();
+
   // TODO: maybe should be somewhere else
   StaticString<32> get_ap_ssid() const {
     return StaticString<32>("HB-") + factory_.random_id.c_str();
