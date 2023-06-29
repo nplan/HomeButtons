@@ -29,6 +29,8 @@ Labels can be:
 
 Enter any text you want. Labels support UTF-8 with special characters. *Home Buttons* will choose between two font sizes automatically. It can display around **5** letters in large font and around **7** letters in smaller font.
 
+> To force small font, prepend text with an underscore: `_`. Example: `_Bedroom`.
+
 #### Icons :material-home:
 
 You can choose any of the [Material Design Icons](https://materialdesignicons.com/){:target="_blank"}. Enter the icon name in the label field in the format `mdi:{icon name}`. For example, `mdi:lightbulb-auto-outline`.
@@ -40,6 +42,9 @@ Icons are downloaded from a *Github* repository. For that purpose an internet co
 In label field, enter: `mdi:{icon name} {text}`. For example, `mdi:lightbulb Bedroom`. There must be a single space separating the icon name and the text. Label name must always be first. The actual position of the icon will be before or after the text, based on the location of the button.
 
 >Icons are slightly smaller in this mode.
+
+> To force small font, prepend text with an underscore: `_`. Example: `mdi:lightbulb _Bedroom`.
+
 ### Configure Button Actions
 
 To configure button actions, click "+" on the *Automations* card, select one of the buttons and set up an automation with *Home Assistant*'s editor.
