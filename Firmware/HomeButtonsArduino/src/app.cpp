@@ -988,7 +988,7 @@ void AppSMStates::DeviceInfoState::loop() {
     }
   }
   if (!awake_mode &&
-      millis() - sm().settings_menu_start_time_ > DEVICE_INFO_TIMEOUT) {
+      millis() - sm().device_info_start_time_ > DEVICE_INFO_TIMEOUT) {
     sm().debug("device info timeout");
     sm().display_.disp_main();
     return transition_to<CmdShutdownState>();
