@@ -6,7 +6,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.2.1";
+static constexpr char SW_VERSION[] = "v2.2.2-beta1";
 
 // ------ URLs ------
 #ifndef HOMEBUTTONS_MINI
@@ -56,13 +56,13 @@ static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;          // s
 static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;   // ms
 static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;  // ms
 static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;    // ms
+static constexpr uint32_t SHUTDOWN_DELAY = 500L;           // ms
 
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 static constexpr uint32_t WIFI_TIMEOUT = 20000L;
 static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 2;
 static constexpr uint32_t MQTT_TIMEOUT = 5000L;
-static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 500L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
 static constexpr uint32_t NET_CONNECT_TIMEOUT = 30000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;

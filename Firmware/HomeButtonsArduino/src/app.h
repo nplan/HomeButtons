@@ -80,6 +80,7 @@ class CmdShutdownState : public State<App> {
   using State<App>::State;
 
   void entry() override;
+  void loop() override;
 
   const char* get_name() override { return "CmdShutdownState"; }
 };
@@ -179,6 +180,7 @@ class App : public AppStateMachine, public Logger {
   uint32_t info_screen_start_time_ = 0;
   uint32_t settings_menu_start_time_ = 0;
   uint32_t device_info_start_time_ = 0;
+  uint32_t shutdown_cmd_time_ = 0;
 
   friend class AppSMStates::InitState;
   friend class AppSMStates::AwakeModeIdleState;

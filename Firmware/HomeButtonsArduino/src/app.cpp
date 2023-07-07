@@ -1007,10 +1007,17 @@ void AppSMStates::CmdShutdownState::entry() {
     sm().device_state_.persisted().info_screen_showing = false;
     sm().display_.disp_main();
   }
-  sm().button_handler_.end();
-  sm().leds_.end();
-  sm().network_.disconnect();
-  return transition_to<NetDisconnectingState>();
+  sm().shutdown_cmd_time_ = millis();
+}
+
+void AppSMStates::CmdShutdownState::loop() {
+  // wait for timeout
+  if (millis() - sm().shutdown_cmd_time_ > SHUTDOWN_DELAY) {
+    sm().button_handler_.end();
+    sm().leds_.end();
+    sm().network_.disconnect();
+    return transition_to<NetDisconnectingState>();
+  }
 }
 
 void AppSMStates::NetDisconnectingState::loop() {
