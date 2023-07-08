@@ -28,6 +28,7 @@ static constexpr uint8_t NUM_BUTTONS = 6;
 #endif
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
 static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
+static constexpr uint8_t USER_MSG_MAXLEN = 64;
 
 // ------ defaults ------
 static constexpr char DEVICE_NAME_DFLT[] = "Home Buttons";

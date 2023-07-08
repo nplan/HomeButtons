@@ -582,12 +582,13 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
   // user message
   if (strcmp(topic, mqtt_.t_disp_msg_cmd().c_str()) == 0) {
     if (display_.get_ui_state().page == DisplayPage::MAIN) {
-      UIState::MessageType msg(payload);
+      UserMessage msg(payload);
       device_state_.persisted().user_msg_showing = true;
       device_state_.save_all();
       display_.disp_message_large(msg.c_str());
     }
     network_.publish(mqtt_.t_disp_msg_cmd(), "", true);
+    network_.publish(mqtt_.t_disp_msg_state(), "-", false);
   }
 }
 
@@ -603,6 +604,7 @@ void App::_net_on_connect() {
   network_.publish(mqtt_.t_awake_mode_state(),
                    (device_state_.persisted().user_awake_mode) ? "ON" : "OFF",
                    true);
+  network_.publish(mqtt_.t_disp_msg_state(), "-", false);
 
   if (device_state_.persisted().send_discovery_config) {
     device_state_.persisted().send_discovery_config = false;

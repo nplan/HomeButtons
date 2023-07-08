@@ -157,9 +157,22 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 
 ## Display a Custom Message {#custom_message}
 
-A custom message can be shown on the e-paper display by publishing a retained payload to the `{base_topic}/{device_name}/cmd/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
+A custom message can be shown on the e-paper display by inputting it in the `Show Message` field on the device page in *Home Assistant*.
 
-Message will not be wrapped automatically. You must include line breaks `\n` in the payload.
+You can also use the `Show Message` entity in automations:
+
+```yaml
+action:
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: text
+    entity_id: text.home_buttons_265cbf_show_message
+    type: set_value
+    value: "Test \n Message"
+```
+
+Message will not be wrapped automatically. You must include line breaks `\n` manually.
+
+Alternatively, you can display a message by publishing a retained payload to the `{base_topic}/{device_name}/cmd/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
 
 Example *Home Assistant* publish service call YAML:
 
