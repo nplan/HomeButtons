@@ -832,17 +832,6 @@ void AppSMStates::UserInputFinishState::loop() {
           return transition_to<NetConnectingState>();
         }
         break;
-      case Button::LONG_1:
-        // info screen - already displayed by transient action handler
-        sm().device_state_.persisted().info_screen_showing = true;
-        sm().info_screen_start_time_ = millis();
-        sm().debug("displayed info screen");
-        if (awake_mode) {
-          return transition_to<AwakeModeIdleState>();
-        } else {
-          return transition_to<CmdShutdownState>();
-        }
-        break;
       default:
         if (awake_mode) {
           return transition_to<AwakeModeIdleState>();
@@ -856,10 +845,22 @@ void AppSMStates::UserInputFinishState::loop() {
       switch (btn_event.action) {
         case Button::LONG_1:
           // info screen
-          sm().display_.disp_info();
+          if (sm().hw_.num_buttons_pressed() == 1) {
+            sm().device_state_.persisted().info_screen_showing = true;
+            sm().info_screen_start_time_ = millis();
+            sm().display_.disp_info();
+            sm().debug("displayed info screen");
+            if (awake_mode) {
+              return transition_to<AwakeModeIdleState>();
+            } else {
+              return transition_to<CmdShutdownState>();
+            }
+          }
           break;
         case Button::LONG_2:
-          return transition_to<SettingsMenuState>();
+          if (sm().hw_.num_buttons_pressed() == 2) {
+            return transition_to<SettingsMenuState>();
+          }
           break;
         default:
           break;
@@ -1050,7 +1051,8 @@ void AppSMStates::NetDisconnectingState::loop() {
 
 void AppSMStates::ShuttingDownState::loop() {
   if (sm().display_.get_state() == Display::State::IDLE &&
-      sm().leds_.get_state() == LEDs::State::IDLE) {
+      sm().leds_.get_state() == LEDs::State::IDLE &&
+      !sm().hw_.any_button_pressed()) {
     sm()._log_stack_status();
     if (sm().device_state_.flags().awake_mode) {
       sm().device_state_.persisted().silent_restart = true;

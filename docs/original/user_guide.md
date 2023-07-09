@@ -3,10 +3,8 @@
 
 ## Controlling The Device
 
-Press any button for:
-
-- 2 s - [Info Screen](#info_screen)
-- 5 s - [Settings Menu](#settings)
+- [Info Screen](#info_screen) - hold any button for 1 s
+- [Settings Menu](#settings) - hold any **two** buttons together for 5 s
 
 ## Home Assistant
 
@@ -80,7 +78,7 @@ The range is from 1 to 30 minutes. The default is 10 minutes.
 
 ## Settings Menu {#settings}
 
-Open the *Settings Menu* by pressing any button for 5 seconds. The menu will show the following options:
+Open the *Settings Menu* by holding any two buttons together for 5 seconds. The menu will show the following options:
 
 - :material-account-cog: - [Setup](#setup)
 - :material-wifi-cog: - [Wi-Fi Setup](#wifi_setup)
@@ -162,7 +160,7 @@ You can start the setup again by pressing any button. Please make sure to enter 
 
 If *Home Buttons* becomes inaccessible on the local network due to changed Wi-Fi settings, you can restart the Wi-Fi setup at any time.
 
-Open [*Settings Menu*](#settings) by holding any button for 5 s and press :material-wifi-cog:. Wi-Fi hotspot will be established and connection instructions will be displayed.
+Open [*Settings Menu*](#settings) by holding any two buttons together for 5 s and press :material-wifi-cog:. Wi-Fi hotspot will be established and connection instructions will be displayed.
 
 1. *Home Buttons* will establish a Wi-Fi hotspot.
 Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
