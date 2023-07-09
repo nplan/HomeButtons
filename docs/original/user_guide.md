@@ -3,8 +3,12 @@
 
 ## Controlling The Device
 
-- [Info Screen](#info_screen) - hold any button for 1 s
+- [Info Screen](#info_screen) - hold any button for 2 s
 - [Settings Menu](#settings) - hold any **two** buttons together for 5 s
+
+Firmware v2.2.1 and below:
+- [Info Screen](#info_screen) - hold any button for 2 s
+- [Settings Menu](#settings) - hold any button for 5 s
 
 ## Home Assistant
 

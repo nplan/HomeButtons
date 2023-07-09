@@ -3,11 +3,15 @@
 
 ## Controlling The Device
 
-- [Info Screen](#info_screen) - hold any button for 1 s
+- [Info Screen](#info_screen) - hold any button for 2 s
 - [Settings Menu](#settings) - hold any **two** buttons together for 5 s
 
-## Home Assistant
+Firmware v2.2.1 and below:
+- [Info Screen](#info_screen) - hold any button for 2 s
+- [Settings Menu](#settings) - hold any button for 5 s
 
+## Home Assistant
+ 
 You can configure most of the settings directly in *Home Assistant*.
 
 > To get to the device's page in *Home Assistant*, click settings in the left side bar, then open *Devices & Services*, move to the *Devices* tab and click on the name you gave your *Home Buttons* during setup.
