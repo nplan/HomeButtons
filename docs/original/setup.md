@@ -72,7 +72,9 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 See this [page](https://www.home-assistant.io/integrations/mqtt/){:target="_blank"} for more information.
 Usually, the simplest way is to install *Mosquitto MQTT* as a *Home Assistant* add-on.
 
-If you don't have or want *Home Assistant*, see [Minimal Setup](minimal.md) guide.
+> If you're using *Mosquitto MQTT* add-on, you must use username and password of your *Home Assistant* account. It's recommended to create a new account for use with MQTT.
+
+If you don't use *Home Assistant*, see [Minimal Setup](minimal.md) guide.
 
 ## Set Up MQTT connection {#setup_mqtt}
 
