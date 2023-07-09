@@ -78,5 +78,7 @@ static constexpr uint8_t LED_DFLT_BRIGHT = 25;
 
 // ------ other ------
 static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
+static constexpr uint32_t SCHEDULE_WAKEUP_MIN = 5;                      // s
+static constexpr uint32_t SCHEDULE_WAKEUP_MAX = SEN_INTERVAL_MAX * 60;  // s
 
 #endif  // HOMEBUTTONS_CONFIG_H

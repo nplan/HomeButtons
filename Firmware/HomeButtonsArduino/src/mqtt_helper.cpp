@@ -234,6 +234,31 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(user_message_config_topic, buffer, true);
   }
 
+  {
+    // schedule wakeup
+    TopicType schedule_wakeup_config_topic =
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
+        "/number/" + _device_state.factory().unique_id +
+        "/schedule_wakeup/config";
+    StaticJsonDocument<MQTT_PYLD_SIZE> schedule_wakeup_conf;
+    schedule_wakeup_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Schedule Wakeup";
+    schedule_wakeup_conf["uniq_id"] = FormatterType{} +
+                                      _device_state.factory().unique_id +
+                                      "_schedule_wakeup";
+    schedule_wakeup_conf["cmd_t"] = t_schedule_wakeup_cmd();
+    schedule_wakeup_conf["stat_t"] = t_schedule_wakeup_state();
+    schedule_wakeup_conf["unit_of_meas"] = "s";
+    schedule_wakeup_conf["min"] = SCHEDULE_WAKEUP_MIN;
+    schedule_wakeup_conf["max"] = SCHEDULE_WAKEUP_MAX;
+    schedule_wakeup_conf["mode"] = "box";
+    schedule_wakeup_conf["ic"] = "mdi:alarm";
+    schedule_wakeup_conf["ret"] = "true";
+    schedule_wakeup_conf["dev"] = device_short;
+    serializeJson(schedule_wakeup_conf, buffer, sizeof(buffer));
+    _network.publish(schedule_wakeup_config_topic, buffer, true);
+  }
+
 #ifndef HOME_BUTTONS_MINI
   {
     // awake mode toggle
@@ -393,4 +418,12 @@ TopicType MQTTHelper::t_disp_msg_cmd() const { return t_cmd() + "disp_msg"; }
 
 TopicType MQTTHelper::t_disp_msg_state() const {
   return t_common() + "disp_msg";
+}
+
+TopicType MQTTHelper::t_schedule_wakeup_cmd() const {
+  return t_cmd() + "schedule_wakeup";
+}
+
+TopicType MQTTHelper::t_schedule_wakeup_state() const {
+  return t_common() + "schedule_wakeup";
 }

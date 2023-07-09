@@ -190,6 +190,59 @@ data:
 mosquitto_pub -h <broker_host> -t <topic> -m $'Line 1\nLine 2'
 ```
 
+## Schedule Wakeup
+
+You can schedule the next wakeup using the `Schedule Wakeup` entity. This is useful if you are changing labels dynamically based on state of other devices.
+
+For example: If some action you trigger with a button press is not instant, but takes some time to complete, you can schedule the next wakeup after the action is completed. This way the label will be updated sooner, instead of having to wait for the next sensor publish wakeup.
+
+Example *Home Assistant* automation YAML:
+
+```yaml
+alias: schedule test
+description: ""
+mode: single
+
+# Change button label immediately on press
+trigger:
+  - platform: device
+    domain: mqtt
+    device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    type: button_short_press
+    subtype: button_3
+    discovery_id: HBTNS-2301-001-265CBF button_3
+condition: []
+action:
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: text
+    entity_id: text.home_buttons_265cbf_button_3_label
+    type: set_value
+    value: _OPENING...
+
+# Schedule next wakeup after 15 seconds
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: number
+    entity_id: number.home_buttons_265cbf_schedule_wakeup
+    type: set_value
+    value: 15
+
+# Simulate some action that takes 10 seconds
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+
+# Change button label after action is completed
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: text
+    entity_id: text.home_buttons_265cbf_button_3_label
+    type: set_value
+    value: _OPENED
+```
+
+You can also schedule wakeup by publishing a message to the `{base_topic}/{device_name}/cmd/schedule_wakeup` topic. The message payload should be the number of seconds to wait before the next wakeup. The minimum value is 5 seconds.
+
 ## Opening The Case {#opening_case}
 
 If you need to remove or replace the battery, or perform a manual firmware upgrade, you have to open the case. The back cover can stay mounted to the wall during the procedure.

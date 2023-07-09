@@ -42,6 +42,9 @@ void App::_start_esp_sleep() {
       !device_state_.persisted().check_connection) {
     if (device_state_.persisted().info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
+    } else if (device_state_.flags().schedule_wakeup_time > 0) {
+      esp_sleep_enable_timer_wakeup(device_state_.flags().schedule_wakeup_time *
+                                    1000000UL);
     } else {
       esp_sleep_enable_timer_wakeup(device_state_.sensor_interval() *
                                     60000000UL);
@@ -589,6 +592,17 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
     }
     network_.publish(mqtt_.t_disp_msg_cmd(), "", true);
     network_.publish(mqtt_.t_disp_msg_state(), "-", false);
+  }
+
+  // schedule wakeup cmd
+  if (strcmp(topic, mqtt_.t_schedule_wakeup_cmd().c_str()) == 0) {
+    uint32_t secs = atoi(payload);
+    if (secs >= SCHEDULE_WAKEUP_MIN && secs <= SCHEDULE_WAKEUP_MAX) {
+      device_state_.flags().schedule_wakeup_time = secs;
+      network_.publish(mqtt_.t_schedule_wakeup_cmd(), "", true);
+      network_.publish(mqtt_.t_schedule_wakeup_state(), "None", true);
+      debug("schedule wakeup set to %d seconds", secs);
+    }
   }
 }
 
