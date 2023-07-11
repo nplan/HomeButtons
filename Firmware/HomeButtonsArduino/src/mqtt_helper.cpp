@@ -116,6 +116,7 @@ void MQTTHelper::send_discovery_config() {
   uint16_t expire_after = _device_state.sensor_interval() * 60 + 60;  // seconds
 
   {
+    // temperature
     TopicType temperature_config_topic =
         sensor_topic_common + "/temperature/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> temp_conf;
@@ -134,6 +135,7 @@ void MQTTHelper::send_discovery_config() {
   }
 
   {
+    // humidity
     TopicType humidity_config_topic = sensor_topic_common + "/humidity/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> humidity_conf;
     humidity_conf["name"] =
@@ -150,6 +152,7 @@ void MQTTHelper::send_discovery_config() {
   }
 
   {
+    // battery
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> battery_conf;
     battery_conf["name"] =
@@ -166,6 +169,7 @@ void MQTTHelper::send_discovery_config() {
   }
 
   {
+    // sensor interval slider
     TopicType sensor_interval_config_topic =
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/number/" + _device_state.factory().unique_id +
@@ -189,6 +193,7 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(sensor_interval_config_topic, buffer, true);
   }
 
+  // button labels
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     TopicType button_label_config_topics =
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
@@ -209,8 +214,54 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(button_label_config_topics, buffer, true);
   }
 
+  {
+    // user message
+    TopicType user_message_config_topic =
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
+        "/text/" + _device_state.factory().unique_id + "/user_message/config";
+    StaticJsonDocument<MQTT_PYLD_SIZE> user_message_conf;
+    user_message_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Show Message";
+    user_message_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_user_message";
+    user_message_conf["cmd_t"] = t_disp_msg_cmd();
+    user_message_conf["stat_t"] = t_disp_msg_state();
+    user_message_conf["max"] = USER_MSG_MAXLEN;
+    user_message_conf["ic"] = "mdi:message-text";
+    user_message_conf["ret"] = "true";
+    user_message_conf["dev"] = device_short;
+    serializeJson(user_message_conf, buffer, sizeof(buffer));
+    _network.publish(user_message_config_topic, buffer, true);
+  }
+
+  {
+    // schedule wakeup
+    TopicType schedule_wakeup_config_topic =
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
+        "/number/" + _device_state.factory().unique_id +
+        "/schedule_wakeup/config";
+    StaticJsonDocument<MQTT_PYLD_SIZE> schedule_wakeup_conf;
+    schedule_wakeup_conf["name"] =
+        FormatterType{} + _device_state.device_name() + " Schedule Wakeup";
+    schedule_wakeup_conf["uniq_id"] = FormatterType{} +
+                                      _device_state.factory().unique_id +
+                                      "_schedule_wakeup";
+    schedule_wakeup_conf["cmd_t"] = t_schedule_wakeup_cmd();
+    schedule_wakeup_conf["stat_t"] = t_schedule_wakeup_state();
+    schedule_wakeup_conf["unit_of_meas"] = "s";
+    schedule_wakeup_conf["min"] = SCHEDULE_WAKEUP_MIN;
+    schedule_wakeup_conf["max"] = SCHEDULE_WAKEUP_MAX;
+    schedule_wakeup_conf["mode"] = "box";
+    schedule_wakeup_conf["ic"] = "mdi:alarm";
+    schedule_wakeup_conf["ret"] = "true";
+    schedule_wakeup_conf["dev"] = device_short;
+    serializeJson(schedule_wakeup_conf, buffer, sizeof(buffer));
+    _network.publish(schedule_wakeup_config_topic, buffer, true);
+  }
+
 #ifndef HOME_BUTTONS_MINI
   {
+    // awake mode toggle
     TopicType awake_mode_config_topic =
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/switch/" + _device_state.factory().unique_id + "/awake_mode/config";
@@ -364,3 +415,15 @@ TopicType MQTTHelper::t_awake_mode_avlb() const {
 }
 
 TopicType MQTTHelper::t_disp_msg_cmd() const { return t_cmd() + "disp_msg"; }
+
+TopicType MQTTHelper::t_disp_msg_state() const {
+  return t_common() + "disp_msg";
+}
+
+TopicType MQTTHelper::t_schedule_wakeup_cmd() const {
+  return t_cmd() + "schedule_wakeup";
+}
+
+TopicType MQTTHelper::t_schedule_wakeup_state() const {
+  return t_common() + "schedule_wakeup";
+}

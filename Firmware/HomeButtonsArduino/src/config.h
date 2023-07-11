@@ -6,7 +6,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.2.1";
+static constexpr char SW_VERSION[] = "v2.3.0";
 
 // ------ URLs ------
 #ifndef HOMEBUTTONS_MINI
@@ -28,6 +28,7 @@ static constexpr uint8_t NUM_BUTTONS = 6;
 #endif
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
 static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
+static constexpr uint8_t USER_MSG_MAXLEN = 64;
 
 // ------ defaults ------
 static constexpr char DEVICE_NAME_DFLT[] = "Home Buttons";
@@ -56,13 +57,13 @@ static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;          // s
 static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;   // ms
 static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;  // ms
 static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;    // ms
+static constexpr uint32_t SHUTDOWN_DELAY = 500L;           // ms
 
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
 static constexpr uint32_t WIFI_TIMEOUT = 20000L;
 static constexpr uint32_t MAX_WIFI_RETRIES_DURING_MQTT_SETUP = 2;
 static constexpr uint32_t MQTT_TIMEOUT = 5000L;
-static constexpr uint32_t MQTT_DISCONNECT_TIMEOUT = 500L;
 static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
 static constexpr uint32_t NET_CONNECT_TIMEOUT = 30000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
@@ -77,5 +78,7 @@ static constexpr uint8_t LED_DFLT_BRIGHT = 25;
 
 // ------ other ------
 static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
+static constexpr uint32_t SCHEDULE_WAKEUP_MIN = 5;                      // s
+static constexpr uint32_t SCHEDULE_WAKEUP_MAX = SEN_INTERVAL_MAX * 60;  // s
 
 #endif  // HOMEBUTTONS_CONFIG_H

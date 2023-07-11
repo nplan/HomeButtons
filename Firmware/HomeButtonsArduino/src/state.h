@@ -74,6 +74,7 @@ class DeviceState : public Logger {
   struct Flags {
     bool display_redraw = false;
     bool awake_mode = false;
+    uint32_t schedule_wakeup_time = 0;
   } flags_;
 
   struct Sensors {

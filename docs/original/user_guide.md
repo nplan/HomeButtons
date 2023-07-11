@@ -3,10 +3,12 @@
 
 ## Controlling The Device
 
-Press any button for:
+- [Info Screen](#info_screen) - hold any button for 2 s
+- [Settings Menu](#settings) - hold any **two** buttons together for 5 s
 
-- 2 s - [Info Screen](#info_screen)
-- 5 s - [Settings Menu](#settings)
+Firmware v2.2.1 and below:
+- [Info Screen](#info_screen) - hold any button for 2 s
+- [Settings Menu](#settings) - hold any button for 5 s
 
 ## Home Assistant
 
@@ -80,7 +82,7 @@ The range is from 1 to 30 minutes. The default is 10 minutes.
 
 ## Settings Menu {#settings}
 
-Open the *Settings Menu* by pressing any button for 5 seconds. The menu will show the following options:
+Open the *Settings Menu* by holding any two buttons together for 5 seconds. The menu will show the following options:
 
 - :material-account-cog: - [Setup](#setup)
 - :material-wifi-cog: - [Wi-Fi Setup](#wifi_setup)
@@ -162,7 +164,7 @@ You can start the setup again by pressing any button. Please make sure to enter 
 
 If *Home Buttons* becomes inaccessible on the local network due to changed Wi-Fi settings, you can restart the Wi-Fi setup at any time.
 
-Open [*Settings Menu*](#settings) by holding any button for 5 s and press :material-wifi-cog:. Wi-Fi hotspot will be established and connection instructions will be displayed.
+Open [*Settings Menu*](#settings) by holding any two buttons together for 5 s and press :material-wifi-cog:. Wi-Fi hotspot will be established and connection instructions will be displayed.
 
 1. *Home Buttons* will establish a Wi-Fi hotspot.
 Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.
@@ -185,9 +187,22 @@ You can start Wi-Fi setup again by pressing any button. Please make sure to ente
 
 ## Display a Custom Message {#custom_message}
 
-A custom message can be shown on the e-paper display by publishing a retained payload to the `{base_topic}/{device_name}/cmd/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
+A custom message can be shown on the e-paper display by inputting it in the `Show Message` field on the device page in *Home Assistant*.
 
-Message will not be wrapped automatically. You must include line breaks `\n` in the payload.
+You can also use the `Show Message` entity in automations:
+
+```yaml
+action:
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: text
+    entity_id: text.home_buttons_265cbf_show_message
+    type: set_value
+    value: "Test \n Message"
+```
+
+Message will not be wrapped automatically. You must include line breaks `\n` manually.
+
+Alternatively, you can display a message by publishing a retained payload to the `{base_topic}/{device_name}/cmd/disp_msg` topic. The message will be displayed when the device wakes up on button press or sensor publish. You can clear the message by pressing any button.
 
 Example *Home Assistant* publish service call YAML:
 
@@ -204,6 +219,59 @@ data:
 ```bash
 mosquitto_pub -h <broker_host> -t <topic> -m $'Line 1\nLine 2'
 ```
+
+## Schedule Wakeup
+
+You can schedule the next wakeup using the `Schedule Wakeup` entity. This is useful if you are changing labels dynamically based on state of other devices.
+
+For example: If some action you trigger with a button press is not instant, but takes some time to complete, you can schedule the next wakeup after the action is completed. This way the label will be updated sooner, instead of having to wait for the next sensor publish wakeup.
+
+Example *Home Assistant* automation YAML:
+
+```yaml
+alias: schedule test
+description: ""
+mode: single
+
+# Change button label immediately on press
+trigger:
+  - platform: device
+    domain: mqtt
+    device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    type: button_short_press
+    subtype: button_3
+    discovery_id: HBTNS-2301-001-265CBF button_3
+condition: []
+action:
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: text
+    entity_id: text.home_buttons_265cbf_button_3_label
+    type: set_value
+    value: _OPENING...
+
+# Schedule next wakeup after 15 seconds
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: number
+    entity_id: number.home_buttons_265cbf_schedule_wakeup
+    type: set_value
+    value: 15
+
+# Simulate some action that takes 10 seconds
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 10
+      milliseconds: 0
+
+# Change button label after action is completed
+  - device_id: 966128a1b5d43dd1b22424cd0a77d44c
+    domain: text
+    entity_id: text.home_buttons_265cbf_button_3_label
+    type: set_value
+    value: _OPENED
+```
+
+You can also schedule wakeup by publishing a message to the `{base_topic}/{device_name}/cmd/schedule_wakeup` topic. The message payload should be the number of seconds to wait before the next wakeup. The minimum value is 5 seconds.
 
 ## Opening The Case {#opening_case}
 

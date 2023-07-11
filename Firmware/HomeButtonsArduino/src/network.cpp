@@ -167,7 +167,6 @@ void NetworkSMStates::DisconnectState::entry() {
   WiFi.mode(WIFI_OFF);
   sm().state_ = Network::State::DISCONNECTED;
   sm().info("disconnected.");
-  delay(MQTT_DISCONNECT_TIMEOUT);
 }
 
 void NetworkSMStates::DisconnectState::loop() {

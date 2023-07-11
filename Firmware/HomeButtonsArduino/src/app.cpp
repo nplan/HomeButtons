@@ -42,6 +42,9 @@ void App::_start_esp_sleep() {
       !device_state_.persisted().check_connection) {
     if (device_state_.persisted().info_screen_showing) {
       esp_sleep_enable_timer_wakeup(INFO_SCREEN_DISP_TIME * 1000UL);
+    } else if (device_state_.flags().schedule_wakeup_time > 0) {
+      esp_sleep_enable_timer_wakeup(device_state_.flags().schedule_wakeup_time *
+                                    1000000UL);
     } else {
       esp_sleep_enable_timer_wakeup(device_state_.sensor_interval() *
                                     60000000UL);
@@ -582,12 +585,24 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
   // user message
   if (strcmp(topic, mqtt_.t_disp_msg_cmd().c_str()) == 0) {
     if (display_.get_ui_state().page == DisplayPage::MAIN) {
-      UIState::MessageType msg(payload);
+      UserMessage msg(payload);
       device_state_.persisted().user_msg_showing = true;
       device_state_.save_all();
       display_.disp_message_large(msg.c_str());
     }
     network_.publish(mqtt_.t_disp_msg_cmd(), "", true);
+    network_.publish(mqtt_.t_disp_msg_state(), "-", false);
+  }
+
+  // schedule wakeup cmd
+  if (strcmp(topic, mqtt_.t_schedule_wakeup_cmd().c_str()) == 0) {
+    uint32_t secs = atoi(payload);
+    if (secs >= SCHEDULE_WAKEUP_MIN && secs <= SCHEDULE_WAKEUP_MAX) {
+      device_state_.flags().schedule_wakeup_time = secs;
+      network_.publish(mqtt_.t_schedule_wakeup_cmd(), "", true);
+      network_.publish(mqtt_.t_schedule_wakeup_state(), "None", true);
+      debug("schedule wakeup set to %d seconds", secs);
+    }
   }
 }
 
@@ -603,6 +618,7 @@ void App::_net_on_connect() {
   network_.publish(mqtt_.t_awake_mode_state(),
                    (device_state_.persisted().user_awake_mode) ? "ON" : "OFF",
                    true);
+  network_.publish(mqtt_.t_disp_msg_state(), "-", false);
 
   if (device_state_.persisted().send_discovery_config) {
     device_state_.persisted().send_discovery_config = false;
@@ -816,17 +832,6 @@ void AppSMStates::UserInputFinishState::loop() {
           return transition_to<NetConnectingState>();
         }
         break;
-      case Button::LONG_1:
-        // info screen - already displayed by transient action handler
-        sm().device_state_.persisted().info_screen_showing = true;
-        sm().info_screen_start_time_ = millis();
-        sm().debug("displayed info screen");
-        if (awake_mode) {
-          return transition_to<AwakeModeIdleState>();
-        } else {
-          return transition_to<CmdShutdownState>();
-        }
-        break;
       default:
         if (awake_mode) {
           return transition_to<AwakeModeIdleState>();
@@ -840,10 +845,22 @@ void AppSMStates::UserInputFinishState::loop() {
       switch (btn_event.action) {
         case Button::LONG_1:
           // info screen
-          sm().display_.disp_info();
+          if (sm().hw_.num_buttons_pressed() == 1) {
+            sm().device_state_.persisted().info_screen_showing = true;
+            sm().info_screen_start_time_ = millis();
+            sm().display_.disp_info();
+            sm().debug("displayed info screen");
+            if (awake_mode) {
+              return transition_to<AwakeModeIdleState>();
+            } else {
+              return transition_to<CmdShutdownState>();
+            }
+          }
           break;
         case Button::LONG_2:
-          return transition_to<SettingsMenuState>();
+          if (sm().hw_.num_buttons_pressed() == 2) {
+            return transition_to<SettingsMenuState>();
+          }
           break;
         default:
           break;
@@ -988,7 +1005,7 @@ void AppSMStates::DeviceInfoState::loop() {
     }
   }
   if (!awake_mode &&
-      millis() - sm().settings_menu_start_time_ > DEVICE_INFO_TIMEOUT) {
+      millis() - sm().device_info_start_time_ > DEVICE_INFO_TIMEOUT) {
     sm().debug("device info timeout");
     sm().display_.disp_main();
     return transition_to<CmdShutdownState>();
@@ -1007,10 +1024,17 @@ void AppSMStates::CmdShutdownState::entry() {
     sm().device_state_.persisted().info_screen_showing = false;
     sm().display_.disp_main();
   }
-  sm().button_handler_.end();
-  sm().leds_.end();
-  sm().network_.disconnect();
-  return transition_to<NetDisconnectingState>();
+  sm().shutdown_cmd_time_ = millis();
+}
+
+void AppSMStates::CmdShutdownState::loop() {
+  // wait for timeout
+  if (millis() - sm().shutdown_cmd_time_ > SHUTDOWN_DELAY) {
+    sm().button_handler_.end();
+    sm().leds_.end();
+    sm().network_.disconnect();
+    return transition_to<NetDisconnectingState>();
+  }
 }
 
 void AppSMStates::NetDisconnectingState::loop() {
@@ -1027,7 +1051,8 @@ void AppSMStates::NetDisconnectingState::loop() {
 
 void AppSMStates::ShuttingDownState::loop() {
   if (sm().display_.get_state() == Display::State::IDLE &&
-      sm().leds_.get_state() == LEDs::State::IDLE) {
+      sm().leds_.get_state() == LEDs::State::IDLE &&
+      !sm().hw_.any_button_pressed()) {
     sm()._log_stack_status();
     if (sm().device_state_.flags().awake_mode) {
       sm().device_state_.persisted().silent_restart = true;

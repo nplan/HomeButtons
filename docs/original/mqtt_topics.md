@@ -21,6 +21,7 @@ Topic | Description | Retained
 {BASE_TOPIC}/{DEVICE_NAME}/cmd/sensor_interval | Command to change sensor publish interval. 1 - 30 minutes. Topic cleared by device when received. | Yes
 {BASE_TOPIC}/{DEVICE_NAME}/cmd/awake_mode | Command to change Awake mode setting. "ON" or "OFF. Topic cleared by device when received. | Yes
 {BASE_TOPIC}/{DEVICE_NAME}/cmd/disp_msg | Display a custom message on device. Topic cleared by device when received. | Yes
+{BASE_TOPIC}/{DEVICE_NAME}/cmd/schedule_wakeup | Schedule next wakeup. Value in seconds. Topic cleared by device when received. | Yes
 
 - {BASE_TOPIC} - Configured during setup. Default is *homebuttons*.
 - {DEVICE_NAME} - Name of device as configured during setup and shown in *Home Assistant*

@@ -179,6 +179,16 @@ bool HardwareDefinition::any_button_pressed() {
 #endif
 }
 
+uint8_t HardwareDefinition::num_buttons_pressed() {
+  uint8_t num = 0;
+  for (uint8_t i = 1; i <= NUM_BUTTONS; i++) {
+    if (button_pressed(i)) {
+      num++;
+    }
+  }
+  return num;
+}
+
 void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
   ledcWrite(ch, brightness);
 }
