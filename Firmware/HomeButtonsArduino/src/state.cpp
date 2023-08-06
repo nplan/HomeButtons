@@ -52,15 +52,9 @@ void DeviceState::load_user() {
       preferences_.getString("disc_prefix", DISCOVERY_PREFIX_DFLT);
 
   for (int i = 0; i < NUM_BUTTONS; i++) {
-    _load_to_static_string(
-        user_preferences_.btn_labels[i],
-        StaticString<8>("btn%d_txt", i + 1).c_str(),
-#ifndef HOME_BUTTONS_MINI
-        StaticString<8>("%s%d", BNT_LABEL_DFLT_PREFIX, i + 1).c_str()
-#else
-        StaticString<16>("mdi:numeric-%d", i + 1).c_str()
-#endif
-    );
+    _load_to_static_string(user_preferences_.btn_labels[i],
+                           StaticString<8>("btn%d_txt", i + 1).c_str(),
+                           StaticString<16>("mdi:numeric-%d", i + 1).c_str());
   }
 
   user_preferences_.sensor_interval =

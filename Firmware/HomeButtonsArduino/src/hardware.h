@@ -96,8 +96,7 @@ struct HardwareDefinition : public Logger {
 
   void set_all_leds(uint8_t brightness);
 
-  void blink_led(uint8_t num, uint8_t num_blinks,
-                 uint8_t brightness = LED_DFLT_BRIGHT);
+  void blink_led(uint8_t num, uint8_t num_blinks, uint8_t brightness);
 
   float read_battery_voltage();
 
@@ -141,6 +140,7 @@ struct HardwareDefinition : public Logger {
   void load_hw_rev_2_0();
   void load_hw_rev_2_2();
   void load_hw_rev_2_3();
+  void load_hw_rev_2_4();
 
   void load_mini_hw_rev_0_1();
   void load_mini_hw_rev_1_1();

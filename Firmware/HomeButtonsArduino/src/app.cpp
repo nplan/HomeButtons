@@ -374,7 +374,7 @@ void App::_main_task() {
   switch (boot_cause_) {
     case BootCause::RESET: {
       if (!device_state_.persisted().silent_restart) {
-        hw_.set_all_leds(LED_DFLT_BRIGHT);
+        hw_.set_all_leds(hw_.LED_BRIGHT_DFLT);
         display_.disp_message("RESTART...", 0);
         display_.update();
       }
@@ -810,14 +810,15 @@ void AppSMStates::UserInputFinishState::loop() {
             return transition_to<AwakeModeIdleState>();
           }
           sm().leds_.blink(btn_event.id,
-                           Button::get_action_multi_count(btn_event.action));
+                           Button::get_action_multi_count(btn_event.action),
+                           sm().hw_.LED_BRIGHT_DFLT, false);
           sm().network_.publish(sm().mqtt_.get_button_topic(btn_event),
                                 BTN_PRESS_PAYLOAD);
           return transition_to<AwakeModeIdleState>();
         } else {
           sm().leds_.blink(btn_event.id,
                            Button::get_action_multi_count(btn_event.action),
-                           true);
+                           sm().hw_.LED_BRIGHT_DFLT, true);
           if (sm().device_state_.sensors().battery_low) {
 #ifndef HOME_BUTTONS_MINI
             sm().display_.disp_message_large(

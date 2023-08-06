@@ -12,8 +12,8 @@ void LEDs::end() {
   debug("cmd end");
 }
 
-void LEDs::blink(uint8_t led_num, uint8_t num_blinks, bool hold,
-                 uint8_t brightness) {
+void LEDs::blink(uint8_t led_num, uint8_t num_blinks, uint8_t brightness,
+                 bool hold) {
   if (num_blinks < 1)
     num_blinks = 1;
   else if (num_blinks > 5)

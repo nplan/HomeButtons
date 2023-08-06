@@ -6,7 +6,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.3.0";
+static constexpr char SW_VERSION[] = "v2.3.1-beta";
 
 // ------ URLs ------
 #ifndef HOMEBUTTONS_MINI
@@ -68,13 +68,6 @@ static constexpr uint32_t NET_CONN_CHECK_INTERVAL = 1000L;
 static constexpr uint32_t NET_CONNECT_TIMEOUT = 30000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
 static const IPAddress DEFAULT_DNS2 = IPAddress(1, 1, 1, 1);
-
-// ------ LEDs ------
-#ifndef HOME_BUTTONS_MINI
-static constexpr uint8_t LED_DFLT_BRIGHT = 225;
-#else
-static constexpr uint8_t LED_DFLT_BRIGHT = 25;
-#endif
 
 // ------ other ------
 static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
