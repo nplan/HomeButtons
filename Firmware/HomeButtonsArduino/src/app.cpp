@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <esp_task_wdt.h>
 #include <SPIFFS.h>
+#include "esp_ota_ops.h"
 
 #include "config.h"
 #include "factory.h"
@@ -11,7 +12,7 @@
 
 #include "mdi_helper.h"
 
-static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
+extern "C" bool verifyRollbackLater() { return true; }
 
 App::App()
     : AppStateMachine("AppSM", *this),
@@ -195,7 +196,24 @@ void App::_main_task() {
   info("SW version: %s", SW_VERSION);
 
   // ------ init hardware ------
-  if (!hw_.init()) {
+  bool hw_init_ok = hw_.init();
+
+  // verify OTA if this is first boot after OTA
+  const esp_partition_t* running = esp_ota_get_running_partition();
+  esp_ota_img_states_t ota_state;
+  if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+    if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+      if (hw_init_ok) {
+        esp_ota_mark_app_valid_cancel_rollback();
+      } else {
+        error("OTA verification failed! Rolling back...");
+        esp_ota_mark_app_invalid_rollback_and_reboot();
+        ESP.restart();  // if above line fails
+      }
+    }
+  }
+
+  if (!hw_init_ok) {
     error("HW init failed! Going to sleep.");
     _start_esp_sleep();
   }

@@ -29,6 +29,13 @@ bool HardwareDefinition::init() {
     return false;
   }
 
+  // check if SW matches HW
+  if (strcmp(get_model_id(), SW_MODEL_ID) != 0) {
+    error("SW device model id %s does not match HW device model id %s",
+          SW_MODEL_ID, get_model_id());
+    return false;
+  }
+
   if (strcmp(get_model_id(), "A1") == 0) {
     strncpy(model_name_, "Home Buttons", sizeof(model_name_));
   } else if (strcmp(get_model_id(), "B1") == 0) {

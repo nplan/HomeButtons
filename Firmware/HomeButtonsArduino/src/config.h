@@ -6,10 +6,15 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.3.1-beta";
+static constexpr char SW_VERSION[] = "v2.3.1-beta2";
+#ifndef HOME_BUTTONS_MINI
+static constexpr char SW_MODEL_ID[] = "A1";
+#else
+static constexpr char SW_MODEL_ID[] = "B1";
+#endif
 
 // ------ URLs ------
-#ifndef HOMEBUTTONS_MINI
+#ifndef HOME_BUTTONS_MINI
 static constexpr char DOCS_LINK[] =
     "https://docs.home-buttons.com/original/setup/";
 #else
@@ -73,5 +78,6 @@ static const IPAddress DEFAULT_DNS2 = IPAddress(1, 1, 1, 1);
 static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
 static constexpr uint32_t SCHEDULE_WAKEUP_MIN = 5;                      // s
 static constexpr uint32_t SCHEDULE_WAKEUP_MAX = SEN_INTERVAL_MAX * 60;  // s
+static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
 
 #endif  // HOMEBUTTONS_CONFIG_H
