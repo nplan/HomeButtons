@@ -27,15 +27,19 @@ You can skip this step if you purchased a fully soldered device.
 You need one 18650 Li-Ion battery cell (**not included**). Please use a high quality cell with greater than 3000 mAh capacity.
 The length of the cell must not exceed 65.5 mm. Button top cells might not fit properly. 
 
-1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it. Then pull the cover off.
+> If you have a device with a different case design see [here](user_guide.md#open_older_case) for how to open it.
 
-    ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
+1. Open the back cover by pressing the tab on the bottom of the device.
+
+    ![Open back cover image](assets/push_cover_tab.jpeg){width="300"}
 
 2. Insert the battery cell. Be careful to orient it so that polarity matches markings on the PCB.
 
     ![Insert battery](assets/insert_battery.jpeg){width="300"}
 
-3. Keep the back cover off for now. You will install it when mounting *Home Buttons* to the wall.
+3. Replace the back cover by aligning it first at the top and then pressing it down until it clicks.
+
+    ![Close back cover image](assets/close_back_cover.jpeg){width="300"}
 
 ## Set Up Wi-Fi Connection {#setup_wifi}
 
@@ -179,8 +183,6 @@ To configure button actions, click "+" on the *Automations* card, select one of 
 
 ## Mount To The Wall
 
-![Mount To Wall](assets/mount_2_wall.jpeg){width="300"}
-
 Mount the **back cover** of *Home Buttons* to the wall. There are 2 options:
 
 1. **Screws**
@@ -192,13 +194,7 @@ Mount the **back cover** of *Home Buttons* to the wall. There are 2 options:
     Use double sided tape (not included). Use only high quality heavy duty foam mounting tape.
     A small patch of size around 1 x 1 cm in each corner works best.
 
-Either way, **make sure the arrow is pointing upwards!**
-
-When the back cover is securely mounted, you can clip on the front of the device. Push it firmly until it's flush with the wall.
-
-![Mount To Wall](assets/mount_2_wall_2.jpeg){width="300"}
-
-***DONE!***
+> Make sure the arrow is pointing upwards!
 
 ## Other Important Information
 

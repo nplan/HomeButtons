@@ -15,18 +15,15 @@ You will need:
 
 You need two AA batteries. Please use high quality alkaline batteries for best battery life.
 
-
 1. Open the back cover by pressing the tab on the bottom of the device.
 
 2. Insert the battery cells. Be careful to orient it so that polarity matches markings on the PCB.
 
-![Insert battery](assets/insert_batteries.jpeg){width="400"}
+    ![Insert battery](assets/insert_batteries.jpeg){width="300"}
 
 3. Replace the back cover by aligning it first at the top and then pressing it down until it clicks.
 
-![Replace back cover](assets/back_cover.gif){width="400"}
-
-
+    ![Replace back cover](assets/back_cover.gif){width="300"}
 
 ## Set Up Wi-Fi Connection {#setup_wifi}
 
@@ -164,7 +161,7 @@ Mount the **back cover** of *Home Buttons* to the wall. There are 2 options:
     Use double sided tape (not included). Use only high quality heavy duty foam mounting tape.
     A small patch of size around 1 x 1 cm in each corner works best.
 
-***DONE!***
+> Make sure the arrow is pointing upwards!
 
 ## Other Important Information
 

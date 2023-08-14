@@ -5,18 +5,23 @@ Find your *Home Buttons* in the device list and click it. Firmware version is di
 
 ![Firmware Version](assets/device_info_card.png){width="250"}
 
-Firmware can be updated in two ways:
+Firmware can be updated in a couple ways:
 
 - [Over The Air](#OTA) (OTA) using a web interface - ***recommended***
-- [Flashing via USB](#USB)
+- [Online Flash Tool](#online) using a web browser and USB
+- [Esptool.py](#esptool) via USB
+- [Full Image Flash](#full_image) - repair a device that is not booting. Can be done via Esptool.py or Online Flash Tool.
 
-> OTA is the simplest way and therefore recommended. Flash via USB only if something goes wrong with the OTA update and web interface is not accessible.
+> OTA is the simplest way and therefore recommended.
 
-**Important!** Downgrading from v2.0.4 to an earlier version is not supported!
+**Important!**
+
+- Updating to v2.4.0 is only possible via [Full Image Flash](#full_image).
+- Downgrading from v2.4.0 is not supported
 
 ## Over The Air (OTA) {#OTA}
 
-1. Find the latest firmware *.bin* file [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"} and download it to your computer.
+1. Find the latest firmware [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"}. Check release notes for any special update requirements. Make sure to select the correct file ending with `_original.bin`. Download it to your computer.
 
 2. Enter *Setup* from the [*Settings Menu*](#settings). Home Buttons will display instructions for connecting to a web interface.
 Scan the QR code or enter the local IP into a web browser.
@@ -33,18 +38,38 @@ Scan the QR code or enter the local IP into a web browser.
 
     ![Update Successful](assets/update_successful.png){width="200"}
  
-## Flashing via USB {#USB}
+## Online Flash Tool {#online}
+
+Flash your device from your web browser.
+
+1. Connect *Home Buttons* to your computer using an USB-C cable.
+
+2. Go to [nplan.github.io/HomeButtonsFlasher](https://nplan.github.io/HomeButtonsFlasher/) and follow the instructions.
+
+> Google Chrome and Microsoft Edge are supported
+
+## Esptool.py {#esptool}
 
 1. Install ***esptool***. If you already have *Python* installed, the easiest way is to install it using *pip*: 
 
-    ```
+    ``` { .shell .copy }
     pip install esptool
     ```
 
     > See [here](https://docs.espressif.com/projects/esptool/en/latest/esp32/installation.html){:target="_blank"}
     for more installation details.
 
-2. Find the latest firmware *.bin* file [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"} and download it to your computer.
+2. Find the latest firmware [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"}. Check release notes for any special update requirements. Make sure to select the correct file:
+
+    1. **Update image** - regular update
+
+        Select file ending with `_original.bin`.
+
+    2. **Full image** - to flash the entire device memory. This will erase all user data.
+
+        Select file ending with `_original_full_image.bin`. 
+
+    Download the file to your computer.
 
 3. Open the case. See instructions [here](user_guide.md#opening_case){:target="_blank"}.
 
@@ -70,34 +95,56 @@ Scan the QR code or enter the local IP into a web browser.
 
     *macOS*
 
-    ``` { .yaml .copy }
+    ``` { .shell .copy }
     ls /dev/cu*
     ```    
 
     *Linux*
 
-    ``` { .yaml .copy }
+    ``` { .shell .copy }
     ls /dev/tty*
     ```
 
     Copy the path of the correct port.
  
-7. Flash the firmware using *esptool*. Run this two commands in *Terminal* or *Command Prompt*:
+7. Flash the firmware using *esptool*.
 
-    ``` { .yaml .copy }
-    python -m esptool --port PORT --after no_reset erase_region 0xe000 0x2000
-    ```
-    ``` { .yaml .copy }
-    python -m esptool --port PORT --after no_reset write_flash 0x10000 BIN_FILE_PATH
-    ```
+    Run this commands in *Terminal* or *Command Prompt*:
 
-    Substitute `PORT` with port that you determined in previous step.
-    Substitute `BIN_FILE_PATH` with the path of downloaded firmware *.bin* file.
+    1. **Update image** - regular update
 
-    > The `erase_region` command resets the app partition boot switch. It's required to make sure the device will boot to the newly flashed firmware.
+        ``` { .shell .copy }
+        python -m esptool --port PORT --after no_reset erase_region 0xe000 0x2000
+        ```
+        ``` { .shell .copy }
+        python -m esptool --port PORT --after no_reset write_flash 0x10000 BIN_FILE_PATH
+        ```
+
+        Substitute `PORT` with port that you determined in previous step.
+        Substitute `BIN_FILE_PATH` with the path of downloaded firmware *.bin* file.
+
+        > The `erase_region` command resets the app partition boot switch. It's required to make sure the device will boot to the newly flashed firmware.
+
+    2. **Full image** - to flash the entire device memory. This will erase all user data.
+
+        ``` { .shell .copy }
+        python -m esptool --port PORT --after no_reset write_flash 0x0 BIN_FILE_PATH
+        ```
+
+        Substitute `PORT` with port that you determined in previous step.
+        Substitute `BIN_FILE_PATH` with the path of downloaded firmware *.bin* file.
 
 8. Wait a few seconds for firmware to flash. When done, you will see a confirmation in *Terminal* or *Command Prompt* window.
 
 9. Disconnect USB-C cable and press the `RST` button.
-*Home Buttons* will display `RESTART...` and then return to showing button labels. Firmware is now successfully updated.
 
+## Full Image Flash {#full_image}
+
+This method flashes the entire device memory. It can be used to repair a device that is not booting.
+
+**Important!** User data will be lost. This includes button labels, WiFi credentials, MQTT settings, etc.
+
+You can flash your device via:
+
+- *Online Flash Tool* - follow the instructions [above](#online). Select `Full Image` in the online tool prior to flashing.
+- *Esptool.py* - follow the instructions [above](#esptool). Download the correct image when required.
