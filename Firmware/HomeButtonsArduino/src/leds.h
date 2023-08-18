@@ -15,8 +15,8 @@ class LEDs : public Logger {
 
   void begin();
   void end();
-  void blink(uint8_t led_num, uint8_t num_blinks, bool hold = false,
-             uint8_t brightness = LED_DFLT_BRIGHT);
+  void blink(uint8_t led_num, uint8_t num_blinks, uint8_t brightness,
+             bool hold = false);
   State get_state() const;
 
   void update(HardwareDefinition& HW);

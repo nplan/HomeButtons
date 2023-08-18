@@ -5,12 +5,6 @@ repo_name: nplan/HomeButtons
 
 nav:
   - Home: index.md
-  - Home Buttons Mini:
-      - mini/index.md
-      - Getting Started: mini/setup.md
-      - User Guide: mini/user_guide.md
-      - MQTT Topics: mini/mqtt_topics.md
-      - Firmware Update: mini/update.md
   - Home Buttons:
       - original/index.md
       - Getting Started: original/setup.md
@@ -19,6 +13,12 @@ nav:
       - Soldering: original/soldering.md
       - Hardware Hacks: original/hardware_hacks.md
       - Firmware Update: original/update.md
+  - Home Buttons Mini:
+      - mini/index.md
+      - Getting Started: mini/setup.md
+      - User Guide: mini/user_guide.md
+      - MQTT Topics: mini/mqtt_topics.md
+      - Firmware Update: mini/update.md
   - Support:
       - Common Issues: help.md
       - Minimal Setup: minimal.md

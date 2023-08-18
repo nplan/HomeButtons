@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <esp_task_wdt.h>
 #include <SPIFFS.h>
+#include "esp_ota_ops.h"
 
 #include "config.h"
 #include "factory.h"
@@ -11,7 +12,7 @@
 
 #include "mdi_helper.h"
 
-static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
+extern "C" bool verifyRollbackLater() { return true; }
 
 App::App()
     : AppStateMachine("AppSM", *this),
@@ -195,7 +196,24 @@ void App::_main_task() {
   info("SW version: %s", SW_VERSION);
 
   // ------ init hardware ------
-  if (!hw_.init()) {
+  bool hw_init_ok = hw_.init();
+
+  // verify OTA if this is first boot after OTA
+  const esp_partition_t* running = esp_ota_get_running_partition();
+  esp_ota_img_states_t ota_state;
+  if (esp_ota_get_state_partition(running, &ota_state) == ESP_OK) {
+    if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+      if (hw_init_ok) {
+        esp_ota_mark_app_valid_cancel_rollback();
+      } else {
+        error("OTA verification failed! Rolling back...");
+        esp_ota_mark_app_invalid_rollback_and_reboot();
+        ESP.restart();  // if above line fails
+      }
+    }
+  }
+
+  if (!hw_init_ok) {
     error("HW init failed! Going to sleep.");
     _start_esp_sleep();
   }
@@ -374,7 +392,7 @@ void App::_main_task() {
   switch (boot_cause_) {
     case BootCause::RESET: {
       if (!device_state_.persisted().silent_restart) {
-        hw_.set_all_leds(LED_DFLT_BRIGHT);
+        hw_.set_all_leds(hw_.LED_BRIGHT_DFLT);
         display_.disp_message("RESTART...", 0);
         display_.update();
       }
@@ -810,14 +828,15 @@ void AppSMStates::UserInputFinishState::loop() {
             return transition_to<AwakeModeIdleState>();
           }
           sm().leds_.blink(btn_event.id,
-                           Button::get_action_multi_count(btn_event.action));
+                           Button::get_action_multi_count(btn_event.action),
+                           sm().hw_.LED_BRIGHT_DFLT, false);
           sm().network_.publish(sm().mqtt_.get_button_topic(btn_event),
                                 BTN_PRESS_PAYLOAD);
           return transition_to<AwakeModeIdleState>();
         } else {
           sm().leds_.blink(btn_event.id,
                            Button::get_action_multi_count(btn_event.action),
-                           true);
+                           sm().hw_.LED_BRIGHT_DFLT, true);
           if (sm().device_state_.sensors().battery_low) {
 #ifndef HOME_BUTTONS_MINI
             sm().display_.disp_message_large(

@@ -275,15 +275,27 @@ You can also schedule wakeup by publishing a message to the `{base_topic}/{devic
 
 ## Opening The Case {#opening_case}
 
+### Latest Case Revision
+
 If you need to remove or replace the battery, or perform a manual firmware upgrade, you have to open the case. The back cover can stay mounted to the wall during the procedure.
 
-1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it.
+1. Open the back cover by pressing the tab on the bottom of the device.
 
-    ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
+    ![Open back cover image](assets/push_cover_tab.jpeg){width="300"}
 
-2. Pull off the front of device. You may need to use some force.
-Hold device in the corners, where the case is strongest.
+3. Replace the back cover by aligning it first at the top and then pressing it down until it clicks.
 
-3. When you're done, reposition the front of device and push firmly until it's flush with the wall.
+    ![Close back cover image](assets/close_back_cover.jpeg){width="300"}
 
-    ![Mount To Wall](assets/mount_2_wall_2.jpeg){width="300"}
+### Older Case Revision {#open_older_case}
+
+  1. Detach the back cover by inserting a flat headed screwdriver in the hole at the bottom and twisting it.
+
+      ![Open back cover image](assets/open_back_cover.jpeg){width="300"}
+
+  2. Pull off the front of device. You may need to use some force.
+  Hold device in the corners, where the case is strongest.
+
+  3. When you're done, reposition the front of device and push firmly until it's flush with the wall.
+
+      ![Mount To Wall](assets/mount_2_wall_2.jpeg){width="300"}

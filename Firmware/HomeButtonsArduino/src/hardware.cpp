@@ -29,6 +29,13 @@ bool HardwareDefinition::init() {
     return false;
   }
 
+  // check if SW matches HW
+  if (strcmp(get_model_id(), SW_MODEL_ID) != 0) {
+    error("SW device model id %s does not match HW device model id %s",
+          SW_MODEL_ID, get_model_id());
+    return false;
+  }
+
   if (strcmp(get_model_id(), "A1") == 0) {
     strncpy(model_name_, "Home Buttons", sizeof(model_name_));
   } else if (strcmp(get_model_id(), "B1") == 0) {
@@ -70,6 +77,9 @@ bool HardwareDefinition::init() {
   } else if (strcmp(hw_ver, "2.3") == 0) {
     load_hw_rev_2_3();
     info("configured for hw version: 2.3");
+  } else if (strcmp(hw_ver, "2.4") == 0) {
+    load_hw_rev_2_4();
+    info("configured for hw version: 2.4");
   } else {
     error("HW rev %s not supported", hw_ver);
     return false;
@@ -545,7 +555,7 @@ void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
 
   LED_RES = 8;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_BRIGHT_DFLT = 225;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -604,7 +614,7 @@ void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
 
   LED_RES = 8;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_BRIGHT_DFLT = 225;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -663,7 +673,66 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
 
   LED_RES = 8;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_BRIGHT_DFLT = 225;
+
+  // ------ battery reading ------“
+  BATT_DIVIDER = 0.5;
+  BATT_ADC_REF_VOLT = 2.6;
+  MIN_BATT_VOLT = 3.3;
+  BATT_HYSTERESIS_VOLT = 3.4;
+  WARN_BATT_VOLT = 3.5;
+  BATT_FULL_VOLT = 4.2;
+  BATT_EMPTY_VOLT = 3.3;
+  BATT_PRESENT_VOLT = 2.7;
+  DC_DETECT_VOLT = 4.5;
+  CHARGE_HYSTERESIS_VOLT = 4.0;
+  BATT_SOC_EST_K = 126.58;
+  BATT_SOC_EST_N = -425.32;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x204072;
+}
+
+void HardwareDefinition::load_hw_rev_2_4() {  // ------ PIN definitions ------
+  version = semver::version{2, 4, 0};
+  BTN1_PIN = 5;
+  BTN2_PIN = 6;
+  BTN3_PIN = 21;
+  BTN4_PIN = 1;
+  BTN5_PIN = 14;
+  BTN6_PIN = 4;
+
+  LED1_PIN = 15;
+  LED2_PIN = 16;
+  LED3_PIN = 17;
+  LED4_PIN = 2;
+  LED5_PIN = 38;
+  LED6_PIN = 37;
+
+  SDA = 10;
+  SCL = 11;
+  VBAT_ADC = 3;
+  CHARGER_STDBY = 12;
+  BOOST_EN = 13;
+  DC_IN_DETECT = 33;
+  CHG_ENABLE = 45;
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+  LED5_CH = 4;
+  LED6_CH = 5;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 25;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -712,7 +781,7 @@ void HardwareDefinition::load_mini_hw_rev_0_1() {
 
   LED_RES = 8;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_BRIGHT_DFLT = 25;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.6666667;
@@ -761,7 +830,7 @@ void HardwareDefinition::load_mini_hw_rev_1_1() {
 
   LED_RES = 8;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_BRIGHT_DFLT = 25;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.6666667;
