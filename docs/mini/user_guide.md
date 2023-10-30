@@ -7,11 +7,12 @@
 - [Settings Menu](#settings) - hold any **two** buttons together for 5 s
 
 Firmware v2.2.1 and below:
+
 - [Info Screen](#info_screen) - hold any button for 2 s
 - [Settings Menu](#settings) - hold any button for 5 s
 
 ## Home Assistant
- 
+
 You can configure most of the settings directly in *Home Assistant*.
 
 > To get to the device's page in *Home Assistant*, click settings in the left side bar, then open *Devices & Services*, move to the *Devices* tab and click on the name you gave your *Home Buttons* during setup.
@@ -244,6 +245,46 @@ action:
 ```
 
 You can also schedule wakeup by publishing a message to the `{base_topic}/{device_name}/cmd/schedule_wakeup` topic. The message payload should be the number of seconds to wait before the next wakeup. The minimum value is 5 seconds.
+
+
+## Set labels dynamically
+
+You can set button labels dynamically from *Home Assistant* automations or by publishing a *MQTT* message.
+
+### Home Assistant
+
+Use a `text.set_value` service call to set the label of a button. The entity ID is `text.{device_name}_button_{button_number}_label`.
+
+```yaml
+service: text.set_value
+data:
+  value: "mdi:dog"
+target:
+  entity_id: text.my_buttons_button_1_label
+```
+
+You can use templates to set the label based on the state of other entities:
+
+```yaml
+service: text.set_value
+data:
+  value: >
+    {% set current_time = states("sensor.time") %}
+    {% if current_time < "12:00" %}
+      mdi:dog
+    {% else %}
+      mdi:cat
+    {% endif %}
+target:
+  entity_id: text.my_buttons_button_1_label
+```
+
+> You must use this service call. Device actions do not support templates.
+
+### MQTT
+
+Publish a message to the `{base_topic}/{device_name}/cmd/button_{button_number}_label` topic. The message payload should be the label you want to set. The label will be updated on the next wakeup.
+
 
 ## Opening The Case {#opening_case}
 
