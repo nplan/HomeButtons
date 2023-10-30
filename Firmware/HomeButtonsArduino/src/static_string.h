@@ -51,8 +51,8 @@ class StaticString {
     if (i > j || i >= length()) {
       return output;
     }
-    auto n =
-        std::snprintf(output.data_, std::min(MAX_SIZE, j - i + 1), data_ + i);
+    auto n = std::snprintf(output.data_, std::min(MAX_SIZE, j - i + 1), "%s",
+                           data_ + i);
     _check_snprintf_return_value(n);
     return output;
   }

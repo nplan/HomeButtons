@@ -62,7 +62,7 @@ Usually, the simplest way is to install *Mosquitto MQTT* as a *Home Assistant* a
 
 > If you're using *Mosquitto MQTT* add-on, you must use username and password of your *Home Assistant* account. It's recommended to create a new account for use with MQTT.
 
-If you don't use *Home Assistant*, see [Minimal Setup](minimal.md) guide.
+If you don't use *Home Assistant*, see [Minimal Setup](../minimal.md) guide.
 
 ## Set Up MQTT connection {#setup_mqtt}
 

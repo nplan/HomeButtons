@@ -120,8 +120,7 @@ void MQTTHelper::send_discovery_config() {
     TopicType temperature_config_topic =
         sensor_topic_common + "/temperature/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> temp_conf;
-    temp_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Temperature";
+    temp_conf["name"] = "Temperature";
     temp_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = t_temperature();
@@ -138,8 +137,7 @@ void MQTTHelper::send_discovery_config() {
     // humidity
     TopicType humidity_config_topic = sensor_topic_common + "/humidity/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> humidity_conf;
-    humidity_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Humidity";
+    humidity_conf["name"] = "Humidity";
     humidity_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_humidity";
     humidity_conf["stat_t"] = t_humidity();
@@ -155,8 +153,7 @@ void MQTTHelper::send_discovery_config() {
     // battery
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> battery_conf;
-    battery_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Battery";
+    battery_conf["name"] = "Battery";
     battery_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_battery";
     battery_conf["stat_t"] = t_battery();
@@ -175,8 +172,7 @@ void MQTTHelper::send_discovery_config() {
         "/number/" + _device_state.factory().unique_id +
         "/sensor_interval/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> sensor_interval_conf;
-    sensor_interval_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Sensor Interval";
+    sensor_interval_conf["name"] = "Sensor interval";
     sensor_interval_conf["uniq_id"] = FormatterType{} +
                                       _device_state.factory().unique_id +
                                       "_sensor_interval";
@@ -200,8 +196,7 @@ void MQTTHelper::send_discovery_config() {
         "/text/" + _device_state.factory().unique_id + "/button_" + (i + 1) +
         "_label/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> conf;
-    conf["name"] = FormatterType{} + _device_state.device_name() + " Button " +
-                   (i + 1) + " Label";
+    conf["name"] = FormatterType{} + "Button " + (i + 1) + " label";
     conf["uniq_id"] = FormatterType{} + _device_state.factory().unique_id +
                       "_button_" + (i + 1) + "_label";
     conf["cmd_t"] = t_btn_label_cmd(i);
@@ -220,8 +215,7 @@ void MQTTHelper::send_discovery_config() {
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/text/" + _device_state.factory().unique_id + "/user_message/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> user_message_conf;
-    user_message_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Show Message";
+    user_message_conf["name"] = "Show message";
     user_message_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_user_message";
     user_message_conf["cmd_t"] = t_disp_msg_cmd();
@@ -241,8 +235,7 @@ void MQTTHelper::send_discovery_config() {
         "/number/" + _device_state.factory().unique_id +
         "/schedule_wakeup/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> schedule_wakeup_conf;
-    schedule_wakeup_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Schedule Wakeup";
+    schedule_wakeup_conf["name"] = "Schedule wakeup";
     schedule_wakeup_conf["uniq_id"] = FormatterType{} +
                                       _device_state.factory().unique_id +
                                       "_schedule_wakeup";
@@ -266,8 +259,7 @@ void MQTTHelper::send_discovery_config() {
         TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
         "/switch/" + _device_state.factory().unique_id + "/awake_mode/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> awake_mode_conf;
-    awake_mode_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Awake Mode";
+    awake_mode_conf["name"] = "Awake mode";
     awake_mode_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_awake_mode";
     awake_mode_conf["cmd_t"] = t_awake_mode_cmd();
@@ -300,8 +292,7 @@ void MQTTHelper::update_discovery_config() {
     TopicType temperature_config_topic =
         sensor_topic_common + "/temperature/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> temp_conf;
-    temp_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Temperature";
+    temp_conf["name"] = "Temperature";
     temp_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_temperature";
     temp_conf["stat_t"] = t_temperature();
@@ -317,8 +308,7 @@ void MQTTHelper::update_discovery_config() {
   {
     TopicType humidity_config_topic = sensor_topic_common + "/humidity/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> humidity_conf;
-    humidity_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Humidity";
+    humidity_conf["name"] = "Humidity";
     humidity_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_humidity";
     humidity_conf["stat_t"] = t_humidity();
@@ -333,8 +323,7 @@ void MQTTHelper::update_discovery_config() {
   {
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
     StaticJsonDocument<MQTT_PYLD_SIZE> battery_conf;
-    battery_conf["name"] =
-        FormatterType{} + _device_state.device_name() + " Battery";
+    battery_conf["name"] = "Battery";
     battery_conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_battery";
     battery_conf["stat_t"] = t_battery();

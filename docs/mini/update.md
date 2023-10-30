@@ -18,7 +18,7 @@ Firmware can be updated in a couple ways:
 
 1. Find the latest firmware [here](https://github.com/nplan/HomeButtons/releases){:target="_blank"}. Check release notes for any special update requirements. Make sure to select the correct file ending with `_mini.bin`. Download it to your computer.
 
-2. Enter *Setup* from the [*Settings Menu*](#settings). Home Buttons will display instructions for connecting to a web interface.
+2. Enter *Setup* from the [*Settings Menu*](user_guide.md#settings). Home Buttons will display instructions for connecting to a web interface.
 Scan the QR code or enter the local IP into a web browser.
 
     ![Setup Page Info](assets/setup_page_info.jpeg){width="250"}

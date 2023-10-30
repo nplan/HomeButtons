@@ -11,7 +11,7 @@ The required steps are:
 4. Test if button presses are working
 
 ## Wi-Fi Setup
-See [Set Up Wi-Fi Connection](setup.md#setup_wifi){:target="_blank"} section of the Getting Started guide for how to get your
+See [Set Up Wi-Fi Connection](original/setup.md#setup_wifi){:target="_blank"} section of the Getting Started guide for how to get your
 *Home Buttons* device connected to your Wi-Fi network.
 
 ## MQTT broker
@@ -39,7 +39,7 @@ something has gone wrong. In this case, check the
 resolve the issue.
 
 ## Connect *Home Buttons* to your MQTT broker
-See the [Set Up MQTT connection](setup.md#setup_mqtt){:target="_blank"} section of the Getting Started guide
+See the [Set Up MQTT connection](original/setup.md#setup_mqtt){:target="_blank"} section of the Getting Started guide
 for how to get your *Home Buttons* connected to your MQTT broker.
 
 ## Testing
@@ -48,7 +48,7 @@ For example, when you press a button, *Home Buttons* will send
 a message to your MQTT broker. It's up to other devices to listen for these
 messages and perform actions.
 
-The list of [MQTT topics](mqtt_topics.md){:target="_blank"} is vital to understand in order to
+The list of [MQTT topics](original/mqtt_topics.md){:target="_blank"} is vital to understand in order to
 test or troubleshoot your system. Below is an example of how you could view the
 messages that are sent when the first button (top left) is pressed. The command
 will not print anything until it receives a message.
