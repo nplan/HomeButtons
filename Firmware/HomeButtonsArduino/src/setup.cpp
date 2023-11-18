@@ -33,7 +33,7 @@ static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 15);
 static WiFiManagerParameter dns_param("dns", "Primary DNS Server", "", 15);
 static WiFiManagerParameter dns2_param("dns2", "Secondary DNS Server", "", 15);
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
 static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
@@ -124,7 +124,7 @@ void save_params_callback(DeviceState* device_state) {
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
       base_topic_param.getValue(), discovery_prefix_param.getValue());
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
   device_state->set_btn_label(0, btn1_label_param.getValue());
   device_state->set_btn_label(1, btn2_label_param.getValue());
   device_state->set_btn_label(2, btn3_label_param.getValue());
@@ -190,7 +190,7 @@ void start_setup(DeviceState& device_state, Display& display,
   dns2_param.setValue(
       device_state.user_preferences().network.dns2.toString().c_str(), 15);
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
   btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
                             BTN_LABEL_MAXLEN);
   btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
@@ -230,7 +230,7 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&dns_param);
   wifi_manager.addParameter(&dns2_param);
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
   wifi_manager.addParameter(&btn1_label_param);
   wifi_manager.addParameter(&btn2_label_param);
   wifi_manager.addParameter(&btn3_label_param);

@@ -10,11 +10,17 @@
 #include "hardware.h"
 
 #if defined(HOME_BUTTONS_ORIGINAL)
+static constexpr uint16_t ROTATION = 0;
 static constexpr uint16_t WIDTH = 128;
 static constexpr uint16_t HEIGHT = 296;
 #elif defined(HOME_BUTTONS_MINI)
+static constexpr uint16_t ROTATION = 0;
 static constexpr int WIDTH = 200;
 constexpr int HEIGHT = 200;
+#elif defined(HOME_BUTTONS_PRO)
+static constexpr uint16_t ROTATION = 0;
+static constexpr uint16_t WIDTH = 400;
+static constexpr uint16_t HEIGHT = 300;
 #else
 #error "No device defined"
 #endif
@@ -24,6 +30,7 @@ uint16_t read16(File &f) {
   uint16_t result;
   ((uint8_t *)&result)[0] = f.read();  // LSB
   ((uint8_t *)&result)[1] = f.read();  // MSB
+
   return result;
 }
 
@@ -43,6 +50,8 @@ uint32_t read32(File &f) {
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
 #elif defined(HOME_BUTTONS_MINI)
 #define GxEPD2_DRIVER_CLASS GxEPD2_154_D67
+#elif defined(HOME_BUTTONS_PRO)
+#define GxEPD2_DRIVER_CLASS GxEPD2_420_GDEY042T91
 #else
 #error "No device defined"
 #endif
@@ -262,10 +271,10 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -300,7 +309,7 @@ void Display::draw_main() {
   const uint16_t min_btn_clearance = 14;
   const uint16_t h_padding = 5;
 
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -475,7 +484,7 @@ void Display::draw_main() {
 }
 
 void Display::draw_info() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -532,7 +541,7 @@ void Display::draw_info() {
 }
 
 void Display::draw_device_info() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -580,7 +589,7 @@ void Display::draw_device_info() {
 }
 
 void Display::draw_welcome() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -647,7 +656,7 @@ void Display::draw_welcome() {
 }
 
 void Display::draw_settings() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -696,7 +705,7 @@ void Display::draw_ap_config() {
   uint8_t qrcodeData[qrcode_getBufferSize(version)];
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -761,7 +770,7 @@ void Display::draw_web_config() {
   uint8_t qrcodeData[qrcode_getBufferSize(version)];
   qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -817,7 +826,7 @@ void Display::draw_test(const char *text, const char *mdi_name,
   fg = GxEPD_BLACK;
   bg = GxEPD_WHITE;
 
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -840,7 +849,7 @@ void Display::draw_test(const char *text, const char *mdi_name,
 #elif defined(HOME_BUTTONS_MINI)
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -872,7 +881,7 @@ void Display::draw_message(const UIState::MessageType &message, bool error,
 }
 
 void Display::draw_main() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   disp->fillScreen(bg_color);
@@ -900,7 +909,7 @@ void Display::draw_main() {
 }
 
 void Display::draw_info() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -932,7 +941,7 @@ void Display::draw_info() {
 }
 
 void Display::draw_device_info() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -975,7 +984,7 @@ void Display::draw_device_info() {
 }
 
 void Display::draw_welcome() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
   u8g2.setBackgroundColor(bg_color);
   u8g2.setForegroundColor(text_color);
@@ -1010,7 +1019,7 @@ void Display::draw_welcome() {
 }
 
 void Display::draw_settings() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);
@@ -1030,7 +1039,7 @@ void Display::draw_settings() {
 }
 
 void Display::draw_ap_config() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
   u8g2.setBackgroundColor(bg_color);
   u8g2.setForegroundColor(text_color);
@@ -1070,7 +1079,7 @@ void Display::draw_ap_config() {
 }
 
 void Display::draw_web_config() {
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
   u8g2.setBackgroundColor(bg_color);
   u8g2.setForegroundColor(text_color);
@@ -1113,7 +1122,7 @@ void Display::draw_test(const char *text, const char *mdi_name,
   fg = GxEPD_BLACK;
   bg = GxEPD_WHITE;
 
-  disp->setRotation(0);
+  disp->setRotation(ROTATION);
   disp->setFullWindow();
 
   u8g2.setFontMode(1);

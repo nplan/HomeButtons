@@ -7,16 +7,16 @@
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
 static constexpr char SW_VERSION[] = "v2.5.0-dev";
-#if defined(HOME_BUTTONS_ORIGINAL)
+
+#if defined(HOME_BUTTONS_ORIGINAL) || \
+    defined(HOME_BUTTONS_PRO)  // TODO remove after testing
 static constexpr char SW_MODEL_ID[] = "A1";
 #elif defined(HOME_BUTTONS_MINI)
 static constexpr char SW_MODEL_ID[] = "B1";
-#else
-#error "No device defined"
 #endif
 
 // ------ URLs ------
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
 static constexpr char DOCS_LINK[] =
     "https://docs.home-buttons.com/original/setup/";
 #elif defined(HOME_BUTTONS_MINI)
@@ -34,6 +34,8 @@ static constexpr char SETUP_AP_PASSWORD[] = "password123";
 static constexpr uint8_t NUM_BUTTONS = 6;
 #elif defined(HOME_BUTTONS_MINI)
 static constexpr uint8_t NUM_BUTTONS = 4;
+#elif defined(HOME_BUTTONS_PRO)
+static constexpr uint8_t NUM_BUTTONS = 12;
 #else
 #error "No device defined"
 #endif
@@ -49,7 +51,7 @@ static constexpr char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
 static constexpr char BNT_LABEL_DFLT_PREFIX[] = "B";
 
 // ------ sensors ------
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
 static constexpr uint16_t SEN_INTERVAL_DFLT = 10;  // min
 static constexpr uint16_t SEN_INTERVAL_MIN = 1;    // min
 static constexpr uint16_t SEN_INTERVAL_MAX = 30;   // min

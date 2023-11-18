@@ -254,6 +254,9 @@ void App::_main_task() {
       {hw_.BTN2_PIN, 2, true},
       {hw_.BTN3_PIN, 3, true},
       {hw_.BTN4_PIN, 4, true}};
+#elif defined(HOME_BUTTONS_PRO)
+  std::tuple<uint8_t, uint16_t, boolean> button_map[1] = {
+      {hw_.BTN2_PIN, 1, true}};
 #else
 #error "No device defined"
 #endif
@@ -278,7 +281,7 @@ void App::_main_task() {
   }
 
 // ------ determine power mode ------
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
   device_state_.sensors().battery_present = hw_.is_battery_present();
   device_state_.sensors().dc_connected = hw_.is_dc_connected();
   info("batt present: %d, DC connected: %d",
@@ -720,7 +723,7 @@ void AppSMStates::InitState::entry() {
 #if defined(HOME_BUTTONS_ORIGINAL)
   sm().mdi_.add_size(64);
   sm().mdi_.add_size(48);
-#elif defined(HOME_BUTTONS_MINI)
+#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_PRO)
   sm().mdi_.add_size(100);
 #else
 #error "No device defined"
@@ -844,7 +847,7 @@ void AppSMStates::UserInputFinishState::loop() {
                            Button::get_action_multi_count(btn_event.action),
                            sm().hw_.LED_BRIGHT_DFLT, true);
           if (sm().device_state_.sensors().battery_low) {
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
             sm().display_.disp_message_large(
                 "Battery\nLOW\n\nPlease\nrecharge\nsoon!", 3000);
 #elif defined(HOME_BUTTONS_MINI)

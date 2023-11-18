@@ -252,7 +252,7 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(schedule_wakeup_config_topic, buffer, true);
   }
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
   {
     // awake mode toggle
     TopicType awake_mode_config_topic =
