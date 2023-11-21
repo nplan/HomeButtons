@@ -6,7 +6,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.4.2";
+static constexpr char SW_VERSION[] = "v2.5.0-dev";
 #if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char SW_MODEL_ID[] = "A1";
 #elif defined(HOME_BUTTONS_MINI)
