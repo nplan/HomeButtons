@@ -50,18 +50,7 @@ bool HardwareDefinition::init() {
 
   auto hw_ver = get_hw_version();
 
-#ifdef HOME_BUTTONS_MINI
-  if (strcmp(hw_ver, "0.1") == 0) {
-    load_mini_hw_rev_0_1();
-    info("configured for hw version: 0.1");
-  } else if (strcmp(hw_ver, "1.1") == 0) {
-    load_mini_hw_rev_1_1();
-    info("configured for hw version: 1.1");
-  } else {
-    error("HW rev %s not supported", hw_ver);
-    return false;
-  }
-#else
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (strcmp(hw_ver, "1.0") == 0) {
     load_hw_rev_1_0();
     info("configured for hw version: 1.0");
@@ -87,28 +76,37 @@ bool HardwareDefinition::init() {
     error("HW rev %s not supported", hw_ver);
     return false;
   }
+#elif defined(HOME_BUTTONS_MINI)
+  if (strcmp(hw_ver, "0.1") == 0) {
+    load_mini_hw_rev_0_1();
+    info("configured for hw version: 0.1");
+  } else if (strcmp(hw_ver, "1.1") == 0) {
+    load_mini_hw_rev_1_1();
+    info("configured for hw version: 1.1");
+  } else {
+    error("HW rev %s not supported", hw_ver);
+    return false;
+  }
+#else
+#error "No device defined"
 #endif
   return true;
 }
 
 void HardwareDefinition::begin() {
+#if defined(HOME_BUTTONS_ORIGINAL)
   pinMode(BTN1_PIN, INPUT);
   pinMode(BTN2_PIN, INPUT);
   pinMode(BTN3_PIN, INPUT);
   pinMode(BTN4_PIN, INPUT);
-#ifndef HOME_BUTTONS_MINI
   pinMode(BTN5_PIN, INPUT);
   pinMode(BTN6_PIN, INPUT);
-#endif
-
-#ifndef HOME_BUTTONS_MINI
   pinMode(CHARGER_STDBY, INPUT_PULLUP);
 
   if (version >= semver::version{2, 2, 0}) {
     pinMode(DC_IN_DETECT, INPUT);
     pinMode(CHG_ENABLE, OUTPUT);
   }
-#endif
 
   ledcSetup(LED1_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED1_PIN, LED1_CH);
@@ -122,12 +120,31 @@ void HardwareDefinition::begin() {
   ledcSetup(LED4_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED4_PIN, LED4_CH);
 
-#ifndef HOME_BUTTONS_MINI
   ledcSetup(LED5_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED5_PIN, LED5_CH);
 
   ledcSetup(LED6_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED6_PIN, LED6_CH);
+
+#elif defined(HOME_BUTTONS_MINI)
+  pinMode(BTN1_PIN, INPUT);
+  pinMode(BTN2_PIN, INPUT);
+  pinMode(BTN3_PIN, INPUT);
+  pinMode(BTN4_PIN, INPUT);
+
+  ledcSetup(LED1_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED1_PIN, LED1_CH);
+
+  ledcSetup(LED2_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED2_PIN, LED2_CH);
+
+  ledcSetup(LED3_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED3_PIN, LED3_CH);
+
+  ledcSetup(LED4_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED4_PIN, LED4_CH);
+#else
+#error "No device defined"
 #endif
 
   // battery voltage adc
@@ -135,7 +152,7 @@ void HardwareDefinition::begin() {
 }
 
 uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   switch (sw_num) {
     case 1:
       return 1;
@@ -152,12 +169,14 @@ uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
     default:
       return 0;
   }
-#else
+#elif defined(HOME_BUTTONS_MINI)
   if (sw_num >= 1 && sw_num <= 4) {
     return sw_num;
   } else {
     return 0;
   }
+#else
+#error "No device defined"
 #endif
 }
 
@@ -182,13 +201,15 @@ bool HardwareDefinition::button_pressed(uint8_t num) {
 }
 
 bool HardwareDefinition::any_button_pressed() {
-#ifdef HOME_BUTTONS_MINI
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
-#else
+#if defined(HOME_BUTTONS_ORIGINAL)
   return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
          digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
          digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
+#elif defined(HOME_BUTTONS_MINI)
+  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
+         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
+#else
+#error "No device defined"
 #endif
 }
 
@@ -210,25 +231,7 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
   num = map_button_num_sw_to_hw(num);
   uint8_t ch;
 
-#ifdef HOME_BUTTONS_MINI
-  switch (num) {
-    case 1:
-      ch = LED1_CH;
-      break;
-    case 2:
-      ch = LED2_CH;
-      break;
-    case 3:
-      ch = LED3_CH;
-      break;
-    case 4:
-      ch = LED4_CH;
-      break;
-    default:
-      return;
-  }
-#else
-
+#if defined(HOME_BUTTONS_ORIGINAL)
   switch (num) {
     case 1:
       ch = LED1_CH;
@@ -251,18 +254,44 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
     default:
       return;
   }
+#elif defined(HOME_BUTTONS_MINI)
+  switch (num) {
+    case 1:
+      ch = LED1_CH;
+      break;
+    case 2:
+      ch = LED2_CH;
+      break;
+    case 3:
+      ch = LED3_CH;
+      break;
+    case 4:
+      ch = LED4_CH;
+      break;
+    default:
+      return;
+  }
+#else
+#error "No device defined"
 #endif
   set_led(ch, brightness);
 }
 
 void HardwareDefinition::set_all_leds(uint8_t brightness) {
+#if defined(HOME_BUTTONS_ORIGINAL)
   set_led(LED1_CH, brightness);
   set_led(LED2_CH, brightness);
   set_led(LED3_CH, brightness);
   set_led(LED4_CH, brightness);
-#ifndef HOME_BUTTONS_MINI
   set_led(LED5_CH, brightness);
   set_led(LED6_CH, brightness);
+#elif defined(HOME_BUTTONS_MINI)
+  set_led(LED1_CH, brightness);
+  set_led(LED2_CH, brightness);
+  set_led(LED3_CH, brightness);
+  set_led(LED4_CH, brightness);
+#else
+#error "No device defined"
 #endif
 }
 
@@ -310,7 +339,7 @@ float HardwareDefinition::read_battery_voltage() {
 }
 
 uint8_t HardwareDefinition::read_battery_percent() {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (!is_battery_present()) return 0;
   float pct = BATT_SOC_EST_K * read_battery_voltage() + BATT_SOC_EST_N;
   if (pct < 1.0)
@@ -318,7 +347,7 @@ uint8_t HardwareDefinition::read_battery_percent() {
   else if (pct > 100.0)
     pct = 100;
   return (uint8_t)round(pct);
-#else
+#elif defined(HOME_BUTTONS_MINI)
   float batvolt = read_battery_voltage();
   float pct = (BAT_SOC_EST_ATAN_A *
                    atan(BAT_SOC_EST_ATAN_B * batvolt + BAT_SOC_EST_ATAN_C) +
@@ -329,6 +358,8 @@ uint8_t HardwareDefinition::read_battery_percent() {
   else if (pct > 100.0)
     pct = 100;
   return (uint8_t)round(pct);
+#else
+#error "No device defined"
 #endif
 }
 
@@ -350,39 +381,47 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
 }
 
 bool HardwareDefinition::is_charger_in_standby() {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   return !digitalRead(CHARGER_STDBY);
-#else
+#elif defined(HOME_BUTTONS_MINI)
   return false;
+#else
+#error "No device defined"
 #endif
 }
 
 bool HardwareDefinition::is_dc_connected() {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (version >= semver::version{2, 2, 0}) {
     return digitalRead(DC_IN_DETECT);
   } else {
     // hardware hack for powering v2.1 with USB-C
     return HardwareDefinition::read_battery_voltage() >= DC_DETECT_VOLT;
   }
-#else
+#elif defined(HOME_BUTTONS_MINI)
   return false;
+#else
+#error "No device defined"
 #endif
 }
 
 void HardwareDefinition::enable_charger(bool enable) {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (version >= semver::version{2, 2, 0}) {
     digitalWrite(CHG_ENABLE, enable);
     debug("charger enabled: %d", enable);
   } else {
     debug("this HW version doesn't support charger control.");
   }
+#elif defined(HOME_BUTTONS_MINI)
+  // not supported
+#else
+#error "No device defined"
 #endif
 }
 
 bool HardwareDefinition::is_battery_present() {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   float volt = read_battery_voltage();
   if (version >= semver::version{2, 2, 0}) {
     return volt >= BATT_PRESENT_VOLT;
@@ -390,8 +429,10 @@ bool HardwareDefinition::is_battery_present() {
     // hardware hack for powering v2.1 with USB-C
     return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
   }
-#else
+#elif defined(HOME_BUTTONS_MINI)
   return true;
+#else
+#error "No device defined"
 #endif
 }
 

@@ -9,12 +9,14 @@
 #include "config.h"
 #include "hardware.h"
 
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr uint16_t WIDTH = 128;
 static constexpr uint16_t HEIGHT = 296;
-#else
+#elif defined(HOME_BUTTONS_MINI)
 static constexpr int WIDTH = 200;
 constexpr int HEIGHT = 200;
+#else
+#error "No device defined"
 #endif
 
 uint16_t read16(File &f) {
@@ -37,10 +39,12 @@ uint32_t read32(File &f) {
 
 #define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
 #define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
-#else
+#elif defined(HOME_BUTTONS_MINI)
 #define GxEPD2_DRIVER_CLASS GxEPD2_154_D67
+#else
+#error "No device defined"
 #endif
 
 #define MAX_DISPLAY_BUFFER_SIZE 65536ul  // e.g.
@@ -258,7 +262,7 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
   disp->setRotation(0);
@@ -833,7 +837,7 @@ void Display::draw_test(const char *text, const char *mdi_name,
 
   disp->display();
 }
-#else
+#elif defined(HOME_BUTTONS_MINI)
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
   disp->setRotation(0);
@@ -1129,6 +1133,8 @@ void Display::draw_test(const char *text, const char *mdi_name,
 
   disp->display();
 }
+#else
+#error "No device defined"
 #endif
 
 void Display::draw_white() {

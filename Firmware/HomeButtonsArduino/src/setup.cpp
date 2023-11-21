@@ -32,6 +32,8 @@ static WiFiManagerParameter gateway_param("gateway", "Gateway", "", 15);
 static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 15);
 static WiFiManagerParameter dns_param("dns", "Primary DNS Server", "", 15);
 static WiFiManagerParameter dns2_param("dns2", "Secondary DNS Server", "", 15);
+
+#if defined(HOME_BUTTONS_ORIGINAL)
 static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
@@ -40,12 +42,23 @@ static WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "",
                                              BTN_LABEL_MAXLEN);
-#ifndef HOME_BUTTONS_MINI
 static WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "",
                                              BTN_LABEL_MAXLEN);
 static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
                                              BTN_LABEL_MAXLEN);
+#elif defined(HOME_BUTTONS_MINI)
+static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
+                                             BTN_LABEL_MAXLEN);
+static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
+                                             BTN_LABEL_MAXLEN);
+static WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "",
+                                             BTN_LABEL_MAXLEN);
+static WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "",
+                                             BTN_LABEL_MAXLEN);
+#else
+#error "No device defined"
 #endif
+
 static WiFiManagerParameter temp_unit_param("temp_unit", "Temperature Unit", "",
                                             1);
 
@@ -110,14 +123,23 @@ void save_params_callback(DeviceState* device_state) {
       mqtt_server_param.getValue(), String(mqtt_port_param.getValue()).toInt(),
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
       base_topic_param.getValue(), discovery_prefix_param.getValue());
+
+#if defined(HOME_BUTTONS_ORIGINAL)
   device_state->set_btn_label(0, btn1_label_param.getValue());
   device_state->set_btn_label(1, btn2_label_param.getValue());
   device_state->set_btn_label(2, btn3_label_param.getValue());
   device_state->set_btn_label(3, btn4_label_param.getValue());
-#ifndef HOME_BUTTONS_MINI
   device_state->set_btn_label(4, btn5_label_param.getValue());
   device_state->set_btn_label(5, btn6_label_param.getValue());
+#elif defined(HOME_BUTTONS_MINI)
+  device_state->set_btn_label(0, btn1_label_param.getValue());
+  device_state->set_btn_label(1, btn2_label_param.getValue());
+  device_state->set_btn_label(2, btn3_label_param.getValue());
+  device_state->set_btn_label(3, btn4_label_param.getValue());
+#else
+#error "No device defined"
 #endif
+
   device_state->set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
 
   IPAddress static_ip, gateway, subnet, dns, dns2;
@@ -167,6 +189,8 @@ void start_setup(DeviceState& device_state, Display& display,
       device_state.user_preferences().network.dns.toString().c_str(), 15);
   dns2_param.setValue(
       device_state.user_preferences().network.dns2.toString().c_str(), 15);
+
+#if defined(HOME_BUTTONS_ORIGINAL)
   btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
                             BTN_LABEL_MAXLEN);
   btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
@@ -175,12 +199,23 @@ void start_setup(DeviceState& device_state, Display& display,
                             BTN_LABEL_MAXLEN);
   btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
                             BTN_LABEL_MAXLEN);
-#ifndef HOME_BUTTONS_MINI
   btn5_label_param.setValue(device_state.get_btn_label(4).c_str(),
                             BTN_LABEL_MAXLEN);
   btn6_label_param.setValue(device_state.get_btn_label(5).c_str(),
                             BTN_LABEL_MAXLEN);
+#elif defined(HOME_BUTTONS_MINI)
+  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(),
+                            BTN_LABEL_MAXLEN);
+  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
+                            BTN_LABEL_MAXLEN);
+#else
+#error "No device defined"
 #endif
+
   temp_unit_param.setValue(device_state.get_temp_unit().c_str(), 1);
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
@@ -194,13 +229,21 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&subnet_param);
   wifi_manager.addParameter(&dns_param);
   wifi_manager.addParameter(&dns2_param);
+
+#if defined(HOME_BUTTONS_ORIGINAL)
   wifi_manager.addParameter(&btn1_label_param);
   wifi_manager.addParameter(&btn2_label_param);
   wifi_manager.addParameter(&btn3_label_param);
   wifi_manager.addParameter(&btn4_label_param);
-#ifndef HOME_BUTTONS_MINI
   wifi_manager.addParameter(&btn5_label_param);
   wifi_manager.addParameter(&btn6_label_param);
+#elif defined(HOME_BUTTONS_MINI)
+  wifi_manager.addParameter(&btn1_label_param);
+  wifi_manager.addParameter(&btn2_label_param);
+  wifi_manager.addParameter(&btn3_label_param);
+  wifi_manager.addParameter(&btn4_label_param);
+#else
+#error "No device defined"
 #endif
   wifi_manager.addParameter(&temp_unit_param);
 

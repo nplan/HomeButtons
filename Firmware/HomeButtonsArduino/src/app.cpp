@@ -243,17 +243,19 @@ void App::_main_task() {
   display_.begin(hw_);
   hw_.begin();
   leds_.begin();
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   std::tuple<uint8_t, uint16_t, boolean> button_map[NUM_BUTTONS] = {
       {hw_.BTN1_PIN, 1, true}, {hw_.BTN6_PIN, 2, true},
       {hw_.BTN2_PIN, 3, true}, {hw_.BTN5_PIN, 4, true},
       {hw_.BTN3_PIN, 5, true}, {hw_.BTN4_PIN, 6, true}};
-#else
+#elif defined(HOME_BUTTONS_MINI)
   std::tuple<uint8_t, uint16_t, boolean> button_map[NUM_BUTTONS] = {
       {hw_.BTN1_PIN, 1, true},
       {hw_.BTN2_PIN, 2, true},
       {hw_.BTN3_PIN, 3, true},
       {hw_.BTN4_PIN, 4, true}};
+#else
+#error "No device defined"
 #endif
   button_handler_.begin(button_map);
 
@@ -276,7 +278,7 @@ void App::_main_task() {
   }
 
 // ------ determine power mode ------
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   device_state_.sensors().battery_present = hw_.is_battery_present();
   device_state_.sensors().dc_connected = hw_.is_dc_connected();
   info("batt present: %d, DC connected: %d",
@@ -341,7 +343,7 @@ void App::_main_task() {
   info("usr awake mode: %d, awake mode: %d",
        device_state_.persisted().user_awake_mode,
        device_state_.flags().awake_mode);
-#else
+#elif defined(HOME_BUTTONS_MINI)
   float batt_voltage = hw_.read_battery_voltage();
   info("batt volts: %f", batt_voltage);
 
@@ -375,6 +377,8 @@ void App::_main_task() {
   // mini doesn't have awake mode
   device_state_.flags().awake_mode = false;
 
+#else
+#error "No device defined"
 #endif
 
   // ------ read sensors ------
@@ -713,11 +717,13 @@ void AppSMStates::InitState::entry() {
   sm()._start_display_task();
   sm()._start_network_task();
 
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
   sm().mdi_.add_size(64);
   sm().mdi_.add_size(48);
-#else
+#elif defined(HOME_BUTTONS_MINI)
   sm().mdi_.add_size(100);
+#else
+#error "No device defined"
 #endif
 
   if (!sm().device_state_.flags().awake_mode) {
@@ -838,12 +844,14 @@ void AppSMStates::UserInputFinishState::loop() {
                            Button::get_action_multi_count(btn_event.action),
                            sm().hw_.LED_BRIGHT_DFLT, true);
           if (sm().device_state_.sensors().battery_low) {
-#ifndef HOME_BUTTONS_MINI
+#if defined(HOME_BUTTONS_ORIGINAL)
             sm().display_.disp_message_large(
                 "Battery\nLOW\n\nPlease\nrecharge\nsoon!", 3000);
-#else
+#elif defined(HOME_BUTTONS_MINI)
             sm().display_.disp_message_large(
                 "Batteries\nLOW\n\nPlease\nreplace\nsoon!", 3000);
+#else
+#error "No device defined"
 #endif
           }
           sm().btn_event_ = btn_event;
