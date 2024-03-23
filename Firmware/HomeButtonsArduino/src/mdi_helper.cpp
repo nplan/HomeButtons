@@ -50,8 +50,8 @@ StaticString<MAX_PATH_LEN> MDIHelper::_get_path(const char* name,
 }
 
 bool MDIHelper::check_connection() {
-  return download::check_connection(
-      HOST, TEST_URL, github_raw_cert::cert_DigiCert_TLS_RSA_SHA256_2020_CA1);
+  return download::check_connection(HOST, TEST_URL,
+                                    github_raw_cert::DigiCert_Global_Root_G2);
 }
 
 bool MDIHelper::download(const char* name, uint16_t size) {
@@ -78,7 +78,7 @@ bool MDIHelper::download(const char* name, uint16_t size) {
   StaticString<256> url("%s%dx%d/%s.bmp", MDI_URL, size, size, name);
   bool ret = download::download_file_https(
       HOST, url.c_str(), file,
-      github_raw_cert::cert_DigiCert_TLS_RSA_SHA256_2020_CA1);
+      github_raw_cert::DigiCert_Global_Root_G2);
   if (ret) {
     info("Downloaded '%s' size: %d", name, size);
     return true;
