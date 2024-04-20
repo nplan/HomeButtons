@@ -141,6 +141,7 @@ struct HardwareDefinition : public Logger {
   void load_hw_rev_2_2();
   void load_hw_rev_2_3();
   void load_hw_rev_2_4();
+  void load_hw_rev_2_5();
 
   void load_mini_hw_rev_0_1();
   void load_mini_hw_rev_1_1();

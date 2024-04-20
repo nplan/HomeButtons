@@ -217,7 +217,7 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
           test_spec_.temp_ref, test_spec_.temp_tol);
   }
   if (hmd_val <= test_spec_.humd_ref - test_spec_.humd_tol ||
-      temp_val >= test_spec_.humd_ref + test_spec_.humd_tol) {
+      hmd_val >= test_spec_.humd_ref + test_spec_.humd_tol) {
     sensor_passed = false;
     error("humidity test fail. Measured: %f, expected: %f +/- %f", hmd_val,
           test_spec_.humd_ref, test_spec_.humd_tol);
