@@ -3,14 +3,19 @@
 
 #include <array>
 #include "state.h"
-#include "buttons.h"
-#include "leds.h"
 #include "network.h"
 #include "display.h"
 #include "mqtt_helper.h"
 #include "logger.h"
 #include "hardware.h"
 #include "mdi_helper.h"
+
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#include "original_mini/buttons.h"
+#include "original_mini/leds.h"
+#elif defined(HOME_BUTTONS_PRO)
+#include "pro/touch.h"
+#endif
 
 class App;
 
@@ -33,6 +38,7 @@ class AwakeModeIdleState : public State<App> {
 
   void entry() override;
   void loop() override;
+  void handle_ui_event(UserInput::Event event);
 
   const char* get_name() override { return "AwakeModeIdleState"; }
 };
@@ -55,12 +61,26 @@ class NetConnectingState : public State<App> {
   const char* get_name() override { return "NetConnectingState"; }
 };
 
+class InfoScreenState : public State<App> {
+ public:
+  using State<App>::State;
+
+  void entry() override;
+  void exit() override;
+  void loop() override;
+  void handle_ui_event(UserInput::Event event);
+
+  const char* get_name() override { return "InfoScreenState"; }
+};
+
 class SettingsMenuState : public State<App> {
  public:
   using State<App>::State;
 
   void entry() override;
+  void exit() override;
   void loop() override;
+  void handle_ui_event(UserInput::Event event);
 
   const char* get_name() override { return "SettingsMenuState"; }
 };
@@ -118,9 +138,10 @@ class FactoryResetState : public State<App> {
 using AppStateMachine = StateMachine<
     App, AppSMStates::InitState, AppSMStates::AwakeModeIdleState,
     AppSMStates::UserInputFinishState, AppSMStates::NetConnectingState,
-    AppSMStates::SettingsMenuState, AppSMStates::DeviceInfoState,
-    AppSMStates::CmdShutdownState, AppSMStates::NetDisconnectingState,
-    AppSMStates::ShuttingDownState, AppSMStates::FactoryResetState>;
+    AppSMStates::InfoScreenState, AppSMStates::SettingsMenuState,
+    AppSMStates::DeviceInfoState, AppSMStates::CmdShutdownState,
+    AppSMStates::NetDisconnectingState, AppSMStates::ShuttingDownState,
+    AppSMStates::FactoryResetState>;
 
 class App : public AppStateMachine, public Logger {
  public:
@@ -132,18 +153,16 @@ class App : public AppStateMachine, public Logger {
   void _start_esp_sleep();
   void _go_to_sleep();
   std::pair<BootCause, int16_t> _determine_boot_cause();
-  void _log_stack_status() const;
+  void _log_task_stats();
 
   void _begin_buttons();
   void _end_buttons();
 
-  static void _button_task(void* app);
-  static void _leds_task(void* app);
+  static void _ui_task(void* app);
   static void _display_task(void* app);
   static void _network_task(void* app);
 
-  void _start_button_task();
-  void _start_leds_task();
+  void _start_ui_task();
   void _start_display_task();
   void _start_network_task();
 
@@ -152,27 +171,37 @@ class App : public AppStateMachine, public Logger {
     static_cast<App*>(app)->_main_task();
   }
 
+  void _handle_ui_event_global(UserInput::Event event);
+  void _publish_btn_event(UserInput::Event event);
   void _publish_sensors();
-  void _publish_awake_mode_avlb();
   void _mqtt_callback(const char* topic, const char* payload);
   void _net_on_connect();
   void _download_mdi_icons();
 
+#if defined(HOME_BUTTONS_ORIGINAL)
+  void _publish_awake_mode_avlb();
+#endif
+
   DeviceState device_state_;
-  TaskHandle_t button_task_h_ = nullptr;
+  TaskHandle_t ui_task_h_ = nullptr;
   TaskHandle_t display_task_h_ = nullptr;
   TaskHandle_t network_task_h_ = nullptr;
-  TaskHandle_t leds_task_h_ = nullptr;
   TaskHandle_t main_task_h_ = nullptr;
 
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   LEDs leds_;
+  ButtonHandler<NUM_BUTTONS> button_handler_;
+  ClickEvent btn_event_;
+#elif defined(HOME_BUTTONS_PRO)
+  TouchInput touch_handler_;
+  UserInput::Event touch_event_;
+#endif
+
   Network network_;
   Display display_;
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
   MDIHelper mdi_;
-  ButtonHandler<NUM_BUTTONS> button_handler_;
-  ButtonEvent btn_event_;
   BootCause boot_cause_;
 
   uint32_t last_sensor_publish_ = 0;
@@ -186,6 +215,7 @@ class App : public AppStateMachine, public Logger {
   friend class AppSMStates::AwakeModeIdleState;
   friend class AppSMStates::UserInputFinishState;
   friend class AppSMStates::NetConnectingState;
+  friend class AppSMStates::InfoScreenState;
   friend class AppSMStates::SettingsMenuState;
   friend class AppSMStates::DeviceInfoState;
   friend class AppSMStates::CmdShutdownState;

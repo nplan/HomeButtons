@@ -173,6 +173,7 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
                     100);
   display.update();
 
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   // test LEDs & buttons
   info("Testing LEDs & buttons");
   bool button_passed = true;
@@ -202,6 +203,7 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
       break;
     }
   }
+#endif
 
   // test sensors
   info("Testing sensors");
@@ -222,6 +224,7 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
     error("humidity test fail. Measured: %f, expected: %f +/- %f", hmd_val,
           test_spec_.humd_ref, test_spec_.humd_tol);
   }
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   uint16_t batt_v = HW.read_battery_voltage() * 1000.;
   if (batt_v <= test_spec_.batt_mvolt_ref - test_spec_.batt_mvolt_tol ||
       batt_v >= test_spec_.batt_mvolt_ref + test_spec_.batt_mvolt_tol) {
@@ -229,8 +232,13 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
     error("battery test fail. Measured: %d mV, expected: %d +/- %d mV", batt_v,
           test_spec_.batt_mvolt_ref, test_spec_.batt_mvolt_tol);
   }
+#endif
 
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   bool passed = display_passed && button_passed && sensor_passed;
+#elif defined(HOME_BUTTONS_PRO)
+  bool passed = display_passed && sensor_passed;
+#endif
 
   // send test results
   StaticJsonDocument<1024> result_doc;
@@ -246,7 +254,9 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
   JsonObject parameters = result_doc.createNestedObject("parameters");
   parameters["measured_temp"] = temp_val;
   parameters["measured_humidity"] = hmd_val;
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   parameters["measured_battery"] = batt_v;
+#endif
 
   serializeJson(result_doc, buffer, sizeof(buffer));
 

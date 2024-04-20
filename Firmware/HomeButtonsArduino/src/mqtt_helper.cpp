@@ -149,6 +149,7 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(humidity_config_topic, buffer, true);
   }
 
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   {
     // battery
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
@@ -188,6 +189,7 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(sensor_interval_conf, buffer, sizeof(buffer));
     _network.publish(sensor_interval_config_topic, buffer, true);
   }
+#endif
 
   // button labels
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
@@ -228,6 +230,7 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(user_message_config_topic, buffer, true);
   }
 
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   {
     // schedule wakeup
     TopicType schedule_wakeup_config_topic =
@@ -251,8 +254,9 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(schedule_wakeup_conf, buffer, sizeof(buffer));
     _network.publish(schedule_wakeup_config_topic, buffer, true);
   }
+#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
+#if defined(HOME_BUTTONS_ORIGINAL)
   {
     // awake mode toggle
     TopicType awake_mode_config_topic =
@@ -336,17 +340,17 @@ void MQTTHelper::update_discovery_config() {
   }
 }
 
-TopicType MQTTHelper::get_button_topic(ButtonEvent event) const {
-  if (event.id < 1 || event.id > NUM_BUTTONS) return {};
+TopicType MQTTHelper::get_button_topic(UserInput::Event event) const {
+  if (event.btn_num < 1 || event.btn_num > NUM_BUTTONS) return {};
 
-  if (event.action == Button::SINGLE)
-    return t_common() + "button_" + event.id;
-  else if (event.action == Button::DOUBLE)
-    return t_common() + "button_" + event.id + "_double";
-  else if (event.action == Button::TRIPLE)
-    return t_common() + "button_" + event.id + "_triple";
-  else if (event.action == Button::QUAD)
-    return t_common() + "button_" + event.id + "_quad";
+  if (event.type == UserInput::EventType::kClickSingle)
+    return t_common() + "button_" + event.btn_num;
+  else if (event.type == UserInput::EventType::kClickDouble)
+    return t_common() + "button_" + event.btn_num + "_double";
+  else if (event.type == UserInput::EventType::kClickTriple)
+    return t_common() + "button_" + event.btn_num + "_triple";
+  else if (event.type == UserInput::EventType::kClickQuad)
+    return t_common() + "button_" + event.btn_num + "_quad";
   else
     return {};
 }

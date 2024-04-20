@@ -3,7 +3,6 @@
 
 #include <Preferences.h>
 
-#include "buttons.h"
 #include "config.h"
 #include "types.h"
 #include "logger.h"
@@ -75,6 +74,8 @@ class DeviceState : public Logger {
     bool display_redraw = false;
     bool awake_mode = false;
     uint32_t schedule_wakeup_time = 0;
+    uint32_t last_user_input_time = 0;
+    bool keep_frontlight_on = false;
   } flags_;
 
   struct Sensors {

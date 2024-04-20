@@ -1,6 +1,11 @@
 #ifndef HOMEBUTTONS_CONFIG_H
 #define HOMEBUTTONS_CONFIG_H
 
+#if !defined(HOME_BUTTONS_ORIGINAL) && !defined(HOME_BUTTONS_MINI) && \
+    !defined(HOME_BUTTONS_PRO)
+#error "No device defined!"
+#endif
+
 #include <WString.h>
 #include <IPAddress.h>
 
@@ -8,11 +13,12 @@
 static constexpr char MANUFACTURER[] = "PLab";
 static constexpr char SW_VERSION[] = "v2.5.0-dev";
 
-#if defined(HOME_BUTTONS_ORIGINAL) || \
-    defined(HOME_BUTTONS_PRO)  // TODO remove after testing
+#if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char SW_MODEL_ID[] = "A1";
 #elif defined(HOME_BUTTONS_MINI)
 static constexpr char SW_MODEL_ID[] = "B1";
+#elif defined(HOME_BUTTONS_PRO)
+static constexpr char SW_MODEL_ID[] = "C1";
 #endif
 
 // ------ URLs ------
@@ -21,8 +27,8 @@ static constexpr char DOCS_LINK[] =
     "https://docs.home-buttons.com/original/setup/";
 #elif defined(HOME_BUTTONS_MINI)
 static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/mini/setup/";
-#else
-#error "No device defined"
+#elif defined(HOME_BUTTONS_PRO)
+static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/pro/setup/";
 #endif
 
 // ------ wifi AP ------
@@ -35,9 +41,7 @@ static constexpr uint8_t NUM_BUTTONS = 6;
 #elif defined(HOME_BUTTONS_MINI)
 static constexpr uint8_t NUM_BUTTONS = 4;
 #elif defined(HOME_BUTTONS_PRO)
-static constexpr uint8_t NUM_BUTTONS = 12;
-#else
-#error "No device defined"
+static constexpr uint8_t NUM_BUTTONS = 9;
 #endif
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
 static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
@@ -59,20 +63,19 @@ static constexpr uint16_t SEN_INTERVAL_MAX = 30;   // min
 static constexpr uint16_t SEN_INTERVAL_DFLT = 30;  // min
 static constexpr uint16_t SEN_INTERVAL_MIN = 5;    // min
 static constexpr uint16_t SEN_INTERVAL_MAX = 60;   // min
-#else
-#error "No device defined"
 #endif
 
 // ----- timing ------
-static constexpr uint32_t SETUP_TIMEOUT = 600;             // s
-static constexpr uint32_t INFO_SCREEN_DISP_TIME = 30000L;  // ms
-static constexpr uint32_t AWAKE_SENSOR_INTERVAL = 60000L;  // ms
-static constexpr uint32_t WDT_TIMEOUT_AWAKE = 60;          // s
-static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;          // s
-static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;   // ms
-static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;  // ms
-static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;    // ms
-static constexpr uint32_t SHUTDOWN_DELAY = 500L;           // ms
+static constexpr uint32_t SETUP_TIMEOUT = 600;              // s
+static constexpr uint32_t INFO_SCREEN_DISP_TIME = 30000L;   // ms
+static constexpr uint32_t AWAKE_SENSOR_INTERVAL = 15000L;   // ms
+static constexpr uint32_t WDT_TIMEOUT_AWAKE = 60;           // s
+static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;           // s
+static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;    // ms
+static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 300000L;  // ms
+static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;     // ms
+static constexpr uint32_t SHUTDOWN_DELAY = 500L;            // ms
+static constexpr uint32_t FRONTLIGHT_TIMEOUT = 5000L;       // ms
 
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;

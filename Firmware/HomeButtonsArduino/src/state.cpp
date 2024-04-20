@@ -13,7 +13,7 @@ void DeviceState::save_user() {
   preferences_.putString("disc_prefix",
                          user_preferences_.mqtt.discovery_prefix);
   for (int i = 0; i < NUM_BUTTONS; i++) {
-    preferences_.putString(StaticString<8>("btn%d_txt", i + 1).c_str(),
+    preferences_.putString(StaticString<9>("btn%d_txt", i + 1).c_str(),
                            user_preferences_.btn_labels[i].c_str());
   }
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
@@ -53,7 +53,7 @@ void DeviceState::load_user() {
 
   for (int i = 0; i < NUM_BUTTONS; i++) {
     _load_to_static_string(user_preferences_.btn_labels[i],
-                           StaticString<8>("btn%d_txt", i + 1).c_str(),
+                           StaticString<9>("btn%d_txt", i + 1).c_str(),
                            StaticString<16>("mdi:numeric-%d", i + 1).c_str());
   }
 

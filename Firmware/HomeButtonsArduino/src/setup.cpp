@@ -33,36 +33,39 @@ static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 15);
 static WiFiManagerParameter dns_param("dns", "Primary DNS Server", "", 15);
 static WiFiManagerParameter dns2_param("dns2", "Secondary DNS Server", "", 15);
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
-                                             BTN_LABEL_MAXLEN);
-#elif defined(HOME_BUTTONS_MINI)
-static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "",
-                                             BTN_LABEL_MAXLEN);
-#else
-#error "No device defined"
-#endif
-
 static WiFiManagerParameter temp_unit_param("temp_unit", "Temperature Unit", "",
                                             1);
 
+static char* button_ids[NUM_BUTTONS];
+static char* button_labels[NUM_BUTTONS];
+static WiFiManagerParameter* btn_label_params[NUM_BUTTONS];
+
 static bool web_portal_saved = false;
+
+void allocate_btn_label_params() {
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    button_ids[i] = new char[11];
+    button_labels[i] = new char[17];
+    snprintf(button_ids[i], 11, "btn%d_lbl", i + 1);
+    snprintf(button_labels[i], 17, "Button %d Label", i + 1);
+
+    btn_label_params[i] = new WiFiManagerParameter(
+        button_ids[i], button_labels[i], "", BTN_LABEL_MAXLEN);
+  }
+}
+
+void set_btn_label_params_from_device_state(DeviceState& device_state) {
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    btn_label_params[i]->setValue(device_state.get_btn_label(i).c_str(),
+                                  BTN_LABEL_MAXLEN);
+  }
+}
+
+void set_device_state_from_btn_label_params(DeviceState& device_state) {
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    device_state.set_btn_label(i, btn_label_params[i]->getValue());
+  }
+}
 
 void start_wifi_setup(DeviceState& device_state, Display& display) {
   static Logger setupLogger("W_SETUP");
@@ -124,21 +127,7 @@ void save_params_callback(DeviceState* device_state) {
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
       base_topic_param.getValue(), discovery_prefix_param.getValue());
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  device_state->set_btn_label(0, btn1_label_param.getValue());
-  device_state->set_btn_label(1, btn2_label_param.getValue());
-  device_state->set_btn_label(2, btn3_label_param.getValue());
-  device_state->set_btn_label(3, btn4_label_param.getValue());
-  device_state->set_btn_label(4, btn5_label_param.getValue());
-  device_state->set_btn_label(5, btn6_label_param.getValue());
-#elif defined(HOME_BUTTONS_MINI)
-  device_state->set_btn_label(0, btn1_label_param.getValue());
-  device_state->set_btn_label(1, btn2_label_param.getValue());
-  device_state->set_btn_label(2, btn3_label_param.getValue());
-  device_state->set_btn_label(3, btn4_label_param.getValue());
-#else
-#error "No device defined"
-#endif
+  set_device_state_from_btn_label_params(*device_state);
 
   device_state->set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
 
@@ -190,31 +179,8 @@ void start_setup(DeviceState& device_state, Display& display,
   dns2_param.setValue(
       device_state.user_preferences().network.dns2.toString().c_str(), 15);
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn5_label_param.setValue(device_state.get_btn_label(4).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn6_label_param.setValue(device_state.get_btn_label(5).c_str(),
-                            BTN_LABEL_MAXLEN);
-#elif defined(HOME_BUTTONS_MINI)
-  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
-                            BTN_LABEL_MAXLEN);
-#else
-#error "No device defined"
-#endif
+  allocate_btn_label_params();
+  set_btn_label_params_from_device_state(device_state);
 
   temp_unit_param.setValue(device_state.get_temp_unit().c_str(), 1);
   wifi_manager.addParameter(&device_name_param);
@@ -230,21 +196,10 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&dns_param);
   wifi_manager.addParameter(&dns2_param);
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  wifi_manager.addParameter(&btn1_label_param);
-  wifi_manager.addParameter(&btn2_label_param);
-  wifi_manager.addParameter(&btn3_label_param);
-  wifi_manager.addParameter(&btn4_label_param);
-  wifi_manager.addParameter(&btn5_label_param);
-  wifi_manager.addParameter(&btn6_label_param);
-#elif defined(HOME_BUTTONS_MINI)
-  wifi_manager.addParameter(&btn1_label_param);
-  wifi_manager.addParameter(&btn2_label_param);
-  wifi_manager.addParameter(&btn3_label_param);
-  wifi_manager.addParameter(&btn4_label_param);
-#else
-#error "No device defined"
-#endif
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    wifi_manager.addParameter(btn_label_params[i]);
+  }
+
   wifi_manager.addParameter(&temp_unit_param);
 
   display.disp_message("Entering\nSETUP...");

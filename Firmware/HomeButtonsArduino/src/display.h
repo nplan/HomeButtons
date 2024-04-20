@@ -2,6 +2,9 @@
 #define HOMEBUTTONS_DISPLAY_H
 
 #include <GxEPD2.h>
+#include <GxEPD2_BW.h>
+#include <U8g2_for_Adafruit_GFX.h>
+
 #include "static_string.h"
 #include "state.h"
 #include "logger.h"
@@ -15,35 +18,27 @@ static constexpr uint16_t max_palette_pixels = 256;
 struct HardwareDefinition;
 
 class DeviceState;
-enum class DisplayPage {
-  EMPTY,
-  MAIN,
-  INFO,
-  DEVICE_INFO,
-  MESSAGE,
-  MESSAGE_LARGE,
-  ERROR,
-  WELCOME,
-  SETTINGS,
-  AP_CONFIG,
-  WEB_CONFIG,
-  TEST
-};
 
-struct UIState {
-  static constexpr size_t MAX_MESSAGE_SIZE = 64;
-  using MessageType = StaticString<MAX_MESSAGE_SIZE>;
+// display init stuff
+#define GxEPD2_DISPLAY_CLASS GxEPD2_BW
 
-  DisplayPage page = DisplayPage::EMPTY;
-  MessageType message{};
-  MDIName mdi_name{};
-  uint16_t mdi_size = 0;
-  bool disappearing = false;
-  uint32_t appear_time = 0;
-  uint32_t disappear_timeout = 0;
-};
+#if defined(HOME_BUTTONS_ORIGINAL)
+#define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
+#elif defined(HOME_BUTTONS_MINI)
+#define GxEPD2_DRIVER_CLASS GxEPD2_154_D67
+#elif defined(HOME_BUTTONS_PRO)
+#define GxEPD2_DRIVER_CLASS GxEPD2_420_GDEY042T91
+#endif
+
+#define MAX_DISPLAY_BUFFER_SIZE 65536ul  // e.g.
+#define MAX_HEIGHT(EPD)                                      \
+  (EPD::HEIGHT <= MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8) \
+       ? EPD::HEIGHT                                         \
+       : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
 
 class Display : public Logger {
+  friend class ButtonTile;
+
  public:
   enum class State { IDLE, ACTIVE, CMD_END, ENDING };
   explicit Display(const DeviceState& device_state, MDIHelper& mdi_helper)
@@ -70,8 +65,6 @@ class Display : public Logger {
   bool busy() { return redraw_in_progress; }
 
  private:
-  enum class LabelType : uint8_t { Text, Icon, Mixed };
-
   State state = State::IDLE;
 
   UIState current_ui_state = {};
@@ -88,6 +81,10 @@ class Display : public Logger {
   const DeviceState& device_state_;
   MDIHelper& mdi_;
 
+  GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS, MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>*
+      disp;
+  U8G2_FOR_ADAFRUIT_GFX u8g2;
+
   // ### buffers for draw_bmp()
   // up to depth 24
   uint8_t input_buffer[3 * input_buffer_pixels];
@@ -98,6 +95,12 @@ class Display : public Logger {
   // palette buffer for depth <= 8 for buffered graphics, needed for 7-color
   // display
   uint16_t rgb_palette_buffer[max_palette_pixels];
+
+  LabelType get_label_type(ButtonLabel label);
+  MDIName get_mdi_name(ButtonLabel label);
+  ButtonLabel get_text(ButtonLabel label);
+
+  ButtonLabel trim_text(ButtonLabel label, uint16_t max_width);
 
   void set_cmd_state(UIState cmd);
 
@@ -115,6 +118,16 @@ class Display : public Logger {
   void draw_black();
   bool draw_bmp(File& file, int16_t x, int16_t y);
   void draw_mdi(const char* name, uint16_t size, int16_t x, int16_t y);
+};
+
+struct ButtonTile {
+  LabelType label_type = LabelType::None;
+  ButtonLabel text{};
+  MDIName mdi_name{};
+  uint16_t width = 0;
+  uint16_t height = 0;
+
+  void draw(Display& display, int16_t x, int16_t y, uint16_t color);
 };
 
 #endif  // HOMEBUTTONS_DISPLAY_H

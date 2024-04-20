@@ -49,81 +49,10 @@ from uuid import uuid4
 from hb_mini_test_jig import HBMiniTestJig
 from helpers import *
 
+from factory_data import FactoryData
+from efuse_tool import burn_efuses
+
 NVS_GEN_PATH = "components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py"
-
-
-@dataclass
-class FactoryData:
-    model_id: str
-    hw_version: str
-    serial: str
-    random_id: str
-
-    @classmethod
-    def generate_random_id(cls):
-        return str(uuid4())[:6].upper()
-
-    @classmethod
-    def verify_model_id(cls, model_id: str):
-        # example model_id A1
-        try:
-            assert len(model_id) == 2
-            assert model_id[0].isalpha()
-            assert model_id[1].isnumeric()
-        except AssertionError:
-            return False
-        else:
-            return True
-
-    @classmethod
-    def verify_hw_version(cls, hw_version: str):
-        # example hw_version 1.1
-        try:
-            assert len(hw_version) == 3
-            assert hw_version[0].isnumeric()
-            assert hw_version[1] == "."
-            assert hw_version[2].isnumeric()
-        except AssertionError:
-            return False
-        else:
-            return True
-
-    @classmethod
-    def verify_serial(cls, serial: str):
-        # example serial 2301-001
-        serial = serial.split("-")
-        try:
-            assert len(serial) == 2
-            assert len(serial[0]) == 4
-            assert len(serial[1]) == 3
-        except AssertionError:
-            return False
-        else:
-            return True
-
-    @classmethod
-    def verify_random_id(cls, random_id: str):
-        # example random_id A1B2C3
-        try:
-            assert len(random_id) == 6
-            assert random_id.isalnum()
-        except AssertionError:
-            return False
-        else:
-            return True
-
-    def verify(self):
-        return (self.verify_model_id(self.model_id) and
-                self.verify_hw_version(self.hw_version) and
-                self.verify_serial(self.serial) and
-                self.verify_random_id(self.random_id))
-
-    def __repr__(self):
-        return ("Factory Data:\n"
-                f"  Model ID: {self.model_id}\n"
-                f"  HW Version: {self.hw_version}\n"
-                f"  Serial: {self.serial}\n"
-                f"  Random ID: {self.random_id}")
 
 
 @dataclass
@@ -186,51 +115,6 @@ def generate_nvs(out_file_path, size: str, factory_test_params: FactoryTestSetup
         tokens = ["python", os.path.join(find_espidf(), NVS_GEN_PATH), "generate",
                   csv_file.name, out_file_path, size]
         subprocess.run(tokens, check=True, capture_output=True, text=True)
-
-
-def decode_factory_data(b: bytearray):
-    serial = b[0:8].decode("utf-8")
-    random_id = b[8:14].decode("utf-8")
-    model_id = b[14:16].decode("utf-8")
-    hw_version = b[16:19].decode("utf-8")
-    return FactoryData(model_id, hw_version, serial, random_id)
-
-
-def encode_factory_data(factory_data: FactoryData):
-    serial = factory_data.serial
-    random_id = factory_data.random_id
-    model_id = factory_data.model_id
-    hw_version = factory_data.hw_version
-
-    assert len(serial) == 8
-    assert len(random_id) == 6
-    assert len(model_id) == 2
-    assert len(hw_version) == 3
-
-    b = bytearray(32)
-    b[0:8] = serial.encode("utf-8")
-    b[8:14] = random_id.encode("utf-8")
-    b[14:16] = model_id.encode("utf-8")
-    b[16:19] = hw_version.encode("utf-8")
-
-    # check
-    assert decode_factory_data(b) == factory_data
-    return b
-
-
-def burn_efuses(port: str, baud: int, factory_data: FactoryData):
-    factory_data = encode_factory_data(factory_data)
-    with NamedTemporaryFile("wb") as f:
-        f.write(factory_data)
-        f.flush()
-        tokens = ["espefuse.py", "--port", port, "--baud", str(baud),
-                  "--do-not-confirm",
-                  "burn_block_data", "BLOCK3", f.name]
-        try:
-            subprocess.run(tokens, check=True, capture_output=True, text=True)
-        except subprocess.CalledProcessError as e:
-            print(e.stdout)
-            quit()
 
 
 def flash_firmware(port: str, baud: int, fw_zip_path: str, test_setup: FactoryTestSetup, spiffs_image_path: str = None):

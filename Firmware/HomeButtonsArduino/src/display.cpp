@@ -21,8 +21,6 @@ constexpr int HEIGHT = 200;
 static constexpr uint16_t ROTATION = 0;
 static constexpr uint16_t WIDTH = 400;
 static constexpr uint16_t HEIGHT = 300;
-#else
-#error "No device defined"
 #endif
 
 uint16_t read16(File &f) {
@@ -44,28 +42,46 @@ uint32_t read32(File &f) {
   return result;
 }
 
-#define GxEPD2_DISPLAY_CLASS GxEPD2_BW
+LabelType Display::get_label_type(ButtonLabel label) {
+  if (label.substring(0, 4) == "mdi:") {
+    if (label.index_of(' ') > 0) {
+      return LabelType::Mixed;
+    } else {
+      return LabelType::Icon;
+    }
+  } else {
+    return LabelType::Text;
+  }
+}
 
-#if defined(HOME_BUTTONS_ORIGINAL)
-#define GxEPD2_DRIVER_CLASS GxEPD2_290_T94_V2
-#elif defined(HOME_BUTTONS_MINI)
-#define GxEPD2_DRIVER_CLASS GxEPD2_154_D67
-#elif defined(HOME_BUTTONS_PRO)
-#define GxEPD2_DRIVER_CLASS GxEPD2_420_GDEY042T91
-#else
-#error "No device defined"
-#endif
+MDIName Display::get_mdi_name(ButtonLabel label) {
+  if (get_label_type(label) == LabelType::Icon) {
+    return MDIName{label.substring(4)};
+  } else if (get_label_type(label) == LabelType::Mixed) {
+    return MDIName{label.substring(4, label.index_of(' '))};
+  } else {
+    return MDIName{};
+  }
+}
 
-#define MAX_DISPLAY_BUFFER_SIZE 65536ul  // e.g.
-#define MAX_HEIGHT(EPD)                                      \
-  (EPD::HEIGHT <= MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8) \
-       ? EPD::HEIGHT                                         \
-       : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
+ButtonLabel Display::get_text(ButtonLabel label) {
+  if (get_label_type(label) == LabelType::Text) {
+    return label;
+  } else if (get_label_type(label) == LabelType::Mixed) {
+    return label.substring(label.index_of(' ') + 1);
+  } else {
+    return ButtonLabel{};
+  }
+}
 
-static GxEPD2_DISPLAY_CLASS<GxEPD2_DRIVER_CLASS,
-                            MAX_HEIGHT(GxEPD2_DRIVER_CLASS)> *disp;
-
-static U8G2_FOR_ADAFRUIT_GFX u8g2;
+ButtonLabel Display::trim_text(ButtonLabel label, uint16_t max_width) {
+  uint16_t w = u8g2.getUTF8Width(label.c_str());
+  while (w > max_width) {
+    label = label.substring(0, label.length() - 2) + ".";
+    w = u8g2.getUTF8Width(label.c_str());
+  }
+  return label;
+}
 
 void Display::begin(HardwareDefinition &HW) {
   if (state != State::IDLE) return;
@@ -271,7 +287,6 @@ void Display::set_cmd_state(UIState cmd) {
   new_ui_cmd = true;
 }
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
 void Display::draw_message(const UIState::MessageType &message, bool error,
                            bool large) {
   disp->setRotation(ROTATION);
@@ -283,6 +298,7 @@ void Display::draw_message(const UIState::MessageType &message, bool error,
 
   disp->fillScreen(bg_color);
 
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (!error) {
     if (!large) {
       u8g2.setFont(u8g2_font_courR12_tr);
@@ -302,13 +318,54 @@ void Display::draw_message(const UIState::MessageType &message, bool error,
     u8g2.setCursor(0, 60);
     u8g2.print(message.c_str());
   }
+
+#elif defined(HOME_BUTTONS_MINI)
+  if (!error) {
+    if (!large) {
+      u8g2.setFont(u8g2_font_courR18_tf);
+      u8g2.setCursor(0, 20);
+    } else {
+      u8g2.setFont(u8g2_font_helvB24_tr);
+      u8g2.setCursor(0, 30);
+    }
+    u8g2.print(message.c_str());
+  } else {
+    u8g2.setFont(u8g2_font_helvB18_tr);
+    const char *text = "ERROR";
+    uint16_t w = u8g2.getUTF8Width(text);
+    u8g2.setCursor(WIDTH / 2 - w / 2, 30);
+    u8g2.print(text);
+    u8g2.setFont(u8g2_font_courR18_tf);
+    u8g2.setCursor(0, 70);
+    u8g2.print(message.c_str());
+  }
+
+#elif defined(HOME_BUTTONS_PRO)
+  if (!error) {
+    if (!large) {
+      u8g2.setFont(u8g2_font_courR12_tr);
+      u8g2.setCursor(0, 20);
+    } else {
+      u8g2.setFont(u8g2_font_helvB18_te);
+      u8g2.setCursor(0, 30);
+    }
+    u8g2.print(message.c_str());
+  } else {
+    u8g2.setFont(u8g2_font_helvB12_tr);
+    const char *text = "ERROR";
+    uint16_t w = u8g2.getUTF8Width(text);
+    u8g2.setCursor(WIDTH / 2 - w / 2, 20);
+    u8g2.print(text);
+    u8g2.setFont(u8g2_font_courR12_tr);
+    u8g2.setCursor(0, 60);
+    u8g2.print(message.c_str());
+  }
+#endif
+
   disp->display();
 }
 
 void Display::draw_main() {
-  const uint16_t min_btn_clearance = 14;
-  const uint16_t h_padding = 5;
-
   disp->setRotation(ROTATION);
   disp->setFullWindow();
 
@@ -317,6 +374,10 @@ void Display::draw_main() {
   u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
+
+#if defined(HOME_BUTTONS_ORIGINAL)
+  const uint16_t min_btn_clearance = 14;
+  const uint16_t h_padding = 5;
 
   // charging line
   if (device_state_.sensors().charging) {
@@ -327,15 +388,7 @@ void Display::draw_main() {
   LabelType label_type[NUM_BUTTONS] = {};
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
     ButtonLabel label = device_state_.get_btn_label(i);
-    if (label.substring(0, 4) == "mdi:") {
-      if (label.index_of(' ') > 0) {
-        label_type[i] = LabelType::Mixed;
-      } else {
-        label_type[i] = LabelType::Icon;
-      }
-    } else {
-      label_type[i] = LabelType::Text;
-    }
+    label_type[i] = get_label_type(label);
   }
 
   // Loop through buttons
@@ -343,8 +396,7 @@ void Display::draw_main() {
     ButtonLabel label = device_state_.get_btn_label(i);
 
     if (label_type[i] == LabelType::Icon) {
-      MDIName icon = label.substring(
-          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
+      MDIName icon = get_mdi_name(label);
 
       // make smaller if opposite is text or mixed
       uint16_t size;
@@ -396,8 +448,8 @@ void Display::draw_main() {
       }
       draw_mdi(icon.c_str(), size, x, y);
     } else if (label_type[i] == LabelType::Mixed) {
-      MDIName icon = label.substring(4, label.index_of(' '));
-      StaticString<56> text = label.substring(label.index_of(' ') + 1);
+      MDIName icon = get_mdi_name(label);
+      ButtonLabel text = get_text(label);
       uint16_t icon_size = 48;
       uint16_t x = i % 2 == 0 ? 0 : WIDTH - icon_size;
       uint16_t y =
@@ -480,6 +532,45 @@ void Display::draw_main() {
     }
   }
   mdi_.end();
+
+#elif defined(HOME_BUTTONS_MINI)
+  mdi_.begin();
+  // Loop through buttons
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+    uint16_t size = 100;
+    uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
+    uint16_t y = i < 2 ? 0 : HEIGHT - size;
+    MDIName icon = get_mdi_name(label);
+    draw_mdi(icon.c_str(), size, x, y);
+  }
+  mdi_.end();
+
+#elif defined(HOME_BUTTONS_PRO)
+  uint16_t tile_width = 132;
+  uint16_t tile_height = 100;
+  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
+    ButtonLabel label = device_state_.get_btn_label(i);
+
+    ButtonTile tile = {};
+    tile.label_type = get_label_type(label);
+    tile.text = get_text(label);
+    tile.mdi_name = get_mdi_name(label);
+    tile.width = tile_width;
+    tile.height = tile_height;
+
+    int16_t x = 2 + i % 3 * tile.width;
+    int16_t y = i / 3 * tile.height;
+    tile.draw(*this, x, y, text_color);
+  }
+  // grid
+  disp->drawFastHLine(0, tile_height, WIDTH, text_color);
+  disp->drawFastHLine(0, 2 * tile_height, WIDTH, text_color);
+  disp->drawFastVLine(133, 0, HEIGHT, text_color);
+  disp->drawFastVLine(266, 0, HEIGHT, text_color);
+
+#endif
+
   disp->display();
 }
 
@@ -493,8 +584,10 @@ void Display::draw_info() {
 
   disp->fillScreen(bg_color);
 
-  uint16_t w;
   UIState::MessageType text;
+
+#if defined(HOME_BUTTONS_ORIGINAL)
+  uint16_t w;
 
   text = "- Temp -";
   u8g2.setFont(u8g2_font_courR12_tr);
@@ -537,6 +630,79 @@ void Display::draw_info() {
   u8g2.setCursor(WIDTH / 2 - w / 2 - 2, 268);
   u8g2.print(text.c_str());
 
+#elif defined(HOME_BUTTONS_MINI)
+  u8g2.setFont(u8g2_font_helvB24_tr);
+
+  disp->drawXBitmap(5, 4, thermometer_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
+                              device_state_.get_temp_unit().c_str());
+  u8g2.setCursor(85, 50);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(5, 68, water_percent_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
+  u8g2.setCursor(85, 116);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(5, 132, battery_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
+  u8g2.setCursor(85, 180);
+  u8g2.print(text.c_str());
+
+#elif defined(HOME_BUTTONS_PRO)
+  u8g2.setFont(u8g2_font_helvB24_tr);
+
+  disp->drawXBitmap(100, 30, thermometer_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
+                              device_state_.get_temp_unit().c_str());
+  int8_t ascent = u8g2.getFontAscent();
+  u8g2.setCursor(180, 30 + 64 / 2 + ascent / 2);
+  u8g2.print(text.c_str());
+
+  disp->drawXBitmap(100, 110, water_percent_64x64, 64, 64, text_color);
+  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
+  u8g2.setCursor(180, 110 + 64 / 2 + ascent / 2);
+  u8g2.print(text.c_str());
+
+  disp->drawLine(20, 200, 380, 200, text_color);
+
+  // device info
+  disp->drawXBitmap(6, 210, hb_logo_64x64, 64, 64, text_color);
+
+  u8g2.setFont(u8g2_font_profont12_tr);
+
+  u8g2.setCursor(75, 220);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(75, 232);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(75, 244);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(75, 256);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(75, 268);
+  u8g2.print(ip_info.c_str());
+
+  // settings icon
+  disp->drawXBitmap(WIDTH - 70, HEIGHT - 90, cog_64x64, 64, 64, text_color);
+  u8g2.setCursor(357, 285);
+  u8g2.print("5s");
+
+  // up chevron
+  disp->drawXBitmap(WIDTH / 2 - 32 / 2, HEIGHT - 28, chevron_up_32x32, 32, 32,
+                    text_color);
+#endif
+
   disp->display();
 }
 
@@ -550,6 +716,7 @@ void Display::draw_device_info() {
 
   disp->fillScreen(bg_color);
 
+#if defined(HOME_BUTTONS_ORIGINAL)
   disp->drawXBitmap(40, 0, hb_logo_48x48, 48, 48, text_color);
 
   u8g2.setFont(u8g2_font_profont12_tr);
@@ -585,6 +752,72 @@ void Display::draw_device_info() {
   }
   u8g2.setCursor(0, 152);
   u8g2.print(batt_volt.c_str());
+
+#elif defined(HOME_BUTTONS_MINI)
+  disp->drawXBitmap(76, 0, hb_logo_48x48, 48, 48, text_color);
+
+  u8g2.setFont(u8g2_font_profont17_tr);
+
+  u8g2.setCursor(0, 70);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 90);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 110);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 130);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(0, 160);
+  u8g2.print(ip_info.c_str());
+
+  UIState::MessageType batt_volt = UIState::MessageType(
+      "Battery: %.2f V", device_state_.sensors().battery_voltage);
+  u8g2.setCursor(0, 180);
+  u8g2.print(batt_volt.c_str());
+
+#elif defined(HOME_BUTTONS_PRO)
+  disp->drawXBitmap(76, 0, hb_logo_48x48, 48, 48, text_color);
+
+  u8g2.setFont(u8g2_font_profont17_tr);
+
+  u8g2.setCursor(0, 70);
+  u8g2.print(device_state_.device_name().c_str());
+
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 90);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 110);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 130);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+
+  UIState::MessageType ip_info =
+      UIState::MessageType("IP: %s", device_state_.ip());
+  u8g2.setCursor(0, 160);
+  u8g2.print(ip_info.c_str());
+
+  UIState::MessageType batt_volt = UIState::MessageType(
+      "Battery: %.2f V", device_state_.sensors().battery_voltage);
+  u8g2.setCursor(0, 180);
+  u8g2.print(batt_volt.c_str());
+#endif
+
   disp->display();
 }
 
@@ -597,8 +830,8 @@ void Display::draw_welcome() {
   u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
-  disp->setCursor(0, 0);
 
+#if defined(HOME_BUTTONS_ORIGINAL)
   uint16_t w;
   const char *text = "Home Buttons";
   u8g2.setFont(u8g2_font_helvB12_tr);
@@ -652,6 +885,87 @@ void Display::draw_welcome() {
   u8g2.setCursor(0, 294);
   u8g2.print(device_state_.factory().unique_id.c_str());
 
+#elif defined(HOME_BUTTONS_MINI)
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, hb_logo_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.factory().serial_number.c_str();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+#elif defined(HOME_BUTTONS_PRO)
+  uint16_t w;
+  const char *text = "Home Buttons";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 40);
+  u8g2.print(text);
+
+  disp->drawXBitmap(52, 52, hb_logo_24x24, 24, 24, GxEPD_BLACK);
+
+  text = "------------------------";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 102);
+  u8g2.print(text);
+
+  uint8_t version = 6;  // 41x41px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
+
+  text = "Setup guide:";
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 145);
+  u8g2.print(text);
+
+  uint16_t qr_x = 23;
+  uint16_t qr_y = 165;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
+      }
+    }
+  }
+
+  u8g2.setFont(u8g2_font_profont12_tr);
+  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
+  u8g2.setCursor(0, 272);
+  u8g2.print(sw_ver.c_str());
+
+  UIState::MessageType model_info = UIState::MessageType("Model: ") +
+                                    device_state_.factory().model_id.c_str() +
+                                    " rev " +
+                                    device_state_.factory().hw_version.c_str();
+  u8g2.setCursor(0, 283);
+  u8g2.print(model_info.c_str());
+
+  u8g2.setCursor(0, 294);
+  u8g2.print(device_state_.factory().unique_id.c_str());
+#endif
+
   disp->display();
 }
 
@@ -665,6 +979,7 @@ void Display::draw_settings() {
 
   disp->fillScreen(bg_color);
 
+#if defined(HOME_BUTTONS_ORIGINAL)
   disp->drawXBitmap(0, 17, account_cog_64x64, 64, 64, text_color);
   disp->drawXBitmap(WIDTH / 2, 17, wifi_cog_64x64, 64, 64, text_color);
   disp->drawXBitmap(0, 116, restore_64x64, 64, 64, text_color);
@@ -691,6 +1006,39 @@ void Display::draw_settings() {
   u8g2.setCursor(0, 294);
   u8g2.print(device_state_.factory().unique_id.c_str());
 
+#elif defined(HOME_BUTTONS_MINI)
+  disp->drawXBitmap(0, 0, account_cog_100x100, 100, 100, text_color);
+  disp->drawXBitmap(100, 0, wifi_cog_100x100, 100, 100, text_color);
+  disp->drawXBitmap(0, 100, restore_100x100, 100, 100, text_color);
+  disp->drawXBitmap(100, 100, close_100x100, 100, 100, text_color);
+
+#elif defined(HOME_BUTTONS_PRO)
+  uint16_t x_icon = 310;
+  uint16_t x_text = 25;
+  u8g2.setFont(u8g2_font_helvB18_te);
+  int8_t ascent = u8g2.getFontAscent();
+
+  disp->drawXBitmap(x_icon, 5, account_cog_64x64, 64, 64, text_color);
+  u8g2.setCursor(x_text, 5 + 64 / 2 + ascent / 2);
+  u8g2.print("Setup");
+  disp->drawFastHLine(0, 74, WIDTH, text_color);
+
+  disp->drawXBitmap(x_icon, 79, wifi_cog_64x64, 64, 64, text_color);
+  u8g2.setCursor(x_text, 79 + 64 / 2 + ascent / 2);
+  u8g2.print("Wi-Fi Setup");
+  disp->drawFastHLine(0, 149, WIDTH, text_color);
+
+  disp->drawXBitmap(x_icon, 154, restore_64x64, 64, 64, text_color);
+  u8g2.setCursor(x_text, 154 + 64 / 2 + ascent / 2);
+  u8g2.print("Restart");
+  disp->drawFastHLine(0, 224, WIDTH, text_color);
+
+  disp->drawXBitmap(x_icon, 229, close_64x64, 64, 64, text_color);
+  u8g2.setCursor(x_text, 229 + 64 / 2 + ascent / 2);
+  u8g2.print("Exit");
+
+#endif
+
   disp->display();
 }
 
@@ -700,11 +1048,6 @@ void Display::draw_ap_config() {
                                   ";P:" + device_state_.get_ap_password() +
                                   ";;";
 
-  uint8_t version = 6;  // 41x41px
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(version)];
-  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
-
   disp->setRotation(ROTATION);
   disp->setFullWindow();
 
@@ -713,6 +1056,12 @@ void Display::draw_ap_config() {
   u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
+
+#if defined(HOME_BUTTONS_ORIGINAL)
+  uint8_t version = 6;  // 41x41px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
   u8g2.setFont(u8g2_font_courR12_tr);
 
@@ -758,17 +1107,89 @@ void Display::draw_ap_config() {
   u8g2.setCursor(0, 275);
   u8g2.print(device_state_.get_ap_password());
 
+#elif defined(HOME_BUTTONS_MINI)
+  uint8_t version = 8;  // 49x49px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+  uint16_t qr_x = 2;
+  uint16_t qr_y = 2;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
+      }
+    }
+  }
+  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
+  disp->drawXBitmap(68, 68, wifi_cog_64x64, 64, 64, GxEPD_BLACK);
+
+  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
+  u8g2.setFont(u8g2_font_profont17_tr);
+  const char *text = device_state_.get_ap_ssid().c_str();
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
+  u8g2.print(text);
+
+#elif defined(HOME_BUTTONS_PRO)
+  uint8_t version = 6;  // 41x41px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+
+  u8g2.setFont(u8g2_font_courR12_tr);
+
+  uint16_t w;
+  const char *text = "Scan:";
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 20);
+  u8g2.print(text);
+
+  uint16_t qr_x = 23;
+  uint16_t qr_y = 35;
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
+      }
+    }
+  }
+  text = "--------- or ---------";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 153);
+  u8g2.print(text);
+
+  text = "Connect to:";
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 190);
+  u8g2.print(text);
+
+  u8g2.setCursor(0, 220);
+  u8g2.print("Wi-Fi:");
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  u8g2.setCursor(0, 235);
+  u8g2.print(device_state_.get_ap_ssid().c_str());
+
+  u8g2.setFont(u8g2_font_courR12_tr);
+  u8g2.setCursor(0, 260);
+  u8g2.print("Password:");
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  u8g2.setCursor(0, 275);
+  u8g2.print(device_state_.get_ap_password());
+#endif
+
   disp->display();
 }
 
 void Display::draw_web_config() {
   UIState::MessageType contents =
       UIState::MessageType("http://") + device_state_.ip();
-
-  uint8_t version = 6;  // 41x41px
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(version)];
-  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
   disp->setRotation(ROTATION);
   disp->setFullWindow();
@@ -778,6 +1199,12 @@ void Display::draw_web_config() {
   u8g2.setBackgroundColor(bg_color);
 
   disp->fillScreen(bg_color);
+
+#if defined(HOME_BUTTONS_ORIGINAL)
+  uint8_t version = 6;  // 41x41px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
 
   u8g2.setFont(u8g2_font_courR12_tr);
 
@@ -817,277 +1244,7 @@ void Display::draw_web_config() {
   u8g2.setCursor(0, 260);
   u8g2.print(device_state_.ip());
 
-  disp->display();
-}
-
-void Display::draw_test(const char *text, const char *mdi_name,
-                        uint16_t mdi_size) {
-  uint16_t fg, bg;
-  fg = GxEPD_BLACK;
-  bg = GxEPD_WHITE;
-
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-
-  u8g2.setFontMode(1);
-  u8g2.setForegroundColor(fg);
-  u8g2.setBackgroundColor(bg);
-
-  disp->fillScreen(bg);
-
-  mdi_.begin();
-  draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 50);
-  mdi_.end();
-
-  u8g2.setFont(u8g2_font_helvB24_te);
-  uint16_t w = u8g2.getUTF8Width(text);
-  u8g2.setCursor(WIDTH / 2 - w / 2, 250);
-  u8g2.print(text);
-
-  disp->display();
-}
 #elif defined(HOME_BUTTONS_MINI)
-void Display::draw_message(const UIState::MessageType &message, bool error,
-                           bool large) {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-
-  u8g2.setFontMode(1);
-  u8g2.setForegroundColor(text_color);
-  u8g2.setBackgroundColor(bg_color);
-
-  disp->fillScreen(bg_color);
-
-  if (!error) {
-    if (!large) {
-      u8g2.setFont(u8g2_font_courR18_tf);
-      u8g2.setCursor(0, 20);
-    } else {
-      u8g2.setFont(u8g2_font_helvB24_tr);
-      u8g2.setCursor(0, 30);
-    }
-    u8g2.print(message.c_str());
-  } else {
-    u8g2.setFont(u8g2_font_helvB18_tr);
-    const char *text = "ERROR";
-    uint16_t w = u8g2.getUTF8Width(text);
-    u8g2.setCursor(WIDTH / 2 - w / 2, 30);
-    u8g2.print(text);
-    u8g2.setFont(u8g2_font_courR18_tf);
-    u8g2.setCursor(0, 70);
-    u8g2.print(message.c_str());
-  }
-  disp->display();
-}
-
-void Display::draw_main() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-
-  disp->fillScreen(bg_color);
-
-  mdi_.begin();
-
-  // Loop through buttons
-  for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
-    ButtonLabel label = device_state_.get_btn_label(i);
-    uint16_t size = 100;
-    uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
-    uint16_t y = i < 2 ? 0 : HEIGHT - size;
-    if (label.substring(0, 4) == "mdi:") {
-      MDIName icon = label.substring(
-          4, label.index_of(' ') > 0 ? label.index_of(' ') : label.length());
-      draw_mdi(icon.c_str(), size, x, y);
-    } else {
-      draw_mdi("x", size, x, y);
-    }
-  }
-  // disp->drawRect(WIDTH / 2 - 1, 0, 2, HEIGHT, GxEPD_BLACK);
-  // disp->drawRect(0, HEIGHT / 2 - 1, WIDTH, 2, GxEPD_BLACK);
-  mdi_.end();
-  disp->display();
-}
-
-void Display::draw_info() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-
-  u8g2.setFontMode(1);
-  u8g2.setForegroundColor(text_color);
-  u8g2.setBackgroundColor(bg_color);
-
-  disp->fillScreen(bg_color);
-
-  UIState::MessageType text;
-  u8g2.setFont(u8g2_font_helvB24_tr);
-
-  disp->drawXBitmap(5, 4, thermometer_64x64, 64, 64, text_color);
-  text = UIState::MessageType("%.1f %s", device_state_.sensors().temperature,
-                              device_state_.get_temp_unit().c_str());
-  u8g2.setCursor(85, 50);
-  u8g2.print(text.c_str());
-
-  disp->drawXBitmap(5, 68, water_percent_64x64, 64, 64, text_color);
-  text = UIState::MessageType("%.0f %%", device_state_.sensors().humidity);
-  u8g2.setCursor(85, 116);
-  u8g2.print(text.c_str());
-
-  disp->drawXBitmap(5, 132, battery_64x64, 64, 64, text_color);
-  text = UIState::MessageType("%d %%", device_state_.sensors().battery_pct);
-  u8g2.setCursor(85, 180);
-  u8g2.print(text.c_str());
-
-  disp->display();
-}
-
-void Display::draw_device_info() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-
-  u8g2.setFontMode(1);
-  u8g2.setForegroundColor(text_color);
-  u8g2.setBackgroundColor(bg_color);
-
-  disp->fillScreen(bg_color);
-
-  disp->drawXBitmap(76, 0, hb_logo_48x48, 48, 48, text_color);
-
-  u8g2.setFont(u8g2_font_profont17_tr);
-
-  u8g2.setCursor(0, 70);
-  u8g2.print(device_state_.device_name().c_str());
-
-  UIState::MessageType sw_ver = UIState::MessageType("SW: ") + SW_VERSION;
-  u8g2.setCursor(0, 90);
-  u8g2.print(sw_ver.c_str());
-
-  UIState::MessageType model_info = UIState::MessageType("Model: ") +
-                                    device_state_.factory().model_id.c_str() +
-                                    " rev " +
-                                    device_state_.factory().hw_version.c_str();
-  u8g2.setCursor(0, 110);
-  u8g2.print(model_info.c_str());
-
-  u8g2.setCursor(0, 130);
-  u8g2.print(device_state_.factory().unique_id.c_str());
-
-  UIState::MessageType ip_info =
-      UIState::MessageType("IP: %s", device_state_.ip());
-  u8g2.setCursor(0, 160);
-  u8g2.print(ip_info.c_str());
-
-  UIState::MessageType batt_volt = UIState::MessageType(
-      "Battery: %.2f V", device_state_.sensors().battery_voltage);
-  u8g2.setCursor(0, 180);
-  u8g2.print(batt_volt.c_str());
-  disp->display();
-}
-
-void Display::draw_welcome() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-  u8g2.setBackgroundColor(bg_color);
-  u8g2.setForegroundColor(text_color);
-  disp->fillScreen(bg_color);
-
-  uint8_t version = 8;  // 49x49px
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(version)];
-  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, DOCS_LINK);
-  uint16_t qr_x = 2;
-  uint16_t qr_y = 2;
-  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
-    // Each horizontal module
-    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
-      // Display each module
-      if (qrcode_getModule(&qrcode, x2, y2)) {
-        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
-      }
-    }
-  }
-  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
-  disp->drawXBitmap(68, 68, hb_logo_64x64, 64, 64, GxEPD_BLACK);
-
-  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
-  u8g2.setFont(u8g2_font_profont17_tr);
-  const char *text = device_state_.factory().serial_number.c_str();
-  uint16_t w = u8g2.getUTF8Width(text);
-  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
-  u8g2.print(text);
-
-  disp->display();
-}
-
-void Display::draw_settings() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-
-  u8g2.setFontMode(1);
-  u8g2.setForegroundColor(text_color);
-  u8g2.setBackgroundColor(bg_color);
-
-  disp->fillScreen(bg_color);
-
-  disp->drawXBitmap(0, 0, account_cog_100x100, 100, 100, text_color);
-  disp->drawXBitmap(100, 0, wifi_cog_100x100, 100, 100, text_color);
-  disp->drawXBitmap(0, 100, restore_100x100, 100, 100, text_color);
-  disp->drawXBitmap(100, 100, close_100x100, 100, 100, text_color);
-
-  // disp->drawRect(WIDTH / 2 - 1, 0, 2, HEIGHT, GxEPD_BLACK);
-  // disp->drawRect(0, HEIGHT / 2 - 1, WIDTH, 2, GxEPD_BLACK);
-  disp->display();
-}
-
-void Display::draw_ap_config() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-  u8g2.setBackgroundColor(bg_color);
-  u8g2.setForegroundColor(text_color);
-  disp->fillScreen(bg_color);
-
-  UIState::MessageType contents = UIState::MessageType("WIFI:T:WPA;S:") +
-                                  device_state_.get_ap_ssid().c_str() +
-                                  ";P:" + device_state_.get_ap_password() +
-                                  ";;";
-
-  uint8_t version = 8;  // 49x49px
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(version)];
-  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
-  uint16_t qr_x = 2;
-  uint16_t qr_y = 2;
-  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
-    // Each horizontal module
-    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
-      // Display each module
-      if (qrcode_getModule(&qrcode, x2, y2)) {
-        disp->fillRect(qr_x + x2 * 4, qr_y + y2 * 4, 4, 4, GxEPD_BLACK);
-      }
-    }
-  }
-  disp->fillRect(66, 66, 68, 68, GxEPD_WHITE);
-  disp->drawXBitmap(68, 68, wifi_cog_64x64, 64, 64, GxEPD_BLACK);
-
-  disp->fillRect(34, 186, 132, 14, GxEPD_WHITE);
-  u8g2.setFont(u8g2_font_profont17_tr);
-  const char *text = device_state_.get_ap_ssid().c_str();
-  uint16_t w = u8g2.getUTF8Width(text);
-  u8g2.setCursor(WIDTH / 2 - w / 2, 198);
-  u8g2.print(text);
-
-  disp->display();
-}
-
-void Display::draw_web_config() {
-  disp->setRotation(ROTATION);
-  disp->setFullWindow();
-  u8g2.setBackgroundColor(bg_color);
-  u8g2.setForegroundColor(text_color);
-  disp->fillScreen(bg_color);
-
-  UIState::MessageType contents =
-      UIState::MessageType("http://") + device_state_.ip();
-
   uint8_t version = 8;  // 49x49px
   QRCode qrcode;
   uint8_t qrcodeData[qrcode_getBufferSize(version)];
@@ -1113,6 +1270,51 @@ void Display::draw_web_config() {
   u8g2.setCursor(WIDTH / 2 - w / 2, 198);
   u8g2.print(text);
 
+#elif defined(HOME_BUTTONS_PRO)
+  uint8_t version = 6;  // 41x41px
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, ECC_HIGH, contents.c_str());
+
+  u8g2.setFont(u8g2_font_courR12_tr);
+
+  uint16_t w;
+  const char *text = "Scan:";
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 20);
+  u8g2.print(text);
+
+  uint16_t qr_x = 23;
+  uint16_t qr_y = 35;
+
+  for (uint8_t y2 = 0; y2 < qrcode.size; y2++) {
+    // Each horizontal module
+    for (uint8_t x2 = 0; x2 < qrcode.size; x2++) {
+      // Display each module
+      if (qrcode_getModule(&qrcode, x2, y2)) {
+        disp->drawRect(qr_x + x2 * 2, qr_y + y2 * 2, 2, 2, GxEPD_BLACK);
+      }
+    }
+  }
+  text = "--------- or ---------";
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 153);
+  u8g2.print(text);
+
+  text = "Go to:";
+  u8g2.setFont(u8g2_font_courR12_tr);
+  w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 200);
+  u8g2.print(text);
+
+  u8g2.setFont(u8g2_font_helvB12_tr);
+  u8g2.setCursor(0, 240);
+  u8g2.print("http://");
+  u8g2.setCursor(0, 260);
+  u8g2.print(device_state_.ip());
+#endif
+
   disp->display();
 }
 
@@ -1131,6 +1333,16 @@ void Display::draw_test(const char *text, const char *mdi_name,
 
   disp->fillScreen(bg);
 
+#if defined(HOME_BUTTONS_ORIGINAL)
+  mdi_.begin();
+  draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 50);
+  mdi_.end();
+
+  u8g2.setFont(u8g2_font_helvB24_te);
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 250);
+  u8g2.print(text);
+#elif defined(HOME_BUTTONS_MINI)
   mdi_.begin();
   draw_mdi(mdi_name, mdi_size, WIDTH / 2 - mdi_size / 2, 20);
   mdi_.end();
@@ -1139,12 +1351,15 @@ void Display::draw_test(const char *text, const char *mdi_name,
   uint16_t w = u8g2.getUTF8Width(text);
   u8g2.setCursor(WIDTH / 2 - w / 2, 175);
   u8g2.print(text);
+#elif defined(HOME_BUTTONS_PRO)
+  u8g2.setFont(u8g2_font_helvB24_te);
+  uint16_t w = u8g2.getUTF8Width(text);
+  u8g2.setCursor(WIDTH / 2 - w / 2, 250);
+  u8g2.print(text);
+#endif
 
   disp->display();
 }
-#else
-#error "No device defined"
-#endif
 
 void Display::draw_white() {
   disp->setFullWindow();
@@ -1340,6 +1555,72 @@ void Display::draw_mdi(const char *name, uint16_t size, int16_t x, int16_t y) {
     } else if (size == 100) {
       disp->drawXBitmap(x, y, file_question_outline_100x100, 100, 100,
                         text_color);
+    } else if (size == 92) {
+      disp->drawXBitmap(x, y, file_question_outline_92x92, 92, 92, text_color);
     }
+  }
+  // disp->drawRect(x, y, size, size, text_color);
+}
+
+void ButtonTile::draw(Display &display, int16_t x, int16_t y, uint16_t color) {
+  // display.disp->drawRect(x, y, width, height, color);
+  switch (label_type) {
+    case LabelType::Icon: {
+      uint16_t mdi_size = 92;
+      if (width < mdi_size || height < mdi_size) {
+        display.error("ButtonTile::draw: Tile height too low");
+        return;
+      }
+      int16_t icon_x = x + (width - mdi_size) / 2;
+      int16_t icon_y = y + (height - mdi_size) / 2;
+      display.mdi_.begin();
+      display.draw_mdi(mdi_name.c_str(), mdi_size, icon_x, icon_y);
+      display.mdi_.end();
+      break;
+    }
+    case LabelType::Mixed: {
+      uint16_t mdi_size = 64;
+
+      display.u8g2.setFont(u8g2_font_helvB18_te);
+      uint16_t h_padding = 4;
+      uint16_t v_padding = 4;
+      int8_t ascent = display.u8g2.getFontAscent();
+      int8_t descent = display.u8g2.getFontDescent();
+      display.debug("Font ascent: %d, descent: %d", ascent, descent);
+      if (mdi_size + ascent - descent + v_padding > height) {
+        display.error("ButtonTile::draw: Tile height too low");
+        return;
+      }
+      int16_t icon_x = x + (width - mdi_size) / 2;
+      int16_t icon_y = y + v_padding;
+      display.mdi_.begin();
+      display.draw_mdi(mdi_name.c_str(), mdi_size, icon_x, icon_y);
+      display.mdi_.end();
+
+      text = display.trim_text(text, width - 2 * h_padding);
+      uint16_t text_width = display.u8g2.getUTF8Width(text.c_str());
+      display.u8g2.setCursor(x + width / 2 - text_width / 2,
+                             y + height - v_padding + descent);
+      display.u8g2.print(text.c_str());
+      break;
+    }
+    case LabelType::Text: {
+      uint16_t h_padding = 4;
+      uint16_t v_padding = 4;
+      display.u8g2.setFont(u8g2_font_helvB24_te);
+      uint16_t text_width = display.u8g2.getUTF8Width(text.c_str());
+      if (text_width >= width - 2 * h_padding) {
+        display.u8g2.setFont(u8g2_font_helvB18_te);
+        text = display.trim_text(text, width - 2 * h_padding);
+      }
+      text_width = display.u8g2.getUTF8Width(text.c_str());
+      int8_t ascent = display.u8g2.getFontAscent();
+      display.u8g2.setCursor(x + width / 2 - text_width / 2,
+                             y + height / 2 + ascent / 2);
+      display.u8g2.print(text.c_str());
+      break;
+    }
+    default:
+      break;
   }
 }

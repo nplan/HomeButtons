@@ -11,7 +11,6 @@
 #include <math.h>
 
 // Temperature & humidity sensor
-TwoWire shtc3_wire = TwoWire(0);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
 bool HardwareDefinition::init() {
@@ -40,6 +39,8 @@ bool HardwareDefinition::init() {
     strncpy(model_name_, "Home Buttons", sizeof(model_name_));
   } else if (strcmp(get_model_id(), "B1") == 0) {
     strncpy(model_name_, "Home Buttons Mini", sizeof(model_name_));
+  } else if (strcmp(get_model_id(), "C1") == 0) {
+    strncpy(model_name_, "Home Buttons Pro", sizeof(model_name_));
   } else {
     error("unknown model id: %s", get_model_id());
     return false;
@@ -50,7 +51,7 @@ bool HardwareDefinition::init() {
 
   auto hw_ver = get_hw_version();
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (strcmp(hw_ver, "1.0") == 0) {
     load_hw_rev_1_0();
     info("configured for hw version: 1.0");
@@ -87,8 +88,13 @@ bool HardwareDefinition::init() {
     error("HW rev %s not supported", hw_ver);
     return false;
   }
-#else
-#error "No device defined"
+#elif defined(HOME_BUTTONS_PRO)
+  if (strcmp(hw_ver, "0.1") == 0) {
+    load_pro_hw_rev_0_1();
+  } else {
+    error("HW rev %s not supported", hw_ver);
+    return false;
+  }
 #endif
   return true;
 }
@@ -145,17 +151,28 @@ void HardwareDefinition::begin() {
   ledcAttachPin(LED4_PIN, LED4_CH);
 
 #elif defined(HOME_BUTTONS_PRO)
-  pinMode(BTN1_PIN, INPUT);
-  pinMode(BTN2_PIN, INPUT);
-  ledcSetup(LED1_CH, LED_FREQ, LED_RES);
-  ledcAttachPin(LED1_PIN, LED1_CH);
-#else
-#error "No device defined"
+  pinMode(TOUCH_CLICK_PIN, INPUT);
+  pinMode(TOUCH_INT_PIN, INPUT);
+  pinMode(FL_LED_EN_PIN, OUTPUT);
+  ledcSetup(FL_LED_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(FL_LED_PIN, FL_LED_CH);
 #endif
 
   // battery voltage adc
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
+
+  // i2c
+  Wire.begin(
+      (int)SDA,
+      (int)SCL);  // must be cast to int otherwise wrong begin() is called
+  Wire1.begin(
+      (int)SDA_1,
+      (int)SCL_1);  // must be cast to int otherwise wrong begin() is called
+
+  shtc3.begin(&Wire);
 }
+
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
 
 uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
 #if defined(HOME_BUTTONS_ORIGINAL)
@@ -181,14 +198,6 @@ uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
   } else {
     return 0;
   }
-#elif defined(HOME_BUTTONS_PRO)
-  if (sw_num == 1) {
-    return sw_num;
-  } else {
-    return 0;
-  }
-#else
-#error "No device defined"
 #endif
 }
 
@@ -212,21 +221,6 @@ bool HardwareDefinition::button_pressed(uint8_t num) {
   }
 }
 
-bool HardwareDefinition::any_button_pressed() {
-#if defined(HOME_BUTTONS_ORIGINAL)
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
-         digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
-#elif defined(HOME_BUTTONS_MINI)
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
-#elif defined(HOME_BUTTONS_PRO)
-  return digitalRead(BTN1_PIN);
-#else
-#error "No device defined"
-#endif
-}
-
 uint8_t HardwareDefinition::num_buttons_pressed() {
   uint8_t num = 0;
   for (uint8_t i = 1; i <= NUM_BUTTONS; i++) {
@@ -245,7 +239,7 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
   num = map_button_num_sw_to_hw(num);
   uint8_t ch;
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
+#if defined(HOME_BUTTONS_ORIGINAL)
   switch (num) {
     case 1:
       ch = LED1_CH;
@@ -285,8 +279,6 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
     default:
       return;
   }
-#else
-#error "No device defined"
 #endif
   set_led(ch, brightness);
 }
@@ -304,10 +296,6 @@ void HardwareDefinition::set_all_leds(uint8_t brightness) {
   set_led(LED2_CH, brightness);
   set_led(LED3_CH, brightness);
   set_led(LED4_CH, brightness);
-#elif defined(HOME_BUTTONS_PRO)
-  set_led(LED1_CH, brightness);
-#else
-#error "No device defined"
 #endif
 }
 
@@ -355,7 +343,7 @@ float HardwareDefinition::read_battery_voltage() {
 }
 
 uint8_t HardwareDefinition::read_battery_percent() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
+#if defined(HOME_BUTTONS_ORIGINAL)
   if (!is_battery_present()) return 0;
   float pct = BATT_SOC_EST_K * read_battery_voltage() + BATT_SOC_EST_N;
   if (pct < 1.0)
@@ -374,17 +362,77 @@ uint8_t HardwareDefinition::read_battery_percent() {
   else if (pct > 100.0)
     pct = 100;
   return (uint8_t)round(pct);
-#else
-#error "No device defined"
+#endif
+}
+#endif
+
+#if defined(HOME_BUTTONS_ORIGINAL)
+bool HardwareDefinition::is_battery_present() {
+  float volt = read_battery_voltage();
+  if (version >= semver::version{2, 2, 0}) {
+    return volt >= BATT_PRESENT_VOLT;
+  } else {
+    // hardware hack for powering v2.1 with USB-C
+    return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
+  }
+}
+
+bool HardwareDefinition::is_charger_in_standby() {
+  return !digitalRead(CHARGER_STDBY);
+}
+
+bool HardwareDefinition::is_dc_connected() {
+  if (version >= semver::version{2, 2, 0}) {
+    return digitalRead(DC_IN_DETECT);
+  } else {
+    // hardware hack for powering v2.1 with USB-C
+    return HardwareDefinition::read_battery_voltage() >= DC_DETECT_VOLT;
+  }
+}
+
+void HardwareDefinition::enable_charger(bool enable) {
+  if (version >= semver::version{2, 2, 0}) {
+    digitalWrite(CHG_ENABLE, enable);
+    debug("charger enabled: %d", enable);
+  } else {
+    debug("this HW version doesn't support charger control.");
+  }
+}
+#endif
+
+#if defined(HOME_BUTTONS_PRO)
+bool HardwareDefinition::touch_click_pressed() {
+  return digitalRead(TOUCH_CLICK_PIN);
+}
+
+void HardwareDefinition::set_frontlight(uint8_t brightness) {
+  // 0 - 255
+  ledcWrite(FL_LED_CH, brightness);
+  if (brightness > 0) {
+    digitalWrite(FL_LED_EN_PIN, HIGH);
+  } else {
+    digitalWrite(FL_LED_EN_PIN, LOW);
+  }
+}
+#endif
+
+bool HardwareDefinition::any_button_pressed() {
+#if defined(HOME_BUTTONS_ORIGINAL)
+  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
+         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
+         digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
+#elif defined(HOME_BUTTONS_MINI)
+  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
+         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
+#elif defined(HOME_BUTTONS_PRO)
+  return touch_click_pressed();
 #endif
 }
 
 void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
                                        const bool fahrenheit) {
-  shtc3_wire.begin(
-      (int)SDA,
-      (int)SCL);  // must be cast to int otherwise wrong begin() is called
-  shtc3.begin(&shtc3_wire);
+  shtc3.reset();
+  shtc3.sleep(false);
   sensors_event_t humidity_event, temp_event;
   shtc3.getEvent(&humidity_event, &temp_event);
   shtc3.sleep(true);
@@ -394,62 +442,7 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
     temp = temp_event.temperature;
   }
   hmd = humidity_event.relative_humidity;
-}
-
-bool HardwareDefinition::is_charger_in_standby() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  return !digitalRead(CHARGER_STDBY);
-#elif defined(HOME_BUTTONS_MINI)
-  return false;
-#else
-#error "No device defined"
-#endif
-}
-
-bool HardwareDefinition::is_dc_connected() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  if (version >= semver::version{2, 2, 0}) {
-    return digitalRead(DC_IN_DETECT);
-  } else {
-    // hardware hack for powering v2.1 with USB-C
-    return HardwareDefinition::read_battery_voltage() >= DC_DETECT_VOLT;
-  }
-#elif defined(HOME_BUTTONS_MINI)
-  return false;
-#else
-#error "No device defined"
-#endif
-}
-
-void HardwareDefinition::enable_charger(bool enable) {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  if (version >= semver::version{2, 2, 0}) {
-    digitalWrite(CHG_ENABLE, enable);
-    debug("charger enabled: %d", enable);
-  } else {
-    debug("this HW version doesn't support charger control.");
-  }
-#elif defined(HOME_BUTTONS_MINI)
-  // not supported
-#else
-#error "No device defined"
-#endif
-}
-
-bool HardwareDefinition::is_battery_present() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
-  float volt = read_battery_voltage();
-  if (version >= semver::version{2, 2, 0}) {
-    return volt >= BATT_PRESENT_VOLT;
-  } else {
-    // hardware hack for powering v2.1 with USB-C
-    return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
-  }
-#elif defined(HOME_BUTTONS_MINI)
-  return true;
-#else
-#error "No device defined"
-#endif
+  debug("Sensor read: temp: %.2f C/F, hmd: %.2f %%", temp, hmd);
 }
 
 bool HardwareDefinition::factory_params_ok() {
@@ -869,6 +862,39 @@ void HardwareDefinition::load_hw_rev_2_5() {  // ------ PIN definitions ------
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x204072;
+}
+
+void HardwareDefinition::load_pro_hw_rev_0_1() {  // ------ PIN definitions
+                                                  // ------
+  version = semver::version{0, 1, 0};
+
+  TOUCH_CLICK_PIN = 5;
+  TOUCH_INT_PIN = 6;
+  TOUCH_RST_PIN = 4;
+
+  FL_LED_EN_PIN = 1;
+  FL_LED_PIN = 2;
+  FL_LED_CH = 0;
+  FL_LED_BRIGHT_DFLT = 200;
+
+  SDA = 10;
+  SCL = 11;
+  SDA_1 = 13;
+  SCL_1 = 14;
+
+  EINK_CS = 34;
+  EINK_DC = 8;
+  EINK_RST = 9;
+  EINK_BUSY = 7;
+
+  LIGHT_SEN_ADC = 3;
+
+  // ------ LED analog parameters ------
+  LED_RES = 8;
+  LED_FREQ = 1000;
+
+  // ------ wakeup ------
+  WAKE_BITMASK = 0x20;
 }
 
 void HardwareDefinition::load_mini_hw_rev_0_1() {

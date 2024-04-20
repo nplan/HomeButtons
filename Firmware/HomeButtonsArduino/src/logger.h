@@ -24,7 +24,7 @@ class Logger {
 
   Logger(const char* tag, esp_log_level_t level = LOGGER_DEFAULT_LOG_LEVEL)
       : tag_(tag), log_level_(level) {
-    _computed_padded_tag();
+    _pad_tag();
     esp_log_level_set(tag_.c_str(), level);
     ESP_LOGD("logger", "Log level for %s: %c", tag, _log_level_to_char(level));
   }
@@ -96,7 +96,7 @@ class Logger {
     }
   }
 
-  void _computed_padded_tag() {
+  void _pad_tag() {
     padded_tag_ = tag_;
     while (padded_tag_.length() < MAX_TAG_LENGTH) {
       padded_tag_ += ' ';

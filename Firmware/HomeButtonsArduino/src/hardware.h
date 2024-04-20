@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #include <semver.hpp>
+#include "freertos/semphr.h"
 
 #include "types.h"
 #include "config.h"
@@ -22,6 +23,10 @@ struct HardwareDefinition : public Logger {
   uint8_t BTN5_PIN;
   uint8_t BTN6_PIN;
 
+  uint8_t TOUCH_CLICK_PIN;
+  uint8_t TOUCH_INT_PIN;
+  uint8_t TOUCH_RST_PIN;
+
   uint8_t LED1_PIN;
   uint8_t LED2_PIN;
   uint8_t LED3_PIN;
@@ -29,13 +34,20 @@ struct HardwareDefinition : public Logger {
   uint8_t LED5_PIN;
   uint8_t LED6_PIN;
 
+  uint8_t FL_LED_EN_PIN;
+  uint8_t FL_LED_PIN;
+
   uint8_t SDA;
   uint8_t SCL;
+  uint8_t SDA_1;
+  uint8_t SCL_1;
   uint8_t VBAT_ADC;
   uint8_t CHARGER_STDBY;
   uint8_t BOOST_EN;
   uint8_t DC_IN_DETECT;
   uint8_t CHG_ENABLE;
+
+  uint8_t LIGHT_SEN_ADC;
 
   uint8_t EINK_CS;
   uint8_t EINK_DC;
@@ -49,6 +61,9 @@ struct HardwareDefinition : public Logger {
   uint8_t LED4_CH;
   uint8_t LED5_CH;
   uint8_t LED6_CH;
+
+  uint8_t FL_LED_CH;
+  uint8_t FL_LED_BRIGHT_DFLT;
 
   uint8_t LED_RES;
   uint16_t LED_FREQ;
@@ -66,11 +81,11 @@ struct HardwareDefinition : public Logger {
   float DC_DETECT_VOLT;
   float CHARGE_HYSTERESIS_VOLT;
 
-  // battery SoC linear approximation coeficients (used for lithium cells)
+  // battery SoC linear approximation coefficients (used for lithium cells)
   float BATT_SOC_EST_K;
   float BATT_SOC_EST_N;
 
-  // atan SoC approximation coeficients (used for alkaline cells)
+  // atan SoC approximation coefficients (used for alkaline cells)
   float BAT_SOC_EST_ATAN_A;
   float BAT_SOC_EST_ATAN_B;
   float BAT_SOC_EST_ATAN_C;
@@ -84,33 +99,35 @@ struct HardwareDefinition : public Logger {
 
   void begin();
 
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   uint8_t map_button_num_sw_to_hw(uint8_t hw_num);
 
   bool button_pressed(uint8_t num);
-  bool any_button_pressed();
   uint8_t num_buttons_pressed();
 
   void set_led(uint8_t ch, uint8_t brightness);
-
   void set_led_num(uint8_t num, uint8_t brightness);
-
   void set_all_leds(uint8_t brightness);
-
   void blink_led(uint8_t num, uint8_t num_blinks, uint8_t brightness);
 
   float read_battery_voltage();
-
   uint8_t read_battery_percent();
+#endif
 
-  void read_temp_hmd(float &tempe, float &hmd, const bool fahrenheit = false);
-
-  bool is_charger_in_standby();
-
-  bool is_dc_connected();
-
-  void enable_charger(bool enable);
-
+#if defined(HOME_BUTTONS_ORIGINAL)
   bool is_battery_present();
+  bool is_charger_in_standby();
+  bool is_dc_connected();
+  void enable_charger(bool enable);
+#endif
+
+#if defined(HOME_BUTTONS_PRO)
+  bool touch_click_pressed();
+  void set_frontlight(uint8_t brightness);
+#endif
+
+  bool any_button_pressed();
+  void read_temp_hmd(float &tempe, float &hmd, const bool fahrenheit = false);
 
   const char *get_serial_number() { return factory_params_.serial_number; }
   const char *get_random_id() { return factory_params_.random_id; }
@@ -142,6 +159,8 @@ struct HardwareDefinition : public Logger {
   void load_hw_rev_2_3();
   void load_hw_rev_2_4();
   void load_hw_rev_2_5();
+
+  void load_pro_hw_rev_0_1();
 
   void load_mini_hw_rev_0_1();
   void load_mini_hw_rev_1_1();
