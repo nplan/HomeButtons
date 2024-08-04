@@ -341,16 +341,16 @@ void MQTTHelper::update_discovery_config() {
 }
 
 TopicType MQTTHelper::get_button_topic(UserInput::Event event) const {
-  if (event.btn_num < 1 || event.btn_num > NUM_BUTTONS) return {};
+  if (event.btn_id < 1 || event.btn_id > NUM_BUTTONS) return {};
 
   if (event.type == UserInput::EventType::kClickSingle)
-    return t_common() + "button_" + event.btn_num;
+    return t_common() + "button_" + event.btn_id;
   else if (event.type == UserInput::EventType::kClickDouble)
-    return t_common() + "button_" + event.btn_num + "_double";
+    return t_common() + "button_" + event.btn_id + "_double";
   else if (event.type == UserInput::EventType::kClickTriple)
-    return t_common() + "button_" + event.btn_num + "_triple";
+    return t_common() + "button_" + event.btn_id + "_triple";
   else if (event.type == UserInput::EventType::kClickQuad)
-    return t_common() + "button_" + event.btn_num + "_quad";
+    return t_common() + "button_" + event.btn_id + "_quad";
   else
     return {};
 }

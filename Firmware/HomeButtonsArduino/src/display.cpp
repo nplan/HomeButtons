@@ -89,7 +89,7 @@ void Display::begin(HardwareDefinition &HW) {
                                   MAX_HEIGHT(GxEPD2_DRIVER_CLASS)>(
       GxEPD2_DRIVER_CLASS(/*CS=*/HW.EINK_CS, /*DC=*/HW.EINK_DC,
                           /*RST=*/HW.EINK_RST, /*BUSY=*/HW.EINK_BUSY));
-  disp->init();
+  disp->init(0, false);
   u8g2.begin(*disp);
   current_ui_state = {};
   cmd_ui_state = {};
@@ -1521,7 +1521,7 @@ bool Display::draw_bmp(File &file, int16_t x, int16_t y) {
           uint16_t yrow = y + (flip ? h - row - 1 : row);
           disp->drawPixel(x + col, yrow, color);
         }  // end pixel
-      }    // end line
+      }  // end line
     }
   }
   file.close();
@@ -1606,7 +1606,6 @@ void ButtonTile::draw(Display &display, int16_t x, int16_t y, uint16_t color) {
     }
     case LabelType::Text: {
       uint16_t h_padding = 4;
-      uint16_t v_padding = 4;
       display.u8g2.setFont(u8g2_font_helvB24_te);
       uint16_t text_width = display.u8g2.getUTF8Width(text.c_str());
       if (text_width >= width - 2 * h_padding) {

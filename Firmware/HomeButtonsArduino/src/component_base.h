@@ -5,26 +5,35 @@
 
 class ComponentBase : public Logger {
  public:
-  enum class State { kUninitialized, kInitialized, kStopped, kRunning };
-  static const char* State2Str(State state) {
+  enum class ComponentState {
+    kUninitialized,
+    kInitialized,
+    kCmdStop,
+    kStopped,
+    kRunning
+  };
+  static const char* State2Str(ComponentState state) {
     switch (state) {
-      case State::kUninitialized:
+      case ComponentState::kUninitialized:
         return "Uninitialized";
-      case State::kInitialized:
+      case ComponentState::kInitialized:
         return "Initialized";
-      case State::kStopped:
+      case ComponentState::kCmdStop:
+        return "CmdStop";
+      case ComponentState::kStopped:
         return "Stopped";
-      case State::kRunning:
+      case ComponentState::kRunning:
         return "Running";
       default:
         return "Unknown";
     }
   }
   ComponentBase(const char* name) : Logger(name) {}
+
   bool Init() {
-    if (state_ == State::kUninitialized) {
+    if (cstate_ == ComponentState::kUninitialized) {
       if (InternalInit()) {
-        state_ = State::kInitialized;
+        cstate_ = ComponentState::kInitialized;
         debug("initialized");
         return true;
       } else {
@@ -36,56 +45,82 @@ class ComponentBase : public Logger {
       return true;
     }
   }
+
   bool Start() {
-    if (state_ == State::kStopped || state_ == State::kInitialized) {
+    if (cstate_ == ComponentState::kStopped ||
+        cstate_ == ComponentState::kInitialized) {
       if (InternalStart()) {
-        state_ = State::kRunning;
+        cstate_ = ComponentState::kRunning;
         debug("started");
         return true;
       } else {
         debug("failed to start");
         return false;
       }
-    } else if (state_ == State::kRunning) {
+    } else if (cstate_ == ComponentState::kRunning) {
       debug("already started");
       return true;
     } else {
-      debug("can't start, state: %s", State2Str(state_));
+      debug("can't start, state: %s", State2Str(cstate_));
       return false;
     }
   }
+
   bool Stop() {
-    if (state_ == State::kRunning) {
+    if (cstate_ == ComponentState::kRunning) {
       if (InternalStop()) {
-        state_ = State::kStopped;
-        debug("stopped");
+        if (cstate_ == ComponentState::kStopped) {
+          // stopped immediately in InternalStop()
+          debug("stopped immediately");
+        } else {
+          cstate_ = ComponentState::kCmdStop;
+          debug("cmd stop accepted");
+        }
         return true;
       } else {
-        debug("failed to stop");
+        debug("cmd stop denied");
         return false;
       }
-    } else if (state_ == State::kStopped) {
+    } else if (cstate_ == ComponentState::kStopped) {
       debug("already stopped");
       return true;
     } else {
-      debug("can't stop, state: %s", State2Str(state_));
+      debug("can't stop, state: %s", State2Str(cstate_));
       return false;
     }
   }
+
   void Loop() {
-    if (state_ == State::kRunning) {
+    if (cstate_ == ComponentState::kRunning ||
+        cstate_ == ComponentState::kCmdStop) {
       InternalLoop();
     }
   }
-  State state() const { return state_; }
+
+  void Restart() {
+    InternalRestart();
+    debug("restarted");
+  }
+
+  ComponentState cstate() const { return cstate_; }
   virtual ~ComponentBase() = default;
+  ComponentBase() = delete;
+
+ protected:
+  void SetStopped() {
+    cstate_ = ComponentState::kStopped;
+    debug("stopped");
+  }
 
  private:
   virtual bool InternalInit() = 0;
   virtual bool InternalStart() = 0;
+  // should instruct loop to stop or stop immediately
   virtual bool InternalStop() = 0;
   virtual void InternalLoop() = 0;
-  State state_ = State::kInitialized;
+  virtual void InternalRestart() = 0;
+
+  ComponentState cstate_ = ComponentState::kUninitialized;
 };
 
 #endif

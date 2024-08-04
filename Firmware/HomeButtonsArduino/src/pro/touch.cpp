@@ -2,15 +2,15 @@
 
 #include "FunctionalInterrupt.h"
 
-bool TouchInput::Init(uint8_t click_pin, uint8_t int_pin, bool active_high) {
-  touch_controller_ = new FT6X36(&Wire1, int_pin);
-  click_pin_ = click_pin;
-  active_high_ = active_high;
-  touch_controller_->registerTouchHandler(std::bind(&TouchInput::touch_handler,
+bool TouchInput::InternalInit() {
+  touch_controller_ = new FT6X36(&Wire1, hw_.TOUCH_INT_PIN);
+
+  touch_controller_->registerTouchHandler(std::bind(&TouchInput::TouchHandler,
                                                     this, std::placeholders::_1,
                                                     std::placeholders::_2));
-  attachInterrupt(click_pin_, std::bind(&TouchInput::_click_isr, this), CHANGE);
-  return UserInput::Init();
+  attachInterrupt(hw_.TOUCH_CLICK_PIN, std::bind(&TouchInput::ClickISR, this),
+                  CHANGE);
+  return true;
 }
 
 bool TouchInput::InternalStart() {
@@ -19,102 +19,96 @@ bool TouchInput::InternalStart() {
 }
 
 bool TouchInput::InternalStop() {
-  detachInterrupt(click_pin_);
+  detachInterrupt(hw_.TOUCH_CLICK_PIN);
   return true;
 }
 
 void TouchInput::InternalLoop() {
-  _btn_update();
+  BtnUpdate();
   touch_controller_->loop();
 }
 
-void TouchInput::_btn_update() {
-  static uint32_t time = 0;
-  static uint8_t sm_state = 0;
-  static uint8_t num_clicks = 0;
-  static uint32_t last_trigger_time = 0;
-  static uint32_t press_start_time = 0;
-
-  switch (sm_state) {
+void TouchInput::BtnUpdate() {
+  switch (btn_sm_state_) {
     case 0:  // idle
       if (rising_flag_) {
         rising_flag_ = false;
-        time = millis();
-        press_start_time = millis();
-        last_trigger_time = millis();
+        btn_sm_time_ = millis();
+        btn_press_start_time_ = millis();
+        btn_last_trigger_time_ = millis();
         click_started_ = true;
-        sm_state = 1;
+        btn_sm_state_ = 1;
       }
       break;
     case 1:  // debounce
-      if (millis() - press_start_time >= kDebounceTimeout) {
-        if (_read_pin()) {
-          sm_state = 2;
-          debug("BTN CLICK");
+      if (millis() - btn_press_start_time_ >= kDebounceTimeout) {
+        if (ReadPin()) {
+          btn_sm_state_ = 2;
         } else {
-          sm_state = 8;
+          btn_sm_state_ = 8;
         }
       }
       break;
     case 2:  // pin is high, wait for release
-      if (falling_flag_ || !_read_pin()) {
+      if (falling_flag_ || !ReadPin()) {
         falling_flag_ = false;
-        num_clicks++;
-        _trigger_click(millis() - press_start_time, num_clicks, false);
-        time = millis();
-        sm_state = 3;
+        btn_num_clicks_++;
+        TriggerClick(millis() - btn_press_start_time_, btn_num_clicks_, false);
+        btn_sm_time_ = millis();
+        btn_sm_state_ = 3;
       }
-      if (millis() - last_trigger_time >= kTriggerInterval) {
-        last_trigger_time = millis();
-        _trigger_click(millis() - press_start_time, num_clicks, false);
+      // keep triggering click if button is held
+      if (millis() - btn_last_trigger_time_ >= kTriggerInterval) {
+        btn_last_trigger_time_ = millis();
+        TriggerClick(millis() - btn_press_start_time_, btn_num_clicks_, false);
       }
       break;
     case 3:  // debounce
-      if (millis() - time >= kDebounceTimeout) {
-        sm_state = 4;
+      if (millis() - btn_sm_time_ >= kDebounceTimeout) {
+        btn_sm_state_ = 4;
       }
       break;
-    case 4:  // end of single_wait for additional
+    case 4:  // end of single_wait for additional presses
       if (rising_flag_) {
         rising_flag_ = false;
-        time = millis();
-        sm_state = 5;
-      } else if (millis() - time >= kPressTimeout) {
-        _trigger_click(millis() - press_start_time, num_clicks, true);
-        sm_state = 8;
+        btn_sm_time_ = millis();
+        btn_sm_state_ = 5;
+      } else if (millis() - btn_sm_time_ >= kPressTimeout) {
+        TriggerClick(millis() - btn_press_start_time_, btn_num_clicks_, true);
+        btn_sm_state_ = 8;
       }
       break;
     case 5:  // debounce next press
-      if (millis() - time >= kDebounceTimeout) {
-        if (_read_pin()) {
-          sm_state = 6;
+      if (millis() - btn_sm_time_ >= kDebounceTimeout) {
+        if (ReadPin()) {
+          btn_sm_state_ = 6;
         } else {
-          sm_state = 4;
+          btn_sm_state_ = 4;
         }
       }
       break;
     case 6:  // pin is high, wait for release
-      if (falling_flag_ || !_read_pin()) {
+      if (falling_flag_ || !ReadPin()) {
         falling_flag_ = false;
-        num_clicks++;
-        _trigger_click(millis() - press_start_time, num_clicks, false);
-        time = millis();
-        sm_state = 7;
+        btn_num_clicks_++;
+        TriggerClick(millis() - btn_press_start_time_, btn_num_clicks_, false);
+        btn_sm_time_ = millis();
+        btn_sm_state_ = 7;
       }
       break;
     case 7:  // debounce and return to 4
-      if (millis() - time >= kDebounceTimeout) {
-        sm_state = 4;
+      if (millis() - btn_sm_time_ >= kDebounceTimeout) {
+        btn_sm_state_ = 4;
       }
       break;
     case 8:  // reset
       click_started_ = false;
-      num_clicks = 0;
-      sm_state = 0;
+      btn_num_clicks_ = 0;
+      btn_sm_state_ = 0;
   }
 }
 
-void TouchInput::touch_handler(TPoint point, TEvent e) {
+void TouchInput::TouchHandler(TPoint point, TEvent e) {
   last_touch_point_ = {point.x, point.y};
   switch (e) {
     case TEvent::TouchStart:
@@ -122,19 +116,19 @@ void TouchInput::touch_handler(TPoint point, TEvent e) {
       touch_started_ = true;
       touch_start_point_ = last_touch_point_;
       touch_start_time_ = millis();
-      _trigger_touch(TEvent::TouchStart, last_touch_point_);
+      TriggerTouch(TEvent::TouchStart, last_touch_point_);
       break;
     case TEvent::TouchMove:
       debug("touch move %d %d", point.x, point.y);
       break;
     case TEvent::TouchEnd:
       debug("touch end %d %d", point.x, point.y);
-      _trigger_touch(TEvent::TouchEnd, last_touch_point_);
+      TriggerTouch(TEvent::TouchEnd, last_touch_point_);
       touch_started_ = false;
       break;
     case TEvent::Tap:
       debug("tap %d %d", point.x, point.y);
-      _trigger_touch(TEvent::Tap, last_touch_point_);
+      TriggerTouch(TEvent::Tap, last_touch_point_);
       break;
     case TEvent::DragStart:
       debug("drag start %d %d", point.x, point.y);
@@ -151,12 +145,12 @@ void TouchInput::touch_handler(TPoint point, TEvent e) {
   }
 }
 
-void IRAM_ATTR TouchInput::_click_isr() {
+void IRAM_ATTR TouchInput::ClickISR() {
   rising_flag_ = digitalRead(click_pin_);
   falling_flag_ = !digitalRead(click_pin_);
 }
 
-bool TouchInput::_read_pin() const {
+bool TouchInput::ReadPin() const {
   if (active_high_) {
     return digitalRead(click_pin_);
   } else {
@@ -164,82 +158,67 @@ bool TouchInput::_read_pin() const {
   }
 }
 
-void TouchInput::_trigger_event(Event event) {
-  info("UI event: %s, x: %d, y: %d", EventType2Str(event.type), event.point.x,
-       event.point.y);
-  if (event_callback_) {
-    event_callback_(event);
-  }
-  if (event_callback_2_) {
-    event_callback_2_(event);
-  }
-}
-
-void TouchInput::_trigger_click(uint32_t duration, uint16_t num_clicks,
-                                bool finished) {
+void TouchInput::TriggerClick(uint32_t duration, uint16_t btn_num_clicks_,
+                              bool finished) {
   debug("CLICK: duration: %d, num_clicks: %d, finished: %d", duration,
-        num_clicks, finished);
+        btn_num_clicks_, finished);
   uint8_t btn_num = Touch2BtnNum(last_touch_point_);
 
-  switch (num_clicks) {
+  switch (btn_num_clicks_) {
     case 0:
       if (duration >= kLong2sTime && duration < kLong5sTime) {
-        _trigger_event(
-            Event{EventType::kHoldLong2s, last_touch_point_, btn_num});
+        TriggerEvent(Event{EventType::kHoldLong2s, last_touch_point_, btn_num});
       } else if (duration >= kLong5sTime && duration < kLong10sTime) {
-        _trigger_event(
-            Event{EventType::kHoldLong5s, last_touch_point_, btn_num});
+        TriggerEvent(Event{EventType::kHoldLong5s, last_touch_point_, btn_num});
       } else if (duration >= kLong10sTime && duration < kLong20sTime) {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kHoldLong10s, last_touch_point_, btn_num});
       } else if (duration >= kLong20sTime) {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kHoldLong20s, last_touch_point_, btn_num});
       }
       break;
     case 1:
       if (duration >= kLong2sTime && duration < kLong5sTime) {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kClickLong2s, last_touch_point_, btn_num});
       } else if (duration >= kLong5sTime && duration < kLong10sTime) {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kClickLong5s, last_touch_point_, btn_num});
       } else if (duration >= kLong10sTime && duration < kLong20sTime) {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kClickLong10s, last_touch_point_, btn_num});
       } else if (duration >= kLong20sTime) {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kClickLong20s, last_touch_point_, btn_num});
       } else {
-        _trigger_event(
+        TriggerEvent(
             Event{EventType::kClickSingle, last_touch_point_, btn_num});
       }
       break;
     case 2:
-      _trigger_event(
-          Event{EventType::kClickDouble, last_touch_point_, btn_num});
+      TriggerEvent(Event{EventType::kClickDouble, last_touch_point_, btn_num});
       break;
     case 3:
-      _trigger_event(
-          Event{EventType::kClickTriple, last_touch_point_, btn_num});
+      TriggerEvent(Event{EventType::kClickTriple, last_touch_point_, btn_num});
       break;
     case 4:
-      _trigger_event(Event{EventType::kClickQuad, last_touch_point_, btn_num});
+      TriggerEvent(Event{EventType::kClickQuad, last_touch_point_, btn_num});
       break;
     default:
       break;
   }
 }
 
-void TouchInput::_trigger_touch(TEvent event, TouchPoint point) {
+void TouchInput::TriggerTouch(TEvent event, TouchPoint point) {
   uint8_t btn_num = Touch2BtnNum(last_touch_point_);
   switch (event) {
     case TEvent::TouchStart:
-      _trigger_event(Event{EventType::kTouchStart, point, btn_num});
+      TriggerEvent(Event{EventType::kTouchStart, point, btn_num});
       break;
     case TEvent::Tap:
       if (!click_started_) {
-        _trigger_event(Event{EventType::kTap, point, btn_num});
+        TriggerEvent(Event{EventType::kTap, point, btn_num});
       }
       break;
     case TEvent::TouchEnd:
@@ -247,20 +226,20 @@ void TouchInput::_trigger_touch(TEvent event, TouchPoint point) {
         if (millis() - touch_start_time_ <= kSwipeTimeout) {
           if (abs(point.x - touch_start_point_.x) >= kSwipeDistance) {
             if (point.x > touch_start_point_.x) {
-              _trigger_event(Event{EventType::kSwipeRight, point, btn_num});
+              TriggerEvent(Event{EventType::kSwipeRight, point, btn_num});
             } else {
-              _trigger_event(Event{EventType::kSwipeLeft, point, btn_num});
+              TriggerEvent(Event{EventType::kSwipeLeft, point, btn_num});
             }
           } else if (abs(point.y - touch_start_point_.y) >= kSwipeDistance) {
             if (point.y > touch_start_point_.y) {
-              _trigger_event(Event{EventType::kSwipeDown, point, btn_num});
+              TriggerEvent(Event{EventType::kSwipeDown, point, btn_num});
             } else {
-              _trigger_event(Event{EventType::kSwipeUp, point, btn_num});
+              TriggerEvent(Event{EventType::kSwipeUp, point, btn_num});
             }
           }
         }
       }
-      _trigger_event(Event{EventType::kTouchEnd, point, btn_num});
+      TriggerEvent(Event{EventType::kTouchEnd, point, btn_num});
       break;
     default:
       break;

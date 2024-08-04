@@ -1,80 +1,95 @@
 #include "leds.h"
 
-#include "hardware.h"
-
-void LEDs::begin() {
-  state = State::ACTIVE;
-  info("begin");
-}
-
-void LEDs::end() {
-  cmd_state = CMDState::CMD_END;
-  debug("cmd end");
-}
-
-void LEDs::blink(uint8_t led_num, uint8_t num_blinks, uint8_t brightness,
-                 bool hold) {
-  if (num_blinks < 1)
-    num_blinks = 1;
-  else if (num_blinks > 5)
-    num_blinks = 5;
-  Blink blink{.led_num = led_num,
-              .num_blinks = num_blinks,
-              .brightness = brightness,
-              .hold = hold};
-  cmd_blink = blink;
-  new_cmd_blink = true;
-  debug("blink - led: %d, blinks: %d, bri: %d, hold: %d", led_num, num_blinks,
-        brightness, hold);
-}
-
-LEDs::State LEDs::get_state() const { return state; }
-
-void LEDs::update(HardwareDefinition& HW) {
-  if (state != State::ACTIVE) {
-    return;
+void LEDSMStates::IdleState::loop() {
+  if (sm().cmd_blink_.has_value()) {
+    sm().current_blink_ = sm().cmd_blink_;
+    sm().cmd_blink_ = std::nullopt;
+    sm().current_blink_num_ = 0;
+    return transition_to<OnState>();
   }
+  if (sm().cstate() == ComponentBase::ComponentState::kCmdStop) {
+    sm().SetStopped();
+  }
+}
 
-  if (new_cmd_blink) {
-    current_blink = cmd_blink;
-    cmd_blink = {};
-    new_cmd_blink = false;
-    uint16_t on, off;
-    switch (current_blink.num_blinks) {
+void LEDSMStates::OnState::entry() {
+  sm().hw_.set_led_num(sm().id_, sm().current_blink_->brightness);
+  sm().last_change_time_ = millis();
+}
+
+void LEDSMStates::OnState::loop() {
+  if (millis() - sm().last_change_time_ >= sm().current_blink_->on_ms) {
+    if (sm().current_blink_->hold &&
+        sm().current_blink_num_ == sm().current_blink_->num_blinks - 1) {
+      return transition_to<IdleState>();
+    } else {
+      return transition_to<OffState>();
+    }
+  }
+}
+
+void LEDSMStates::OffState::entry() {
+  sm().hw_.set_led_num(sm().id_, 0);
+  sm().last_change_time_ = millis();
+}
+
+void LEDSMStates::OffState::loop() {
+  if (millis() - sm().last_change_time_ >= sm().current_blink_->off_ms) {
+    if (sm().current_blink_num_ < sm().current_blink_->num_blinks - 1) {
+      sm().current_blink_num_++;
+      return transition_to<OnState>();
+    } else {
+      return transition_to<IdleState>();
+    }
+  }
+}
+
+void LED::Blink(uint8_t num_blinks, uint8_t brightness, uint16_t on_ms,
+                uint16_t off_ms, bool hold) {
+  if (on_ms == 0) {
+    switch (num_blinks) {
       case 1:
-        on = 400;
-        off = 400;
+        on_ms = 400;
         break;
       case 2:
-        on = 100;
-        off = 300;
+        on_ms = 100;
         break;
       case 3:
-        on = 67;
-        off = 200;
+        on_ms = 67;
         break;
       case 4:
-        on = 50;
-        off = 150;
+        on_ms = 50;
         break;
       default:
-        on = 50;
-        off = 150;
+        on_ms = 50;
         break;
     }
-    for (uint8_t i = 0; i < current_blink.num_blinks; i++) {
-      HW.set_led_num(current_blink.led_num, current_blink.brightness);
-      delay(on);
-      if (!(current_blink.hold && i == current_blink.num_blinks - 1)) {
-        HW.set_led_num(current_blink.led_num, 0);
-        delay(off);
-      }
-    }
-    current_blink = {};
   }
-  if (cmd_state == CMDState::CMD_END) {
-    cmd_state = CMDState::NONE;
-    state = State::IDLE;
-    info("ended");
+  if (off_ms == 0) {
+    switch (num_blinks) {
+      case 1:
+        off_ms = 400;
+        break;
+      case 2:
+        off_ms = 300;
+        break;
+      case 3:
+        off_ms = 200;
+        break;
+      case 4:
+        off_ms = 150;
+        break;
+      default:
+        off_ms = 150;
+        break;
+    }
+    cmd_blink_ = LEDBlink{num_blinks, brightness, on_ms, off_ms, hold};
+    debug(
+        "blink - led: %d, blinks: %d, bri: %d, on_ms: %d, off_ms: %d, hold: %d",
+        id_, num_blinks, brightness, on_ms, off_ms, hold);
   }
 }
+
+bool LED::InternalStop() { return true; }
+
+void LED::InternalLoop() { LEDStateMachine::loop(); }

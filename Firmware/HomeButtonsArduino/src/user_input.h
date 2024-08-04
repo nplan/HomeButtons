@@ -3,6 +3,11 @@
 
 #include "component_base.h"
 
+static constexpr uint32_t kLong2sTime = 2000L;
+static constexpr uint32_t kLong5sTime = 5000L;
+static constexpr uint32_t kLong10sTime = 10000L;
+static constexpr uint32_t kLong20sTime = 20000L;
+
 class UserInput : public ComponentBase {
  public:
   enum class EventType {
@@ -19,13 +24,9 @@ class UserInput : public ComponentBase {
     kClickTriple,
     kClickQuad,
     kHoldLong2s,
-    kClickLong2s,
     kHoldLong5s,
-    kClickLong5s,
     kHoldLong10s,
-    kClickLong10s,
     kHoldLong20s,
-    kClickLong20s
   };
 
   static const char* EventType2Str(EventType type) {
@@ -56,20 +57,12 @@ class UserInput : public ComponentBase {
         return "ClickQuad";
       case EventType::kHoldLong2s:
         return "HoldLong2s";
-      case EventType::kClickLong2s:
-        return "ClickLong2s";
       case EventType::kHoldLong5s:
         return "HoldLong5s";
-      case EventType::kClickLong5s:
-        return "ClickLong5s";
       case EventType::kHoldLong10s:
         return "HoldLong10s";
-      case EventType::kClickLong10s:
-        return "ClickLong10s";
       case EventType::kHoldLong20s:
         return "HoldLong20s";
-      case EventType::kClickLong20s:
-        return "ClickLong20s";
       default:
         return "Unknown";
     }
@@ -83,7 +76,8 @@ class UserInput : public ComponentBase {
   struct Event {
     EventType type = EventType::kNone;
     TouchPoint point = {0, 0};
-    uint16_t btn_num = 0;
+    uint16_t btn_id = 0;
+    bool final = false;
   };
 
   UserInput(const char* name) : ComponentBase(name) {}
@@ -94,9 +88,36 @@ class UserInput : public ComponentBase {
     event_callback_secondary_ = callback;
   }
 
- private:
+  static uint8_t EventType2NumClicks(EventType type) {
+    switch (type) {
+      case EventType::kClickSingle:
+        return 1;
+      case EventType::kClickDouble:
+        return 2;
+      case EventType::kClickTriple:
+        return 3;
+      case EventType::kClickQuad:
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
+ protected:
   std::function<void(Event)> event_callback_;
   std::function<void(Event)> event_callback_secondary_;
+
+  void TriggerEvent(Event event) {
+    info("UI event: %s, point (%d, %d), btn_id: %d, final: %d",
+         EventType2Str(event.type), event.point.x, event.point.y, event.btn_id,
+         event.final);
+    if (event_callback_) {
+      event_callback_(event);
+    }
+    if (event_callback_secondary_) {
+      event_callback_secondary_(event);
+    }
+  }
 };
 
 #endif

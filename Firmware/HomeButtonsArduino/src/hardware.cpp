@@ -100,6 +100,7 @@ bool HardwareDefinition::init() {
 }
 
 void HardwareDefinition::begin() {
+  debug("hw begin");
 #if defined(HOME_BUTTONS_ORIGINAL)
   pinMode(BTN1_PIN, INPUT);
   pinMode(BTN2_PIN, INPUT);
@@ -165,9 +166,13 @@ void HardwareDefinition::begin() {
   Wire.begin(
       (int)SDA,
       (int)SCL);  // must be cast to int otherwise wrong begin() is called
+
+#if defined(HOME_BUTTONS_PRO)
+  // touch screen
   Wire1.begin(
       (int)SDA_1,
       (int)SCL_1);  // must be cast to int otherwise wrong begin() is called
+#endif
 
   shtc3.begin(&Wire);
 }
@@ -201,21 +206,41 @@ uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
 #endif
 }
 
-bool HardwareDefinition::button_pressed(uint8_t num) {
-  num = map_button_num_sw_to_hw(num);
+uint8_t HardwareDefinition::button_pin(uint8_t id) {
+  uint8_t num = map_button_num_sw_to_hw(id);
   switch (num) {
     case 1:
-      return digitalRead(BTN1_PIN);
+      return BTN1_PIN;
     case 2:
-      return digitalRead(BTN2_PIN);
+      return BTN2_PIN;
     case 3:
-      return digitalRead(BTN3_PIN);
+      return BTN3_PIN;
     case 4:
-      return digitalRead(BTN4_PIN);
+      return BTN4_PIN;
     case 5:
-      return digitalRead(BTN5_PIN);
+      return BTN5_PIN;
     case 6:
-      return digitalRead(BTN6_PIN);
+      return BTN6_PIN;
+    default:
+      return 0;
+  }
+}
+
+bool HardwareDefinition::button_pressed(uint8_t id) {
+  uint8_t num = map_button_num_sw_to_hw(id);
+  switch (num) {
+    case 1:
+      return digitalRead(BTN1_PIN) == BTN1_ACTIVE_HIGH;
+    case 2:
+      return digitalRead(BTN2_PIN) == BTN2_ACTIVE_HIGH;
+    case 3:
+      return digitalRead(BTN3_PIN) == BTN3_ACTIVE_HIGH;
+    case 4:
+      return digitalRead(BTN4_PIN) == BTN4_ACTIVE_HIGH;
+    case 5:
+      return digitalRead(BTN5_PIN) == BTN5_ACTIVE_HIGH;
+    case 6:
+      return digitalRead(BTN6_PIN) == BTN6_ACTIVE_HIGH;
     default:
       return false;
   }
@@ -519,6 +544,13 @@ void HardwareDefinition::load_hw_rev_1_0() {  // ------ PIN definitions ------
   BTN5_PIN = 5;
   BTN6_PIN = 6;
 
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = true;
+  BTN6_ACTIVE_HIGH = true;
+
   LED1_PIN = 15;
   LED2_PIN = 16;
   LED3_PIN = 17;
@@ -577,6 +609,13 @@ void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
   BTN4_PIN = 1;
   BTN5_PIN = 3;
   BTN6_PIN = 4;
+
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = true;
+  BTN6_ACTIVE_HIGH = true;
 
   LED1_PIN = 15;
   LED2_PIN = 16;
@@ -637,6 +676,13 @@ void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
   BTN5_PIN = 3;
   BTN6_PIN = 4;
 
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = true;
+  BTN6_ACTIVE_HIGH = true;
+
   LED1_PIN = 15;
   LED2_PIN = 16;
   LED3_PIN = 17;
@@ -695,6 +741,13 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
   BTN4_PIN = 1;
   BTN5_PIN = 14;
   BTN6_PIN = 4;
+
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = true;
+  BTN6_ACTIVE_HIGH = true;
 
   LED1_PIN = 15;
   LED2_PIN = 16;
@@ -755,6 +808,13 @@ void HardwareDefinition::load_hw_rev_2_4() {  // ------ PIN definitions ------
   BTN5_PIN = 14;
   BTN6_PIN = 4;
 
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = true;
+  BTN6_ACTIVE_HIGH = true;
+
   LED1_PIN = 15;
   LED2_PIN = 16;
   LED3_PIN = 17;
@@ -814,6 +874,13 @@ void HardwareDefinition::load_hw_rev_2_5() {  // ------ PIN definitions ------
   BTN5_PIN = 14;
   BTN6_PIN = 4;
 
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = true;
+  BTN6_ACTIVE_HIGH = true;
+
   LED1_PIN = 15;
   LED2_PIN = 16;
   LED3_PIN = 17;
@@ -871,6 +938,7 @@ void HardwareDefinition::load_pro_hw_rev_0_1() {  // ------ PIN definitions
   TOUCH_CLICK_PIN = 5;
   TOUCH_INT_PIN = 6;
   TOUCH_RST_PIN = 4;
+  TOUCH_CLICK_ACTIVE_HIGH = true;
 
   FL_LED_EN_PIN = 1;
   FL_LED_PIN = 2;
@@ -903,6 +971,11 @@ void HardwareDefinition::load_mini_hw_rev_0_1() {
   BTN2_PIN = 1;
   BTN3_PIN = 14;
   BTN4_PIN = 4;
+
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
 
   LED1_PIN = 17;
   LED2_PIN = 2;
@@ -952,6 +1025,11 @@ void HardwareDefinition::load_mini_hw_rev_1_1() {
   BTN2_PIN = 1;
   BTN3_PIN = 14;
   BTN4_PIN = 4;
+
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
 
   LED1_PIN = 17;
   LED2_PIN = 2;

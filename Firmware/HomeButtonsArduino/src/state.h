@@ -58,7 +58,6 @@ class DeviceState : public Logger {
     // Flags
     bool wifi_quick_connect = false;
     bool charge_complete_showing = false;
-    bool info_screen_showing = false;
     bool user_msg_showing = false;
     bool check_connection = false;
     uint8_t failed_connections = 0;

@@ -11,7 +11,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.5.0-dev";
+static constexpr char SW_VERSION[] = "v2.5.0-alpha2";
 
 #if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char SW_MODEL_ID[] = "A1";
@@ -92,5 +92,14 @@ static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
 static constexpr uint32_t SCHEDULE_WAKEUP_MIN = 5;                      // s
 static constexpr uint32_t SCHEDULE_WAKEUP_MAX = SEN_INTERVAL_MAX * 60;  // s
 static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
+
+// ------ UI ------
+#if defined(HOME_BUTTONS_ORIGINAL)
+static constexpr char BATT_EMPTY_MSG[] =
+    "Battery\nLOW\n\nPlease\nrecharge\nsoon!";
+#elif defined(HOME_BUTTONS_MINI)
+static constexpr char BATT_EMPTY_MSG[] =
+    "Batteries\nLOW\n\nPlease\nreplace\nsoon!";
+#endif
 
 #endif  // HOMEBUTTONS_CONFIG_H

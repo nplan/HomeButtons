@@ -43,20 +43,24 @@ class AwakeModeIdleState : public State<App> {
   const char* get_name() override { return "AwakeModeIdleState"; }
 };
 
-class UserInputFinishState : public State<App> {
+class SleepModeHandleInput : public State<App> {
  public:
   using State<App>::State;
 
+  void entry() override;
   void loop() override;
+  void handle_ui_event(UserInput::Event event);
 
-  const char* get_name() override { return "UserInputFinishState"; }
+  const char* get_name() override { return "SleepModeHandleInput"; }
 };
 
 class NetConnectingState : public State<App> {
  public:
   using State<App>::State;
 
+  void entry() override;
   void loop() override;
+  void handle_ui_event(UserInput::Event event);
 
   const char* get_name() override { return "NetConnectingState"; }
 };
@@ -91,6 +95,7 @@ class DeviceInfoState : public State<App> {
 
   void entry() override;
   void loop() override;
+  void handle_ui_event(UserInput::Event event);
 
   const char* get_name() override { return "DeviceInfoState"; }
 };
@@ -137,7 +142,7 @@ class FactoryResetState : public State<App> {
 
 using AppStateMachine = StateMachine<
     App, AppSMStates::InitState, AppSMStates::AwakeModeIdleState,
-    AppSMStates::UserInputFinishState, AppSMStates::NetConnectingState,
+    AppSMStates::SleepModeHandleInput, AppSMStates::NetConnectingState,
     AppSMStates::InfoScreenState, AppSMStates::SettingsMenuState,
     AppSMStates::DeviceInfoState, AppSMStates::CmdShutdownState,
     AppSMStates::NetDisconnectingState, AppSMStates::ShuttingDownState,
@@ -188,24 +193,49 @@ class App : public AppStateMachine, public Logger {
   TaskHandle_t network_task_h_ = nullptr;
   TaskHandle_t main_task_h_ = nullptr;
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-  LEDs leds_;
-  ButtonHandler<NUM_BUTTONS> button_handler_;
-  ClickEvent btn_event_;
+#if defined(HOME_BUTTONS_ORIGINAL)
+  Button btn1_;
+  Button btn2_;
+  Button btn3_;
+  Button btn4_;
+  Button btn5_;
+  Button btn6_;
+  ButtonInput<NUM_BUTTONS> buttons_;
+  LED led1_;
+  LED led2_;
+  LED led3_;
+  LED led4_;
+  LED led5_;
+  LED led6_;
+  LEDs<NUM_BUTTONS> leds_;
+#elif defined(HOME_BUTTONS_MINI)
+  Button btn1_;
+  Button btn2_;
+  Button btn3_;
+  Button btn4_;
+  ButtonInput<NUM_BUTTONS> buttons_;
+  LED led1_;
+  LED led2_;
+  LED led3_;
+  LED led4_;
+  LEDs<NUM_BUTTONS> leds_;
 #elif defined(HOME_BUTTONS_PRO)
   TouchInput touch_handler_;
-  UserInput::Event touch_event_;
 #endif
+  UserInput::Event user_event_ = {};
 
   Network network_;
   Display display_;
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
   MDIHelper mdi_;
+
   BootCause boot_cause_;
+  uint8_t wakeup_btn_id_ = 0;
 
   uint32_t last_sensor_publish_ = 0;
   uint32_t last_m_display_redraw_ = 0;
+  uint32_t input_start_time_ = 0;
   uint32_t info_screen_start_time_ = 0;
   uint32_t settings_menu_start_time_ = 0;
   uint32_t device_info_start_time_ = 0;
@@ -213,7 +243,7 @@ class App : public AppStateMachine, public Logger {
 
   friend class AppSMStates::InitState;
   friend class AppSMStates::AwakeModeIdleState;
-  friend class AppSMStates::UserInputFinishState;
+  friend class AppSMStates::SleepModeHandleInput;
   friend class AppSMStates::NetConnectingState;
   friend class AppSMStates::InfoScreenState;
   friend class AppSMStates::SettingsMenuState;

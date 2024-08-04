@@ -13,6 +13,7 @@
 struct HardwareDefinition : public Logger {
  public:
   HardwareDefinition() : Logger("HW") {}
+  HardwareDefinition(const HardwareDefinition &) = delete;
   semver::version version;
 
   // ------ PIN definitions ------
@@ -23,7 +24,15 @@ struct HardwareDefinition : public Logger {
   uint8_t BTN5_PIN;
   uint8_t BTN6_PIN;
 
+  bool BTN1_ACTIVE_HIGH;
+  bool BTN2_ACTIVE_HIGH;
+  bool BTN3_ACTIVE_HIGH;
+  bool BTN4_ACTIVE_HIGH;
+  bool BTN5_ACTIVE_HIGH;
+  bool BTN6_ACTIVE_HIGH;
+
   uint8_t TOUCH_CLICK_PIN;
+  bool TOUCH_CLICK_ACTIVE_HIGH;
   uint8_t TOUCH_INT_PIN;
   uint8_t TOUCH_RST_PIN;
 
@@ -101,7 +110,7 @@ struct HardwareDefinition : public Logger {
 
 #if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   uint8_t map_button_num_sw_to_hw(uint8_t hw_num);
-
+  uint8_t button_pin(uint8_t num);
   bool button_pressed(uint8_t num);
   uint8_t num_buttons_pressed();
 
