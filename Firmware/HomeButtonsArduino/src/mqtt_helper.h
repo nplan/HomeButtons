@@ -41,6 +41,8 @@ class MQTTHelper {
   TopicType t_disp_msg_state() const;
   TopicType t_schedule_wakeup_cmd() const;
   TopicType t_schedule_wakeup_state() const;
+  TopicType t_led_brightness_cmd() const;
+  TopicType t_led_brightness_state() const;
 
  private:
   DeviceState& _device_state;

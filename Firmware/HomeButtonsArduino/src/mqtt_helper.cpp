@@ -29,11 +29,6 @@ void MQTTHelper::send_discovery_config() {
       _device_state.user_preferences().mqtt.discovery_prefix.c_str(),
       _device_state.factory().unique_id.c_str());
 
-  // sensor config topics
-  TopicType sensor_topic_common =
-      TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
-      "/sensor/" + _device_state.factory().unique_id;
-
   // device objects
   StaticJsonDocument<256> device_full;
   device_full["ids"][0] = _device_state.factory().unique_id;
@@ -113,8 +108,12 @@ void MQTTHelper::send_discovery_config() {
     _network.publish(topic_name, buffer, true);
   }
 
+#if defined(HAS_TH_SENSOR)
+  // sensor config topics
+  TopicType sensor_topic_common =
+      TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
+      "/sensor/" + _device_state.factory().unique_id;
   uint16_t expire_after = _device_state.sensor_interval() * 60 + 60;  // seconds
-
   {
     // temperature
     TopicType temperature_config_topic =
@@ -148,8 +147,9 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(humidity_conf, buffer, sizeof(buffer));
     _network.publish(humidity_config_topic, buffer, true);
   }
+#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BATTERY)
   {
     // battery
     TopicType battery_config_topic = sensor_topic_common + "/battery/config";
@@ -165,7 +165,9 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(battery_conf, buffer, sizeof(buffer));
     _network.publish(battery_config_topic, buffer, true);
   }
+#endif
 
+#if defined(HAS_TH_SENSOR)
   {
     // sensor interval slider
     TopicType sensor_interval_config_topic =
@@ -191,6 +193,7 @@ void MQTTHelper::send_discovery_config() {
   }
 #endif
 
+#if defined(HAS_DISPLAY)
   // button labels
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     TopicType button_label_config_topics =
@@ -229,8 +232,9 @@ void MQTTHelper::send_discovery_config() {
     serializeJson(user_message_conf, buffer, sizeof(buffer));
     _network.publish(user_message_config_topic, buffer, true);
   }
+#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_SLEEP_MODE)
   {
     // schedule wakeup
     TopicType schedule_wakeup_config_topic =
@@ -256,7 +260,7 @@ void MQTTHelper::send_discovery_config() {
   }
 #endif
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HAS_AWAKE_MODE)
   {
     // awake mode toggle
     TopicType awake_mode_config_topic =
@@ -274,6 +278,31 @@ void MQTTHelper::send_discovery_config() {
     awake_mode_conf["dev"] = device_short;
     serializeJson(awake_mode_conf, buffer, sizeof(buffer));
     _network.publish(awake_mode_config_topic, buffer, true);
+  }
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  {
+    // led brightness slider
+    TopicType led_brightness_config_topic =
+        TopicType{} + _device_state.user_preferences().mqtt.discovery_prefix +
+        "/number/" + _device_state.factory().unique_id +
+        "/led_brightness/config";
+    StaticJsonDocument<MQTT_PYLD_SIZE> led_brightness_conf;
+    led_brightness_conf["name"] = "LED brightness";
+    led_brightness_conf["uniq_id"] =
+        FormatterType{} + _device_state.factory().unique_id + "_led_brightness";
+    led_brightness_conf["cmd_t"] = t_led_brightness_cmd();
+    led_brightness_conf["stat_t"] = t_led_brightness_state();
+    led_brightness_conf["unit_of_meas"] = "%";
+    led_brightness_conf["min"] = 0;
+    led_brightness_conf["max"] = 100;
+    led_brightness_conf["mode"] = "slider";
+    led_brightness_conf["ic"] = "mdi:led-on";
+    led_brightness_conf["ret"] = "true";
+    led_brightness_conf["dev"] = device_short;
+    serializeJson(led_brightness_conf, buffer, sizeof(buffer));
+    _network.publish(led_brightness_config_topic, buffer, true);
   }
 #endif
 }
@@ -419,4 +448,12 @@ TopicType MQTTHelper::t_schedule_wakeup_cmd() const {
 
 TopicType MQTTHelper::t_schedule_wakeup_state() const {
   return t_common() + "schedule_wakeup";
+}
+
+TopicType MQTTHelper::t_led_brightness_cmd() const {
+  return t_cmd() + "led_brightness";
+}
+
+TopicType MQTTHelper::t_led_brightness_state() const {
+  return t_common() + "led_brightness";
 }

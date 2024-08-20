@@ -34,6 +34,7 @@ class DeviceState : public Logger {
     ButtonLabel btn_labels[NUM_BUTTONS];
     uint16_t sensor_interval = 0;  // minutes
     bool use_fahrenheit = false;
+    uint8_t led_brightness = 0;  // 0-100
 
     StaticIPConfig network;
 
@@ -140,6 +141,10 @@ class DeviceState : public Logger {
   void set_temp_unit(StaticString<1> unit) {
     bool f = unit == "F" || unit == "f";
     user_preferences_.use_fahrenheit = f;
+  }
+
+  void set_led_brightness(uint8_t brightness) {
+    user_preferences_.led_brightness = brightness;
   }
 
   void save_user();

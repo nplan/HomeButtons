@@ -18,6 +18,7 @@ void DeviceState::save_user() {
   }
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
   preferences_.putBool("use_f", user_preferences_.use_fahrenheit);
+  preferences_.putUInt("led_br", user_preferences_.led_brightness);
   preferences_.putString(
       "sta_ip",
       ip_address_to_static_string(user_preferences_.network.static_ip).c_str());
@@ -60,6 +61,8 @@ void DeviceState::load_user() {
   user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   user_preferences_.use_fahrenheit = preferences_.getBool("use_f", false);
+  user_preferences_.led_brightness =
+      preferences_.getUInt("led_br", DFLT_AMB_LED_BRIGHT);
 
   _load_to_ip_address(user_preferences_.network.static_ip, "sta_ip", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.gateway, "g_way", "0.0.0.0");

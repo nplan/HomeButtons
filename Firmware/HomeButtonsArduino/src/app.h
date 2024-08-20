@@ -4,17 +4,21 @@
 #include <array>
 #include "state.h"
 #include "network.h"
-#include "display.h"
 #include "mqtt_helper.h"
 #include "logger.h"
 #include "hardware.h"
-#include "mdi_helper.h"
+#include "setup.h"
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-#include "original_mini/buttons.h"
-#include "original_mini/leds.h"
-#elif defined(HOME_BUTTONS_PRO)
-#include "pro/touch.h"
+#if defined(HAS_DISPLAY)
+#include "display.h"
+#include "mdi_helper.h"
+#endif
+
+#if defined(HAS_BUTTON_UI)
+#include "button_ui/buttons.h"
+#include "button_ui/leds.h"
+#elif defined(HAS_TOUCH_UI)
+#include "touch/touch.h"
 #endif
 
 class App;
@@ -155,20 +159,23 @@ class App : public AppStateMachine, public Logger {
   void setup();
 
  private:
+#if defined(HAS_SLEEP_MODE)
   void _start_esp_sleep();
   void _go_to_sleep();
+#endif
+  void _handle_failed_init();
   std::pair<BootCause, int16_t> _determine_boot_cause();
   void _log_task_stats();
 
-  void _begin_buttons();
-  void _end_buttons();
-
   static void _ui_task(void* app);
-  static void _display_task(void* app);
-  static void _network_task(void* app);
-
   void _start_ui_task();
+
+#if defined(HAS_DISPLAY)
+  static void _display_task(void* app);
   void _start_display_task();
+#endif
+
+  static void _network_task(void* app);
   void _start_network_task();
 
   void _main_task();
@@ -176,14 +183,24 @@ class App : public AppStateMachine, public Logger {
     static_cast<App*>(app)->_main_task();
   }
 
+  void _begin_hw();
+  void _start_tasks();
+
   void _handle_ui_event_global(UserInput::Event event);
-  void _publish_btn_event(UserInput::Event event);
-  void _publish_sensors();
+  void _publish_ui_event(UserInput::Event event);
   void _mqtt_callback(const char* topic, const char* payload);
   void _net_on_connect();
+#if defined(HAS_TH_SENSOR)
+  void _publish_sensors();
+#endif
+#if defined(HAS_BATTERY)
+  void _publish_battery();
+#endif
+#if defined(HAS_DISPLAY)
   void _download_mdi_icons();
+#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HAS_AWAKE_MODE)
   void _publish_awake_mode_avlb();
 #endif
 
@@ -208,7 +225,7 @@ class App : public AppStateMachine, public Logger {
   LED led5_;
   LED led6_;
   LEDs<NUM_BUTTONS> leds_;
-#elif defined(HOME_BUTTONS_MINI)
+#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
   Button btn1_;
   Button btn2_;
   Button btn3_;
@@ -219,16 +236,19 @@ class App : public AppStateMachine, public Logger {
   LED led3_;
   LED led4_;
   LEDs<NUM_BUTTONS> leds_;
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   TouchInput touch_handler_;
 #endif
   UserInput::Event user_event_ = {};
 
   Network network_;
+#if defined(HAS_DISPLAY)
   Display display_;
+  MDIHelper mdi_;
+#endif
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
-  MDIHelper mdi_;
+  HBSetup setup_;
 
   BootCause boot_cause_;
   uint8_t wakeup_btn_id_ = 0;
@@ -240,6 +260,9 @@ class App : public AppStateMachine, public Logger {
   uint32_t settings_menu_start_time_ = 0;
   uint32_t device_info_start_time_ = 0;
   uint32_t shutdown_cmd_time_ = 0;
+
+  friend class FactoryTest;
+  friend class HBSetup;
 
   friend class AppSMStates::InitState;
   friend class AppSMStates::AwakeModeIdleState;

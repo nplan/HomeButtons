@@ -77,6 +77,7 @@ struct HardwareDefinition : public Logger {
   uint8_t LED_RES;
   uint16_t LED_FREQ;
   uint8_t LED_BRIGHT_DFLT;
+  uint8_t LED_MAX_AMB_BRIGHT;
 
   // ------ battery reading ------
   float BATT_DIVIDER;
@@ -108,7 +109,7 @@ struct HardwareDefinition : public Logger {
 
   void begin();
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
   uint8_t map_button_num_sw_to_hw(uint8_t hw_num);
   uint8_t button_pin(uint8_t num);
   bool button_pressed(uint8_t num);
@@ -118,20 +119,24 @@ struct HardwareDefinition : public Logger {
   void set_led_num(uint8_t num, uint8_t brightness);
   void set_all_leds(uint8_t brightness);
   void blink_led(uint8_t num, uint8_t num_blinks, uint8_t brightness);
-
-  float read_battery_voltage();
-  uint8_t read_battery_percent();
 #endif
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HAS_BATTERY)
+  float read_battery_voltage();
+  uint8_t read_battery_percent();
   bool is_battery_present();
+#endif
+
+#if defined(HAS_CHARGER)
   bool is_charger_in_standby();
   bool is_dc_connected();
   void enable_charger(bool enable);
 #endif
 
-#if defined(HOME_BUTTONS_PRO)
+#if defined(HAS_TOUCH_UI)
   bool touch_click_pressed();
+#endif
+#if defined(HAS_FRONTLIGHT)
   void set_frontlight(uint8_t brightness);
 #endif
 
@@ -174,6 +179,8 @@ struct HardwareDefinition : public Logger {
   void load_mini_hw_rev_0_1();
   void load_mini_hw_rev_1_1();
 
+  void load_industrial_hw_rev_1_0();
+
  private:
   struct {
     // members have length +1 for null terminator
@@ -183,7 +190,7 @@ struct HardwareDefinition : public Logger {
     char hw_version[4];
   } factory_params_{};
 
-  char model_name_[21] = "";
+  char model_name_[30] = "";
   char unique_id_[22] = "";
 
   bool _efuse_burned();

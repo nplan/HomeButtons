@@ -10,8 +10,10 @@
 
 #include <math.h>
 
+#if defined(HAS_TH_SENSOR)
 // Temperature & humidity sensor
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
+#endif
 
 bool HardwareDefinition::init() {
   if (factory_params_ok()) {
@@ -41,6 +43,8 @@ bool HardwareDefinition::init() {
     strncpy(model_name_, "Home Buttons Mini", sizeof(model_name_));
   } else if (strcmp(get_model_id(), "C1") == 0) {
     strncpy(model_name_, "Home Buttons Pro", sizeof(model_name_));
+  } else if (strcmp(get_model_id(), "D1") == 0) {
+    strncpy(model_name_, "Home Buttons Industrial", sizeof(model_name_));
   } else {
     error("unknown model id: %s", get_model_id());
     return false;
@@ -95,6 +99,14 @@ bool HardwareDefinition::init() {
     error("HW rev %s not supported", hw_ver);
     return false;
   }
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+  if (strcmp(hw_ver, "1.0") == 0) {
+    load_industrial_hw_rev_1_0();
+    info("configured for hw version: 1.0");
+  } else {
+    error("HW rev %s not supported", hw_ver);
+    return false;
+  }
 #endif
   return true;
 }
@@ -133,6 +145,15 @@ void HardwareDefinition::begin() {
   ledcSetup(LED6_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED6_PIN, LED6_CH);
 
+  // battery voltage adc
+  analogSetPinAttenuation(VBAT_ADC, ADC_11db);
+
+  // temp sen i2c
+  Wire.begin(
+      (int)SDA,
+      (int)SCL);  // must be cast to int otherwise wrong begin() is called
+  shtc3.begin(&Wire);
+
 #elif defined(HOME_BUTTONS_MINI)
   pinMode(BTN1_PIN, INPUT);
   pinMode(BTN2_PIN, INPUT);
@@ -151,33 +172,54 @@ void HardwareDefinition::begin() {
   ledcSetup(LED4_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED4_PIN, LED4_CH);
 
+  // battery voltage adc
+  analogSetPinAttenuation(VBAT_ADC, ADC_11db);
+
+  // temp sen i2c
+  Wire.begin(
+      (int)SDA,
+      (int)SCL);  // must be cast to int otherwise wrong begin() is called
+  shtc3.begin(&Wire);
+
 #elif defined(HOME_BUTTONS_PRO)
   pinMode(TOUCH_CLICK_PIN, INPUT);
   pinMode(TOUCH_INT_PIN, INPUT);
   pinMode(FL_LED_EN_PIN, OUTPUT);
   ledcSetup(FL_LED_CH, LED_FREQ, LED_RES);
   ledcAttachPin(FL_LED_PIN, FL_LED_CH);
-#endif
 
-  // battery voltage adc
-  analogSetPinAttenuation(VBAT_ADC, ADC_11db);
-
-  // i2c
+  // temp sen i2c
   Wire.begin(
       (int)SDA,
       (int)SCL);  // must be cast to int otherwise wrong begin() is called
+  shtc3.begin(&Wire);
 
-#if defined(HOME_BUTTONS_PRO)
   // touch screen
   Wire1.begin(
       (int)SDA_1,
       (int)SCL_1);  // must be cast to int otherwise wrong begin() is called
-#endif
 
-  shtc3.begin(&Wire);
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+  pinMode(BTN1_PIN, INPUT);
+  pinMode(BTN2_PIN, INPUT);
+  pinMode(BTN3_PIN, INPUT);
+  pinMode(BTN4_PIN, INPUT);
+
+  ledcSetup(LED1_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED1_PIN, LED1_CH);
+
+  ledcSetup(LED2_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED2_PIN, LED2_CH);
+
+  ledcSetup(LED3_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED3_PIN, LED3_CH);
+
+  ledcSetup(LED4_CH, LED_FREQ, LED_RES);
+  ledcAttachPin(LED4_PIN, LED4_CH);
+#endif
 }
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
 
 uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
 #if defined(HOME_BUTTONS_ORIGINAL)
@@ -197,7 +239,7 @@ uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
     default:
       return 0;
   }
-#elif defined(HOME_BUTTONS_MINI)
+#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
   if (sw_num >= 1 && sw_num <= 4) {
     return sw_num;
   } else {
@@ -287,7 +329,7 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
     default:
       return;
   }
-#elif defined(HOME_BUTTONS_MINI)
+#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
   switch (num) {
     case 1:
       ch = LED1_CH;
@@ -316,7 +358,7 @@ void HardwareDefinition::set_all_leds(uint8_t brightness) {
   set_led(LED4_CH, brightness);
   set_led(LED5_CH, brightness);
   set_led(LED6_CH, brightness);
-#elif defined(HOME_BUTTONS_MINI)
+#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
   set_led(LED1_CH, brightness);
   set_led(LED2_CH, brightness);
   set_led(LED3_CH, brightness);
@@ -362,7 +404,9 @@ void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
     delay(off);
   }
 }
+#endif
 
+#if defined(HAS_BATTERY)
 float HardwareDefinition::read_battery_voltage() {
   return (analogReadMilliVolts(VBAT_ADC) / 1000.) / BATT_DIVIDER;
 }
@@ -389,9 +433,7 @@ uint8_t HardwareDefinition::read_battery_percent() {
   return (uint8_t)round(pct);
 #endif
 }
-#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL)
 bool HardwareDefinition::is_battery_present() {
   float volt = read_battery_voltage();
   if (version >= semver::version{2, 2, 0}) {
@@ -401,6 +443,9 @@ bool HardwareDefinition::is_battery_present() {
     return volt >= BATT_PRESENT_VOLT && volt < DC_DETECT_VOLT;
   }
 }
+#endif
+
+#if defined(HAS_CHARGER)
 
 bool HardwareDefinition::is_charger_in_standby() {
   return !digitalRead(CHARGER_STDBY);
@@ -425,11 +470,13 @@ void HardwareDefinition::enable_charger(bool enable) {
 }
 #endif
 
-#if defined(HOME_BUTTONS_PRO)
+#if defined(HAS_TOUCH_UI)
 bool HardwareDefinition::touch_click_pressed() {
   return digitalRead(TOUCH_CLICK_PIN);
 }
+#endif
 
+#if defined(HAS_FRONTLIGHT)
 void HardwareDefinition::set_frontlight(uint8_t brightness) {
   // 0 - 255
   ledcWrite(FL_LED_CH, brightness);
@@ -451,9 +498,13 @@ bool HardwareDefinition::any_button_pressed() {
          digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
 #elif defined(HOME_BUTTONS_PRO)
   return touch_click_pressed();
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
+         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
 #endif
 }
 
+#if defined(HAS_TH_SENSOR)
 void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
                                        const bool fahrenheit) {
   shtc3.reset();
@@ -469,6 +520,7 @@ void HardwareDefinition::read_temp_hmd(float &temp, float &hmd,
   hmd = humidity_event.relative_humidity;
   debug("Sensor read: temp: %.2f C/F, hmd: %.2f %%", temp, hmd);
 }
+#endif
 
 bool HardwareDefinition::factory_params_ok() {
   return factory_params_.serial_number[0] != 0 &&
@@ -1071,4 +1123,33 @@ void HardwareDefinition::load_mini_hw_rev_1_1() {
 
   // ------ wakeup ------
   WAKE_BITMASK = 0x204012;
+}
+
+void HardwareDefinition::load_industrial_hw_rev_1_0() {
+  version = semver::version{0, 1, 0};
+  BTN1_PIN = 6;
+  BTN2_PIN = 5;
+  BTN3_PIN = 1;
+  BTN4_PIN = 21;
+
+  BTN1_ACTIVE_HIGH = true;
+  BTN2_ACTIVE_HIGH = true;
+  BTN3_ACTIVE_HIGH = true;
+  BTN4_ACTIVE_HIGH = true;
+
+  LED1_PIN = 17;
+  LED2_PIN = 16;
+  LED3_PIN = 37;
+  LED4_PIN = 2;
+
+  // ------ LED analog parameters ------
+  LED1_CH = 0;
+  LED2_CH = 1;
+  LED3_CH = 2;
+  LED4_CH = 3;
+
+  LED_RES = 8;
+  LED_FREQ = 1000;
+  LED_BRIGHT_DFLT = 255;
+  LED_MAX_AMB_BRIGHT = 75;
 }

@@ -2,8 +2,39 @@
 #define HOMEBUTTONS_CONFIG_H
 
 #if !defined(HOME_BUTTONS_ORIGINAL) && !defined(HOME_BUTTONS_MINI) && \
-    !defined(HOME_BUTTONS_PRO)
+    !defined(HOME_BUTTONS_PRO) && !defined(HOME_BUTTONS_INDUSTRIAL)
 #error "No device defined!"
+#endif
+
+#if defined(HOME_BUTTONS_ORIGINAL)
+#define HAS_BUTTON_UI
+#define HAS_DISPLAY
+#define HAS_BATTERY
+#define HAS_CHARGER
+#define HAS_AWAKE_MODE
+#define HAS_SLEEP_MODE
+#define HAS_TH_SENSOR
+#endif
+
+#if defined(HOME_BUTTONS_MINI)
+#define HAS_BUTTON_UI
+#define HAS_DISPLAY
+#define HAS_BATTERY
+#define HAS_SLEEP_MODE
+#define HAS_TH_SENSOR
+#endif
+
+#if defined(HOME_BUTTONS_PRO)
+#define HAS_TOUCH_UI
+#define HAS_DISPLAY
+#define HAS_FRONTLIGHT
+#define HAS_TH_SENSOR
+#define HAS_FRONTLIGHT
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+#define HAS_SWITCH_UI
+#define HAS_BUTTON_UI
 #endif
 
 #include <WString.h>
@@ -19,16 +50,21 @@ static constexpr char SW_MODEL_ID[] = "A1";
 static constexpr char SW_MODEL_ID[] = "B1";
 #elif defined(HOME_BUTTONS_PRO)
 static constexpr char SW_MODEL_ID[] = "C1";
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+static constexpr char SW_MODEL_ID[] = "D1";
 #endif
 
 // ------ URLs ------
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
+#if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char DOCS_LINK[] =
     "https://docs.home-buttons.com/original/setup/";
 #elif defined(HOME_BUTTONS_MINI)
 static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/mini/setup/";
 #elif defined(HOME_BUTTONS_PRO)
 static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/pro/setup/";
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+static constexpr char DOCS_LINK[] =
+    "https://docs.home-buttons.com/industrial/setup/";
 #endif
 
 // ------ wifi AP ------
@@ -42,6 +78,8 @@ static constexpr uint8_t NUM_BUTTONS = 6;
 static constexpr uint8_t NUM_BUTTONS = 4;
 #elif defined(HOME_BUTTONS_PRO)
 static constexpr uint8_t NUM_BUTTONS = 9;
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+static constexpr uint8_t NUM_BUTTONS = 4;
 #endif
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
 static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
@@ -55,7 +93,8 @@ static constexpr char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
 static constexpr char BNT_LABEL_DFLT_PREFIX[] = "B";
 
 // ------ sensors ------
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO)
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO) || \
+    defined(HOME_BUTTONS_INDUSTRIAL)
 static constexpr uint16_t SEN_INTERVAL_DFLT = 10;  // min
 static constexpr uint16_t SEN_INTERVAL_MIN = 1;    // min
 static constexpr uint16_t SEN_INTERVAL_MAX = 30;   // min
@@ -101,5 +140,7 @@ static constexpr char BATT_EMPTY_MSG[] =
 static constexpr char BATT_EMPTY_MSG[] =
     "Batteries\nLOW\n\nPlease\nreplace\nsoon!";
 #endif
+
+static constexpr uint8_t DFLT_AMB_LED_BRIGHT = 15;
 
 #endif  // HOMEBUTTONS_CONFIG_H

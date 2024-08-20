@@ -15,35 +15,83 @@ class IdleState : public State<LED> {
  public:
   using State<LED>::State;
 
+  void entry() override;
   void loop() override;
 
   const char* get_name() override { return "IdleState"; }
 };
 
-class OnState : public State<LED> {
+class BlinkOnState : public State<LED> {
  public:
   using State<LED>::State;
 
   void entry() override;
   void loop() override;
 
-  const char* get_name() override { return "OnState"; }
+  const char* get_name() override { return "BlinkOnState"; }
 };
 
-class OffState : public State<LED> {
+class BlinkOffState : public State<LED> {
  public:
   using State<LED>::State;
 
   void entry() override;
   void loop() override;
 
-  const char* get_name() override { return "OffState"; }
+  const char* get_name() override { return "BlinkOffState"; }
 };
+
+class ConstOnState : public State<LED> {
+ public:
+  using State<LED>::State;
+
+  void entry() override;
+  void loop() override;
+
+  const char* get_name() override { return "ConstOnState"; }
+};
+
+class PulseState : public State<LED> {
+ public:
+  using State<LED>::State;
+
+  void entry() override;
+  void loop() override;
+
+  const char* get_name() override { return "PulseState"; }
+};
+
+class TransitionState : public State<LED> {
+ public:
+  using State<LED>::State;
+
+  void entry() override;
+  void loop() override;
+
+  const char* get_name() override { return "TransitionState"; }
+
+ private:
+  uint32_t start_time_ = 0;
+};
+
 }  // namespace LEDSMStates
 
+enum class LEDBlinkType { kOff, kConstant, kBlink, kPulse };
+
+struct LEDBlink {
+  LEDBlinkType type = LEDBlinkType::kOff;
+  uint8_t brightness = 0;
+  uint8_t num_blinks = 0;
+  uint16_t on_ms = 0;
+  uint16_t off_ms = 0;
+  bool hold = false;
+  uint16_t cycle_ms = 0;
+};
+
 using LEDStateMachine =
-    StateMachine<LED, LEDSMStates::IdleState, LEDSMStates::OnState,
-                 LEDSMStates::OffState>;
+    StateMachine<LED, LEDSMStates::IdleState, LEDSMStates::BlinkOnState,
+                 LEDSMStates::BlinkOffState, LEDSMStates::ConstOnState,
+                 LEDSMStates::PulseState, LEDSMStates::TransitionState>;
 
 class LED : public ComponentBase, public LEDStateMachine {
  public:
@@ -57,35 +105,40 @@ class LED : public ComponentBase, public LEDStateMachine {
   bool InternalStart() override { return true; }
   bool InternalStop() override;
   void InternalLoop() override;
-  void InternalRestart() override {};
+  void InternalRestart() override;
+
+  void On(uint8_t brightness);
+  void Off();
 
   void Blink(uint8_t num_blinks, uint8_t brightness, uint16_t on_ms = 0,
              uint16_t off_ms = 0, bool hold = false);
+
+  void Pulse(uint8_t brightness, uint16_t cycle_ms = 1000);
+
+  void SetAmbientBrightness(uint8_t brightness) {
+    ambient_brightness_ = brightness;
+  }
 
   uint8_t id() const { return id_; }
 
  private:
   uint16_t id_ = 0;
   HardwareDefinition& hw_;
-  struct LEDBlink {
-    uint8_t num_blinks = 0;
-    uint8_t brightness = 0;
-    uint16_t on_ms = 0;
-    uint16_t off_ms = 0;
-    bool hold = false;
-  };
 
-  enum class SMState { kIdle, kOn, kOff };
-  SMState sm_state_ = SMState::kIdle;
   uint32_t last_change_time_ = 0;
   uint8_t current_blink_num_ = 0;
 
   std::optional<LEDBlink> cmd_blink_;
   std::optional<LEDBlink> current_blink_;
 
+  uint8_t ambient_brightness_ = 0;
+
   friend class LEDSMStates::IdleState;
-  friend class LEDSMStates::OnState;
-  friend class LEDSMStates::OffState;
+  friend class LEDSMStates::BlinkOnState;
+  friend class LEDSMStates::BlinkOffState;
+  friend class LEDSMStates::ConstOnState;
+  friend class LEDSMStates::PulseState;
+  friend class LEDSMStates::TransitionState;
 };
 
 template <uint8_t N_LEDS>
@@ -101,6 +154,54 @@ class LEDs : public ComponentBase {
         led.get().Blink(num_blinks, brightness, on_ms, off_ms, hold);
         return;
       }
+    }
+  }
+
+  void On(uint8_t led_id, uint8_t brightness) {
+    for (auto& led : leds_) {
+      if (led.get().id() == led_id) {
+        led.get().On(brightness);
+        return;
+      }
+    }
+  }
+
+  void Off(uint8_t led_id) {
+    for (auto& led : leds_) {
+      if (led.get().id() == led_id) {
+        led.get().Off();
+        return;
+      }
+    }
+  }
+
+  void Pulse(uint8_t led_id, uint8_t brightness, uint16_t cycle_ms = 1000) {
+    for (auto& led : leds_) {
+      if (led.get().id() == led_id) {
+        led.get().Pulse(brightness, cycle_ms);
+        return;
+      }
+    }
+  }
+
+  void SetAmbientBrightness(uint8_t led_id, uint8_t brightness) {
+    for (auto& led : leds_) {
+      if (led.get().id() == led_id) {
+        led.get().SetAmbientBrightness(brightness);
+        return;
+      }
+    }
+  }
+
+  void AllOn(uint8_t brightness) {
+    for (auto& led : leds_) {
+      led.get().On(brightness);
+    }
+  }
+
+  void AllOff() {
+    for (auto& led : leds_) {
+      led.get().Off();
     }
   }
 

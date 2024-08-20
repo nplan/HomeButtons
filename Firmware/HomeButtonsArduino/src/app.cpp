@@ -7,10 +7,7 @@
 
 #include "config.h"
 #include "factory.h"
-#include "setup.h"
 #include "hardware.h"
-
-#include "mdi_helper.h"
 
 extern "C" bool verifyRollbackLater() { return true; };
 
@@ -36,7 +33,7 @@ App::App()
       leds_("LEDs",
             std::array<std::reference_wrapper<LED>, NUM_BUTTONS>{
                 led1_, led2_, led3_, led4_, led5_, led6_}),
-#elif defined(HOME_BUTTONS_MINI)
+#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
       btn1_("BTN1", 1, hw_),
       btn2_("BTN2", 2, hw_),
       btn3_("BTN3", 3, hw_),
@@ -52,12 +49,15 @@ App::App()
       leds_("LEDs",
             std::array<std::reference_wrapper<LED>, NUM_BUTTONS>{led1_, led2_,
                                                                  led3_, led4_}),
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
       touch_handler_(hw_),
 #endif
       network_(device_state_),
+#if defined(HAS_DISPLAY)
       display_(device_state_, mdi_),
-      mqtt_(device_state_, network_) {
+#endif
+      mqtt_(device_state_, network_),
+      setup_(*this) {
 }
 
 void App::setup() {
@@ -74,6 +74,17 @@ void App::setup() {
   vTaskDelete(NULL);
 }
 
+void App::_handle_failed_init() {
+#if defined(HAS_SLEEP_MODE)
+  error("Failed to initialize hardware. Going to sleep.");
+  _start_esp_sleep();
+#else
+  error("Failed to initialize hardware. Restarting...");
+  ESP.restart();
+#endif
+}
+
+#if defined(HAS_SLEEP_MODE)
 void App::_start_esp_sleep() {
 #if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   esp_sleep_enable_ext1_wakeup(hw_.WAKE_BITMASK, ESP_EXT1_WAKEUP_ANY_HIGH);
@@ -105,6 +116,7 @@ void App::_go_to_sleep() {
 #endif
   _start_esp_sleep();
 }
+#endif
 
 std::pair<BootCause, int16_t> App::_determine_boot_cause() {
   BootCause boot_cause = BootCause::RESET;
@@ -115,9 +127,8 @@ std::pair<BootCause, int16_t> App::_determine_boot_cause() {
     case ESP_SLEEP_WAKEUP_EXT1: {
       uint64_t GPIO_reason = esp_sleep_get_ext1_wakeup_status();
       wakeup_pin = (log(GPIO_reason)) / log(2);
-      info("wakeup cause: PIN %d", wakeup_pin);
+      debug("wakeup cause: PIN %d", wakeup_pin);
       wakeup_btn_id = buttons_.id_from_pin(wakeup_pin);
-      info("wakeup btn id: %d", wakeup_btn_id);
       if (wakeup_btn_id > 0) {
         boot_cause = BootCause::BUTTON;
       } else {
@@ -125,25 +136,14 @@ std::pair<BootCause, int16_t> App::_determine_boot_cause() {
       }
     } break;
     case ESP_SLEEP_WAKEUP_TIMER:
-      info("wakeup cause: TIMER");
       boot_cause = BootCause::TIMER;
       break;
     default:
-      info("wakeup cause: RESET");
       boot_cause = BootCause::RESET;
       break;
   }
-#elif defined(HOME_BUTTONS_PRO)
-  switch (esp_sleep_get_wakeup_cause()) {
-    case ESP_SLEEP_WAKEUP_EXT1:
-      info("wakeup cause: BUTTON");
-      boot_cause = BootCause::BUTTON;
-      break;
-    default:
-      info("wakeup cause: RESET");
-      boot_cause = BootCause::RESET;
-      break;
-  }
+#elif defined(HOME_BUTTONS_PRO) || defined(HOME_BUTTONS_INDUSTRIAL)
+  boot_cause = BootCause::RESET;
 #endif
   return std::make_pair(boot_cause, wakeup_btn_id);
 }
@@ -188,11 +188,14 @@ void App::_log_task_stats() {
 void App::_ui_task(void* param) {
   App* app = static_cast<App*>(param);
   while (true) {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
     app->buttons_.Loop();
     app->leds_.Loop();
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
     app->touch_handler_.Loop();
+#endif
+
+#if defined(HAS_FRONTLIGHT)
     if (millis() - app->device_state_.flags().last_user_input_time >
         FRONTLIGHT_TIMEOUT) {
       if (!app->device_state_.flags().keep_frontlight_on) {
@@ -200,23 +203,6 @@ void App::_ui_task(void* param) {
       }
     }
 #endif
-    delay(10);
-  }
-}
-
-void App::_display_task(void* param) {
-  App* app = static_cast<App*>(param);
-  while (true) {
-    app->display_.update();
-    delay(50);
-  }
-}
-
-void App::_network_task(void* param) {
-  App* app = static_cast<App*>(param);
-  app->network_.setup();
-  while (true) {
-    app->network_.update();
     delay(10);
   }
 }
@@ -235,6 +221,15 @@ void App::_start_ui_task() {
   );
 }
 
+#if defined(HAS_DISPLAY)
+void App::_display_task(void* param) {
+  App* app = static_cast<App*>(param);
+  while (true) {
+    app->display_.update();
+    delay(50);
+  }
+}
+
 void App::_start_display_task() {
   if (display_task_h_ != nullptr) return;
   debug("m_display task started.");
@@ -245,6 +240,16 @@ void App::_start_display_task() {
               1,                // Task priority
               &display_task_h_  // Task handle
   );
+}
+#endif
+
+void App::_network_task(void* param) {
+  App* app = static_cast<App*>(param);
+  app->network_.setup();
+  while (true) {
+    app->network_.update();
+    delay(10);
+  }
 }
 
 void App::_start_network_task() {
@@ -257,6 +262,35 @@ void App::_start_network_task() {
               1,                // Task priority
               &network_task_h_  // Task handle
   );
+}
+
+void App::_begin_hw() {
+#if defined(HAS_DISPLAY)
+  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
+  display_.begin(hw_);
+#endif
+  hw_.begin();
+#if defined(HAS_BUTTON_UI)
+  buttons_.Init();
+  leds_.Init();
+#elif defined(HAS_TOUCH_UI)
+  touch_handler_.Init(hw_.TOUCH_CLICK_PIN, hw_.TOUCH_INT_PIN);
+#endif
+}
+
+void App::_start_tasks() {
+  _start_ui_task();
+  _start_network_task();
+#if defined(HAS_DISPLAY)
+  _start_display_task();
+#endif
+
+#if defined(HAS_BUTTON_UI)
+  buttons_.Start();
+  leds_.Start();
+#elif defined(HAS_TOUCH_UI)
+  touch_handler_.Start();
+#endif
 }
 
 void App::_main_task() {
@@ -283,40 +317,35 @@ void App::_main_task() {
   }
 
   if (!hw_init_ok) {
-    error("HW init failed! Going to sleep.");
-    _start_esp_sleep();
+    error("HW init failed!");
+    _handle_failed_init();
   }
 
   // ------ factory test ------
-  FactoryTest factory_test;
+  FactoryTest factory_test(*this);
   if (factory_test.is_test_required()) {
-    if (factory_test.run_test(hw_, display_)) {
+    if (factory_test.run_test()) {
       device_state_.load_all(hw_);
+#if defined(HAS_DISPLAY)
       display_.begin(hw_);
       display_.disp_welcome();
       display_.update();
       display_.end();
+#endif
       info("factory test complete. Going to sleep.");
-      _start_esp_sleep();
+      _handle_failed_init();
     } else {
       error("factory test failed! Going to sleep.");
+#if defined(HAS_DISPLAY)
       display_.disp_error("Factory\nTest\nFailed");
       display_.update();
-      _start_esp_sleep();
+#endif
+      _handle_failed_init();
     }
   }
 
   device_state_.load_all(hw_);
-
-  // must be before ledAttachPin (reserves GPIO37 = SPIDQS)
-  display_.begin(hw_);
-  hw_.begin();
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-  buttons_.Init();
-  leds_.Init();
-#elif defined(HOME_BUTTONS_PRO)
-  touch_handler_.Init(hw_.TOUCH_CLICK_PIN, hw_.TOUCH_INT_PIN);
-#endif
+  _begin_hw();
 
   // ------ after update handler ------
   if (device_state_.persisted().last_sw_ver != SW_VERSION) {
@@ -326,10 +355,12 @@ void App::_main_task() {
       device_state_.persisted().last_sw_ver = SW_VERSION;
       device_state_.persisted().send_discovery_config = true;
       device_state_.save_all();
+#if defined(HAS_DISPLAY)
       display_.disp_message(
           (UIState::MessageType("Firmware\nupdated to\n") + SW_VERSION)
               .c_str());
       display_.update();
+#endif
       ESP.restart();
     } else {  // first boot after factory flash
       device_state_.persisted().last_sw_ver = SW_VERSION;
@@ -435,83 +466,107 @@ void App::_main_task() {
   }
   // mini doesn't have awake mode
   device_state_.flags().awake_mode = false;
-#elif defined(HOME_BUTTONS_PRO)
-  // pro only has powered awake mode
+#elif defined(HOME_BUTTONS_PRO) || defined(HOME_BUTTONS_INDUSTRIAL)
   device_state_.flags().awake_mode = true;
 #endif
 
+#if defined(HAS_TH_SENSOR)
   // ------ read sensors ------
   hw_.read_temp_hmd(device_state_.sensors().temperature,
                     device_state_.sensors().humidity,
                     device_state_.get_use_fahrenheit());
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#endif
+#if defined(HAS_BATTERY)
   device_state_.sensors().battery_pct = hw_.read_battery_percent();
   device_state_.sensors().battery_voltage = hw_.read_battery_voltage();
 #endif
 
+  // ------ start tasks ------
+  _start_tasks();
+
   // ------ boot cause ------
   std::tie(boot_cause_, wakeup_btn_id_) = _determine_boot_cause();
+  info("boot cause: %d, wakeup btn id: %d", static_cast<int>(boot_cause_),
+       wakeup_btn_id_);
 
   // ------ handle boot cause ------
   switch (boot_cause_) {
     case BootCause::RESET: {
       if (!device_state_.persisted().silent_restart) {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-        hw_.set_all_leds(hw_.LED_BRIGHT_DFLT);
-#elif defined(HOME_BUTTONS_PRO)
+#if defined(HAS_BUTTON_UI)
+        leds_.AllOn(hw_.LED_BRIGHT_DFLT);
+        delay(1000);
+#endif
+#if defined(HAS_FRONTLIGHT)
         hw_.set_frontlight(hw_.FL_LED_BRIGHT_DFLT);
 #endif
+#if defined(HAS_DISPLAY)
         display_.disp_message("RESTART...", 0);
-        display_.update();
+        delay(3000);
+#endif
       }
 
+#if defined(HAS_DISPLAY)
       // format SPIFFS if needed
       if (!SPIFFS.begin()) {
         info("Formatting icon storage...");
         display_.disp_message("Formatting\nIcon\nStorage...", 0);
-        display_.update();
+        delay(3000);
         SPIFFS.format();
       } else {
         SPIFFS.end();
         debug("SPIFFS test mount OK");
       }
+#endif
 
+      // check if restart to setup or Wi-Fi setup is needed
       if (device_state_.persisted().restart_to_wifi_setup) {
         device_state_.clear_persisted_flags();
         info("staring Wi-Fi setup...");
-        start_wifi_setup(device_state_, display_);  // resets ESP when done
+        setup_.start_wifi_setup();  // resets ESP when done
       } else if (device_state_.persisted().restart_to_setup) {
         device_state_.clear_persisted_flags();
         info("staring setup...");
-        start_setup(device_state_, display_, hw_);  // resets ESP when done
+        setup_.start_setup();  // resets ESP when done
       }
 
       device_state_.clear_persisted_flags();
+
       if (!device_state_.persisted().wifi_done ||
           !device_state_.persisted().setup_done) {
+#if defined(HAS_DISPLAY)
         display_.disp_welcome();
-        display_.update();
+        delay(3000);
         display_.end();
-        display_.update();
+        delay(3000);
+#endif
+#if defined(HAS_SLEEP_MODE)
         _go_to_sleep();
+#endif
       } else {
+#if defined(HAS_DISPLAY)
         display_.disp_main();
-        display_.update();
+        delay(3000);
+#endif
       }
       device_state_.persisted().download_mdi_icons = true;
       device_state_.persisted().send_discovery_config = true;
       device_state_.save_all();
       if (device_state_.flags().awake_mode) {
 // proceed with awake mode
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-        hw_.set_all_leds(0);
-#elif defined(HOME_BUTTONS_PRO)
+#if defined(HAS_BUTTON_UI)
+        leds_.AllOff();
+#elif defined(HAS_FRONTLIGHT)
         hw_.set_frontlight(0);
 #endif
       } else {
+#if defined(HAS_DISPLAY)
         display_.end();
-        display_.update();
+        delay(3000);
+#endif
+#if defined(HAS_SLEEP_MODE)
         _go_to_sleep();
+#endif
       }
       break;
     }
@@ -521,23 +576,23 @@ void App::_main_task() {
         if (device_state_.persisted().charge_complete_showing) {
           device_state_.persisted().charge_complete_showing = false;
           display_.disp_main();
-          display_.update();
+          delay(3000);
           display_.end();
-          display_.update();
+          delay(3000);
           _go_to_sleep();
         } else if (device_state_.persisted().user_msg_showing) {
           device_state_.persisted().user_msg_showing = false;
           display_.disp_main();
-          display_.update();
+          delay(3000);
           display_.end();
-          display_.update();
+          delay(3000);
           _go_to_sleep();
         } else if (device_state_.persisted().check_connection) {
           device_state_.persisted().check_connection = false;
           display_.disp_main();
-          display_.update();
+          delay(3000);
           display_.end();
-          display_.update();
+          delay(3000);
           _go_to_sleep();
         } else {
           // proceed
@@ -546,18 +601,6 @@ void App::_main_task() {
         // proceed with awake mode
       }
       break;
-#elif defined(HOME_BUTTONS_PRO)
-      if (!device_state_.persisted().wifi_done) {
-        device_state_.persisted().silent_restart = true;
-        device_state_.persisted().restart_to_wifi_setup = true;
-        device_state_.save_all();
-        ESP.restart();
-      } else if (!device_state_.persisted().setup_done) {
-        device_state_.persisted().restart_to_setup = true;
-        device_state_.persisted().silent_restart = true;
-        device_state_.save_all();
-        ESP.restart();
-      }
 #endif
     }
 
@@ -577,27 +620,25 @@ void App::_main_task() {
       }
       break;
     }
-#elif defined(HOME_BUTTONS_MINI)
-    case BootCause::TIMER: {
-      break;
-    }
 #endif
     default:
       break;
   }
 
+#if defined(HAS_DISPLAY)
   display_.init_ui_state(UIState{.page = DisplayPage::MAIN});
+#endif
   network_.set_mqtt_callback(std::bind(&App::_mqtt_callback, this,
                                        std::placeholders::_1,
                                        std::placeholders::_2));
   network_.set_on_connect(std::bind(&App::_net_on_connect, this));
 
-#if defined(HOME_BUTTONS_PRO)
+#if defined(HAS_TOUCH_UI)
   touch_handler_.SetEventCallbackSecondary(
       std::bind(&App::_handle_ui_event_global, this, std::placeholders::_1));
 #endif
 
-  debug("Starting main loop");
+  debug("Starting main state machine loop");
   while (true) {
     loop();
     esp_task_wdt_reset();
@@ -609,11 +650,12 @@ void App::_handle_ui_event_global(UserInput::Event event) {
   device_state_.flags().last_user_input_time = millis();
 }
 
-void App::_publish_btn_event(UserInput::Event event) {
+void App::_publish_ui_event(UserInput::Event event) {
   TopicType topic = mqtt_.get_button_topic(event);
   network_.publish(topic, BTN_PRESS_PAYLOAD);
 }
 
+#if defined(HAS_TH_SENSOR)
 void App::_publish_sensors() {
   network_.publish(mqtt_.t_temperature(),
                    PayloadType("%.2f", device_state_.sensors().temperature));
@@ -622,8 +664,16 @@ void App::_publish_sensors() {
   network_.publish(mqtt_.t_battery(),
                    PayloadType("%u", device_state_.sensors().battery_pct));
 }
+#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL)
+#if defined(HAS_BATTERY)
+void App::_publish_battery() {
+  network_.publish(mqtt_.t_battery(),
+                   PayloadType("%u", device_state_.sensors().battery_pct));
+}
+#endif
+
+#if defined(HAS_AWAKE_MODE)
 void App::_publish_awake_mode_avlb() {
   if (hw_.is_dc_connected()) {
     network_.publish(mqtt_.t_awake_mode_avlb(), "online", true);
@@ -634,6 +684,7 @@ void App::_publish_awake_mode_avlb() {
 #endif
 
 void App::_mqtt_callback(const char* topic, const char* payload) {
+#if defined(HAS_TH_SENSOR)
   if (strcmp(topic, mqtt_.t_sensor_interval_cmd().c_str()) == 0) {
     uint16_t mins = atoi(payload);
     if (mins >= SEN_INTERVAL_MIN && mins <= SEN_INTERVAL_MAX) {
@@ -650,7 +701,9 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
     network_.publish(mqtt_.t_sensor_interval_cmd(), "", true);
     return;
   }
+#endif
 
+#if defined(HAS_DISPLAY)
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     if (strcmp(topic, mqtt_.t_btn_label_cmd(i).c_str()) == 0) {
       ButtonLabel new_label(payload);
@@ -672,7 +725,9 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       return;
     }
   }
+#endif
 
+#if defined(HAS_AWAKE_MODE)
   if (strcmp(topic, mqtt_.t_awake_mode_cmd().c_str()) == 0) {
     if (strcmp(payload, "ON") == 0) {
       device_state_.persisted().user_awake_mode = true;
@@ -690,7 +745,9 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
     network_.publish(mqtt_.t_awake_mode_cmd(), "", true);
     return;
   }
+#endif
 
+#if defined(HAS_DISPLAY)
   // user message
   if (strcmp(topic, mqtt_.t_disp_msg_cmd().c_str()) == 0) {
     if (display_.get_ui_state().page == DisplayPage::MAIN) {
@@ -702,7 +759,9 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
     network_.publish(mqtt_.t_disp_msg_cmd(), "", true);
     network_.publish(mqtt_.t_disp_msg_state(), "-", false);
   }
+#endif
 
+#if defined(HAS_SLEEP_MODE)
   // schedule wakeup cmd
   if (strcmp(topic, mqtt_.t_schedule_wakeup_cmd().c_str()) == 0) {
     uint32_t secs = atoi(payload);
@@ -713,6 +772,30 @@ void App::_mqtt_callback(const char* topic, const char* payload) {
       debug("schedule wakeup set to %d seconds", secs);
     }
   }
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  if (strcmp(topic, mqtt_.t_led_brightness_cmd().c_str()) == 0) {
+    uint8_t brightness = atoi(payload);
+    if (brightness >= 0 && brightness <= 100) {
+      device_state_.set_led_brightness(brightness);
+      device_state_.save_all();
+      uint8_t brightness_255 =
+          map(brightness, 0, 100, 0, hw_.LED_MAX_AMB_BRIGHT);
+      for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+        leds_.SetAmbientBrightness(i + 1, brightness_255);
+      }
+      leds_.Restart();
+      network_.publish(mqtt_.t_led_brightness_state(),
+                       PayloadType("%u", brightness), true);
+      debug("LED brightness set to %d", brightness);
+    } else {
+      warning("Invalid brightness value: %d", brightness);
+    }
+    network_.publish(mqtt_.t_led_brightness_cmd(), "", true);
+    return;
+  }
+#endif
 }
 
 void App::_net_on_connect() {
@@ -736,12 +819,22 @@ void App::_net_on_connect() {
     info("Sending discovery config...");
     mqtt_.send_discovery_config();
   }
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  network_.publish(
+      mqtt_.t_led_brightness_state(),
+      PayloadType("%u", device_state_.user_preferences().led_brightness, true));
+#endif
+
+#if defined(HAS_DISPLAY)
   if (device_state_.persisted().download_mdi_icons) {
     device_state_.persisted().download_mdi_icons = false;
     _download_mdi_icons();
   }
+#endif
 }
 
+#if defined(HAS_DISPLAY)
 void App::_download_mdi_icons() {
   bool download_required = false;
   mdi_.begin();
@@ -801,20 +894,11 @@ void App::_download_mdi_icons() {
   mdi_.end();
   device_state_.flags().display_redraw = true;
 }
+#endif
 
 void AppSMStates::InitState::entry() {
   sm().network_.connect();
-  sm()._start_ui_task();
-  sm()._start_display_task();
-  sm()._start_network_task();
-
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-  sm().buttons_.Start();
   sm().buttons_.InitPress(sm().wakeup_btn_id_);
-  sm().leds_.Start();
-#elif defined(HOME_BUTTONS_PRO)
-  sm().touch_handler_.Start();
-#endif
 
 #if defined(HOME_BUTTONS_ORIGINAL)
   sm().mdi_.add_size(64);
@@ -824,6 +908,16 @@ void AppSMStates::InitState::entry() {
 #elif defined(HOME_BUTTONS_PRO)
   sm().mdi_.add_size(92);
   sm().mdi_.add_size(64);
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  uint8_t brightnes_255 =
+      map(sm().device_state_.user_preferences().led_brightness, 0, 100, 0,
+          sm().hw_.LED_MAX_AMB_BRIGHT);
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    sm().leds_.SetAmbientBrightness(i + 1, brightnes_255);
+    sm().leds_.Restart();
+  }
 #endif
 
   if (!sm().device_state_.flags().awake_mode) {
@@ -840,17 +934,21 @@ void AppSMStates::InitState::entry() {
     sm().device_state_.persisted().charge_complete_showing = false;
     esp_task_wdt_init(WDT_TIMEOUT_AWAKE, true);
     esp_task_wdt_add(NULL);
+#if defined(HAS_DISPLAY)
     sm().display_.disp_main();
+#endif
     return transition_to<AwakeModeIdleState>();
   }
 }
 
 void AppSMStates::AwakeModeIdleState::entry() {
+#if defined(HAS_DISPLAY)
   sm().display_.disp_main();
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#endif
+#if defined(HAS_BUTTON_UI)
   sm().buttons_.SetEventCallback(std::bind(&AwakeModeIdleState::handle_ui_event,
                                            this, std::placeholders::_1));
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   sm().touch_handler_.SetEventCallback(std::bind(
       &AwakeModeIdleState::handle_ui_event, this, std::placeholders::_1));
 #endif
@@ -858,21 +956,27 @@ void AppSMStates::AwakeModeIdleState::entry() {
 
 void AppSMStates::AwakeModeIdleState::loop() {
   if (millis() - sm().last_sensor_publish_ >= AWAKE_SENSOR_INTERVAL) {
+#if defined(HAS_TH_SENSOR)
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
                            sm().device_state_.sensors().humidity,
                            sm().device_state_.get_use_fahrenheit());
+    sm()._publish_sensors();
+#endif
 
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BATTERY)
     sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
     sm().device_state_.sensors().battery_voltage =
         sm().hw_.read_battery_voltage();
+    sm()._publish_battery();
 #endif
-    sm()._publish_sensors();
     sm().last_sensor_publish_ = millis();
 #ifdef HOME_BUTTONS_DEBUG
     sm()._log_task_stats();
 #endif
-  } else if (millis() - sm().last_m_display_redraw_ >= AWAKE_REDRAW_INTERVAL) {
+  }
+
+#if defined(HAS_DISPLAY)
+  if (millis() - sm().last_m_display_redraw_ >= AWAKE_REDRAW_INTERVAL) {
     if (sm().device_state_.flags().display_redraw) {
       sm().device_state_.flags().display_redraw = false;
       if (sm().device_state_.persisted().download_mdi_icons) {
@@ -883,13 +987,16 @@ void AppSMStates::AwakeModeIdleState::loop() {
     }
     sm().last_m_display_redraw_ = millis();
   }
-#if defined(HOME_BUTTONS_PRO)
+#endif
+
+#if defined(HAS_FRONTLIGHT)
   else if (millis() - sm().device_state_.flags().last_user_input_time >
            FRONTLIGHT_TIMEOUT) {
     sm().hw_.set_frontlight(0);
   }
 #endif
-#if defined(HOME_BUTTONS_ORIGINAL)
+
+#if defined(HAS_CHARGER)
   else if (!sm().hw_.is_dc_connected()) {
     sm()._publish_awake_mode_avlb();
     sm().device_state_.sensors().charging = false;
@@ -913,7 +1020,7 @@ void AppSMStates::AwakeModeIdleState::loop() {
 
 void AppSMStates::AwakeModeIdleState::handle_ui_event(UserInput::Event event) {
   sm().device_state_.flags().last_user_input_time = millis();
-#if defined(HOME_BUTTONS_PRO)
+#if defined(HAS_FRONTLIGHT)
   sm().hw_.set_frontlight(sm().hw_.FL_LED_BRIGHT_DFLT);
 #endif
   if (event.final) {
@@ -922,7 +1029,30 @@ void AppSMStates::AwakeModeIdleState::handle_ui_event(UserInput::Event event) {
       case UserInput::EventType::kClickDouble:
       case UserInput::EventType::kClickTriple:
       case UserInput::EventType::kClickQuad:
-        sm()._publish_btn_event(event);
+        if (!sm().device_state_.persisted().wifi_done) {
+          sm().info("Wi-Fi setup not done");
+#if !defined(HAS_DISPLAY)
+          sm().leds_.Blink(4, 5, sm().hw_.LED_BRIGHT_DFLT, 200, 160, false);
+          delay(5000);
+#endif
+          sm().device_state_.persisted().restart_to_wifi_setup = true;
+          sm().device_state_.persisted().silent_restart = true;
+          sm().device_state_.save_all();
+          sm().info("restarting to Wi-Fi setup...");
+          ESP.restart();
+        } else if (!sm().device_state_.persisted().setup_done) {
+          sm().info("setup not done");
+#if !defined(HAS_DISPLAY)
+          sm().leds_.Blink(4, 5, sm().hw_.LED_BRIGHT_DFLT, 200, 160, false);
+          delay(5000);
+#endif
+          sm().device_state_.persisted().restart_to_setup = true;
+          sm().device_state_.persisted().silent_restart = true;
+          sm().device_state_.save_all();
+          sm().info("restarting to setup...");
+          ESP.restart();
+        }
+        sm()._publish_ui_event(event);
         sm().leds_.Blink(event.btn_id,
                          UserInput::EventType2NumClicks(event.type),
                          sm().hw_.LED_BRIGHT_DFLT, 0, 0, false);
@@ -934,12 +1064,14 @@ void AppSMStates::AwakeModeIdleState::handle_ui_event(UserInput::Event event) {
     }
   } else {
     switch (event.type) {
+#if defined(HAS_DISPLAY)
       case UserInput::EventType::kHoldLong2s:
         if (sm().hw_.num_buttons_pressed() == 1) {
           sm().buttons_.Restart();
           return transition_to<InfoScreenState>();
         }
         break;
+#endif
       case UserInput::EventType::kHoldLong5s:
         if (sm().hw_.num_buttons_pressed() == 2) {
           sm().buttons_.Restart();
@@ -954,10 +1086,10 @@ void AppSMStates::AwakeModeIdleState::handle_ui_event(UserInput::Event event) {
 
 void AppSMStates::SleepModeHandleInput::entry() {
   sm().input_start_time_ = millis();
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
   sm().buttons_.SetEventCallback(std::bind(
       &SleepModeHandleInput::handle_ui_event, this, std::placeholders::_1));
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   sm().touch_handler_.SetEventCallback(std::bind(
       &SleepModeHandleInput::handle_ui_event, this, std::placeholders::_1));
 #endif
@@ -994,7 +1126,7 @@ void AppSMStates::SleepModeHandleInput::handle_ui_event(
         sm().leds_.Blink(event.btn_id,
                          UserInput::EventType2NumClicks(event.type),
                          sm().hw_.LED_BRIGHT_DFLT, 0, 0, true);
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BATTERY)
         if (sm().device_state_.sensors().battery_low) {
           sm().display_.disp_message_large(BATT_EMPTY_MSG, 3000);
         }
@@ -1006,6 +1138,7 @@ void AppSMStates::SleepModeHandleInput::handle_ui_event(
     }
   } else {  // non final event
     switch (event.type) {
+#if defined(HAS_DISPLAY)
       case UserInput::EventType::kHoldLong2s:
         if (sm().hw_.num_buttons_pressed() == 1) {
           sm().buttons_.Restart();
@@ -1018,6 +1151,7 @@ void AppSMStates::SleepModeHandleInput::handle_ui_event(
           return transition_to<SettingsMenuState>();
         }
         break;
+#endif
       default:
         break;
     }
@@ -1025,30 +1159,36 @@ void AppSMStates::SleepModeHandleInput::handle_ui_event(
 }
 
 void AppSMStates::NetConnectingState::entry() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
   sm().buttons_.SetEventCallback(std::bind(&NetConnectingState::handle_ui_event,
                                            this, std::placeholders::_1));
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   sm().touch_handler_.SetEventCallback(std::bind(
       &NetConnectingState::handle_ui_event, this, std::placeholders::_1));
 #endif
 }
 
 void AppSMStates::NetConnectingState::loop() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
   if (sm().network_.get_state() == Network::State::M_CONNECTED) {
     if (sm().user_event_.type != UserInput::EventType::kNone) {
-      sm()._publish_btn_event(sm().user_event_);
+      sm()._publish_ui_event(sm().user_event_);
     }
+#if defined(HAS_TH_SENSOR)
     sm().hw_.read_temp_hmd(sm().device_state_.sensors().temperature,
                            sm().device_state_.sensors().humidity,
                            sm().device_state_.get_use_fahrenheit());
-    sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
     sm()._publish_sensors();
+#endif
+#if defined(HAS_BATTERY)
+    sm().device_state_.sensors().battery_pct = sm().hw_.read_battery_percent();
+    sm()._publish_battery();
+#endif
     sm().device_state_.persisted().failed_connections = 0;
     return transition_to<CmdShutdownState>();
 
   } else if (millis() >= NET_CONNECT_TIMEOUT) {
+#if defined(HAS_DISPLAY)
     sm().warning("network connect timeout.");
     if (sm().boot_cause_ == BootCause::BUTTON) {
       sm().display_.disp_error("Network\nconnection\nnot\nsuccessful", 3000);
@@ -1062,6 +1202,7 @@ void AppSMStates::NetConnectingState::loop() {
       }
     }
     return transition_to<CmdShutdownState>();
+#endif
   }
 #endif
 }
@@ -1081,16 +1222,18 @@ void AppSMStates::NetConnectingState::handle_ui_event(UserInput::Event event) {
 }
 
 void AppSMStates::InfoScreenState::entry() {
+#if defined(HAS_DISPLAY)
   sm().info_screen_start_time_ = millis();
   sm().display_.disp_info();
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
   sm().buttons_.SetEventCallback(std::bind(&InfoScreenState::handle_ui_event,
                                            this, std::placeholders::_1));
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   sm().device_state_.flags().keep_frontlight_on = true;
   sm().hw_.set_frontlight(sm().hw_.FL_LED_BRIGHT_DFLT);
   sm().touch_handler_.SetEventCallback(std::bind(
       &InfoScreenState::handle_ui_event, this, std::placeholders::_1));
+#endif
 #endif
 }
 
@@ -1104,7 +1247,9 @@ void AppSMStates::InfoScreenState::loop() {
     if (sm().device_state_.flags().awake_mode) {
       return transition_to<AwakeModeIdleState>();
     } else {
+#if defined(HAS_DISPLAY)
       sm().display_.disp_main();
+#endif
       return transition_to<CmdShutdownState>();
     }
   }
@@ -1120,7 +1265,6 @@ void AppSMStates::InfoScreenState::handle_ui_event(UserInput::Event event) {
         if (sm().device_state_.flags().awake_mode) {
           return transition_to<AwakeModeIdleState>();
         } else {
-          sm().display_.disp_main();
           return transition_to<CmdShutdownState>();
         }
       default:
@@ -1131,12 +1275,17 @@ void AppSMStates::InfoScreenState::handle_ui_event(UserInput::Event event) {
 
 void AppSMStates::SettingsMenuState::entry() {
   sm().settings_menu_start_time_ = millis();
+#if defined(HAS_DISPLAY)
   sm().display_.disp_settings();
-
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#else
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    sm().leds_.Pulse(i + 1, sm().hw_.LED_BRIGHT_DFLT, 2000);
+  }
+#endif
+#if defined(HAS_BUTTON_UI)
   sm().buttons_.SetEventCallback(std::bind(&SettingsMenuState::handle_ui_event,
                                            this, std::placeholders::_1));
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   sm().device_state_.flags().keep_frontlight_on = true;
   sm().hw_.set_frontlight(sm().hw_.FL_LED_BRIGHT_DFLT);
   sm().touch_handler_.SetEventCallback(std::bind(
@@ -1146,6 +1295,11 @@ void AppSMStates::SettingsMenuState::entry() {
 
 void AppSMStates::SettingsMenuState::exit() {
   sm().device_state_.flags().keep_frontlight_on = false;
+#if !defined(HAS_DISPLAY)
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    sm().leds_.Off(i + 1);
+  }
+#endif
 }
 
 void AppSMStates::SettingsMenuState::loop() {
@@ -1161,7 +1315,7 @@ void AppSMStates::SettingsMenuState::loop() {
 
 void AppSMStates::SettingsMenuState::handle_ui_event(UserInput::Event event) {
   sm().device_state_.flags().last_user_input_time = millis();
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
   if (event.final) {
     switch (event.type) {
       case UserInput::EventType::kClickSingle:
@@ -1171,6 +1325,7 @@ void AppSMStates::SettingsMenuState::handle_ui_event(UserInput::Event event) {
             sm().device_state_.persisted().restart_to_setup = true;
             sm().device_state_.persisted().silent_restart = true;
             sm().device_state_.save_all();
+            sm().info("restarting to setup...");
             ESP.restart();
             break;
           case 2:
@@ -1178,10 +1333,12 @@ void AppSMStates::SettingsMenuState::handle_ui_event(UserInput::Event event) {
             sm().device_state_.persisted().restart_to_wifi_setup = true;
             sm().device_state_.persisted().silent_restart = true;
             sm().device_state_.save_all();
+            sm().info("restarting to Wi-Fi setup...");
             ESP.restart();
             break;
           case 3:
             // restart
+            sm().info("restarting...");
             ESP.restart();
             break;
           case 4:
@@ -1189,7 +1346,6 @@ void AppSMStates::SettingsMenuState::handle_ui_event(UserInput::Event event) {
             if (sm().device_state_.flags().awake_mode) {
               return transition_to<AwakeModeIdleState>();
             } else {
-              sm().display_.disp_main();
               return transition_to<CmdShutdownState>();
             }
             break;
@@ -1242,7 +1398,6 @@ void AppSMStates::SettingsMenuState::handle_ui_event(UserInput::Event event) {
           ESP.restart();
         } else {
           // exit
-          sm().display_.disp_main();
           return transition_to<AwakeModeIdleState>();
         }
         break;
@@ -1261,11 +1416,13 @@ void AppSMStates::SettingsMenuState::handle_ui_event(UserInput::Event event) {
 
 void AppSMStates::DeviceInfoState::entry() {
   sm().device_info_start_time_ = millis();
+#if defined(HAS_DISPLAY)
   sm().display_.disp_device_info();
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#endif
+#if defined(HAS_BUTTON_UI)
   sm().buttons_.SetEventCallback(std::bind(&DeviceInfoState::handle_ui_event,
                                            this, std::placeholders::_1));
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
   sm().device_state_.flags().keep_frontlight_on = true;
   sm().hw_.set_frontlight(sm().hw_.FL_LED_BRIGHT_DFLT);
   sm().touch_handler_.SetEventCallback(std::bind(
@@ -1279,7 +1436,6 @@ void AppSMStates::DeviceInfoState::loop() {
     if (sm().device_state_.flags().awake_mode) {
       return transition_to<AwakeModeIdleState>();
     } else {
-      sm().display_.disp_main();
       return transition_to<CmdShutdownState>();
     }
   }
@@ -1295,7 +1451,6 @@ void AppSMStates::DeviceInfoState::handle_ui_event(UserInput::Event event) {
         if (sm().device_state_.flags().awake_mode) {
           return transition_to<AwakeModeIdleState>();
         } else {
-          sm().display_.disp_main();
           return transition_to<CmdShutdownState>();
         }
         break;
@@ -1309,6 +1464,10 @@ void AppSMStates::DeviceInfoState::handle_ui_event(UserInput::Event event) {
 }
 
 void AppSMStates::CmdShutdownState::entry() {
+#if defined(HAS_DISPLAY)
+  if (sm().display_.get_ui_state().page != DisplayPage::MAIN) {
+    sm().display_.disp_main();
+  }
   if (sm().device_state_.persisted().download_mdi_icons) {
     sm()._download_mdi_icons();
     sm().device_state_.persisted().download_mdi_icons = false;
@@ -1316,19 +1475,17 @@ void AppSMStates::CmdShutdownState::entry() {
   if (sm().boot_cause_ == BootCause::RESET) {
     sm().display_.disp_main();
   }
-  if (sm().device_state_.flags().awake_mode) {
-    sm().display_.disp_main();
-  }
+#endif
   sm().shutdown_cmd_time_ = millis();
 }
 
 void AppSMStates::CmdShutdownState::loop() {
   // wait for timeout
   if (millis() - sm().shutdown_cmd_time_ > SHUTDOWN_DELAY) {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
+#if defined(HAS_BUTTON_UI)
     sm().buttons_.Stop();
     sm().leds_.Stop();
-#elif defined(HOME_BUTTONS_PRO)
+#elif defined(HAS_TOUCH_UI)
     sm().touch_handler_.Stop();
 #endif
     sm().network_.disconnect();
@@ -1337,30 +1494,39 @@ void AppSMStates::CmdShutdownState::loop() {
 }
 
 void AppSMStates::NetDisconnectingState::loop() {
-  if (sm().network_.get_state() == Network::State::DISCONNECTED &&
-      !sm().display_.busy()) {
+  bool conditions = true;
+  conditions =
+      conditions && sm().network_.get_state() == Network::State::DISCONNECTED;
+#if defined(HAS_DISPLAY)
+  conditions = conditions && !sm().display_.busy();
+#endif
+  if (conditions) {
+#if defined(HAS_DISPLAY)
     if (sm().device_state_.flags().display_redraw) {
       sm().device_state_.flags().display_redraw = false;
       sm().display_.disp_main();
     }
     sm().display_.end();
+#endif
     return transition_to<ShuttingDownState>();
   }
 }
 
 void AppSMStates::ShuttingDownState::loop() {
-#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
-  bool ended =
-      sm().display_.get_state() == Display::State::IDLE &&
-      sm().leds_.cstate() == ComponentBase::ComponentState::kStopped &&
-      sm().buttons_.cstate() == ComponentBase::ComponentState::kStopped &&
-      !sm().hw_.any_button_pressed();
-#elif defined(HOME_BUTTONS_PRO)
-  bool ended =
-      sm().display_.get_state() == Display::State::IDLE &&
-      sm().touch_handler_.cstate() == ComponentBase::ComponentState::kStopped;
+  bool ended = true;
+#if defined(HAS_DISPLAY)
+  ended = ended && sm().display_.get_state() == Display::State::IDLE;
 #endif
-
+#if defined(HAS_BUTTON_UI)
+  ended = ended &&
+          sm().leds_.cstate() == ComponentBase::ComponentState::kStopped &&
+          sm().buttons_.cstate() == ComponentBase::ComponentState::kStopped &&
+          !sm().hw_.any_button_pressed();
+#endif
+#if defined(HAS_TOUCH_UI)
+  ended = ended && sm().touch_handler_.cstate() ==
+                       ComponentBase::ComponentState::kStopped;
+#endif
   if (ended) {
 #ifdef HOME_BUTTONS_DEBUG
     sm()._log_task_stats();
@@ -1370,15 +1536,22 @@ void AppSMStates::ShuttingDownState::loop() {
       sm().device_state_.save_all();
       ESP.restart();
     } else {
+#if defined(HAS_SLEEP_MODE)
       sm()._go_to_sleep();
+#endif
     }
   }
 }
 
 void AppSMStates::FactoryResetState::entry() {
-  sm().display_.disp_message("Factory\nRESET...");
+  sm().info("factory reset...");
   sm().network_.disconnect(true);  // erase login data
+#if defined(HAS_DISPLAY)
+  sm().display_.disp_message("Factory\nRESET...");
   sm().display_.end();
+#else
+  sm().leds_.Blink(4, 10, sm().hw_.LED_BRIGHT_DFLT, 200, 160, false);
+#endif
 #if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI)
   sm().buttons_.Stop();
 #elif defined(HOME_BUTTONS_PRO)
@@ -1386,10 +1559,16 @@ void AppSMStates::FactoryResetState::entry() {
 }
 
 void AppSMStates::FactoryResetState::loop() {
-  if (sm().network_.get_state() == Network::State::DISCONNECTED &&
-      sm().display_.get_state() == Display::State::IDLE) {
+  bool conditions = true;
+  conditions =
+      conditions && sm().network_.get_state() == Network::State::DISCONNECTED;
+#if defined(HAS_DISPLAY)
+  conditions = conditions && sm().display_.get_state() == Display::State::IDLE;
+#endif
+  if (conditions) {
     sm().device_state_.clear_all();
     sm().info("factory reset complete.");
+    delay(5000);
     ESP.restart();
   }
 }

@@ -5,9 +5,9 @@
 
 #include "static_string.h"
 #include "logger.h"
+#include "hardware.h"
 
-class Display;
-struct HardwareDefinition;
+#include "app.h"
 
 struct FacTestParams {
   bool do_test;
@@ -33,12 +33,14 @@ struct TestSpec {
 
 class FactoryTest : public Logger {
  public:
-  FactoryTest() : Logger("Fac.Test") {}
+  FactoryTest(App& app) : Logger("Fac.Test"), app_(app) {}
   bool is_test_required();
-  bool run_test(HardwareDefinition& HW, Display& display);
+  bool run_test();
 
  private:
   TestSpec test_spec_ = {};
+
+  App& app_;
 
   void _mqtt_callback(const char* topic, uint8_t* payload, uint32_t length);
 };
