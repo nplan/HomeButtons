@@ -8,6 +8,8 @@
 
 #include "Adafruit_SHTC3.h"
 
+#include "driver/ledc.h"
+
 #include <math.h>
 
 #if defined(HAS_TH_SENSOR)
@@ -217,6 +219,9 @@ void HardwareDefinition::begin() {
   ledcSetup(LED4_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED4_PIN, LED4_CH);
 #endif
+
+  // enable hardware ledc fading
+  ledc_fade_func_install(0);
 }
 
 #if defined(HAS_BUTTON_UI)
@@ -298,11 +303,19 @@ uint8_t HardwareDefinition::num_buttons_pressed() {
   return num;
 }
 
-void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness) {
-  ledcWrite(ch, brightness);
+void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness,
+                                 uint16_t fade_time) {
+  if (fade_time > 0) {
+    ledc_set_fade_with_time(LEDC_LOW_SPEED_MODE, (ledc_channel_t)ch, brightness,
+                            fade_time);
+    ledc_fade_start(LEDC_LOW_SPEED_MODE, (ledc_channel_t)ch, LEDC_FADE_NO_WAIT);
+  } else {
+    ledcWrite(ch, brightness);
+  }
 }
 
-void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
+void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness,
+                                     uint16_t fade_time) {
   num = map_button_num_sw_to_hw(num);
   uint8_t ch;
 
@@ -347,22 +360,22 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness) {
       return;
   }
 #endif
-  set_led(ch, brightness);
+  set_led(ch, brightness, fade_time);
 }
 
-void HardwareDefinition::set_all_leds(uint8_t brightness) {
+void HardwareDefinition::set_all_leds(uint8_t brightness, uint16_t fade_time) {
 #if defined(HOME_BUTTONS_ORIGINAL)
-  set_led(LED1_CH, brightness);
-  set_led(LED2_CH, brightness);
-  set_led(LED3_CH, brightness);
-  set_led(LED4_CH, brightness);
-  set_led(LED5_CH, brightness);
-  set_led(LED6_CH, brightness);
+  set_led(LED1_CH, brightness, fade_time);
+  set_led(LED2_CH, brightness, fade_time);
+  set_led(LED3_CH, brightness, fade_time);
+  set_led(LED4_CH, brightness, fade_time);
+  set_led(LED5_CH, brightness, fade_time);
+  set_led(LED6_CH, brightness, fade_time);
 #elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
-  set_led(LED1_CH, brightness);
-  set_led(LED2_CH, brightness);
-  set_led(LED3_CH, brightness);
-  set_led(LED4_CH, brightness);
+  set_led(LED1_CH, brightness, fade_time);
+  set_led(LED2_CH, brightness, fade_time);
+  set_led(LED3_CH, brightness, fade_time);
+  set_led(LED4_CH, brightness, fade_time);
 #endif
 }
 

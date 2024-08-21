@@ -1,6 +1,8 @@
 #ifndef HOMEBUTTONS_CONFIG_H
 #define HOMEBUTTONS_CONFIG_H
 
+// #define LED_DEFAULT_FADE_TIME 100
+
 #if !defined(HOME_BUTTONS_ORIGINAL) && !defined(HOME_BUTTONS_MINI) && \
     !defined(HOME_BUTTONS_PRO) && !defined(HOME_BUTTONS_INDUSTRIAL)
 #error "No device defined!"
@@ -131,6 +133,7 @@ static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
 static constexpr uint32_t SCHEDULE_WAKEUP_MIN = 5;                      // s
 static constexpr uint32_t SCHEDULE_WAKEUP_MAX = SEN_INTERVAL_MAX * 60;  // s
 static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
+static constexpr uint16_t LED_DEFAULT_FADE_TIME = 100;  // ms
 
 // ------ UI ------
 #if defined(HOME_BUTTONS_ORIGINAL)

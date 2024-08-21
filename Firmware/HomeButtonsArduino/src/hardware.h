@@ -115,9 +115,12 @@ struct HardwareDefinition : public Logger {
   bool button_pressed(uint8_t num);
   uint8_t num_buttons_pressed();
 
-  void set_led(uint8_t ch, uint8_t brightness);
-  void set_led_num(uint8_t num, uint8_t brightness);
-  void set_all_leds(uint8_t brightness);
+  void set_led(uint8_t ch, uint8_t brightness,
+               uint16_t fade_time = LED_DEFAULT_FADE_TIME);
+  void set_led_num(uint8_t num, uint8_t brightness,
+                   uint16_t fade_time = LED_DEFAULT_FADE_TIME);
+  void set_all_leds(uint8_t brightness,
+                    uint16_t fade_time = LED_DEFAULT_FADE_TIME);
   void blink_led(uint8_t num, uint8_t num_blinks, uint8_t brightness);
 #endif
 
