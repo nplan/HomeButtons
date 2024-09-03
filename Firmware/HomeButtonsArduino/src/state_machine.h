@@ -52,9 +52,9 @@ class StateMachine {
 
     current_state_ = &std::get<NextState>(states_);
 
-    base_.info("Entering state %s::%s", name_,
-               std::visit([](auto statePtr) { return statePtr->get_name(); },
-                          current_state_));
+    base_.debug("Entering state %s::%s", name_,
+                std::visit([](auto statePtr) { return statePtr->get_name(); },
+                           current_state_));
     std::visit([](auto statePtr) { statePtr->entry(); }, current_state_);
   }
 
@@ -72,14 +72,14 @@ class StateMachine {
   }
 
   void _enter_state(std::variant<States *...> state) {
-    base_.info(
+    base_.debug(
         "Entering state %s::%s", name_,
         std::visit([](auto statePtr) { return statePtr->get_name(); }, state));
     std::visit([](auto statePtr) { statePtr->entry(); }, state);
   }
 
   void _exit_state(std::variant<States *...> state) {
-    base_.info(
+    base_.debug(
         "Leaving state %s::%s", name_,
         std::visit([](auto statePtr) { return statePtr->get_name(); }, state));
     std::visit([](auto statePtr) { statePtr->exit(); }, state);

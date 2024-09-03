@@ -35,7 +35,6 @@
 #endif
 
 #if defined(HOME_BUTTONS_INDUSTRIAL)
-#define HAS_SWITCH_UI
 #define HAS_BUTTON_UI
 #endif
 
@@ -44,7 +43,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.5.0-alpha2";
+static constexpr char SW_VERSION[] = "v2.5.0-alpha5";
 
 #if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char SW_MODEL_ID[] = "A1";
@@ -70,7 +69,6 @@ static constexpr char DOCS_LINK[] =
 #endif
 
 // ------ wifi AP ------
-static constexpr char WIFI_MANAGER_TITLE[] = "Home Buttons";
 static constexpr char SETUP_AP_PASSWORD[] = "password123";
 
 // ------ buttons ------
@@ -81,7 +79,7 @@ static constexpr uint8_t NUM_BUTTONS = 4;
 #elif defined(HOME_BUTTONS_PRO)
 static constexpr uint8_t NUM_BUTTONS = 9;
 #elif defined(HOME_BUTTONS_INDUSTRIAL)
-static constexpr uint8_t NUM_BUTTONS = 4;
+static constexpr uint8_t NUM_BUTTONS = 5;
 #endif
 static constexpr char BTN_PRESS_PAYLOAD[] = "PRESS";
 static constexpr uint8_t BTN_LABEL_MAXLEN = 56;
@@ -93,6 +91,7 @@ static constexpr uint16_t MQTT_PORT_DFLT = 1883;
 static constexpr char BASE_TOPIC_DFLT[] = "homebuttons";
 static constexpr char DISCOVERY_PREFIX_DFLT[] = "homeassistant";
 static constexpr char BNT_LABEL_DFLT_PREFIX[] = "B";
+static constexpr char BTN_CONF_DFLT[] = "BBBBBBBBBBBBBBBB";
 
 // ------ sensors ------
 #if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_PRO) || \
@@ -128,12 +127,17 @@ static constexpr uint32_t NET_CONNECT_TIMEOUT = 30000L;
 static constexpr uint8_t MAX_FAILED_CONNECTIONS = 5;
 static const IPAddress DEFAULT_DNS2 = IPAddress(1, 1, 1, 1);
 
+// ------ MQTT ------
+static constexpr uint16_t MQTT_PYLD_SIZE = 512;
+static constexpr uint16_t MQTT_BUFFER_SIZE = 777;
+static constexpr size_t MAX_TOPIC_LENGTH = 256;
+
 // ------ other ------
 static constexpr uint32_t MIN_FREE_HEAP = 10000UL;
 static constexpr uint32_t SCHEDULE_WAKEUP_MIN = 5;                      // s
 static constexpr uint32_t SCHEDULE_WAKEUP_MAX = SEN_INTERVAL_MAX * 60;  // s
 static constexpr uint32_t MDI_FREE_SPACE_THRESHOLD = 100000UL;
-static constexpr uint16_t LED_DEFAULT_FADE_TIME = 100;  // ms
+static constexpr uint16_t LED_DEFAULT_FADE_TIME = 50;  // ms
 
 // ------ UI ------
 #if defined(HOME_BUTTONS_ORIGINAL)
@@ -144,6 +148,11 @@ static constexpr char BATT_EMPTY_MSG[] =
     "Batteries\nLOW\n\nPlease\nreplace\nsoon!";
 #endif
 
-static constexpr uint8_t DFLT_AMB_LED_BRIGHT = 15;
+static constexpr uint8_t DFLT_AMB_LED_BRIGHT = 10;  // 0 - 255
+
+// ------ BUTTONS ------
+static constexpr uint32_t kBtnDebounceTimeout = 50L;
+static constexpr uint32_t kBtnPressTimeout = 500L;
+static constexpr uint32_t kBtnTriggerInterval = 250L;
 
 #endif  // HOMEBUTTONS_CONFIG_H

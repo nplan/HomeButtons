@@ -77,6 +77,18 @@ class ComponentBase : public Logger {
           debug("cmd stop accepted");
         }
         return true;
+      } else if (cstate_ == ComponentState::kCmdStop) {
+        debug("cmd stop, already stopping");
+        return true;
+      } else if (cstate_ == ComponentState::kStopped) {
+        debug("cmd stope, already stopped");
+        return true;
+      } else if (cstate_ == ComponentState::kUninitialized) {
+        debug("cmd stop, not initialized");
+        return true;
+      } else if (cstate_ == ComponentState::kInitialized) {
+        debug("cmd stop, not started");
+        return true;
       } else {
         debug("cmd stop denied");
         return false;

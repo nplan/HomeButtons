@@ -80,7 +80,7 @@ enum class LEDBlinkType { kOff, kConstant, kBlink, kPulse };
 
 struct LEDBlink {
   LEDBlinkType type = LEDBlinkType::kOff;
-  uint8_t brightness = 0;
+  uint16_t brightness = 0;
   uint8_t num_blinks = 0;
   uint16_t on_ms = 0;
   uint16_t off_ms = 0;
@@ -107,16 +107,20 @@ class LED : public ComponentBase, public LEDStateMachine {
   void InternalLoop() override;
   void InternalRestart() override;
 
-  void On(uint8_t brightness);
+  void On(uint16_t brightness);
   void Off();
 
-  void Blink(uint8_t num_blinks, uint8_t brightness, uint16_t on_ms = 0,
+  void Blink(uint8_t num_blinks, uint16_t brightness, uint16_t on_ms = 0,
              uint16_t off_ms = 0, bool hold = false);
 
-  void Pulse(uint8_t brightness, uint16_t cycle_ms = 1000);
+  void Pulse(uint16_t brightness, uint16_t cycle_ms = 1000);
 
-  void SetAmbientBrightness(uint8_t brightness) {
+  void SetAmbientBrightness(uint16_t brightness) {
     ambient_brightness_ = brightness;
+    debug("LED %d ambient brightness set to: %d", id_, ambient_brightness_);
+    if (is_current_state<LEDSMStates::IdleState>()) {
+      transition_to<LEDSMStates::IdleState>();
+    }
   }
 
   uint8_t id() const { return id_; }
@@ -147,7 +151,7 @@ class LEDs : public ComponentBase {
   LEDs(const char* name, std::array<std::reference_wrapper<LED>, N_LEDS> leds)
       : ComponentBase(name), leds_(leds) {}
 
-  void Blink(uint8_t led_id, uint8_t num_blinks, uint8_t brightness,
+  void Blink(uint8_t led_id, uint8_t num_blinks, uint16_t brightness,
              uint16_t on_ms = 0, uint16_t off_ms = 0, bool hold = false) {
     for (auto& led : leds_) {
       if (led.get().id() == led_id) {
@@ -157,7 +161,7 @@ class LEDs : public ComponentBase {
     }
   }
 
-  void On(uint8_t led_id, uint8_t brightness) {
+  void On(uint8_t led_id, uint16_t brightness) {
     for (auto& led : leds_) {
       if (led.get().id() == led_id) {
         led.get().On(brightness);
@@ -175,7 +179,7 @@ class LEDs : public ComponentBase {
     }
   }
 
-  void Pulse(uint8_t led_id, uint8_t brightness, uint16_t cycle_ms = 1000) {
+  void Pulse(uint8_t led_id, uint16_t brightness, uint16_t cycle_ms = 1000) {
     for (auto& led : leds_) {
       if (led.get().id() == led_id) {
         led.get().Pulse(brightness, cycle_ms);
@@ -184,7 +188,7 @@ class LEDs : public ComponentBase {
     }
   }
 
-  void SetAmbientBrightness(uint8_t led_id, uint8_t brightness) {
+  void SetAmbientBrightness(uint8_t led_id, uint16_t brightness) {
     for (auto& led : leds_) {
       if (led.get().id() == led_id) {
         led.get().SetAmbientBrightness(brightness);
@@ -193,7 +197,7 @@ class LEDs : public ComponentBase {
     }
   }
 
-  void AllOn(uint8_t brightness) {
+  void AllOn(uint16_t brightness) {
     for (auto& led : leds_) {
       led.get().On(brightness);
     }

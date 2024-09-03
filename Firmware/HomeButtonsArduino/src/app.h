@@ -5,6 +5,7 @@
 #include "state.h"
 #include "network.h"
 #include "mqtt_helper.h"
+#include "topics.h"
 #include "logger.h"
 #include "hardware.h"
 #include "setup.h"
@@ -15,9 +16,10 @@
 #endif
 
 #if defined(HAS_BUTTON_UI)
-#include "button_ui/buttons.h"
-#include "button_ui/leds.h"
-#elif defined(HAS_TOUCH_UI)
+#include "button_ui/btn_sw_led.h"
+#endif
+
+#if defined(HAS_TOUCH_UI)
 #include "touch/touch.h"
 #endif
 
@@ -41,6 +43,7 @@ class AwakeModeIdleState : public State<App> {
   using State<App>::State;
 
   void entry() override;
+  void exit() override;
   void loop() override;
   void handle_ui_event(UserInput::Event event);
 
@@ -52,6 +55,7 @@ class SleepModeHandleInput : public State<App> {
   using State<App>::State;
 
   void entry() override;
+  void exit() override;
   void loop() override;
   void handle_ui_event(UserInput::Event event);
 
@@ -63,6 +67,7 @@ class NetConnectingState : public State<App> {
   using State<App>::State;
 
   void entry() override;
+  void exit() override;
   void loop() override;
   void handle_ui_event(UserInput::Event event);
 
@@ -98,6 +103,7 @@ class DeviceInfoState : public State<App> {
   using State<App>::State;
 
   void entry() override;
+  void exit() override;
   void loop() override;
   void handle_ui_event(UserInput::Event event);
 
@@ -211,41 +217,41 @@ class App : public AppStateMachine, public Logger {
   TaskHandle_t main_task_h_ = nullptr;
 
 #if defined(HOME_BUTTONS_ORIGINAL)
-  Button btn1_;
-  Button btn2_;
-  Button btn3_;
-  Button btn4_;
-  Button btn5_;
-  Button btn6_;
-  ButtonInput<NUM_BUTTONS> buttons_;
-  LED led1_;
-  LED led2_;
-  LED led3_;
-  LED led4_;
-  LED led5_;
-  LED led6_;
-  LEDs<NUM_BUTTONS> leds_;
-#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
-  Button btn1_;
-  Button btn2_;
-  Button btn3_;
-  Button btn4_;
-  ButtonInput<NUM_BUTTONS> buttons_;
-  LED led1_;
-  LED led2_;
-  LED led3_;
-  LED led4_;
-  LEDs<NUM_BUTTONS> leds_;
-#elif defined(HAS_TOUCH_UI)
+  BtnSwLED b1_;
+  BtnSwLED b2_;
+  BtnSwLED b3_;
+  BtnSwLED b4_;
+  BtnSwLED b5_;
+  BtnSwLED b6_;
+  BtnSwLEDInput<NUM_BUTTONS> bsl_input_;
+#elif defined(HOME_BUTTONS_MINI)
+  BtnSwLED b1_;
+  BtnSwLED b2_;
+  BtnSwLED b3_;
+  BtnSwLED b4_;
+  BtnSwLED sw_;
+  BtnSwLEDInput<NUM_BUTTONS> bsl_input_;
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+  BtnSwLED b1_;
+  BtnSwLED b2_;
+  BtnSwLED b3_;
+  BtnSwLED b4_;
+  BtnSwLED sw_;
+  BtnSwLEDInput<NUM_BUTTONS> bsl_input_;
+#endif
+
+#if defined(HAS_TOUCH_UI)
   TouchInput touch_handler_;
 #endif
+
   UserInput::Event user_event_ = {};
 
-  Network network_;
 #if defined(HAS_DISPLAY)
   Display display_;
   MDIHelper mdi_;
 #endif
+  TopicHelper topics_;
+  Network network_;
   MQTTHelper mqtt_;
   HardwareDefinition hw_;
   HBSetup setup_;

@@ -17,7 +17,7 @@ void LEDSMStates::IdleState::loop() {
     } else if (sm().current_blink_->type == LEDBlinkType::kPulse) {
       return transition_to<PulseState>();
     } else if (sm().current_blink_->type == LEDBlinkType::kOff) {
-      sm().hw_.set_led_num(sm().id_, sm().ambient_brightness_);
+      return transition_to<IdleState>();
     }
   }
   if (sm().cstate() == ComponentBase::ComponentState::kCmdStop) {
@@ -63,7 +63,7 @@ void LEDSMStates::ConstOnState::entry() {
 
 void LEDSMStates::ConstOnState::loop() {
   if (sm().cmd_blink_.has_value()) {
-    return transition_to<TransitionState>();
+    return transition_to<IdleState>();
   }
   if (sm().cstate() == ComponentBase::ComponentState::kCmdStop) {
     sm().SetStopped();
@@ -79,7 +79,7 @@ void LEDSMStates::PulseState::loop() {
                0.5);
   sm().hw_.set_led_num(sm().id_, b);
   if (sm().cmd_blink_.has_value()) {
-    return transition_to<TransitionState>();
+    return transition_to<IdleState>();
   }
   if (sm().cstate() == ComponentBase::ComponentState::kCmdStop) {
     sm().SetStopped();
@@ -97,7 +97,7 @@ void LEDSMStates::TransitionState::loop() {
   }
 }
 
-void LED::Blink(uint8_t num_blinks, uint8_t brightness, uint16_t on_ms,
+void LED::Blink(uint8_t num_blinks, uint16_t brightness, uint16_t on_ms,
                 uint16_t off_ms, bool hold) {
   if (on_ms == 0) {
     switch (num_blinks) {
@@ -143,7 +143,7 @@ void LED::Blink(uint8_t num_blinks, uint8_t brightness, uint16_t on_ms,
         id_, num_blinks, brightness, on_ms, off_ms, hold);
 }
 
-void LED::On(uint8_t brightness) {
+void LED::On(uint16_t brightness) {
   cmd_blink_ = LEDBlink{LEDBlinkType::kConstant, brightness};
   debug("ON: led: %d, bri: %d", id_, brightness);
 }
@@ -153,7 +153,7 @@ void LED::Off() {
   debug("OFF: led: %d", id_);
 }
 
-void LED::Pulse(uint8_t brightness, uint16_t cycle_ms) {
+void LED::Pulse(uint16_t brightness, uint16_t cycle_ms) {
   cmd_blink_ =
       LEDBlink{LEDBlinkType::kPulse, brightness, 0, 0, 0, false, cycle_ms};
   debug("PULSE: led: %d, bri: %d, cycle_ms: %d", id_, brightness, cycle_ms);

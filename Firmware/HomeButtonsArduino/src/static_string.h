@@ -90,6 +90,23 @@ class StaticString {
     return -1;
   }
 
+  char char_at(unsigned int index) const { return operator[](index); }
+
+  void to_upper_case() {
+    for (char* p = data_; *p; p++) {
+      *p = toupper(*p);
+    }
+  }
+
+  void to_lower_case() {
+    for (char* p = data_; *p; p++) {
+      *p = tolower(*p);
+    }
+  }
+
+  char* begin() { return data_; }
+  char* end() { return data_ + length(); }
+
   template <typename T>
   StaticString operator+(T other) const {
     StaticString output = *this;
@@ -155,6 +172,22 @@ class StaticString {
     return std::strncmp(data_, other.data_,
                         std::min(MAX_SIZE,
                                  StaticString<_OTHER_MAX_SIZE>::MAX_SIZE)) == 0;
+  }
+
+  char operator[](unsigned int i) const {
+    if (i >= length()) {
+      return '\0';
+    }
+    return data_[i];
+  }
+
+  char& operator[](unsigned int i) {
+    static char dummy;
+    if (i >= length()) {
+      dummy = 0;
+      return dummy;
+    }
+    return data_[i];
   }
 
  private:

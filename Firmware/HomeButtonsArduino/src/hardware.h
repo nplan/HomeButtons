@@ -72,12 +72,12 @@ struct HardwareDefinition : public Logger {
   uint8_t LED6_CH;
 
   uint8_t FL_LED_CH;
-  uint8_t FL_LED_BRIGHT_DFLT;
+  uint16_t FL_LED_BRIGHT_DFLT;
 
   uint8_t LED_RES;
   uint16_t LED_FREQ;
-  uint8_t LED_BRIGHT_DFLT;
-  uint8_t LED_MAX_AMB_BRIGHT;
+  uint16_t LED_BRIGHT_DFLT;
+  uint16_t LED_MAX_AMB_BRIGHT;
 
   // ------ battery reading ------
   float BATT_DIVIDER;
@@ -115,13 +115,12 @@ struct HardwareDefinition : public Logger {
   bool button_pressed(uint8_t num);
   uint8_t num_buttons_pressed();
 
-  void set_led(uint8_t ch, uint8_t brightness,
+  void set_led(uint8_t ch, uint16_t brightness,
                uint16_t fade_time = LED_DEFAULT_FADE_TIME);
-  void set_led_num(uint8_t num, uint8_t brightness,
+  void set_led_num(uint8_t num, uint16_t brightness,
                    uint16_t fade_time = LED_DEFAULT_FADE_TIME);
-  void set_all_leds(uint8_t brightness,
+  void set_all_leds(uint16_t brightness,
                     uint16_t fade_time = LED_DEFAULT_FADE_TIME);
-  void blink_led(uint8_t num, uint8_t num_blinks, uint8_t brightness);
 #endif
 
 #if defined(HAS_BATTERY)
@@ -139,6 +138,7 @@ struct HardwareDefinition : public Logger {
 #if defined(HAS_TOUCH_UI)
   bool touch_click_pressed();
 #endif
+
 #if defined(HAS_FRONTLIGHT)
   void set_frontlight(uint8_t brightness);
 #endif

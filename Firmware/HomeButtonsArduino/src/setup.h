@@ -14,6 +14,9 @@ class HBSetup : public Logger {
 
  private:
   App& app_;
+  bool web_portal_saved_ = false;
+
+  void save_params_callback();
 };
 
 #endif  // HOMEBUTTONS_SETUP_H

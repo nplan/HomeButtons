@@ -5,6 +5,7 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <ESPmDNS.h>
 
 #include "utils.h"
 
@@ -28,14 +29,20 @@ static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 15);
 static WiFiManagerParameter dns_param("dns", "Primary DNS Server", "", 15);
 static WiFiManagerParameter dns2_param("dns2", "Secondary DNS Server", "", 15);
 
+#if defined(HAS_TH_SENSOR)
 static WiFiManagerParameter temp_unit_param("temp_unit", "Temperature Unit", "",
                                             1);
+#endif
 
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+static WiFiManagerParameter button_config_param("btn_conf", "Button Config", "",
+                                                NUM_BUTTONS - 1);
+#endif
+
+#if defined(HAS_DISPLAY)
 static char* button_ids[NUM_BUTTONS];
 static char* button_labels[NUM_BUTTONS];
 static WiFiManagerParameter* btn_label_params[NUM_BUTTONS];
-
-static bool web_portal_saved = false;
 
 void allocate_btn_label_params() {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
@@ -61,26 +68,51 @@ void set_device_state_from_btn_label_params(DeviceState& device_state_) {
     device_state_.set_btn_label(i, btn_label_params[i]->getValue());
   }
 }
+#endif
 
 void HBSetup::start_wifi_setup() {
   info("Wi-Fi setup");
+  app_.bsl_input_.PauseSwitchMode();
 #if defined(HAS_DISPLAY)
   app_.display_.disp_ap_config();
   app_.display_.update();
 #else
-  app_.leds_.Pulse(2, app_.hw_.LED_BRIGHT_DFLT, 2000);
+  app_.bsl_input_.LEDPulse(2, app_.hw_.LED_BRIGHT_DFLT, 2000);
+#endif
+
+#if defined(HOME_BUTTONS_DEBUG)
+  Serial.begin(115200);
+  wifi_manager.setDebugOutput(true, WM_DEBUG_DEV);
 #endif
 
   WiFi.mode(WIFI_STA);
-  wifi_manager.setConfigPortalTimeout(SETUP_TIMEOUT);
-  wifi_manager.resetSettings();
-  wifi_manager.setTitle(WIFI_MANAGER_TITLE);
+  wifi_manager.setTitle(app_.device_state_.get_model_name_w_rand_id().c_str());
   wifi_manager.setBreakAfterConfig(true);
   wifi_manager.setDarkMode(true);
   wifi_manager.setShowInfoUpdate(false);
+  wifi_manager.setConfigPortalBlocking(false);
 
+  uint32_t setup_start_time = millis();
   wifi_manager.startConfigPortal(app_.device_state_.get_ap_ssid().c_str(),
                                  app_.device_state_.get_ap_password());
+  while (true) {
+    bool connected = wifi_manager.process();
+    if (millis() - setup_start_time > SETUP_TIMEOUT * 1000L) {
+      debug("Wi-Fi config portal stopped, timeout");
+      break;
+    }
+    if (connected) {
+      debug("Wi-Fi config portal stopped, connected");
+      break;
+    }
+    if (app_.hw_.any_button_pressed()) {
+      debug("Wi-Fi config portal stopped by user");
+      break;
+    }
+    delay(250);
+  }
+
+  info("Wi-Fi config portal stopped, trying to connect to Wi-Fi...");
 
   bool wifi_connected = false;
   WiFi.mode(WIFI_STA);
@@ -98,17 +130,21 @@ void HBSetup::start_wifi_setup() {
   }
 
   if (wifi_connected) {
+    SSIDType ssid(WiFi.SSID());
+    if (!(ssid == app_.device_state_.user_preferences().network.ssid)) {
+      app_.device_state_.clear_static_ip_config();
+    }
     app_.device_state_.persisted().wifi_done = true;
     app_.device_state_.persisted().restart_to_setup = true;
     app_.device_state_.persisted().silent_restart = true;
     app_.device_state_.save_all();
-    info("Wi-Fi connected.");
+    info("Wi-Fi connected :)");
 #if defined(HAS_DISPLAY)
     app_.display_.disp_message_large("Wi-Fi\nconnected\n:)");
     app_.display_.update();
     delay(3000);
 #else
-    app_.leds_.Blink(2, 2, app_.hw_.LED_BRIGHT_DFLT, 500, 400, false);
+    app_.bsl_input_.LEDBlink(2, 2, app_.hw_.LED_BRIGHT_DFLT, 500, 400, false);
     delay(3000);
 #endif
     ESP.restart();
@@ -116,51 +152,66 @@ void HBSetup::start_wifi_setup() {
     app_.device_state_.persisted().wifi_done = false;
     app_.device_state_.persisted().silent_restart = true;
     app_.device_state_.save_all();
-    warning("Wi-Fi error.");
+    warning("Wi-Fi error :(");
 #if defined(HAS_DISPLAY)
     app_.display_.disp_error("Wi-Fi\nconnection\nerror");
     app_.display_.update();
     delay(5000);
 #else
-    app_.leds_.Blink(2, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
+    app_.bsl_input_.LEDBlink(2, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
     delay(3000);
 #endif
     ESP.restart();
   }
 }
 
-void save_params_callback(DeviceState* device_state_) {
-  device_state_->set_device_name(DeviceName{device_name_param.getValue()});
-  device_state_->set_mqtt_parameters(
+void HBSetup::save_params_callback() {
+  app_.device_state_.set_device_name(DeviceName{device_name_param.getValue()});
+  app_.device_state_.set_mqtt_parameters(
       mqtt_server_param.getValue(), String(mqtt_port_param.getValue()).toInt(),
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
       base_topic_param.getValue(), discovery_prefix_param.getValue());
 
+#if defined(HAS_DISPLAY)
   set_device_state_from_btn_label_params(*device_state_);
+#endif
 
-  device_state_->set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
+#if defined(HAS_TH_SENSOR)
+  app_.device_state_.set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
+#endif
 
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  app_.device_state_.set_btn_conf_string(
+      BtnConfString{button_config_param.getValue()});
+#endif
+
+  SSIDType ssid(WiFi.SSID());
   IPAddress static_ip, gateway, subnet, dns, dns2;
   static_ip.fromString(static_ip_param.getValue());
   gateway.fromString(gateway_param.getValue());
   subnet.fromString(subnet_param.getValue());
   dns.fromString(dns_param.getValue());
   dns2.fromString(dns2_param.getValue());
-  device_state_->set_static_ip_config(static_ip, gateway, subnet, dns, dns2);
-  web_portal_saved = true;
+  app_.device_state_.set_static_ip_config(ssid, static_ip, gateway, subnet, dns,
+                                          dns2);
+  web_portal_saved_ = true;
 }
 
 void HBSetup::start_setup() {
   info("Setup");
+  app_.bsl_input_.PauseSwitchMode();
   // config
-  wifi_manager.setTitle(WIFI_MANAGER_TITLE);
+  wifi_manager.setTitle(app_.device_state_.get_model_name_w_rand_id().c_str());
   wifi_manager.setSaveParamsCallback(
-      std::bind(&save_params_callback, &app_.device_state_));
+      std::bind(&HBSetup::save_params_callback, this));
   wifi_manager.setBreakAfterConfig(true);
   wifi_manager.setShowPassword(true);
   wifi_manager.setParamsPage(true);
   wifi_manager.setDarkMode(true);
   wifi_manager.setShowInfoUpdate(true);
+
+  // hostname
+  wifi_manager.setHostname(app_.device_state_.get_hostname().c_str());
 
   // parameters
   device_name_param.setValue(app_.device_state_.device_name().c_str(), 20);
@@ -192,10 +243,21 @@ void HBSetup::start_setup() {
       app_.device_state_.user_preferences().network.dns2.toString().c_str(),
       15);
 
+#if defined(HAS_DISPLAY)
   allocate_btn_label_params();
   set_btn_label_params_from_device_state(app_.device_state_);
+#endif
 
+#if defined(HAS_TH_SENSOR)
   temp_unit_param.setValue(app_.device_state_.get_temp_unit().c_str(), 1);
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  button_config_param.setValue(
+      app_.device_state_.user_preferences().btn_conf_string.c_str(),
+      NUM_BUTTONS - 1);
+#endif
+
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
   wifi_manager.addParameter(&mqtt_port_param);
@@ -209,17 +271,25 @@ void HBSetup::start_setup() {
   wifi_manager.addParameter(&dns_param);
   wifi_manager.addParameter(&dns2_param);
 
+#if defined(HAS_DISPLAY)
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     wifi_manager.addParameter(btn_label_params[i]);
   }
+#endif
 
+#if defined(HAS_TH_SENSOR)
   wifi_manager.addParameter(&temp_unit_param);
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  wifi_manager.addParameter(&button_config_param);
+#endif
 
 #if defined(HAS_DISPLAY)
   app_.display_.disp_message("Entering\nSETUP...");
   app_.display_.update();
 #else
-  app_.leds_.Pulse(1, app_.hw_.LED_BRIGHT_DFLT, 500);
+  app_.bsl_input_.LEDPulse(1, app_.hw_.LED_BRIGHT_DFLT, 500);
   delay(2000);
 #endif
 
@@ -270,35 +340,40 @@ void HBSetup::start_setup() {
       app_.display_.update();
       delay(3000);
 #else
-      app_.leds_.Blink(1, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
+      app_.bsl_input_.LEDBlink(1, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
       delay(3000);
 #endif
       ESP.restart();
     }
   }
+
+  // mDNS
+  MDNS.begin(app_.device_state_.get_hostname().c_str());
+
   app_.device_state_.set_ip(WiFi.localIP());
-  info("Connect to IP: %s",
-       ip_address_to_static_string(WiFi.localIP()).c_str());
+  info("Connect to http://%s or http://%s.local",
+       ip_address_to_static_string(WiFi.localIP()).c_str(),
+       app_.device_state_.get_hostname().c_str());
 #if defined(HAS_DISPLAY)
   app_.display_.disp_web_config();
   app_.display_.update();
 #else
-  app_.leds_.Pulse(1, app_.hw_.LED_BRIGHT_DFLT, 2000);
+  app_.bsl_input_.LEDPulse(1, app_.hw_.LED_BRIGHT_DFLT, 2000);
 #endif
   uint32_t setup_start_time = millis();
 
-  web_portal_saved = false;
+  web_portal_saved_ = false;
   wifi_manager.startWebPortal();
   while (millis() - setup_start_time < SETUP_TIMEOUT * 1000L) {
     wifi_manager.process();
-    if (app_.hw_.any_button_pressed() || web_portal_saved) {
+    if (app_.hw_.any_button_pressed() || web_portal_saved_) {
       break;
     }
     delay(10);
   }
   wifi_manager.stopWebPortal();
 
-  if (!web_portal_saved) {
+  if (!web_portal_saved_) {
     debug("User triggered exit setup");
     app_.device_state_.persisted().silent_restart = true;
     app_.device_state_.save_all();
@@ -329,7 +404,7 @@ void HBSetup::start_setup() {
   app_.display_.disp_message("Confirming\nsetup...");
   app_.display_.update();
 #else
-  app_.leds_.Pulse(1, app_.hw_.LED_BRIGHT_DFLT, 250);
+  app_.bsl_input_.LEDPulse(1, app_.hw_.LED_BRIGHT_DFLT, 250);
 #endif
 
   while (!mqtt_client.connected()) {
@@ -344,7 +419,7 @@ void HBSetup::start_setup() {
       app_.display_.update();
       delay(3000);
 #else
-      app_.leds_.Blink(1, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
+      app_.bsl_input_.LEDBlink(1, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
       delay(3000);
 #endif
       ESP.restart();
@@ -364,7 +439,7 @@ void HBSetup::start_setup() {
   app_.display_.update();
   delay(3000);
 #else
-  app_.leds_.Blink(1, 2, app_.hw_.LED_BRIGHT_DFLT, 500, 400, false);
+  app_.bsl_input_.LEDBlink(1, 2, app_.hw_.LED_BRIGHT_DFLT, 500, 400, false);
   delay(3000);
 #endif
   ESP.restart();

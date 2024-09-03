@@ -27,6 +27,8 @@ class UserInput : public ComponentBase {
     kHoldLong5s,
     kHoldLong10s,
     kHoldLong20s,
+    kSwitchOn,
+    kSwitchOff,
   };
 
   static const char* EventType2Str(EventType type) {
@@ -63,6 +65,10 @@ class UserInput : public ComponentBase {
         return "HoldLong10s";
       case EventType::kHoldLong20s:
         return "HoldLong20s";
+      case EventType::kSwitchOn:
+        return "SwitchOn";
+      case EventType::kSwitchOff:
+        return "SwitchOff";
       default:
         return "Unknown";
     }
@@ -87,6 +93,9 @@ class UserInput : public ComponentBase {
   void SetEventCallbackSecondary(std::function<void(Event)> callback) {
     event_callback_secondary_ = callback;
   }
+
+  void ClearEventCallback() { event_callback_ = nullptr; }
+  void ClearEventCallbackSecondary() { event_callback_secondary_ = nullptr; }
 
   static uint8_t EventType2NumClicks(EventType type) {
     switch (type) {

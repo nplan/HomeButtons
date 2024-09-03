@@ -115,7 +115,7 @@ class Network : public NetworkStateMachine, public Logger {
 
   enum class Command { NONE, CONNECT, DISCONNECT };
 
-  explicit Network(DeviceState &device_state);
+  explicit Network(DeviceState &device_state, TopicHelper &topics);
   Network(const Network &) = delete;
   ~Network();
 
@@ -144,6 +144,7 @@ class Network : public NetworkStateMachine, public Logger {
   DeviceState &device_state_;
   WiFiClient wifi_client_;
   PubSubClient mqtt_client_;
+  TopicHelper &topics_;
   QueueHandle_t mqtt_publish_queue_ = nullptr;
   TaskHandle_t network_task_handle_ = nullptr;
 

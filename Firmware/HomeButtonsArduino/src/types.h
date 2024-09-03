@@ -15,9 +15,16 @@ using DeviceName = StaticString<20>;
 using ButtonLabel = StaticString<BTN_LABEL_MAXLEN>;
 using MDIName = StaticString<48>;
 using UserMessage = StaticString<USER_MSG_MAXLEN>;
+using BtnConfString = StaticString<16>;
 
 using TouchActionString = StaticString<16>;
 using ClickActionString = StaticString<16>;
+
+using TopicType = StaticString<MAX_TOPIC_LENGTH>;
+using PayloadType = StaticString<MQTT_PYLD_SIZE>;
+
+using SSIDType = StaticString<32>;
+using HostnameType = StaticString<32>;
 
 enum class DisplayPage {
   EMPTY,

@@ -206,6 +206,7 @@ void HardwareDefinition::begin() {
   pinMode(BTN2_PIN, INPUT);
   pinMode(BTN3_PIN, INPUT);
   pinMode(BTN4_PIN, INPUT);
+  pinMode(BTN5_PIN, INPUT);
 
   ledcSetup(LED1_CH, LED_FREQ, LED_RES);
   ledcAttachPin(LED1_PIN, LED1_CH);
@@ -244,8 +245,14 @@ uint8_t HardwareDefinition::map_button_num_sw_to_hw(uint8_t sw_num) {
     default:
       return 0;
   }
-#elif defined(HOME_BUTTONS_MINI) || defined(HOME_BUTTONS_INDUSTRIAL)
+#elif defined(HOME_BUTTONS_MINI)
   if (sw_num >= 1 && sw_num <= 4) {
+    return sw_num;
+  } else {
+    return 0;
+  }
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+  if (sw_num >= 1 && sw_num <= 5) {
     return sw_num;
   } else {
     return 0;
@@ -294,6 +301,8 @@ bool HardwareDefinition::button_pressed(uint8_t id) {
 }
 
 uint8_t HardwareDefinition::num_buttons_pressed() {
+#if defined(HOME_BUTTONS_ORIGINAL) || defined(HOME_BUTTONS_MINI) || \
+    defined(HOME_BUTTONS_PRO)
   uint8_t num = 0;
   for (uint8_t i = 1; i <= NUM_BUTTONS; i++) {
     if (button_pressed(i)) {
@@ -301,9 +310,18 @@ uint8_t HardwareDefinition::num_buttons_pressed() {
     }
   }
   return num;
+#elif defined(HOME_BUTTONS_INDUSTRIAL)
+  uint8_t num = 0;
+  for (uint8_t i = 1; i <= 4; i++) {
+    if (button_pressed(i)) {
+      num++;
+    }
+  }
+  return num;
+#endif
 }
 
-void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness,
+void HardwareDefinition::set_led(uint8_t ch, uint16_t brightness,
                                  uint16_t fade_time) {
   if (fade_time > 0) {
     ledc_set_fade_with_time(LEDC_LOW_SPEED_MODE, (ledc_channel_t)ch, brightness,
@@ -314,7 +332,7 @@ void HardwareDefinition::set_led(uint8_t ch, uint8_t brightness,
   }
 }
 
-void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness,
+void HardwareDefinition::set_led_num(uint8_t num, uint16_t brightness,
                                      uint16_t fade_time) {
   num = map_button_num_sw_to_hw(num);
   uint8_t ch;
@@ -363,7 +381,7 @@ void HardwareDefinition::set_led_num(uint8_t num, uint8_t brightness,
   set_led(ch, brightness, fade_time);
 }
 
-void HardwareDefinition::set_all_leds(uint8_t brightness, uint16_t fade_time) {
+void HardwareDefinition::set_all_leds(uint16_t brightness, uint16_t fade_time) {
 #if defined(HOME_BUTTONS_ORIGINAL)
   set_led(LED1_CH, brightness, fade_time);
   set_led(LED2_CH, brightness, fade_time);
@@ -377,45 +395,6 @@ void HardwareDefinition::set_all_leds(uint8_t brightness, uint16_t fade_time) {
   set_led(LED3_CH, brightness, fade_time);
   set_led(LED4_CH, brightness, fade_time);
 #endif
-}
-
-void HardwareDefinition::blink_led(uint8_t led, uint8_t num_blinks,
-                                   uint8_t brightness) {
-  if (num_blinks < 1)
-    num_blinks = 1;
-  else if (num_blinks > 4)
-    num_blinks = 4;
-
-  uint16_t on, off;
-  switch (num_blinks) {
-    case 1:
-      on = 800;
-      off = 0;
-      break;
-    case 2:
-      on = 100;
-      off = 300;
-      break;
-    case 3:
-      on = 67;
-      off = 200;
-      break;
-    case 4:
-      on = 50;
-      off = 150;
-      break;
-    default:
-      on = 50;
-      off = 150;
-      break;
-  }
-
-  for (uint8_t i = 0; i < num_blinks; i++) {
-    set_led_num(led, brightness);
-    delay(on);
-    set_led_num(led, 0);
-    delay(off);
-  }
 }
 #endif
 
@@ -490,7 +469,7 @@ bool HardwareDefinition::touch_click_pressed() {
 #endif
 
 #if defined(HAS_FRONTLIGHT)
-void HardwareDefinition::set_frontlight(uint8_t brightness) {
+void HardwareDefinition::set_frontlight(uint16_t brightness) {
   // 0 - 255
   ledcWrite(FL_LED_CH, brightness);
   if (brightness > 0) {
@@ -502,19 +481,7 @@ void HardwareDefinition::set_frontlight(uint8_t brightness) {
 #endif
 
 bool HardwareDefinition::any_button_pressed() {
-#if defined(HOME_BUTTONS_ORIGINAL)
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN) ||
-         digitalRead(BTN5_PIN) || digitalRead(BTN6_PIN);
-#elif defined(HOME_BUTTONS_MINI)
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
-#elif defined(HOME_BUTTONS_PRO)
-  return touch_click_pressed();
-#elif defined(HOME_BUTTONS_INDUSTRIAL)
-  return digitalRead(BTN1_PIN) || digitalRead(BTN2_PIN) ||
-         digitalRead(BTN3_PIN) || digitalRead(BTN4_PIN);
-#endif
+  return num_buttons_pressed() > 0;
 }
 
 #if defined(HAS_TH_SENSOR)
@@ -644,9 +611,9 @@ void HardwareDefinition::load_hw_rev_1_0() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 20;
+  LED_BRIGHT_DFLT = 80;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -710,9 +677,9 @@ void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 225;
+  LED_BRIGHT_DFLT = 900;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -776,9 +743,9 @@ void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 225;
+  LED_BRIGHT_DFLT = 900;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -842,9 +809,9 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 225;
+  LED_BRIGHT_DFLT = 900;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -908,9 +875,9 @@ void HardwareDefinition::load_hw_rev_2_4() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 25;
+  LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -974,9 +941,9 @@ void HardwareDefinition::load_hw_rev_2_5() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 25;
+  LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -1008,7 +975,7 @@ void HardwareDefinition::load_pro_hw_rev_0_1() {  // ------ PIN definitions
   FL_LED_EN_PIN = 1;
   FL_LED_PIN = 2;
   FL_LED_CH = 0;
-  FL_LED_BRIGHT_DFLT = 200;
+  FL_LED_BRIGHT_DFLT = 800;
 
   SDA = 10;
   SCL = 11;
@@ -1023,7 +990,7 @@ void HardwareDefinition::load_pro_hw_rev_0_1() {  // ------ PIN definitions
   LIGHT_SEN_ADC = 3;
 
   // ------ LED analog parameters ------
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
 
   // ------ wakeup ------
@@ -1062,9 +1029,9 @@ void HardwareDefinition::load_mini_hw_rev_0_1() {
   LED3_CH = 2;
   LED4_CH = 3;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 25;
+  LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.6666667;
@@ -1116,9 +1083,9 @@ void HardwareDefinition::load_mini_hw_rev_1_1() {
   LED3_CH = 2;
   LED4_CH = 3;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 25;
+  LED_BRIGHT_DFLT = 100;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.6666667;
@@ -1144,11 +1111,13 @@ void HardwareDefinition::load_industrial_hw_rev_1_0() {
   BTN2_PIN = 5;
   BTN3_PIN = 1;
   BTN4_PIN = 21;
+  BTN5_PIN = 14;
 
   BTN1_ACTIVE_HIGH = true;
   BTN2_ACTIVE_HIGH = true;
   BTN3_ACTIVE_HIGH = true;
   BTN4_ACTIVE_HIGH = true;
+  BTN5_ACTIVE_HIGH = false;
 
   LED1_PIN = 17;
   LED2_PIN = 16;
@@ -1161,8 +1130,8 @@ void HardwareDefinition::load_industrial_hw_rev_1_0() {
   LED3_CH = 2;
   LED4_CH = 3;
 
-  LED_RES = 8;
+  LED_RES = 10;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 255;
-  LED_MAX_AMB_BRIGHT = 75;
+  LED_BRIGHT_DFLT = 1000;
+  LED_MAX_AMB_BRIGHT = 100;
 }

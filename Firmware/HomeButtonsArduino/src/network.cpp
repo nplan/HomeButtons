@@ -208,11 +208,12 @@ void NetworkSMStates::FullyConnectedState::loop() {
   }
 }
 
-Network::Network(DeviceState &device_state)
+Network::Network(DeviceState &device_state, TopicHelper &topics)
     : NetworkStateMachine("NetworkSM", *this),
       Logger("NET"),
       device_state_(device_state),
-      mqtt_client_(wifi_client_) {
+      mqtt_client_(wifi_client_),
+      topics_(topics) {
   mqtt_publish_queue_ =
       xQueueCreate(MQTT_QUEUE_SIZE, sizeof(PublishQueueElement));
   if (mqtt_publish_queue_ == nullptr) error("Failed to create publish queue");
@@ -324,9 +325,12 @@ bool Network::_connect_mqtt() {
     return mqtt_client_.connect(
         device_state_.factory().unique_id.c_str(),
         device_state_.user_preferences().mqtt.user.c_str(),
-        device_state_.user_preferences().mqtt.password.c_str());
+        device_state_.user_preferences().mqtt.password.c_str(),
+        topics_.t_avlb().c_str(), 1, true, "offline");
   } else {
-    return mqtt_client_.connect(device_state_.factory().unique_id.c_str());
+    return mqtt_client_.connect(device_state_.factory().unique_id.c_str(), NULL,
+                                NULL, topics_.t_avlb().c_str(), 1, true,
+                                "offline");
   }
 }
 
