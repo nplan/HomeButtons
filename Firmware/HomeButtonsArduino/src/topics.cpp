@@ -20,14 +20,14 @@ TopicType TopicHelper::get_button_topic(UserInput::Event event) const {
 }
 
 TopicType TopicHelper::t_switch_state(uint8_t switch_idx) const {
-  if (switch_idx <= NUM_BUTTONS)
+  if (switch_idx > 0 && switch_idx <= NUM_BUTTONS)
     return t_common() + "switch_" + (switch_idx);
   else
     return {};
 }
 
 TopicType TopicHelper::t_switch_cmd(uint8_t switch_idx) const {
-  if (switch_idx <= NUM_BUTTONS)
+  if (switch_idx > 0 && switch_idx <= NUM_BUTTONS)
     return t_cmd() + "switch_" + (switch_idx);
   else
     return {};
@@ -52,14 +52,14 @@ TopicType TopicHelper::t_btn_press(uint8_t btn_idx) const {
 }
 
 TopicType TopicHelper::t_btn_label_state(uint8_t btn_idx) const {
-  if (btn_idx <= NUM_BUTTONS)
+  if (btn_idx > 0 && btn_idx <= NUM_BUTTONS)
     return t_common() + "btn_" + (btn_idx) + "_label";
   else
     return {};
 }
 
 TopicType TopicHelper::t_btn_label_cmd(uint8_t btn_idx) const {
-  if (btn_idx <= NUM_BUTTONS)
+  if (btn_idx > 0 && btn_idx <= NUM_BUTTONS)
     return t_cmd() + "btn_" + (btn_idx) + "_label";
   else
     return {};
@@ -99,15 +99,19 @@ TopicType TopicHelper::t_schedule_wakeup_state() const {
   return t_common() + "schedule_wakeup";
 }
 
-TopicType TopicHelper::t_led_brightness_cmd() const {
-  return t_cmd() + "led_brightness";
+TopicType TopicHelper::t_led_amb_bright_cmd() const {
+  return t_cmd() + "led_amb_bright";
 }
 
-TopicType TopicHelper::t_led_brightness_state() const {
-  return t_common() + "led_brightness";
+TopicType TopicHelper::t_led_amb_bright_state() const {
+  return t_common() + "led_amb_bright";
 }
 
 TopicType TopicHelper::t_avlb() const { return t_common() + "available"; }
+
+TopicType TopicHelper::t_system_state() const {
+  return t_common() + "system_state";
+}
 
 TopicType TopicHelper::t_btn_config(uint8_t btn_id) {
   return TopicType(
@@ -183,7 +187,7 @@ TopicType TopicHelper::t_btn_label_config(uint8_t btn_idx) {
   return TopicType(
       "%s/text/%s/button_%d_label/config",
       _device_state.user_preferences().mqtt.discovery_prefix.c_str(),
-      _device_state.factory().unique_id.c_str(), btn_idx + 1);
+      _device_state.factory().unique_id.c_str(), btn_idx);
 }
 
 TopicType TopicHelper::t_user_message_config() {
@@ -207,9 +211,9 @@ TopicType TopicHelper::t_awake_mode_config() {
       _device_state.factory().unique_id.c_str());
 }
 
-TopicType TopicHelper::t_led_brightness_config() {
+TopicType TopicHelper::t_led_amb_bright_config() {
   return TopicType(
-      "%s/number/%s/led_brightness/config",
+      "%s/number/%s/led_amb_bright/config",
       _device_state.user_preferences().mqtt.discovery_prefix.c_str(),
       _device_state.factory().unique_id.c_str());
 }

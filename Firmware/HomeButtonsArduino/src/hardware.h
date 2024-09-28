@@ -72,12 +72,11 @@ struct HardwareDefinition : public Logger {
   uint8_t LED6_CH;
 
   uint8_t FL_LED_CH;
-  uint16_t FL_LED_BRIGHT_DFLT;
+  uint8_t FL_LED_BRIGHT_DFLT;
 
   uint8_t LED_RES;
   uint16_t LED_FREQ;
-  uint16_t LED_BRIGHT_DFLT;
-  uint16_t LED_MAX_AMB_BRIGHT;
+  uint16_t LED_MAX_PWM;
 
   // ------ battery reading ------
   float BATT_DIVIDER;
@@ -119,8 +118,13 @@ struct HardwareDefinition : public Logger {
                uint16_t fade_time = LED_DEFAULT_FADE_TIME);
   void set_led_num(uint8_t num, uint16_t brightness,
                    uint16_t fade_time = LED_DEFAULT_FADE_TIME);
+  void set_led_pct_num(uint8_t num, uint8_t brightness_pct,
+                       uint16_t fade_time = LED_DEFAULT_FADE_TIME);
   void set_all_leds(uint16_t brightness,
                     uint16_t fade_time = LED_DEFAULT_FADE_TIME);
+  void set_all_leds_pct(uint8_t brightness_pct,
+                        uint16_t fade_time = LED_DEFAULT_FADE_TIME);
+
 #endif
 
 #if defined(HAS_BATTERY)

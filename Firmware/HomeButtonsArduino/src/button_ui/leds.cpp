@@ -1,7 +1,7 @@
 #include "leds.h"
 
 void LEDSMStates::IdleState::entry() {
-  sm().hw_.set_led_num(sm().id_, sm().ambient_brightness_);
+  sm().hw_.set_led_pct_num(sm().id_, sm().ambient_brightness_);
 }
 
 void LEDSMStates::IdleState::loop() {
@@ -26,7 +26,7 @@ void LEDSMStates::IdleState::loop() {
 }
 
 void LEDSMStates::BlinkOnState::entry() {
-  sm().hw_.set_led_num(sm().id_, sm().current_blink_->brightness);
+  sm().hw_.set_led_pct_num(sm().id_, sm().current_blink_->brightness);
   sm().last_change_time_ = millis();
 }
 
@@ -42,7 +42,7 @@ void LEDSMStates::BlinkOnState::loop() {
 }
 
 void LEDSMStates::BlinkOffState::entry() {
-  sm().hw_.set_led_num(sm().id_, sm().ambient_brightness_);
+  sm().hw_.set_led_pct_num(sm().id_, sm().ambient_brightness_);
   sm().last_change_time_ = millis();
 }
 
@@ -58,10 +58,15 @@ void LEDSMStates::BlinkOffState::loop() {
 }
 
 void LEDSMStates::ConstOnState::entry() {
-  sm().hw_.set_led_num(sm().id_, sm().current_blink_->brightness);
+  brightness = sm().current_blink_->brightness;
+  sm().hw_.set_led_pct_num(sm().id_, sm().current_blink_->brightness);
 }
 
 void LEDSMStates::ConstOnState::loop() {
+  if (sm().current_blink_ && sm().current_blink_->brightness != brightness) {
+    sm().hw_.set_led_pct_num(sm().id_, sm().current_blink_->brightness);
+    brightness = sm().current_blink_->brightness;
+  }
   if (sm().cmd_blink_.has_value()) {
     return transition_to<IdleState>();
   }
@@ -77,7 +82,7 @@ void LEDSMStates::PulseState::loop() {
               (-0.5 * cos(2 * PI * (millis() - sm().last_change_time_) /
                           sm().current_blink_->cycle_ms) +
                0.5);
-  sm().hw_.set_led_num(sm().id_, b);
+  sm().hw_.set_led_pct_num(sm().id_, b);
   if (sm().cmd_blink_.has_value()) {
     return transition_to<IdleState>();
   }
@@ -88,7 +93,7 @@ void LEDSMStates::PulseState::loop() {
 
 void LEDSMStates::TransitionState::entry() {
   start_time_ = millis();
-  sm().hw_.set_led_num(sm().id_, sm().ambient_brightness_);
+  sm().hw_.set_led_pct_num(sm().id_, sm().ambient_brightness_);
 }
 
 void LEDSMStates::TransitionState::loop() {
@@ -97,8 +102,11 @@ void LEDSMStates::TransitionState::loop() {
   }
 }
 
-void LED::Blink(uint8_t num_blinks, uint16_t brightness, uint16_t on_ms,
+void LED::Blink(uint8_t num_blinks, uint8_t brightness, uint16_t on_ms,
                 uint16_t off_ms, bool hold) {
+  if (brightness == 0) {
+    brightness = default_brightness_;
+  }
   if (on_ms == 0) {
     switch (num_blinks) {
       case 1:
@@ -143,7 +151,10 @@ void LED::Blink(uint8_t num_blinks, uint16_t brightness, uint16_t on_ms,
         id_, num_blinks, brightness, on_ms, off_ms, hold);
 }
 
-void LED::On(uint16_t brightness) {
+void LED::On(uint8_t brightness) {
+  if (brightness == 0) {
+    brightness = default_brightness_;
+  }
   cmd_blink_ = LEDBlink{LEDBlinkType::kConstant, brightness};
   debug("ON: led: %d, bri: %d", id_, brightness);
 }
@@ -153,10 +164,34 @@ void LED::Off() {
   debug("OFF: led: %d", id_);
 }
 
-void LED::Pulse(uint16_t brightness, uint16_t cycle_ms) {
+void LED::Pulse(uint8_t brightness, uint16_t cycle_ms) {
+  if (brightness == 0) {
+    brightness = default_brightness_;
+  }
   cmd_blink_ =
       LEDBlink{LEDBlinkType::kPulse, brightness, 0, 0, 0, false, cycle_ms};
   debug("PULSE: led: %d, bri: %d, cycle_ms: %d", id_, brightness, cycle_ms);
+}
+
+void LED::SetDefaultBrightness(uint8_t brightness) {
+  if (brightness > 100) brightness = 100;
+  if (brightness < LED_MIN_BRIGHT) brightness = LED_MIN_BRIGHT;
+  debug("LED %d default brightness set to: %d", id_, default_brightness_);
+  default_brightness_ = brightness;
+  if (current_blink_) {
+    current_blink_.value().brightness = brightness;
+  }
+}
+
+void LED::SetAmbientBrightness(uint8_t brightness) {
+  if (brightness > 100) {
+    brightness = 100;
+  }
+  ambient_brightness_ = brightness;
+  debug("LED %d ambient brightness set to: %d", id_, ambient_brightness_);
+  if (is_current_state<LEDSMStates::IdleState>()) {
+    transition_to<LEDSMStates::IdleState>();
+  }
 }
 
 bool LED::InternalStop() { return true; }

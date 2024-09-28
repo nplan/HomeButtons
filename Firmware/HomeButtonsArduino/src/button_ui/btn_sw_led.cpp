@@ -1,6 +1,16 @@
 #include "btn_sw_led.h"
 #include "FunctionalInterrupt.h"
 
+void BtnSwLEDStates::StoppedState::loop() {
+  // stop when led stops
+  if (sm().has_led_ &&
+      sm().cstate() == ComponentBase::ComponentState::kCmdStop) {
+    if (sm().led_.cstate() == ComponentBase::ComponentState::kStopped) {
+      sm().SetStopped();
+    }
+  }
+}
+
 void BtnSwLEDStates::IdleState::entry() {
   sm().rising_flag_ = false;
   sm().falling_flag_ = false;
@@ -57,7 +67,8 @@ void BtnSwLEDStates::PressedState::entry() {
 }
 
 void BtnSwLEDStates::PressedState::loop() {
-  if (sm().falling_flag_) {
+  // note: when waking from deep sleep on button, falling flage might be missed
+  if (sm().falling_flag_ || !sm().PinState()) {
     if (sm().switch_mode_) {
       if (!sm().is_kill_switch_) {
         if (sm().switch_state_) {
@@ -126,7 +137,7 @@ void BtnSwLEDStates::SwOnState::entry() {
   sm().rising_flag_ = false;
   sm().falling_flag_ = false;
   sm().switch_state_ = true;
-  sm().LEDOn(sm().hw_.LED_BRIGHT_DFLT);
+  sm().LEDOn();
 }
 
 void BtnSwLEDStates::SwOnState::loop() {
@@ -164,14 +175,29 @@ bool BtnSwLED::InternalStart() {
   led_.Start();
   attachInterrupt(hw_.button_pin(id_), std::bind(&BtnSwLED::ISR, this), CHANGE);
   debug("attached interrupt on pin %d", hw_.button_pin(id_));
+  transition_to<BtnSwLEDStates::IdleState>();
   return true;
 }
 
 bool BtnSwLED::InternalStop() {
   led_.Stop();
   detachInterrupt(hw_.button_pin(id_));
-  SetStopped();
+  transition_to<BtnSwLEDStates::StoppedState>();
   return true;
+}
+
+void BtnSwLED::InternalLoop() {
+  BtnSwLEDStateMachine::loop();
+  if (has_led_) {
+    led_.Loop();
+  }
+}
+void BtnSwLED::InternalRestart() {
+  switch_state_ = false;
+  if (has_led_) {
+    led_.Restart();
+  }
+  transition_to<BtnSwLEDStates::IdleState>();
 }
 
 void BtnSwLED::TriggerClick(uint32_t duration, uint16_t btn_num_clicks_,

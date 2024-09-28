@@ -17,6 +17,25 @@
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 #endif
 
+// Convert perceived brightness (0-100) to a 12-bit PWM value (0-4095)
+uint16_t LED_PCT2PWM(uint8_t perceived_brightness, uint16_t max_pwm_value) {
+  // Clamp the input value to the range 0-100
+  if (perceived_brightness > 100) perceived_brightness = 100;
+
+  // Normalize the input (0-100) to (0.0-1.0)
+  float normalized_brightness = perceived_brightness / 100.0f;
+
+  // Apply gamma correction to account for human perception
+  float corrected_brightness = pow(normalized_brightness, LED_GAMMA);
+
+  // Scale the corrected brightness to the custom PWM range (0-max_pwm_value)
+  // and round up
+  uint16_t pwm_value =
+      static_cast<uint16_t>(ceil(corrected_brightness * max_pwm_value));
+
+  return pwm_value;
+}
+
 bool HardwareDefinition::init() {
   if (factory_params_ok()) {
     debug("factory params already set");
@@ -396,6 +415,19 @@ void HardwareDefinition::set_all_leds(uint16_t brightness, uint16_t fade_time) {
   set_led(LED4_CH, brightness, fade_time);
 #endif
 }
+
+void HardwareDefinition::set_led_pct_num(uint8_t num, uint8_t brightness_pct,
+                                         uint16_t fade_time) {
+  uint16_t brightness = LED_PCT2PWM(brightness_pct, LED_MAX_PWM);
+  set_led_num(num, brightness, fade_time);
+}
+
+void HardwareDefinition::set_all_leds_pct(uint8_t brightness_pct,
+                                          uint16_t fade_time) {
+  uint16_t brightness = LED_PCT2PWM(brightness_pct, LED_MAX_PWM);
+  set_all_leds(brightness, fade_time);
+}
+
 #endif
 
 #if defined(HAS_BATTERY)
@@ -611,9 +643,9 @@ void HardwareDefinition::load_hw_rev_1_0() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 80;
+  LED_MAX_PWM = 660;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -677,9 +709,9 @@ void HardwareDefinition::load_hw_rev_2_0() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 900;
+  LED_MAX_PWM = 4000;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -743,9 +775,9 @@ void HardwareDefinition::load_hw_rev_2_2() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 900;
+  LED_MAX_PWM = 4000;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -809,9 +841,9 @@ void HardwareDefinition::load_hw_rev_2_3() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 900;
+  LED_MAX_PWM = 4000;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -875,9 +907,9 @@ void HardwareDefinition::load_hw_rev_2_4() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_MAX_PWM = 750;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -941,9 +973,9 @@ void HardwareDefinition::load_hw_rev_2_5() {  // ------ PIN definitions ------
   LED5_CH = 4;
   LED6_CH = 5;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_MAX_PWM = 750;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.5;
@@ -990,7 +1022,7 @@ void HardwareDefinition::load_pro_hw_rev_0_1() {  // ------ PIN definitions
   LIGHT_SEN_ADC = 3;
 
   // ------ LED analog parameters ------
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
 
   // ------ wakeup ------
@@ -1029,9 +1061,9 @@ void HardwareDefinition::load_mini_hw_rev_0_1() {
   LED3_CH = 2;
   LED4_CH = 3;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_MAX_PWM = 750;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.6666667;
@@ -1083,9 +1115,9 @@ void HardwareDefinition::load_mini_hw_rev_1_1() {
   LED3_CH = 2;
   LED4_CH = 3;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 100;
+  LED_MAX_PWM = 750;
 
   // ------ battery reading ------“
   BATT_DIVIDER = 0.6666667;
@@ -1130,8 +1162,7 @@ void HardwareDefinition::load_industrial_hw_rev_1_0() {
   LED3_CH = 2;
   LED4_CH = 3;
 
-  LED_RES = 10;
+  LED_RES = 12;
   LED_FREQ = 1000;
-  LED_BRIGHT_DFLT = 1000;
-  LED_MAX_AMB_BRIGHT = 100;
+  LED_MAX_PWM = 4095;
 }

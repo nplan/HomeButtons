@@ -11,6 +11,15 @@ class BtnSwLED;
 
 namespace BtnSwLEDStates {
 
+class StoppedState : public State<BtnSwLED> {
+ public:
+  using State<BtnSwLED>::State;
+
+  void loop() override;
+
+  const char* get_name() override { return "StoppedState"; }
+};
+
 class IdleState : public State<BtnSwLED> {
  public:
   using State<BtnSwLED>::State;
@@ -96,10 +105,10 @@ class SwOffState : public State<BtnSwLED> {
 }  // namespace BtnSwLEDStates
 
 using BtnSwLEDStateMachine = StateMachine<
-    BtnSwLED, BtnSwLEDStates::IdleState, BtnSwLEDStates::RisingDebounceState,
-    BtnSwLEDStates::PressedState, BtnSwLEDStates::FallingDebounceState,
-    BtnSwLEDStates::ReleasedState, BtnSwLEDStates::SwOnState,
-    BtnSwLEDStates::SwOffState>;
+    BtnSwLED, BtnSwLEDStates::StoppedState, BtnSwLEDStates::IdleState,
+    BtnSwLEDStates::RisingDebounceState, BtnSwLEDStates::PressedState,
+    BtnSwLEDStates::FallingDebounceState, BtnSwLEDStates::ReleasedState,
+    BtnSwLEDStates::SwOnState, BtnSwLEDStates::SwOffState>;
 
 class BtnSwLED : public UserInput, public BtnSwLEDStateMachine {
  public:
@@ -116,6 +125,8 @@ class BtnSwLED : public UserInput, public BtnSwLEDStateMachine {
   uint16_t id() const { return id_; }
   uint8_t pin() const { return hw_.button_pin(id_); }
   bool switch_state() const { return switch_state_; }
+
+  bool PinState() const { return hw_.button_pressed(id_); }
 
   void InitPress();
 
@@ -169,7 +180,7 @@ class BtnSwLED : public UserInput, public BtnSwLEDStateMachine {
     auto_led_ = on;
   }
 
-  void LEDOn(uint16_t brightness) {
+  void LEDOn(uint8_t brightness = 0) {
     if (has_led_) {
       led_.On(brightness);
     }
@@ -181,20 +192,26 @@ class BtnSwLED : public UserInput, public BtnSwLEDStateMachine {
     }
   }
 
-  void LEDBlink(uint8_t num_blinks, uint16_t brightness, uint16_t on_ms = 0,
+  void LEDBlink(uint8_t num_blinks, uint8_t brightness = 0, uint16_t on_ms = 0,
                 uint16_t off_ms = 0, bool hold = false) {
     if (has_led_) {
       led_.Blink(num_blinks, brightness, on_ms, off_ms, hold);
     }
   }
 
-  void LEDPulse(uint16_t brightness, uint16_t cycle_ms = 1000) {
+  void LEDPulse(uint8_t brightness = 0, uint16_t cycle_ms = 1000) {
     if (has_led_) {
       led_.Pulse(brightness, cycle_ms);
     }
   }
 
-  void LEDSetAmbientBrightness(uint16_t brightness) {
+  void LEDSetDefaultBrightness(uint8_t brightness) {
+    if (has_led_) {
+      led_.SetDefaultBrightness(brightness);
+    }
+  }
+
+  void LEDSetAmbientBrightness(uint8_t brightness) {
     if (has_led_) {
       led_.SetAmbientBrightness(brightness);
     }
@@ -207,19 +224,8 @@ class BtnSwLED : public UserInput, public BtnSwLEDStateMachine {
   }
   bool InternalStart() override;
   bool InternalStop() override;
-  void InternalLoop() override {
-    BtnSwLEDStateMachine::loop();
-    if (has_led_) {
-      led_.Loop();
-    }
-  }
-  void InternalRestart() override {
-    switch_state_ = false;
-    if (has_led_) {
-      led_.Restart();
-    }
-    transition_to<BtnSwLEDStates::IdleState>();
-  }
+  void InternalLoop() override;
+  void InternalRestart() override;
 
   void TriggerClick(uint32_t duration, uint16_t num_clicks,
                     bool finished = true);
@@ -248,6 +254,7 @@ class BtnSwLED : public UserInput, public BtnSwLEDStateMachine {
 
   void IRAM_ATTR ISR();
 
+  friend class BtnSwLEDStates::StoppedState;
   friend class BtnSwLEDStates::IdleState;
   friend class BtnSwLEDStates::RisingDebounceState;
   friend class BtnSwLEDStates::PressedState;
@@ -287,6 +294,14 @@ class BtnSwLEDInput : public UserInput {
     return bls_;
   }
 
+  bool PinState(uint8_t bls_id) {
+    auto bls = GetBtnSwLED(bls_id);
+    if (bls) {
+      return bls.value().get().PinState();
+    }
+    return false;
+  }
+
   void InitPress(uint8_t bls_id) {
     auto bls = GetBtnSwLED(bls_id);
     if (bls) {
@@ -301,7 +316,7 @@ class BtnSwLEDInput : public UserInput {
     }
   }
 
-  void SetSwitchMode(bool on) {
+  void SetSwitchModeAll(bool on) {
     for (auto& bls : bls_) {
       bls.get().SetSwitchMode(on);
     }
@@ -314,7 +329,7 @@ class BtnSwLEDInput : public UserInput {
     }
   }
 
-  void PauseSwitchMode() {
+  void PauseSwitchModeAll() {
     for (auto& bls : bls_) {
       bls.get().PauseSwitchMode();
     }
@@ -327,7 +342,7 @@ class BtnSwLEDInput : public UserInput {
     }
   }
 
-  void ResumeSwitchMode() {
+  void ResumeSwitchModeAll() {
     for (auto& bls : bls_) {
       bls.get().ResumeSwitchMode();
     }
@@ -340,7 +355,7 @@ class BtnSwLEDInput : public UserInput {
     }
   }
 
-  void SetAutoLED(bool on) {
+  void SetAutoLEDAll(bool on) {
     for (auto& bls : bls_) {
       bls.get().SetAutoLED(on);
     }
@@ -351,16 +366,17 @@ class BtnSwLEDInput : public UserInput {
     if (bls) {
       return bls.value().get().switch_state();
     }
+    return false;
   }
 
-  void LEDOn(uint8_t bls_id, uint16_t brightness) {
+  void LEDOn(uint8_t bls_id, uint8_t brightness = 0) {
     auto bls = GetBtnSwLED(bls_id);
     if (bls) {
       bls.value().get().LEDOn(brightness);
     }
   }
 
-  void LEDOn(uint16_t brightness) {
+  void LEDOnAll(uint8_t brightness = 0) {
     for (auto& bls : bls_) {
       bls.get().LEDOn(brightness);
     }
@@ -373,13 +389,13 @@ class BtnSwLEDInput : public UserInput {
     }
   }
 
-  void LEDOff() {
+  void LEDOffAll() {
     for (auto& bls : bls_) {
       bls.get().LEDOff();
     }
   }
 
-  void LEDBlink(uint8_t bls_id, uint8_t num_blinks, uint16_t brightness,
+  void LEDBlink(uint8_t bls_id, uint8_t num_blinks, uint8_t brightness = 0,
                 uint16_t on_ms = 0, uint16_t off_ms = 0, bool hold = false) {
     auto bls = GetBtnSwLED(bls_id);
     if (bls) {
@@ -387,34 +403,48 @@ class BtnSwLEDInput : public UserInput {
     }
   }
 
-  void LEDBlink(uint8_t num_blinks, uint16_t brightness, uint16_t on_ms = 0,
-                uint16_t off_ms = 0, bool hold = false) {
+  void LEDBlinkAll(uint8_t num_blinks, uint8_t brightness = 0,
+                   uint16_t on_ms = 0, uint16_t off_ms = 0, bool hold = false) {
     for (auto& bls : bls_) {
       bls.get().LEDBlink(num_blinks, brightness, on_ms, off_ms, hold);
     }
   }
 
-  void LEDPulse(uint8_t bls_id, uint16_t brightness, uint16_t cycle_ms) {
+  void LEDPulse(uint8_t bls_id, uint8_t brightness = 0,
+                uint16_t cycle_ms = 1000) {
     auto bls = GetBtnSwLED(bls_id);
     if (bls) {
       bls.value().get().LEDPulse(brightness, cycle_ms);
     }
   }
 
-  void LEDPulse(uint16_t brightness, uint16_t cycle_ms) {
+  void LEDPulseAll(uint8_t brightness = 0, uint16_t cycle_ms = 1000) {
     for (auto& bls : bls_) {
       bls.get().LEDPulse(brightness, cycle_ms);
     }
   }
 
-  void LEDSetAmbientBrightness(uint8_t bls_id, uint16_t brightness) {
+  void LEDSetDefaultBrightness(uint8_t bls_id, uint8_t brightness) {
+    auto bls = GetBtnSwLED(bls_id);
+    if (bls) {
+      bls.value().get().LEDSetDefaultBrightness(brightness);
+    }
+  }
+
+  void LEDSetDefaultBrightnessAll(uint8_t brightness) {
+    for (auto& bls : bls_) {
+      bls.get().LEDSetDefaultBrightness(brightness);
+    }
+  }
+
+  void LEDSetAmbientBrightness(uint8_t bls_id, uint8_t brightness) {
     auto bls = GetBtnSwLED(bls_id);
     if (bls) {
       bls.value().get().LEDSetAmbientBrightness(brightness);
     }
   }
 
-  void LEDSetAmbientBrightness(uint16_t brightness) {
+  void LEDSetAmbientBrightnessAll(uint8_t brightness) {
     for (auto& bls : bls_) {
       bls.get().LEDSetAmbientBrightness(brightness);
     }
@@ -441,13 +471,23 @@ class BtnSwLEDInput : public UserInput {
     for (auto& bls : bls_) {
       bls.get().Stop();
     }
-    SetStopped();
     return true;
   }
 
   void InternalLoop() override {
     for (auto& bls : bls_) {
       bls.get().Loop();
+    }
+    if (cstate() == ComponentBase::ComponentState::kCmdStop) {
+      bool all_stopped = true;
+      for (auto& bls : bls_) {
+        all_stopped =
+            all_stopped &&
+            bls.get().cstate() == ComponentBase::ComponentState::kStopped;
+      }
+      if (all_stopped) {
+        SetStopped();
+      }
     }
   }
 

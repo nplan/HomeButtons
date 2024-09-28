@@ -135,7 +135,7 @@ bool FactoryTest::run_test() {
   device_doc["random_id"] = app_.hw_.get_random_id();
   device_doc["model_id"] = app_.hw_.get_model_id();
   device_doc["fw_version"] = SW_VERSION;
-  device_doc["app_.hw__version"] = app_.hw_.get_hw_version();
+  device_doc["hw_version"] = app_.hw_.get_hw_version();
 
   char buffer[512];
   serializeJson(device_doc, buffer, sizeof(buffer));
@@ -179,30 +179,22 @@ bool FactoryTest::run_test() {
 #if defined(HAS_BUTTON_UI)
   // test LEDs & buttons
   info("Testing LEDs & buttons");
-  bool button_passed = true;
-  app_.hw_.set_all_leds(255);
-  bool pressed[NUM_BUTTONS] = {};
+  bool button_passed = false;
+  app_.hw_.set_all_leds_pct(LED_DFLT_BRIGHT);
   uint32_t start_time = millis();
+  uint8_t btn_idx = 0;
   while (true) {
     if (millis() - start_time > BUTTON_TEST_TIMEOUT) {
       error("button test timeout");
       button_passed = false;
       break;
     }
-    for (int i = 0; i < NUM_BUTTONS; i++) {
-      if (app_.hw_.button_pressed(i + 1)) {
-        pressed[i] = true;
-        app_.hw_.set_led_num(i + 1, 0);
-      }
+    if (app_.hw_.button_pressed(btn_idx + 1)) {
+      app_.hw_.set_led_pct_num(btn_idx + 1, 0);
+      btn_idx++;
     }
-    bool all_pressed = true;
-    for (int i = 0; i < NUM_BUTTONS; i++) {
-      all_pressed = pressed[i];
-      if (!all_pressed) {
-        break;
-      }
-    }
-    if (all_pressed) {
+    if (btn_idx >= NUM_BUTTONS) {
+      button_passed = true;
       break;
     }
   }
@@ -229,16 +221,24 @@ bool FactoryTest::run_test() {
     error("humidity test fail. Measured: %f, expected: %f +/- %f", hmd_val,
           test_spec_.humd_ref, test_spec_.humd_tol);
   }
+  passed = passed && sensor_passed;
+#else
+  float temp_val = 0;
+  float hmd_val = 0;
+#endif
 #if defined(HAS_BATTERY)
+  info("Testing battery");
+  bool batt_passed = true;
   uint16_t batt_v = app_.hw_.read_battery_voltage() * 1000.;
   if (batt_v <= test_spec_.batt_mvolt_ref - test_spec_.batt_mvolt_tol ||
       batt_v >= test_spec_.batt_mvolt_ref + test_spec_.batt_mvolt_tol) {
-    sensor_passed = false;
+    batt_passed = false;
     error("battery test fail. Measured: %d mV, expected: %d +/- %d mV", batt_v,
           test_spec_.batt_mvolt_ref, test_spec_.batt_mvolt_tol);
   }
-#endif
-  passed = passed && sensor_passed;
+  passed = passed && batt_passed;
+#else
+  uint16_t batt_v = 0;
 #endif
 
   // send test results
@@ -249,19 +249,13 @@ bool FactoryTest::run_test() {
   device["random_id"] = app_.hw_.get_random_id();
   device["model_id"] = app_.hw_.get_model_id();
   device["fw_version"] = SW_VERSION;
-  device["app_.hw_version"] = app_.hw_.get_hw_version();
+  device["hw_version"] = app_.hw_.get_hw_version();
   result_doc["passed"] = passed;
 
-#if defined(HAS_TH_SENSOR) || defined(HAS_BATTERY)
   JsonObject parameters = result_doc.createNestedObject("parameters");
-#endif
-#if defined(HAS_TH_SENSOR)
   parameters["measured_temp"] = temp_val;
   parameters["measured_humidity"] = hmd_val;
-#endif
-#if defined(HAS_BATTERY)
   parameters["measured_battery"] = batt_v;
-#endif
 
   serializeJson(result_doc, buffer, sizeof(buffer));
 

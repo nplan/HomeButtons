@@ -30,11 +30,12 @@ class TopicHelper {
   TopicType t_disp_msg_state() const;
   TopicType t_schedule_wakeup_cmd() const;
   TopicType t_schedule_wakeup_state() const;
-  TopicType t_led_brightness_cmd() const;
-  TopicType t_led_brightness_state() const;
+  TopicType t_led_amb_bright_cmd() const;
+  TopicType t_led_amb_bright_state() const;
   TopicType t_avlb() const;
   TopicType t_switch_state(uint8_t switch_idx) const;
   TopicType t_switch_cmd(uint8_t switch_idx) const;
+  TopicType t_system_state() const;
 
   // config topics
   TopicType t_btn_config(uint8_t btn_id);
@@ -51,7 +52,7 @@ class TopicHelper {
   TopicType t_user_message_config();
   TopicType t_schedule_wakeup_config();
   TopicType t_awake_mode_config();
-  TopicType t_led_brightness_config();
+  TopicType t_led_amb_bright_config();
 
  private:
   DeviceState& _device_state;

@@ -58,26 +58,25 @@ void allocate_btn_label_params() {
 
 void set_btn_label_params_from_device_state(DeviceState& device_state_) {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    btn_label_params[i]->setValue(device_state_.get_btn_label(i).c_str(),
+    btn_label_params[i]->setValue(device_state_.get_btn_label(i + 1).c_str(),
                                   BTN_LABEL_MAXLEN);
   }
 }
 
 void set_device_state_from_btn_label_params(DeviceState& device_state_) {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
-    device_state_.set_btn_label(i, btn_label_params[i]->getValue());
+    device_state_.set_btn_label(i + 1, btn_label_params[i]->getValue());
   }
 }
 #endif
 
 void HBSetup::start_wifi_setup() {
   info("Wi-Fi setup");
-  app_.bsl_input_.PauseSwitchMode();
+  app_.bsl_input_.PauseSwitchModeAll();
 #if defined(HAS_DISPLAY)
   app_.display_.disp_ap_config();
-  app_.display_.update();
 #else
-  app_.bsl_input_.LEDPulse(2, app_.hw_.LED_BRIGHT_DFLT, 2000);
+  app_.bsl_input_.LEDPulse(2, LED_DFLT_BRIGHT, 2000);
 #endif
 
 #if defined(HOME_BUTTONS_DEBUG)
@@ -95,6 +94,7 @@ void HBSetup::start_wifi_setup() {
   uint32_t setup_start_time = millis();
   wifi_manager.startConfigPortal(app_.device_state_.get_ap_ssid().c_str(),
                                  app_.device_state_.get_ap_password());
+  bool user_stopped = false;
   while (true) {
     bool connected = wifi_manager.process();
     if (millis() - setup_start_time > SETUP_TIMEOUT * 1000L) {
@@ -106,10 +106,23 @@ void HBSetup::start_wifi_setup() {
       break;
     }
     if (app_.hw_.any_button_pressed()) {
+      user_stopped = true;
       debug("Wi-Fi config portal stopped by user");
       break;
     }
     delay(250);
+  }
+
+  if (user_stopped) {
+    info("Wi-Fi config portal stopped by user");
+#if defined(HAS_DISPLAY)
+    app_.display_.disp_error("Wi-Fi\nsetup\ncancelled");
+    delay(5000);
+#else
+    app_.bsl_input_.LEDBlink(2, 5, LED_DFLT_BRIGHT, 200, 160, false);
+    delay(3000);
+#endif
+    ESP.restart();
   }
 
   info("Wi-Fi config portal stopped, trying to connect to Wi-Fi...");
@@ -141,10 +154,9 @@ void HBSetup::start_wifi_setup() {
     info("Wi-Fi connected :)");
 #if defined(HAS_DISPLAY)
     app_.display_.disp_message_large("Wi-Fi\nconnected\n:)");
-    app_.display_.update();
     delay(3000);
 #else
-    app_.bsl_input_.LEDBlink(2, 2, app_.hw_.LED_BRIGHT_DFLT, 500, 400, false);
+    app_.bsl_input_.LEDBlink(2, 2, LED_DFLT_BRIGHT, 500, 400, false);
     delay(3000);
 #endif
     ESP.restart();
@@ -155,10 +167,9 @@ void HBSetup::start_wifi_setup() {
     warning("Wi-Fi error :(");
 #if defined(HAS_DISPLAY)
     app_.display_.disp_error("Wi-Fi\nconnection\nerror");
-    app_.display_.update();
     delay(5000);
 #else
-    app_.bsl_input_.LEDBlink(2, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
+    app_.bsl_input_.LEDBlink(2, 5, LED_DFLT_BRIGHT, 200, 160, false);
     delay(3000);
 #endif
     ESP.restart();
@@ -173,7 +184,7 @@ void HBSetup::save_params_callback() {
       base_topic_param.getValue(), discovery_prefix_param.getValue());
 
 #if defined(HAS_DISPLAY)
-  set_device_state_from_btn_label_params(*device_state_);
+  set_device_state_from_btn_label_params(app_.device_state_);
 #endif
 
 #if defined(HAS_TH_SENSOR)
@@ -199,7 +210,7 @@ void HBSetup::save_params_callback() {
 
 void HBSetup::start_setup() {
   info("Setup");
-  app_.bsl_input_.PauseSwitchMode();
+  app_.bsl_input_.PauseSwitchModeAll();
   // config
   wifi_manager.setTitle(app_.device_state_.get_model_name_w_rand_id().c_str());
   wifi_manager.setSaveParamsCallback(
@@ -287,9 +298,8 @@ void HBSetup::start_setup() {
 
 #if defined(HAS_DISPLAY)
   app_.display_.disp_message("Entering\nSETUP...");
-  app_.display_.update();
 #else
-  app_.bsl_input_.LEDPulse(1, app_.hw_.LED_BRIGHT_DFLT, 500);
+  app_.bsl_input_.LEDPulse(1, LED_DFLT_BRIGHT, 500);
   delay(2000);
 #endif
 
@@ -337,10 +347,9 @@ void HBSetup::start_setup() {
       warning("Wi-Fi error.");
 #if defined(HAS_DISPLAY)
       app_.display_.disp_error("Wi-Fi\nerror");
-      app_.display_.update();
       delay(3000);
 #else
-      app_.bsl_input_.LEDBlink(1, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
+      app_.bsl_input_.LEDBlink(1, 5, LED_DFLT_BRIGHT, 200, 160, false);
       delay(3000);
 #endif
       ESP.restart();
@@ -356,9 +365,8 @@ void HBSetup::start_setup() {
        app_.device_state_.get_hostname().c_str());
 #if defined(HAS_DISPLAY)
   app_.display_.disp_web_config();
-  app_.display_.update();
 #else
-  app_.bsl_input_.LEDPulse(1, app_.hw_.LED_BRIGHT_DFLT, 2000);
+  app_.bsl_input_.LEDPulse(1, LED_DFLT_BRIGHT, 2000);
 #endif
   uint32_t setup_start_time = millis();
 
@@ -402,9 +410,8 @@ void HBSetup::start_setup() {
 
 #if defined(HAS_DISPLAY)
   app_.display_.disp_message("Confirming\nsetup...");
-  app_.display_.update();
 #else
-  app_.bsl_input_.LEDPulse(1, app_.hw_.LED_BRIGHT_DFLT, 250);
+  app_.bsl_input_.LEDPulse(1, LED_DFLT_BRIGHT, 250);
 #endif
 
   while (!mqtt_client.connected()) {
@@ -416,10 +423,9 @@ void HBSetup::start_setup() {
       warning("MQTT error.");
 #if defined(HAS_DISPLAY)
       app_.display_.disp_error("MQTT\nerror");
-      app_.display_.update();
       delay(3000);
 #else
-      app_.bsl_input_.LEDBlink(1, 5, app_.hw_.LED_BRIGHT_DFLT, 200, 160, false);
+      app_.bsl_input_.LEDBlink(1, 5, LED_DFLT_BRIGHT, 200, 160, false);
       delay(3000);
 #endif
       ESP.restart();
@@ -436,10 +442,9 @@ void HBSetup::start_setup() {
   info("setup successful");
 #if defined(HAS_DISPLAY)
   app_.display_.disp_message_large("Setup\ncomplete\n:)");
-  app_.display_.update();
   delay(3000);
 #else
-  app_.bsl_input_.LEDBlink(1, 2, app_.hw_.LED_BRIGHT_DFLT, 500, 400, false);
+  app_.bsl_input_.LEDBlink(1, 2, LED_DFLT_BRIGHT, 500, 400, false);
   delay(3000);
 #endif
   ESP.restart();

@@ -13,7 +13,7 @@ message(STATUS "HOME_BUTTONS_INDUSTRIAL: ${HOME_BUTTONS_INDUSTRIAL}")
 # Get list of all .c and .cpp files in the src directory
 FILE(GLOB_RECURSE app_sources ${CMAKE_SOURCE_DIR}/src/*.c ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
-if(DEFINED HOME_BUTTONS_ORIGINAL AND DEFINED HOME_BUTTONS_MINI)
+if(DEFINED HOME_BUTTONS_ORIGINAL OR DEFINED HOME_BUTTONS_MINI)
     file(GLOB_RECURSE files_to_remove "${CMAKE_SOURCE_DIR}/src/touch/*")
 
     foreach(file ${files_to_remove})

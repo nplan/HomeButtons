@@ -43,7 +43,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.5.0-alpha5";
+static constexpr char SW_VERSION[] = "v2.5.0";
 
 #if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char SW_MODEL_ID[] = "A1";
@@ -106,16 +106,17 @@ static constexpr uint16_t SEN_INTERVAL_MAX = 60;   // min
 #endif
 
 // ----- timing ------
-static constexpr uint32_t SETUP_TIMEOUT = 600;              // s
-static constexpr uint32_t INFO_SCREEN_DISP_TIME = 30000L;   // ms
-static constexpr uint32_t AWAKE_SENSOR_INTERVAL = 15000L;   // ms
-static constexpr uint32_t WDT_TIMEOUT_AWAKE = 60;           // s
-static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;           // s
-static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;    // ms
-static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 300000L;  // ms
-static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;     // ms
-static constexpr uint32_t SHUTDOWN_DELAY = 500L;            // ms
-static constexpr uint32_t FRONTLIGHT_TIMEOUT = 5000L;       // ms
+static constexpr uint32_t SETUP_TIMEOUT = 600;                // s
+static constexpr uint32_t INFO_SCREEN_DISP_TIME = 15000L;     // ms
+static constexpr uint32_t AWAKE_SENSOR_INTERVAL = 15000L;     // ms
+static constexpr uint32_t WDT_TIMEOUT_AWAKE = 60;             // s
+static constexpr uint32_t WDT_TIMEOUT_SLEEP = 60;             // s
+static constexpr uint32_t AWAKE_REDRAW_INTERVAL = 1000L;      // ms
+static constexpr uint32_t SETTINGS_MENU_TIMEOUT = 30000L;     // ms
+static constexpr uint32_t DEVICE_INFO_TIMEOUT = 30000L;       // ms
+static constexpr uint32_t SHUTDOWN_DELAY = 500L;              // ms
+static constexpr uint32_t FRONTLIGHT_TIMEOUT = 5000L;         // ms
+static constexpr uint32_t SLEEP_MODE_INPUT_TIMEOUT = 10000L;  // ms
 
 // ------ network ------
 static constexpr uint32_t QUICK_WIFI_TIMEOUT = 5000L;
@@ -148,7 +149,11 @@ static constexpr char BATT_EMPTY_MSG[] =
     "Batteries\nLOW\n\nPlease\nreplace\nsoon!";
 #endif
 
-static constexpr uint8_t DFLT_AMB_LED_BRIGHT = 10;  // 0 - 255
+// ------ LEDs ------
+static constexpr uint8_t LED_DFLT_BRIGHT = 100;    // pct
+static constexpr uint8_t LED_MIN_BRIGHT = 10;      // pct
+static constexpr uint8_t LED_MAX_AMB_BRIGHT = 20;  // pct
+static constexpr float LED_GAMMA = 2.2;
 
 // ------ BUTTONS ------
 static constexpr uint32_t kBtnDebounceTimeout = 50L;

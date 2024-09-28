@@ -11,8 +11,8 @@
 #include "setup.h"
 
 #if defined(HAS_DISPLAY)
-#include "display.h"
-#include "mdi_helper.h"
+#include "display/display.h"
+#include "mdi/mdi_helper.h"
 #endif
 
 #if defined(HAS_BUTTON_UI)
@@ -169,9 +169,10 @@ class App : public AppStateMachine, public Logger {
   void _start_esp_sleep();
   void _go_to_sleep();
 #endif
-  void _handle_failed_init();
+  void _sleep_or_restart();
   std::pair<BootCause, int16_t> _determine_boot_cause();
   void _log_task_stats();
+  void _publish_system_state();
 
   static void _ui_task(void* app);
   void _start_ui_task();
@@ -229,7 +230,6 @@ class App : public AppStateMachine, public Logger {
   BtnSwLED b2_;
   BtnSwLED b3_;
   BtnSwLED b4_;
-  BtnSwLED sw_;
   BtnSwLEDInput<NUM_BUTTONS> bsl_input_;
 #elif defined(HOME_BUTTONS_INDUSTRIAL)
   BtnSwLED b1_;

@@ -35,6 +35,8 @@ void MQTTHelper::send_discovery_config() {
   StaticJsonDocument<128> device_short;
   device_short["ids"][0] = _device_state.factory().unique_id;
 
+  uint16_t expire_after = _device_state.sensor_interval() * 60 + 60;  // seconds
+
   char buffer[MQTT_PYLD_SIZE];
 
   bool full_device_sent = false;
@@ -174,7 +176,7 @@ void MQTTHelper::send_discovery_config() {
     conf["exp_aft"] = expire_after;
     conf["dev"] = device_short;
     serializeJson(conf, buffer, sizeof(buffer));
-    _network.publish(topics_.t_battery_config(), buffer, true);
+    _network.publish(topics_.t_battery_config(), buffer, true); 
   }
 #endif
 
@@ -205,8 +207,8 @@ void MQTTHelper::send_discovery_config() {
     conf["name"] = FormatterType{} + "Button " + (i + 1) + " label";
     conf["uniq_id"] = FormatterType{} + _device_state.factory().unique_id +
                       "_button_" + (i + 1) + "_label";
-    conf["cmd_t"] = topics_.t_btn_label_cmd(i);
-    conf["stat_t"] = topics_.t_btn_label_state(i);
+    conf["cmd_t"] = topics_.t_btn_label_cmd(i + 1);
+    conf["stat_t"] = topics_.t_btn_label_state(i + 1);
     conf["max"] = BTN_LABEL_MAXLEN;
     conf["ic"] = FormatterType("mdi:numeric-%d-box", i + 1);
     conf["ret"] = "true";
@@ -217,7 +219,7 @@ void MQTTHelper::send_discovery_config() {
 
   {
     // user message
-    StaticJsonDocument<MQTT_PYLD_SIZE> user_message_conf;
+    StaticJsonDocument<MQTT_PYLD_SIZE> conf;
     conf["name"] = "Show message";
     conf["uniq_id"] =
         FormatterType{} + _device_state.factory().unique_id + "_user_message";
@@ -277,18 +279,18 @@ void MQTTHelper::send_discovery_config() {
     StaticJsonDocument<MQTT_PYLD_SIZE> conf;
     conf["name"] = "LED brightness";
     conf["uniq_id"] =
-        FormatterType{} + _device_state.factory().unique_id + "_led_brightness";
-    conf["cmd_t"] = topics_.t_led_brightness_cmd();
-    conf["stat_t"] = topics_.t_led_brightness_state();
+        FormatterType{} + _device_state.factory().unique_id + "_led_amb_bright";
+    conf["cmd_t"] = topics_.t_led_amb_bright_cmd();
+    conf["stat_t"] = topics_.t_led_amb_bright_state();
     conf["avty_t"] = topics_.t_avlb();
     conf["unit_of_meas"] = "%";
     conf["min"] = 0;
-    conf["max"] = 100;
+    conf["max"] = LED_MAX_AMB_BRIGHT;
     conf["mode"] = "slider";
     conf["ic"] = "mdi:led-on";
     conf["dev"] = device_short;
     serializeJson(conf, buffer, sizeof(buffer));
-    _network.publish(topics_.t_led_brightness_config(), buffer, true);
+    _network.publish(topics_.t_led_amb_bright_config(), buffer, true);
   }
 #endif
 }
@@ -397,6 +399,6 @@ void MQTTHelper::clear_discovery_config() {
 #endif
 
 #if defined(HOME_BUTTONS_INDUSTRIAL)
-  _network.publish(topics_.t_led_brightness_config(), empty_payload, true);
+  _network.publish(topics_.t_led_amb_bright_config(), empty_payload, true);
 #endif
 }

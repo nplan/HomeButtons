@@ -8,7 +8,7 @@
 #include "static_string.h"
 #include "state.h"
 #include "logger.h"
-#include "mdi_helper.h"
+#include "mdi/mdi_helper.h"
 #include "types.h"
 
 // parameters for draw_bmp()

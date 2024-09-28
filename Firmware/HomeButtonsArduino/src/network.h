@@ -126,6 +126,10 @@ class Network : public NetworkStateMachine, public Logger {
 
   State get_state();
 
+  IPAddress get_ip() { return WiFi.localIP(); }
+
+  int32_t get_rssi() { return WiFi.RSSI(); }
+
   void publish(const TopicType &topic, const PayloadType &payload,
                bool retained = false);
   void publish(const TopicType &topic, const char *payload,

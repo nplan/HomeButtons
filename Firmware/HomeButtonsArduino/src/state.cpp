@@ -18,7 +18,7 @@ void DeviceState::save_user() {
   }
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
   preferences_.putBool("use_f", user_preferences_.use_fahrenheit);
-  preferences_.putUInt("led_br", user_preferences_.led_brightness);
+  preferences_.putUInt("led_am_br", user_preferences_.led_amb_bright);
   preferences_.putString("btn_conf", user_preferences_.btn_conf_string.c_str());
   preferences_.putString("ssid", user_preferences_.network.ssid.c_str());
   preferences_.putString(
@@ -63,8 +63,8 @@ void DeviceState::load_user() {
   user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   user_preferences_.use_fahrenheit = preferences_.getBool("use_f", false);
-  user_preferences_.led_brightness =
-      preferences_.getUInt("led_br", DFLT_AMB_LED_BRIGHT);
+  user_preferences_.led_amb_bright =
+      preferences_.getUInt("led_am_br", LED_MAX_AMB_BRIGHT);
 
   _load_to_static_string(user_preferences_.btn_conf_string, "btn_conf",
                          BTN_CONF_DFLT);
@@ -191,16 +191,16 @@ size_t DeviceState::get_free_entries() { return preferences_.freeEntries(); }
 
 const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
   static ButtonLabel noLabel;
-  if (i < NUM_BUTTONS) {
-    return user_preferences_.btn_labels[i];
+  if (i > 0 && i <= NUM_BUTTONS) {
+    return user_preferences_.btn_labels[i - 1];
   } else {
     return noLabel;
   }
 }
 
 void DeviceState::set_btn_label(uint8_t i, const char* label) {
-  if (i < NUM_BUTTONS) {
-    user_preferences_.btn_labels[i].set(label);
+  if (i > 0 && i <= NUM_BUTTONS) {
+    user_preferences_.btn_labels[i - 1].set(label);
   }
 }
 

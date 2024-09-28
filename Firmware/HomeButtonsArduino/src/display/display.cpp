@@ -387,13 +387,13 @@ void Display::draw_main() {
   mdi_.begin();
   LabelType label_type[NUM_BUTTONS] = {};
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
-    ButtonLabel label = device_state_.get_btn_label(i);
+    ButtonLabel label = device_state_.get_btn_label(i + 1);
     label_type[i] = get_label_type(label);
   }
 
   // Loop through buttons
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
-    ButtonLabel label = device_state_.get_btn_label(i);
+    ButtonLabel label = device_state_.get_btn_label(i + 1);
 
     if (label_type[i] == LabelType::Icon) {
       MDIName icon = get_mdi_name(label);
@@ -537,7 +537,7 @@ void Display::draw_main() {
   mdi_.begin();
   // Loop through buttons
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
-    ButtonLabel label = device_state_.get_btn_label(i);
+    ButtonLabel label = device_state_.get_btn_label(i + 1);
     uint16_t size = 100;
     uint16_t x = i % 2 == 0 ? 0 : WIDTH - size;
     uint16_t y = i < 2 ? 0 : HEIGHT - size;
@@ -550,7 +550,7 @@ void Display::draw_main() {
   uint16_t tile_width = 132;
   uint16_t tile_height = 100;
   for (uint16_t i = 0; i < NUM_BUTTONS; i++) {
-    ButtonLabel label = device_state_.get_btn_label(i);
+    ButtonLabel label = device_state_.get_btn_label(i + 1);
 
     ButtonTile tile = {};
     tile.label_type = get_label_type(label);
