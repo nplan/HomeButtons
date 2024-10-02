@@ -8,7 +8,6 @@ You will need:
    1. 18650 Li-Ion battery cell (not included). ***WARNING:*** maximum length is 65.5 mm. Button top cells might not fit properly.
    1. USB-C power brick
    1. 5V DC power supply
-1. A flat headed screwdriver
 1. 2x mounting screws with anchors suitable for your walls ***or*** double sided tape (must stick to plastic well)
 1. A Wi-Fi network
 1. An MQTT broker

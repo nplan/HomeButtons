@@ -41,7 +41,7 @@ The labels and button actions can be easily configured directly in *Home Assista
 
 <div style="display: inline-block;" markdown>
 
-![Home Buttons](assets/hb_mini_1.jpeg){align=left width="400"}
+![Home Buttons Mini](assets/hb_mini_1.jpeg){align=left width="400"}
 
 Compact device with 4 buttons and a 1.5" display. Supports icon labels. Powered by AA batteries with up to 2 years of battery life.
 
@@ -74,7 +74,6 @@ The original *Home Buttons*. Larger device with 6 buttons and a 2.9" display. Su
 - 6 push buttons, multiple press support
 - 2.9" e-paper display
 - Text labels and *Material Design Icons* :material-emoticon-cool-outline:
-
 - Temperature & humidity sensor
 - Power options: Rechargeable 18650 Li-Ion Battery Cell, USB-C, 5V DC
 - Greater than 1 year battery life
@@ -86,6 +85,28 @@ The original *Home Buttons*. Larger device with 6 buttons and a 2.9" display. Su
 
 ---
 
+### Home Buttons Industrial
+
+<div style="display: inline-block;" markdown>
+
+![Home Buttons Industrial](assets/hb_ind_front.png){align=left width="350"}
+
+A device featuring industrial-grade buttons and a rugged aluminum enclosure. Does not have a display. Powered by USB-C or 7-32 V DC. Ideal for garages and workshops.
+
+**Features**:
+
+- Rugged industrial design with outstanding tactile feedback
+- Illuminated momentary buttons (adjustable brightness)
+- Buttons can be configured as triggers or switches
+- Kill switch
+- Wi-Fi connectivity
+- Power options: USB-C (2 m cable included) or 7-32 V DC power
+
+[*Learn more...*](industrial/)
+
+</div>
+
+---
 
 ## Where To Get
 

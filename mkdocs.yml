@@ -19,8 +19,14 @@ nav:
       - User Guide: mini/user_guide.md
       - MQTT Topics: mini/mqtt_topics.md
       - Firmware Update: mini/update.md
+  - Home Buttons Industrial:
+      - industrial/index.md
+      - Getting Started: industrial/setup.md
+      - User Guide: industrial/user_guide.md
+      - MQTT Topics: industrial/mqtt_topics.md
+      - Firmware Update: industrial/update.md
   - Support:
-      - Common Issues: help.md
+      - Frequent Issues: help.md
       - Minimal Setup: minimal.md
 
 theme:
