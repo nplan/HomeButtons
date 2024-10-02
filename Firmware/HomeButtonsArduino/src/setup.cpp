@@ -1,16 +1,12 @@
 #include "setup.h"
+#include "app.h"
 
 #include <Arduino.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <ESPmDNS.h>
 
-#include "config.h"
-#include "display.h"
-#include "hardware.h"
-#include "state.h"
-#include "logger.h"
-#include "network.h"
 #include "utils.h"
 
 static WiFiManager wifi_manager;
@@ -32,40 +28,104 @@ static WiFiManagerParameter gateway_param("gateway", "Gateway", "", 15);
 static WiFiManagerParameter subnet_param("subnet", "Subnet Mask", "", 15);
 static WiFiManagerParameter dns_param("dns", "Primary DNS Server", "", 15);
 static WiFiManagerParameter dns2_param("dns2", "Secondary DNS Server", "", 15);
-static WiFiManagerParameter btn1_label_param("btn1_lbl", "Button 1 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn2_label_param("btn2_lbl", "Button 2 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn3_label_param("btn3_lbl", "Button 3 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn4_label_param("btn4_lbl", "Button 4 Label", "",
-                                             BTN_LABEL_MAXLEN);
-#ifndef HOME_BUTTONS_MINI
-static WiFiManagerParameter btn5_label_param("btn5_lbl", "Button 5 Label", "",
-                                             BTN_LABEL_MAXLEN);
-static WiFiManagerParameter btn6_label_param("btn6_lbl", "Button 6 Label", "",
-                                             BTN_LABEL_MAXLEN);
-#endif
+
+#if defined(HAS_TH_SENSOR)
 static WiFiManagerParameter temp_unit_param("temp_unit", "Temperature Unit", "",
                                             1);
+#endif
 
-static bool web_portal_saved = false;
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+static WiFiManagerParameter button_config_param("btn_conf", "Button Config", "",
+                                                NUM_BUTTONS - 1);
+#endif
 
-void start_wifi_setup(DeviceState& device_state, Display& display) {
-  static Logger setupLogger("W_SETUP");
-  display.disp_ap_config();
-  display.update();
+#if defined(HAS_DISPLAY)
+static char* button_ids[NUM_BUTTONS];
+static char* button_labels[NUM_BUTTONS];
+static WiFiManagerParameter* btn_label_params[NUM_BUTTONS];
+
+void allocate_btn_label_params() {
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    button_ids[i] = new char[11];
+    button_labels[i] = new char[17];
+    snprintf(button_ids[i], 11, "btn%d_lbl", i + 1);
+    snprintf(button_labels[i], 17, "Button %d Label", i + 1);
+
+    btn_label_params[i] = new WiFiManagerParameter(
+        button_ids[i], button_labels[i], "", BTN_LABEL_MAXLEN);
+  }
+}
+
+void set_btn_label_params_from_device_state(DeviceState& device_state_) {
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    btn_label_params[i]->setValue(device_state_.get_btn_label(i + 1).c_str(),
+                                  BTN_LABEL_MAXLEN);
+  }
+}
+
+void set_device_state_from_btn_label_params(DeviceState& device_state_) {
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    device_state_.set_btn_label(i + 1, btn_label_params[i]->getValue());
+  }
+}
+#endif
+
+void HBSetup::start_wifi_setup() {
+  info("Wi-Fi setup");
+  app_.bsl_input_.PauseSwitchModeAll();
+#if defined(HAS_DISPLAY)
+  app_.display_.disp_ap_config();
+#else
+  app_.bsl_input_.LEDPulse(2, LED_DFLT_BRIGHT, 2000);
+#endif
+
+#if defined(HOME_BUTTONS_DEBUG)
+  Serial.begin(115200);
+  wifi_manager.setDebugOutput(true, WM_DEBUG_DEV);
+#endif
 
   WiFi.mode(WIFI_STA);
-  wifi_manager.setConfigPortalTimeout(SETUP_TIMEOUT);
-  wifi_manager.resetSettings();
-  wifi_manager.setTitle(WIFI_MANAGER_TITLE);
+  wifi_manager.setTitle(app_.device_state_.get_model_name_w_rand_id().c_str());
   wifi_manager.setBreakAfterConfig(true);
   wifi_manager.setDarkMode(true);
   wifi_manager.setShowInfoUpdate(false);
+  wifi_manager.setConfigPortalBlocking(false);
 
-  wifi_manager.startConfigPortal(device_state.get_ap_ssid().c_str(),
-                                 device_state.get_ap_password());
+  uint32_t setup_start_time = millis();
+  wifi_manager.startConfigPortal(app_.device_state_.get_ap_ssid().c_str(),
+                                 app_.device_state_.get_ap_password());
+  bool user_stopped = false;
+  while (true) {
+    bool connected = wifi_manager.process();
+    if (millis() - setup_start_time > SETUP_TIMEOUT * 1000L) {
+      debug("Wi-Fi config portal stopped, timeout");
+      break;
+    }
+    if (connected) {
+      debug("Wi-Fi config portal stopped, connected");
+      break;
+    }
+    if (app_.hw_.any_button_pressed()) {
+      user_stopped = true;
+      debug("Wi-Fi config portal stopped by user");
+      break;
+    }
+    delay(250);
+  }
+
+  if (user_stopped) {
+    info("Wi-Fi config portal stopped by user");
+#if defined(HAS_DISPLAY)
+    app_.display_.disp_error("Wi-Fi\nsetup\ncancelled");
+    delay(5000);
+#else
+    app_.bsl_input_.LEDBlink(2, 5, LED_DFLT_BRIGHT, 200, 160, false);
+    delay(3000);
+#endif
+    ESP.restart();
+  }
+
+  info("Wi-Fi config portal stopped, trying to connect to Wi-Fi...");
 
   bool wifi_connected = false;
   WiFi.mode(WIFI_STA);
@@ -83,105 +143,132 @@ void start_wifi_setup(DeviceState& device_state, Display& display) {
   }
 
   if (wifi_connected) {
-    device_state.persisted().wifi_done = true;
-    device_state.persisted().restart_to_setup = true;
-    device_state.persisted().silent_restart = true;
-    device_state.save_all();
-    setupLogger.info("Wi-Fi connected.");
-    display.disp_message_large("Wi-Fi\nconnected\n:)");
-    display.update();
+    SSIDType ssid(WiFi.SSID());
+    if (!(ssid == app_.device_state_.user_preferences().network.ssid)) {
+      app_.device_state_.clear_static_ip_config();
+    }
+    app_.device_state_.persisted().wifi_done = true;
+    app_.device_state_.persisted().restart_to_setup = true;
+    app_.device_state_.persisted().silent_restart = true;
+    app_.device_state_.save_all();
+    info("Wi-Fi connected :)");
+#if defined(HAS_DISPLAY)
+    app_.display_.disp_message_large("Wi-Fi\nconnected\n:)");
     delay(3000);
+#else
+    app_.bsl_input_.LEDBlink(2, 2, LED_DFLT_BRIGHT, 500, 400, false);
+    delay(3000);
+#endif
     ESP.restart();
   } else {
-    device_state.persisted().wifi_done = false;
-    device_state.persisted().silent_restart = true;
-    device_state.save_all();
-    setupLogger.warning("Wi-Fi error.");
-    display.disp_error("Wi-Fi\nconnection\nerror");
-    display.update();
+    app_.device_state_.persisted().wifi_done = false;
+    app_.device_state_.persisted().silent_restart = true;
+    app_.device_state_.save_all();
+    warning("Wi-Fi error :(");
+#if defined(HAS_DISPLAY)
+    app_.display_.disp_error("Wi-Fi\nconnection\nerror");
     delay(5000);
+#else
+    app_.bsl_input_.LEDBlink(2, 5, LED_DFLT_BRIGHT, 200, 160, false);
+    delay(3000);
+#endif
     ESP.restart();
   }
 }
 
-void save_params_callback(DeviceState* device_state) {
-  device_state->set_device_name(DeviceName{device_name_param.getValue()});
-  device_state->set_mqtt_parameters(
+void HBSetup::save_params_callback() {
+  app_.device_state_.set_device_name(DeviceName{device_name_param.getValue()});
+  app_.device_state_.set_mqtt_parameters(
       mqtt_server_param.getValue(), String(mqtt_port_param.getValue()).toInt(),
       mqtt_user_param.getValue(), mqtt_password_param.getValue(),
       base_topic_param.getValue(), discovery_prefix_param.getValue());
-  device_state->set_btn_label(0, btn1_label_param.getValue());
-  device_state->set_btn_label(1, btn2_label_param.getValue());
-  device_state->set_btn_label(2, btn3_label_param.getValue());
-  device_state->set_btn_label(3, btn4_label_param.getValue());
-#ifndef HOME_BUTTONS_MINI
-  device_state->set_btn_label(4, btn5_label_param.getValue());
-  device_state->set_btn_label(5, btn6_label_param.getValue());
-#endif
-  device_state->set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
 
+#if defined(HAS_DISPLAY)
+  set_device_state_from_btn_label_params(app_.device_state_);
+#endif
+
+#if defined(HAS_TH_SENSOR)
+  app_.device_state_.set_temp_unit(StaticString<1>(temp_unit_param.getValue()));
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  app_.device_state_.set_btn_conf_string(
+      BtnConfString{button_config_param.getValue()});
+#endif
+
+  SSIDType ssid(WiFi.SSID());
   IPAddress static_ip, gateway, subnet, dns, dns2;
   static_ip.fromString(static_ip_param.getValue());
   gateway.fromString(gateway_param.getValue());
   subnet.fromString(subnet_param.getValue());
   dns.fromString(dns_param.getValue());
   dns2.fromString(dns2_param.getValue());
-  device_state->set_static_ip_config(static_ip, gateway, subnet, dns, dns2);
-  web_portal_saved = true;
+  app_.device_state_.set_static_ip_config(ssid, static_ip, gateway, subnet, dns,
+                                          dns2);
+  web_portal_saved_ = true;
 }
 
-void start_setup(DeviceState& device_state, Display& display,
-                 HardwareDefinition& HW) {
+void HBSetup::start_setup() {
+  info("Setup");
+  app_.bsl_input_.PauseSwitchModeAll();
   // config
-  static Logger setupLogger("SETUP");
-  wifi_manager.setTitle(WIFI_MANAGER_TITLE);
+  wifi_manager.setTitle(app_.device_state_.get_model_name_w_rand_id().c_str());
   wifi_manager.setSaveParamsCallback(
-      std::bind(&save_params_callback, &device_state));
+      std::bind(&HBSetup::save_params_callback, this));
   wifi_manager.setBreakAfterConfig(true);
   wifi_manager.setShowPassword(true);
   wifi_manager.setParamsPage(true);
   wifi_manager.setDarkMode(true);
   wifi_manager.setShowInfoUpdate(true);
 
+  // hostname
+  wifi_manager.setHostname(app_.device_state_.get_hostname().c_str());
+
   // parameters
-  device_name_param.setValue(device_state.device_name().c_str(), 20);
+  device_name_param.setValue(app_.device_state_.device_name().c_str(), 20);
   mqtt_server_param.setValue(
-      device_state.user_preferences().mqtt.server.c_str(), 32);
+      app_.device_state_.user_preferences().mqtt.server.c_str(), 32);
   mqtt_port_param.setValue(
-      String(device_state.user_preferences().mqtt.port).c_str(), 6);
-  mqtt_user_param.setValue(device_state.user_preferences().mqtt.user.c_str(),
-                           64);
+      String(app_.device_state_.user_preferences().mqtt.port).c_str(), 6);
+  mqtt_user_param.setValue(
+      app_.device_state_.user_preferences().mqtt.user.c_str(), 64);
   mqtt_password_param.setValue(
-      device_state.user_preferences().mqtt.password.c_str(), 64);
+      app_.device_state_.user_preferences().mqtt.password.c_str(), 64);
   base_topic_param.setValue(
-      device_state.user_preferences().mqtt.base_topic.c_str(), 64);
+      app_.device_state_.user_preferences().mqtt.base_topic.c_str(), 64);
   discovery_prefix_param.setValue(
-      device_state.user_preferences().mqtt.discovery_prefix.c_str(), 64);
-  static_ip_param.setValue(
-      device_state.user_preferences().network.static_ip.toString().c_str(), 15);
+      app_.device_state_.user_preferences().mqtt.discovery_prefix.c_str(), 64);
+  static_ip_param.setValue(app_.device_state_.user_preferences()
+                               .network.static_ip.toString()
+                               .c_str(),
+                           15);
   gateway_param.setValue(
-      device_state.user_preferences().network.gateway.toString().c_str(), 15);
+      app_.device_state_.user_preferences().network.gateway.toString().c_str(),
+      15);
   subnet_param.setValue(
-      device_state.user_preferences().network.subnet.toString().c_str(), 15);
+      app_.device_state_.user_preferences().network.subnet.toString().c_str(),
+      15);
   dns_param.setValue(
-      device_state.user_preferences().network.dns.toString().c_str(), 15);
+      app_.device_state_.user_preferences().network.dns.toString().c_str(), 15);
   dns2_param.setValue(
-      device_state.user_preferences().network.dns2.toString().c_str(), 15);
-  btn1_label_param.setValue(device_state.get_btn_label(0).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn2_label_param.setValue(device_state.get_btn_label(1).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn3_label_param.setValue(device_state.get_btn_label(2).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn4_label_param.setValue(device_state.get_btn_label(3).c_str(),
-                            BTN_LABEL_MAXLEN);
-#ifndef HOME_BUTTONS_MINI
-  btn5_label_param.setValue(device_state.get_btn_label(4).c_str(),
-                            BTN_LABEL_MAXLEN);
-  btn6_label_param.setValue(device_state.get_btn_label(5).c_str(),
-                            BTN_LABEL_MAXLEN);
+      app_.device_state_.user_preferences().network.dns2.toString().c_str(),
+      15);
+
+#if defined(HAS_DISPLAY)
+  allocate_btn_label_params();
+  set_btn_label_params_from_device_state(app_.device_state_);
 #endif
-  temp_unit_param.setValue(device_state.get_temp_unit().c_str(), 1);
+
+#if defined(HAS_TH_SENSOR)
+  temp_unit_param.setValue(app_.device_state_.get_temp_unit().c_str(), 1);
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  button_config_param.setValue(
+      app_.device_state_.user_preferences().btn_conf_string.c_str(),
+      NUM_BUTTONS - 1);
+#endif
+
   wifi_manager.addParameter(&device_name_param);
   wifi_manager.addParameter(&mqtt_server_param);
   wifi_manager.addParameter(&mqtt_port_param);
@@ -194,35 +281,43 @@ void start_setup(DeviceState& device_state, Display& display,
   wifi_manager.addParameter(&subnet_param);
   wifi_manager.addParameter(&dns_param);
   wifi_manager.addParameter(&dns2_param);
-  wifi_manager.addParameter(&btn1_label_param);
-  wifi_manager.addParameter(&btn2_label_param);
-  wifi_manager.addParameter(&btn3_label_param);
-  wifi_manager.addParameter(&btn4_label_param);
-#ifndef HOME_BUTTONS_MINI
-  wifi_manager.addParameter(&btn5_label_param);
-  wifi_manager.addParameter(&btn6_label_param);
-#endif
-  wifi_manager.addParameter(&temp_unit_param);
 
-  display.disp_message("Entering\nSETUP...");
-  display.update();
+#if defined(HAS_DISPLAY)
+  for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+    wifi_manager.addParameter(btn_label_params[i]);
+  }
+#endif
+
+#if defined(HAS_TH_SENSOR)
+  wifi_manager.addParameter(&temp_unit_param);
+#endif
+
+#if defined(HOME_BUTTONS_INDUSTRIAL)
+  wifi_manager.addParameter(&button_config_param);
+#endif
+
+#if defined(HAS_DISPLAY)
+  app_.display_.disp_message("Entering\nSETUP...");
+#else
+  app_.bsl_input_.LEDPulse(1, LED_DFLT_BRIGHT, 500);
+  delay(2000);
+#endif
 
   // set static IP if configured
   StaticIPConfig static_ip_config =
-      validate_static_ip_config(device_state.user_preferences().network);
+      validate_static_ip_config(app_.device_state_.user_preferences().network);
   if (static_ip_config.valid) {
     WiFi.config(static_ip_config.static_ip, static_ip_config.gateway,
                 static_ip_config.subnet, static_ip_config.dns,
                 static_ip_config.dns2);
-    setupLogger.info(
-        "Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
-        ip_address_to_static_string(static_ip_config.static_ip).c_str(),
-        ip_address_to_static_string(static_ip_config.gateway).c_str(),
-        ip_address_to_static_string(static_ip_config.subnet).c_str(),
-        ip_address_to_static_string(static_ip_config.dns).c_str(),
-        ip_address_to_static_string(static_ip_config.dns2).c_str());
+    info("Using static IP %s, Gateway %s, Subnet %s, DNS1 %s, DNS2 %s",
+         ip_address_to_static_string(static_ip_config.static_ip).c_str(),
+         ip_address_to_static_string(static_ip_config.gateway).c_str(),
+         ip_address_to_static_string(static_ip_config.subnet).c_str(),
+         ip_address_to_static_string(static_ip_config.dns).c_str(),
+         ip_address_to_static_string(static_ip_config.dns2).c_str());
   } else {
-    setupLogger.info("Using DHCP. Static IP not set or not valid.");
+    info("Using DHCP. Static IP not set or not valid.");
   }
 
   // connect Wi-Fi
@@ -243,40 +338,53 @@ void start_setup(DeviceState& device_state, Display& display,
       break;
     } else if (remaining_tries > 0) {
       remaining_tries--;
-      setupLogger.warning("Wi-Fi error, retrying (remaining tries: %d)",
-                          remaining_tries);
+      warning("Wi-Fi error, retrying (remaining tries: %d)", remaining_tries);
       WiFi.disconnect();
       delay(1000);
     } else {
-      device_state.persisted().silent_restart = true;
-      device_state.save_all();
-      setupLogger.warning("Wi-Fi error.");
-      display.disp_error("Wi-Fi\nerror");
-      display.update();
+      app_.device_state_.persisted().silent_restart = true;
+      app_.device_state_.save_all();
+      warning("Wi-Fi error.");
+#if defined(HAS_DISPLAY)
+      app_.display_.disp_error("Wi-Fi\nerror");
       delay(3000);
+#else
+      app_.bsl_input_.LEDBlink(1, 5, LED_DFLT_BRIGHT, 200, 160, false);
+      delay(3000);
+#endif
       ESP.restart();
     }
   }
-  device_state.set_ip(WiFi.localIP());
-  display.disp_web_config();
-  display.update();
+
+  // mDNS
+  MDNS.begin(app_.device_state_.get_hostname().c_str());
+
+  app_.device_state_.set_ip(WiFi.localIP());
+  info("Connect to http://%s or http://%s.local",
+       ip_address_to_static_string(WiFi.localIP()).c_str(),
+       app_.device_state_.get_hostname().c_str());
+#if defined(HAS_DISPLAY)
+  app_.display_.disp_web_config();
+#else
+  app_.bsl_input_.LEDPulse(1, LED_DFLT_BRIGHT, 2000);
+#endif
   uint32_t setup_start_time = millis();
 
-  web_portal_saved = false;
+  web_portal_saved_ = false;
   wifi_manager.startWebPortal();
   while (millis() - setup_start_time < SETUP_TIMEOUT * 1000L) {
     wifi_manager.process();
-    if (HW.any_button_pressed() || web_portal_saved) {
+    if (app_.hw_.any_button_pressed() || web_portal_saved_) {
       break;
     }
     delay(10);
   }
   wifi_manager.stopWebPortal();
 
-  if (!web_portal_saved) {
-    setupLogger.debug("User triggered exit setup");
-    device_state.persisted().silent_restart = true;
-    device_state.save_all();
+  if (!web_portal_saved_) {
+    debug("User triggered exit setup");
+    app_.device_state_.persisted().silent_restart = true;
+    app_.device_state_.save_all();
     ESP.restart();
   }
 
@@ -284,47 +392,60 @@ void start_setup(DeviceState& device_state, Display& display,
   uint32_t mqtt_start_time = millis();
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
-  setupLogger.debug("Trying to connect to mqtt://%s:%d",
-                    device_state.user_preferences().mqtt.server.c_str(),
-                    device_state.user_preferences().mqtt.port);
-  mqtt_client.setServer(device_state.user_preferences().mqtt.server.c_str(),
-                        device_state.user_preferences().mqtt.port);
-  if (device_state.user_preferences().mqtt.user.length() > 0 &&
-      device_state.user_preferences().mqtt.password.length() > 0) {
-    mqtt_client.connect(device_state.factory().unique_id.c_str(),
-                        device_state.user_preferences().mqtt.user.c_str(),
-                        device_state.user_preferences().mqtt.password.c_str());
+  debug("Trying to connect to mqtt://%s:%d",
+        app_.device_state_.user_preferences().mqtt.server.c_str(),
+        app_.device_state_.user_preferences().mqtt.port);
+  mqtt_client.setServer(
+      app_.device_state_.user_preferences().mqtt.server.c_str(),
+      app_.device_state_.user_preferences().mqtt.port);
+  if (app_.device_state_.user_preferences().mqtt.user.length() > 0 &&
+      app_.device_state_.user_preferences().mqtt.password.length() > 0) {
+    mqtt_client.connect(
+        app_.device_state_.factory().unique_id.c_str(),
+        app_.device_state_.user_preferences().mqtt.user.c_str(),
+        app_.device_state_.user_preferences().mqtt.password.c_str());
   } else {
-    mqtt_client.connect(device_state.factory().unique_id.c_str());
+    mqtt_client.connect(app_.device_state_.factory().unique_id.c_str());
   }
 
-  display.disp_message("Confirming\nsetup...");
-  display.update();
+#if defined(HAS_DISPLAY)
+  app_.display_.disp_message("Confirming\nsetup...");
+#else
+  app_.bsl_input_.LEDPulse(1, LED_DFLT_BRIGHT, 250);
+#endif
 
   while (!mqtt_client.connected()) {
     delay(10);
     if (millis() - mqtt_start_time >= MQTT_TIMEOUT) {
-      device_state.persisted().setup_done = false;
-      device_state.persisted().silent_restart = true;
-      device_state.save_all();
-      setupLogger.warning("MQTT error.");
-      display.disp_error("MQTT\nerror");
-      display.update();
+      app_.device_state_.persisted().setup_done = false;
+      app_.device_state_.persisted().silent_restart = true;
+      app_.device_state_.save_all();
+      warning("MQTT error.");
+#if defined(HAS_DISPLAY)
+      app_.display_.disp_error("MQTT\nerror");
       delay(3000);
+#else
+      app_.bsl_input_.LEDBlink(1, 5, LED_DFLT_BRIGHT, 200, 160, false);
+      delay(3000);
+#endif
       ESP.restart();
     }
   }
 
   mqtt_client.disconnect();
   WiFi.disconnect(true);
-  device_state.persisted().setup_done = true;
-  device_state.persisted().silent_restart = true;
-  device_state.persisted().connect_on_restart = true;
-  device_state.save_all();
+  app_.device_state_.persisted().setup_done = true;
+  app_.device_state_.persisted().silent_restart = true;
+  app_.device_state_.persisted().connect_on_restart = true;
+  app_.device_state_.save_all();
 
-  setupLogger.info("setup successful");
-  display.disp_message_large("Setup\ncomplete\n:)");
-  display.update();
+  info("setup successful");
+#if defined(HAS_DISPLAY)
+  app_.display_.disp_message_large("Setup\ncomplete\n:)");
   delay(3000);
+#else
+  app_.bsl_input_.LEDBlink(1, 2, LED_DFLT_BRIGHT, 500, 400, false);
+  delay(3000);
+#endif
   ESP.restart();
 }

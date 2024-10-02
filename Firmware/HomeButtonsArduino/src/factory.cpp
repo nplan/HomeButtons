@@ -9,9 +9,6 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 
-#include "display.h"
-#include "hardware.h"
-
 static constexpr char FAC_TEST_BASE_TOPIC[] = "homebuttons-factory/devices";
 static constexpr uint16_t TEST_ICON_SIZE = 100;
 static constexpr uint32_t BUTTON_TEST_TIMEOUT = 60000L;
@@ -64,9 +61,11 @@ bool FactoryTest::is_test_required() {
   return do_test;
 }
 
-bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
+bool FactoryTest::run_test() {
   Preferences prefs;
   FacTestParams params = {};
+
+  bool passed = true;
 
   prefs.begin("fac_test", true);
   params.do_test = prefs.getBool("do_test", false);
@@ -79,22 +78,22 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
   prefs.end();
 
   info("Starting factory test...");
-  display.begin(HW);
-  HW.begin();
+  app_._begin_hw();
 
+#if defined(HAS_DISPLAY)
   // format SPIFFS if needed
   if (!SPIFFS.begin()) {
     info("Formatting icon storage...");
-    display.disp_message("Formatting\nIcon\nStorage...", 0);
-    display.update();
+    app_.display_.disp_message("Formatting\nIcon\nStorage...", 0);
+    app_.display_.update();
     SPIFFS.format();
   } else {
     SPIFFS.end();
     debug("SPIFFS test mount OK");
   }
-
-  display.disp_message_large("FACTORY");
-  display.update();
+  app_.display_.disp_message_large("FACTORY");
+  app_.display_.update();
+#endif
 
   WiFiClient wifi_client;
   PubSubClient mqtt_client(wifi_client);
@@ -120,28 +119,29 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
        params.mqtt_port);
   mqtt_client.setServer(params.mqtt_server, params.mqtt_port);
   while (!mqtt_client.connected()) {
-    mqtt_client.connect(HW.get_unique_id(), params.mqtt_user.c_str(),
+    mqtt_client.connect(app_.hw_.get_unique_id(), params.mqtt_user.c_str(),
                         params.mqtt_password.c_str());
     delay(100);
   }
   info("MQTT connected");
 
   StaticString<256> test_topic("%s/%s/test_start", FAC_TEST_BASE_TOPIC,
-                               HW.get_serial_number());
+                               app_.hw_.get_serial_number());
   mqtt_client.subscribe(test_topic.c_str());
 
   // send device discovery message
   StaticJsonDocument<256> device_doc;
-  device_doc["serial"] = HW.get_serial_number();
-  device_doc["random_id"] = HW.get_random_id();
-  device_doc["model_id"] = HW.get_model_id();
+  device_doc["serial"] = app_.hw_.get_serial_number();
+  device_doc["random_id"] = app_.hw_.get_random_id();
+  device_doc["model_id"] = app_.hw_.get_model_id();
   device_doc["fw_version"] = SW_VERSION;
-  device_doc["hw_version"] = HW.get_hw_version();
+  device_doc["hw_version"] = app_.hw_.get_hw_version();
 
   char buffer[512];
   serializeJson(device_doc, buffer, sizeof(buffer));
 
-  StaticString<256> topic("%s/%s", FAC_TEST_BASE_TOPIC, HW.get_serial_number());
+  StaticString<256> topic("%s/%s", FAC_TEST_BASE_TOPIC,
+                          app_.hw_.get_serial_number());
   mqtt_client.publish(topic.c_str(), buffer);
 
   // wait for test start message
@@ -150,6 +150,7 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
     delay(10);
   }
 
+#if defined(HAS_DISPLAY)
   // test display
   info("Testing display");
   bool display_passed = true;
@@ -169,46 +170,44 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
   }
   mdi.end();
 
-  display.disp_test(test_spec_.disp_text.c_str(), test_spec_.mdi_name.c_str(),
-                    100);
-  display.update();
+  app_.display_.disp_test(test_spec_.disp_text.c_str(),
+                          test_spec_.mdi_name.c_str(), 100);
+  app_.display_.update();
+  passed = passed && display_passed;
+#endif
 
+#if defined(HAS_BUTTON_UI)
   // test LEDs & buttons
   info("Testing LEDs & buttons");
-  bool button_passed = true;
-  HW.set_all_leds(255);
-  bool pressed[NUM_BUTTONS] = {};
+  bool button_passed = false;
+  app_.hw_.set_all_leds_pct(LED_DFLT_BRIGHT);
   uint32_t start_time = millis();
+  uint8_t btn_idx = 0;
   while (true) {
     if (millis() - start_time > BUTTON_TEST_TIMEOUT) {
       error("button test timeout");
       button_passed = false;
       break;
     }
-    for (int i = 0; i < NUM_BUTTONS; i++) {
-      if (HW.button_pressed(i + 1)) {
-        pressed[i] = true;
-        HW.set_led_num(i + 1, 0);
-      }
+    if (app_.hw_.button_pressed(btn_idx + 1)) {
+      app_.hw_.set_led_pct_num(btn_idx + 1, 0);
+      btn_idx++;
     }
-    bool all_pressed = true;
-    for (int i = 0; i < NUM_BUTTONS; i++) {
-      all_pressed = pressed[i];
-      if (!all_pressed) {
-        break;
-      }
-    }
-    if (all_pressed) {
+    if (btn_idx >= NUM_BUTTONS) {
+      button_passed = true;
       break;
     }
   }
+  passed = passed && button_passed;
+#endif
 
+#if defined(HAS_TH_SENSOR)
   // test sensors
   info("Testing sensors");
   bool sensor_passed = true;
   float temp_val;
   float hmd_val;
-  HW.read_temp_hmd(temp_val, hmd_val);
+  app_.hw_.read_temp_hmd(temp_val, hmd_val);
 
   if (temp_val <= test_spec_.temp_ref - test_spec_.temp_tol ||
       temp_val >= test_spec_.temp_ref + test_spec_.temp_tol) {
@@ -222,25 +221,35 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
     error("humidity test fail. Measured: %f, expected: %f +/- %f", hmd_val,
           test_spec_.humd_ref, test_spec_.humd_tol);
   }
-  uint16_t batt_v = HW.read_battery_voltage() * 1000.;
+  passed = passed && sensor_passed;
+#else
+  float temp_val = 0;
+  float hmd_val = 0;
+#endif
+#if defined(HAS_BATTERY)
+  info("Testing battery");
+  bool batt_passed = true;
+  uint16_t batt_v = app_.hw_.read_battery_voltage() * 1000.;
   if (batt_v <= test_spec_.batt_mvolt_ref - test_spec_.batt_mvolt_tol ||
       batt_v >= test_spec_.batt_mvolt_ref + test_spec_.batt_mvolt_tol) {
-    sensor_passed = false;
+    batt_passed = false;
     error("battery test fail. Measured: %d mV, expected: %d +/- %d mV", batt_v,
           test_spec_.batt_mvolt_ref, test_spec_.batt_mvolt_tol);
   }
-
-  bool passed = display_passed && button_passed && sensor_passed;
+  passed = passed && batt_passed;
+#else
+  uint16_t batt_v = 0;
+#endif
 
   // send test results
   StaticJsonDocument<1024> result_doc;
 
   JsonObject device = result_doc.createNestedObject("device");
-  device["serial"] = HW.get_serial_number();
-  device["random_id"] = HW.get_random_id();
-  device["model_id"] = HW.get_model_id();
+  device["serial"] = app_.hw_.get_serial_number();
+  device["random_id"] = app_.hw_.get_random_id();
+  device["model_id"] = app_.hw_.get_model_id();
   device["fw_version"] = SW_VERSION;
-  device["hw_version"] = HW.get_hw_version();
+  device["hw_version"] = app_.hw_.get_hw_version();
   result_doc["passed"] = passed;
 
   JsonObject parameters = result_doc.createNestedObject("parameters");
@@ -251,7 +260,7 @@ bool FactoryTest::run_test(HardwareDefinition& HW, Display& display) {
   serializeJson(result_doc, buffer, sizeof(buffer));
 
   StaticString<256> result_topic("%s/%s/test_result", FAC_TEST_BASE_TOPIC,
-                                 HW.get_serial_number());
+                                 app_.hw_.get_serial_number());
   mqtt_client.publish(result_topic.c_str(), buffer);
 
   if (passed) {

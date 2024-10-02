@@ -22,7 +22,7 @@ The expected average values for reaction time are:
 
 ### 3. Device not appearing in Home Assistant
 
-You might need to trigger a publish of the MQTT discovery message. To do that, enter [Settings Menu](original/user_guide.md#settings) by pressing any button for 5 s, and restart the device by pressing :material-restore:. The discovery message will be published on the next button press after the restart.
+You might need to trigger a publish of the MQTT discovery message. To do that, enter [Settings Menu](original/user_guide.md#settings) by pressing any two buttons together for 5 s, and restart the device by pressing :material-restore: or :blue_circle: blue button. The discovery message will be published on the next button press after the restart.
 
 ### 4. Display showing :material-file-question-outline: instead of an icon
 
@@ -30,12 +30,13 @@ Please check that the icon name is correct and that you put `mdi:` prefix before
 
 Another reason could be that the download of the icons failed.
 
-To trigger download again manually, enter [Settings Menu](original/user_guide.md#settings) by pressing any button for 5 s, and restart the device by pressing :material-restore:. The missing icons will be downloaded on the next button press after the restart.
+To trigger download again manually, enter [Settings Menu](original/user_guide.md#settings) by pressing any two buttons together for 5 s, and restart the device by pressing :material-restore:. The missing icons will be downloaded on the next button press after the restart.
 
 ### 5. Bricked device
 
 This can happen if you update to v2.4.0 or later directly from a version older than v2.1.0. Follow this instruction to recover your device:
 
+1. Write us at [support@home-buttons.com](mailto:support@home-buttons.com). Include the serial number of your device. We'll send you the **NVS bin** file that you need for recovery.
 1. Connect device with an USB-C cable to your computer
 1. Go to [Home Buttons Flasher](https://nplan.github.io/HomeButtonsFlasher/)
 1. Put device to programming mode by holding BOOT button and pressing RST button. Boot LED should light up.

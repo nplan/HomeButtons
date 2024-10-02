@@ -8,3 +8,5 @@ sdkconfig.debug
 sdkconfig.release
 sdkconfig.mini_debug
 sdkconfig.mini_release
+sdkconfig.pro_release
+sdkconfig.pro_debug

@@ -68,11 +68,11 @@ bool download::check_connection(const char* host, const char* url,
   https.setTimeout(DOWNLOAD_TIMEOUT);
   https.begin(url, certificate);
   int http_code = https.GET();
+  https.end();
   if (http_code != HTTP_CODE_OK) {
     logger.error("GET request failed with code %d", http_code);
     return false;
   } else {
     return true;
   }
-  https.end();
 }

@@ -115,7 +115,7 @@ class Network : public NetworkStateMachine, public Logger {
 
   enum class Command { NONE, CONNECT, DISCONNECT };
 
-  explicit Network(DeviceState &device_state);
+  explicit Network(DeviceState &device_state, TopicHelper &topics);
   Network(const Network &) = delete;
   ~Network();
 
@@ -125,6 +125,10 @@ class Network : public NetworkStateMachine, public Logger {
   void setup();  // Warning: must be called from same task (thread) as update()
 
   State get_state();
+
+  IPAddress get_ip() { return WiFi.localIP(); }
+
+  int32_t get_rssi() { return WiFi.RSSI(); }
 
   void publish(const TopicType &topic, const PayloadType &payload,
                bool retained = false);
@@ -144,6 +148,7 @@ class Network : public NetworkStateMachine, public Logger {
   DeviceState &device_state_;
   WiFiClient wifi_client_;
   PubSubClient mqtt_client_;
+  TopicHelper &topics_;
   QueueHandle_t mqtt_publish_queue_ = nullptr;
   TaskHandle_t network_task_handle_ = nullptr;
 

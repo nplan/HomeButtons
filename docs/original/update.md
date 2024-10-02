@@ -88,7 +88,7 @@ Flash your device from your web browser.
     If you're not sure which device is *Home Buttons*, disconnect it and then reconnect it. 
     See which port disappears and then appears again. Remember the *COM##* name.
 
-    ** *macOS* and *Linux* **
+    ***macOS and Linux***
 
     Run the following command twice. First with *Home Buttons* connected and then disconnected.
     The port that is present the first time and not the second is the correct one.

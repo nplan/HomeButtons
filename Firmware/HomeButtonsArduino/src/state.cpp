@@ -13,11 +13,14 @@ void DeviceState::save_user() {
   preferences_.putString("disc_prefix",
                          user_preferences_.mqtt.discovery_prefix);
   for (int i = 0; i < NUM_BUTTONS; i++) {
-    preferences_.putString(StaticString<8>("btn%d_txt", i + 1).c_str(),
+    preferences_.putString(StaticString<9>("btn%d_txt", i + 1).c_str(),
                            user_preferences_.btn_labels[i].c_str());
   }
   preferences_.putUInt("sen_itv", user_preferences_.sensor_interval);
   preferences_.putBool("use_f", user_preferences_.use_fahrenheit);
+  preferences_.putUInt("led_am_br", user_preferences_.led_amb_bright);
+  preferences_.putString("btn_conf", user_preferences_.btn_conf_string.c_str());
+  preferences_.putString("ssid", user_preferences_.network.ssid.c_str());
   preferences_.putString(
       "sta_ip",
       ip_address_to_static_string(user_preferences_.network.static_ip).c_str());
@@ -53,14 +56,20 @@ void DeviceState::load_user() {
 
   for (int i = 0; i < NUM_BUTTONS; i++) {
     _load_to_static_string(user_preferences_.btn_labels[i],
-                           StaticString<8>("btn%d_txt", i + 1).c_str(),
+                           StaticString<9>("btn%d_txt", i + 1).c_str(),
                            StaticString<16>("mdi:numeric-%d", i + 1).c_str());
   }
 
   user_preferences_.sensor_interval =
       preferences_.getUInt("sen_itv", SEN_INTERVAL_DFLT);
   user_preferences_.use_fahrenheit = preferences_.getBool("use_f", false);
+  user_preferences_.led_amb_bright =
+      preferences_.getUInt("led_am_br", LED_MAX_AMB_BRIGHT);
 
+  _load_to_static_string(user_preferences_.btn_conf_string, "btn_conf",
+                         BTN_CONF_DFLT);
+
+  _load_to_static_string(user_preferences_.network.ssid, "ssid", "");
   _load_to_ip_address(user_preferences_.network.static_ip, "sta_ip", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.gateway, "g_way", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.subnet, "s_net", "0.0.0.0");
@@ -76,6 +85,15 @@ void DeviceState::clear_user() {
   preferences_.end();
 }
 
+void DeviceState::clear_static_ip_config() {
+  user_preferences_.network.static_ip = IPAddress();
+  user_preferences_.network.gateway = IPAddress();
+  user_preferences_.network.subnet = IPAddress();
+  user_preferences_.network.dns = IPAddress();
+  user_preferences_.network.dns2 = IPAddress();
+  save_user();
+}
+
 void DeviceState::save_persisted() {
   preferences_.begin("persisted", false);
   preferences_.putBool("lb_mode", persisted_.low_batt_mode);
@@ -85,7 +103,6 @@ void DeviceState::save_persisted() {
   preferences_.putBool("u_awake", persisted_.user_awake_mode);
   preferences_.putBool("wifi_qc", persisted_.wifi_quick_connect);
   preferences_.putBool("chg_cpt_shwn", persisted_.charge_complete_showing);
-  preferences_.putBool("info_shwn", persisted_.info_screen_showing);
   preferences_.putBool("u_msg_shwn", persisted_.user_msg_showing);
   preferences_.putBool("chk_conn", persisted_.check_connection);
   preferences_.putUInt("faild_cons", persisted_.failed_connections);
@@ -108,7 +125,6 @@ void DeviceState::load_persisted() {
   persisted_.wifi_quick_connect = preferences_.getBool("wifi_qc", false);
   persisted_.charge_complete_showing =
       preferences_.getBool("chg_cpt_shwn", false);
-  persisted_.info_screen_showing = preferences_.getBool("info_shwn", false);
   persisted_.user_msg_showing = preferences_.getBool("u_msg_shwn", false);
   persisted_.check_connection = preferences_.getBool("chk_conn", false);
   persisted_.failed_connections = preferences_.getUInt("faild_cons", 0);
@@ -131,7 +147,6 @@ void DeviceState::clear_persisted() {
 void DeviceState::clear_persisted_flags() {
   persisted_.wifi_quick_connect = false;
   persisted_.charge_complete_showing = false;
-  persisted_.info_screen_showing = false;
   persisted_.check_connection = false;
   persisted_.failed_connections = 0;
   persisted_.restart_to_wifi_setup = false;
@@ -176,16 +191,16 @@ size_t DeviceState::get_free_entries() { return preferences_.freeEntries(); }
 
 const ButtonLabel& DeviceState::get_btn_label(uint8_t i) const {
   static ButtonLabel noLabel;
-  if (i < NUM_BUTTONS) {
-    return user_preferences_.btn_labels[i];
+  if (i > 0 && i <= NUM_BUTTONS) {
+    return user_preferences_.btn_labels[i - 1];
   } else {
     return noLabel;
   }
 }
 
 void DeviceState::set_btn_label(uint8_t i, const char* label) {
-  if (i < NUM_BUTTONS) {
-    user_preferences_.btn_labels[i].set(label);
+  if (i > 0 && i <= NUM_BUTTONS) {
+    user_preferences_.btn_labels[i - 1].set(label);
   }
 }
 

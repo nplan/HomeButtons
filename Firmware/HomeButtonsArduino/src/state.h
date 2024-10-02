@@ -3,7 +3,6 @@
 
 #include <Preferences.h>
 
-#include "buttons.h"
 #include "config.h"
 #include "types.h"
 #include "logger.h"
@@ -12,6 +11,7 @@
 
 struct StaticIPConfig {
   bool valid;
+  SSIDType ssid;
   IPAddress static_ip;
   IPAddress gateway;
   IPAddress subnet;
@@ -35,6 +35,8 @@ class DeviceState : public Logger {
     ButtonLabel btn_labels[NUM_BUTTONS];
     uint16_t sensor_interval = 0;  // minutes
     bool use_fahrenheit = false;
+    uint8_t led_amb_bright = 0;  // 0-100
+    BtnConfString btn_conf_string;
 
     StaticIPConfig network;
 
@@ -59,7 +61,6 @@ class DeviceState : public Logger {
     // Flags
     bool wifi_quick_connect = false;
     bool charge_complete_showing = false;
-    bool info_screen_showing = false;
     bool user_msg_showing = false;
     bool check_connection = false;
     uint8_t failed_connections = 0;
@@ -75,6 +76,8 @@ class DeviceState : public Logger {
     bool display_redraw = false;
     bool awake_mode = false;
     uint32_t schedule_wakeup_time = 0;
+    uint32_t last_user_input_time = 0;
+    bool keep_frontlight_on = false;
   } flags_;
 
   struct Sensors {
@@ -104,11 +107,12 @@ class DeviceState : public Logger {
     user_preferences_.mqtt = {server,   port,       user,
                               password, base_topic, discovery_prefix};
   }
-  void set_static_ip_config(const IPAddress& static_ip,
+  void set_static_ip_config(SSIDType ssid, const IPAddress& static_ip,
                             const IPAddress& gateway, const IPAddress& subnet,
                             const IPAddress& dns = IPAddress(),
                             const IPAddress& dns2 = IPAddress()) {
     user_preferences_.network.valid = false;
+    user_preferences_.network.ssid = ssid;
     user_preferences_.network.static_ip = static_ip;
     user_preferences_.network.gateway = gateway;
     user_preferences_.network.subnet = subnet;
@@ -119,6 +123,8 @@ class DeviceState : public Logger {
   const StaticIPConfig get_static_ip_config() const {
     return user_preferences_.network;
   }
+
+  void clear_static_ip_config();
 
   const DeviceName& device_name() const {
     return user_preferences_.device_name;
@@ -140,6 +146,21 @@ class DeviceState : public Logger {
   void set_temp_unit(StaticString<1> unit) {
     bool f = unit == "F" || unit == "f";
     user_preferences_.use_fahrenheit = f;
+  }
+
+  void set_led_brightness(uint8_t brightness) {
+    user_preferences_.led_amb_bright = brightness;
+  }
+
+  void set_btn_conf_string(const BtnConfString& btn_conf_string) {
+    BtnConfString btn_conf_string_upper(btn_conf_string);
+    btn_conf_string_upper.to_upper_case();
+    for (char& c : btn_conf_string_upper) {
+      if (c != 'B' && c != 'S') {
+        c = 'B';
+      }
+      user_preferences_.btn_conf_string = btn_conf_string_upper;
+    }
   }
 
   void save_user();
@@ -165,9 +186,8 @@ class DeviceState : public Logger {
 
   size_t get_free_entries();
 
-  // TODO: maybe should be somewhere else
-  StaticString<32> get_ap_ssid() const {
-    return StaticString<32>("HB-") + factory_.random_id.c_str();
+  SSIDType get_ap_ssid() const {
+    return SSIDType("HB-") + factory_.random_id.c_str();
   }
   const char* get_ap_password() const { return SETUP_AP_PASSWORD; }
 
@@ -177,6 +197,15 @@ class DeviceState : public Logger {
   }
 
   const char* ip() const { return ip_address_.c_str(); }
+
+  HostnameType get_hostname() const {
+    return HostnameType("HB-") + factory_.random_id.c_str();
+  }
+
+  StaticString<50> get_model_name_w_rand_id() const {
+    return StaticString<50>("%s %s", factory_.model_name.c_str(),
+                            factory_.random_id.c_str());
+  }
 
  private:
   void _load_factory(HardwareDefinition& hw);
