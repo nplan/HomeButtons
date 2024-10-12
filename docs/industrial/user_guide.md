@@ -107,6 +107,26 @@ If it doesn't, open the web browser and navigate to http://192.168.4.1.
 
 > If the :orange_circle: orange button doesn't stop pulsing, the connection was not successful. Please check the password and try again. Press any button to stop the Wi-Fi setup. To repeat the Wi-Fi setup, enter the settings menu and press the :orange_circle: orange button.
 
+## Sync switch to a device
+
+The button must be in switch mode to sync it with a device. To change the mode, enter the [*Settings Menu*](#settings) and press the :red_circle: red button.
+Navigate to the web interface at `http://HB-XXXXXX.local`. In the button field `Button Config` change the mode of the button to `S`. Click save.
+
+1. In *Home Assistant*, go to Settings -> Devices & services -> Devices tab -> your *Home Buttons* and verify that the button is displaying as a switch
+
+1. Add the [*Linked Entities*](https://github.com/alexdelprete/ha-blueprints) blueprint to your *Home Assistant*
+
+    [![Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2Falexdelprete%2Fha-blueprints%2Fmain%2Fha-blueprint-linked-entities.yaml)
+
+1. In *Home Assistant*, go to Settings -> Automations & scenes -> Blueprint tab -> Linked Entities
+
+1. Select the *Home Buttons* switch entity as the first entity
+
+1. Select the device you want to sync with as the second entity
+
+1. Save
+
+The switch will now be synced with the device. The state of the switch will reflect the state of the device.
 
 ## Opening The Case {#opening_case}
 

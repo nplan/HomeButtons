@@ -167,6 +167,7 @@ void HardwareDefinition::begin() {
   ledcAttachPin(LED6_PIN, LED6_CH);
 
   // battery voltage adc
+  pinMode(VBAT_ADC, INPUT);
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
 
   // temp sen i2c
@@ -194,6 +195,7 @@ void HardwareDefinition::begin() {
   ledcAttachPin(LED4_PIN, LED4_CH);
 
   // battery voltage adc
+  pinMode(VBAT_ADC, INPUT);
   analogSetPinAttenuation(VBAT_ADC, ADC_11db);
 
   // temp sen i2c
