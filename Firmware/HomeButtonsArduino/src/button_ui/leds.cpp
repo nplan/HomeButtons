@@ -34,7 +34,7 @@ void LEDSMStates::BlinkOnState::loop() {
   if (millis() - sm().last_change_time_ >= sm().current_blink_->on_ms) {
     if (sm().current_blink_->hold &&
         sm().current_blink_num_ == sm().current_blink_->num_blinks - 1) {
-      return transition_to<IdleState>();
+      return transition_to<ConstOnState>();
     } else {
       return transition_to<BlinkOffState>();
     }
