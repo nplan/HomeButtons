@@ -43,6 +43,8 @@ static WiFiManagerParameter button_config_param("btn_conf", "Button Config", "",
 static char* button_ids[NUM_BUTTONS];
 static char* button_labels[NUM_BUTTONS];
 static WiFiManagerParameter* btn_label_params[NUM_BUTTONS];
+static WiFiManagerParameter icon_server_param("icon_srv", "Icon Server", "",
+                                              128);
 
 void allocate_btn_label_params() {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
@@ -185,6 +187,8 @@ void HBSetup::save_params_callback() {
 
 #if defined(HAS_DISPLAY)
   set_device_state_from_btn_label_params(app_.device_state_);
+  app_.device_state_.set_icon_server(
+      IconServerType{icon_server_param.getValue()});
 #endif
 
 #if defined(HAS_TH_SENSOR)
@@ -257,6 +261,8 @@ void HBSetup::start_setup() {
 #if defined(HAS_DISPLAY)
   allocate_btn_label_params();
   set_btn_label_params_from_device_state(app_.device_state_);
+  icon_server_param.setValue(
+      app_.device_state_.user_preferences().icon_server.c_str(), 128);
 #endif
 
 #if defined(HAS_TH_SENSOR)
@@ -286,6 +292,7 @@ void HBSetup::start_setup() {
   for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
     wifi_manager.addParameter(btn_label_params[i]);
   }
+  wifi_manager.addParameter(&icon_server_param);
 #endif
 
 #if defined(HAS_TH_SENSOR)
