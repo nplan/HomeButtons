@@ -26,6 +26,8 @@ using PayloadType = StaticString<MQTT_PYLD_SIZE>;
 using SSIDType = StaticString<32>;
 using HostnameType = StaticString<32>;
 
+using IconServerType = StaticString<128>;
+
 enum class DisplayPage {
   EMPTY,
   MAIN,

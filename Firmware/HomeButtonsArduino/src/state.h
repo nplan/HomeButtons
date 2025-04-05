@@ -48,6 +48,8 @@ class DeviceState : public Logger {
       String base_topic = "";
       String discovery_prefix = "";
     } mqtt;
+
+    IconServerType icon_server;
   } user_preferences_;
 
   struct Persisted {
@@ -160,6 +162,14 @@ class DeviceState : public Logger {
         c = 'B';
       }
       user_preferences_.btn_conf_string = btn_conf_string_upper;
+    }
+  }
+
+  void set_icon_server(const IconServerType& icon_server) {
+    if (!icon_server.empty()) {
+      user_preferences_.icon_server = icon_server;
+    } else {
+      user_preferences_.icon_server = ICON_URL_DFLT;
     }
   }
 

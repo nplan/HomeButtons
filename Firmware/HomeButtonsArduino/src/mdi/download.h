@@ -4,10 +4,9 @@
 #include <FS.h>
 
 namespace download {
-bool download_file_https(const char* host, const char* url, File& file,
-                         const char* certificate);
+bool download_file(const char* url, File& file,
+                   const char* certificate = nullptr);
 
-bool check_connection(const char* host, const char* url,
-                      const char* certificate);
+bool check_connection(const char* url, const char* certificate = nullptr);
 }  // namespace download
 #endif

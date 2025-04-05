@@ -1,15 +1,8 @@
 #include "mdi_helper.h"
 
 #include "download.h"
-#include "github_raw_cert.h"
-
-static constexpr char HOST[] = "raw.githubusercontent.com";
-
-static constexpr char MDI_URL[] =
-    "https://raw.githubusercontent.com/nplan/MDI-BMP/main/";
-
-static constexpr char TEST_URL[] =
-    "https://raw.githubusercontent.com/nplan/MDI-BMP/main/64x64/alien.bmp";
+#include "certificates.h"
+#include "config.h"
 
 static constexpr char FOLDER[] = "/mdi";
 
@@ -50,8 +43,17 @@ StaticString<MAX_PATH_LEN> MDIHelper::_get_path(const char* name,
 }
 
 bool MDIHelper::check_connection() {
-  return download::check_connection(HOST, TEST_URL,
-                                    github_raw_cert::DigiCert_Global_Root_G2);
+  if (_device_state.user_preferences().icon_server == ICON_URL_DFLT) {
+    debug("Using default icon server");
+    return download::check_connection(
+        _device_state.user_preferences().icon_server.c_str(),
+        certificates::isrg_root_x1);
+  } else {
+    debug("Using user icon server: %s",
+          _device_state.user_preferences().icon_server.c_str());
+    return download::check_connection(
+        _device_state.user_preferences().icon_server.c_str());
+  }
 }
 
 bool MDIHelper::download(const char* name, uint16_t size) {
@@ -67,7 +69,7 @@ bool MDIHelper::download(const char* name, uint16_t size) {
     return true;
   }
 
-  debug("Downloading '%s' size %d to '%s'", name, size, path.c_str());
+  info("Downloading '%s' size %d to '%s'", name, size, path.c_str());
 
   File file = SPIFFS.open(path.c_str(), FILE_WRITE, true);
   if (!file) {
@@ -75,10 +77,17 @@ bool MDIHelper::download(const char* name, uint16_t size) {
     return false;
   }
 
-  StaticString<256> url("%s%dx%d/%s.bmp", MDI_URL, size, size, name);
-  bool ret = download::download_file_https(
-      HOST, url.c_str(), file,
-      github_raw_cert::DigiCert_Global_Root_G2);
+  StaticString<256> url("%s%dx%d/%s.bmp",
+                        _device_state.user_preferences().icon_server.c_str(),
+                        size, size, name);
+  info("Icon URL: %s", url.c_str());
+  bool ret;
+  if (_device_state.user_preferences().icon_server == ICON_URL_DFLT) {
+    ret =
+        download::download_file(url.c_str(), file, certificates::isrg_root_x1);
+  } else {
+    ret = download::download_file(url.c_str(), file);
+  }
   if (ret) {
     info("Downloaded '%s' size: %d", name, size);
     return true;

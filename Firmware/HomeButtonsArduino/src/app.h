@@ -247,8 +247,8 @@ class App : public AppStateMachine, public Logger {
   UserInput::Event user_event_ = {};
 
 #if defined(HAS_DISPLAY)
-  Display display_;
   MDIHelper mdi_;
+  Display display_;
 #endif
   TopicHelper topics_;
   Network network_;

@@ -9,18 +9,26 @@
 #include "logger.h"
 #include "static_string.h"
 
-static constexpr uint32_t DOWNLOAD_TIMEOUT = 5000;
+static constexpr uint32_t DOWNLOAD_TIMEOUT = 10000;
 static constexpr size_t DOWNLOAD_BUFFER_SIZE = 1024;
 
-bool download::download_file_https(const char* host, const char* url,
-                                   File& file, const char* certificate) {
+bool download::download_file(const char* url, File& file,
+                             const char* certificate) {
   static Logger logger("Download");
 
-  // Send a GET request for the BMP file
+  // connect
   HTTPClient https;
   https.setConnectTimeout(DOWNLOAD_TIMEOUT);
   https.setTimeout(DOWNLOAD_TIMEOUT);
-  https.begin(url, certificate);
+  if (certificate != nullptr) {
+    logger.debug("Using certificate");
+    https.begin(url, certificate);
+  } else {
+    logger.debug("Not using certificate");
+    https.begin(url);
+  }
+
+  // Send a GET request for the BMP file
   int http_code = https.GET();
   if (http_code != HTTP_CODE_OK) {
     logger.error("GET request failed with code %d", http_code);
@@ -30,15 +38,24 @@ bool download::download_file_https(const char* host, const char* url,
 
   // Write the BMP data to the file
   WiFiClient* stream = https.getStreamPtr();
-  int totalBytes = 0;
+  int16_t content_size = https.getSize();
+  if (content_size == -1) {
+    logger.error("No content length");
+    https.end();
+    return false;
+  }
+  size_t totalBytes = 0;
   uint32_t start_time = millis();
-  while (https.connected() && (totalBytes < https.getSize())) {
+  while (totalBytes < content_size) {
     if (stream->available()) {
-      uint8_t buffer[DOWNLOAD_BUFFER_SIZE];
-      int bytesRead = stream->readBytes(buffer, sizeof(buffer));
-      if (bytesRead == 0) {
-        break;
+      size_t num_2_read;
+      if (content_size - totalBytes < DOWNLOAD_BUFFER_SIZE) {
+        num_2_read = content_size - totalBytes;
+      } else {
+        num_2_read = DOWNLOAD_BUFFER_SIZE;
       }
+      uint8_t buffer[DOWNLOAD_BUFFER_SIZE];
+      size_t bytesRead = stream->readBytes(buffer, num_2_read);
       file.write(buffer, bytesRead);
       totalBytes += bytesRead;
     }
@@ -48,7 +65,7 @@ bool download::download_file_https(const char* host, const char* url,
       file.close();
       return false;
     }
-    delay(1);
+    yield();
   }
   file.close();
   logger.debug("Wrote %d bytes", totalBytes);
@@ -58,19 +75,26 @@ bool download::download_file_https(const char* host, const char* url,
   return true;
 }
 
-bool download::check_connection(const char* host, const char* url,
-                                const char* certificate) {
+bool download::check_connection(const char* url, const char* certificate) {
   static Logger logger("Download");
 
-  // Send a GET request for the BMP file
+  // connect
   HTTPClient https;
   https.setConnectTimeout(DOWNLOAD_TIMEOUT);
   https.setTimeout(DOWNLOAD_TIMEOUT);
-  https.begin(url, certificate);
+  if (certificate != nullptr) {
+    logger.debug("Using certificate");
+    https.begin(url, certificate);
+  } else {
+    logger.debug("Not using certificate");
+    https.begin(url);
+  }
+
+  // Send a GET request for the BMP file
   int http_code = https.GET();
   https.end();
-  if (http_code != HTTP_CODE_OK) {
-    logger.error("GET request failed with code %d", http_code);
+  logger.info("GET request to %s returned %d", url, http_code);
+  if (http_code < 0) {
     return false;
   } else {
     return true;

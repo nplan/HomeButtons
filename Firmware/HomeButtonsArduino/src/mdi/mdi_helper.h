@@ -5,6 +5,7 @@
 
 #include "logger.h"
 #include "static_string.h"
+#include "state.h"
 
 static constexpr uint8_t MAX_NUM_SIZES = 3;
 
@@ -12,7 +13,8 @@ static constexpr size_t MAX_PATH_LEN = 56;
 
 class MDIHelper : public Logger {
  public:
-  MDIHelper() : Logger("MDI") {}
+  MDIHelper(DeviceState& device_state)
+      : Logger("MDI"), _device_state(device_state) {}
   bool begin();
   void add_size(uint16_t size);
   bool download(const char* name, uint16_t size);
@@ -31,6 +33,8 @@ class MDIHelper : public Logger {
   uint16_t sizes_[MAX_NUM_SIZES] = {0};
   uint8_t num_sizes_ = 0;
   StaticString<MAX_PATH_LEN> _get_path(const char* name, uint16_t size);
+
+  DeviceState& _device_state;
 };
 
 #endif

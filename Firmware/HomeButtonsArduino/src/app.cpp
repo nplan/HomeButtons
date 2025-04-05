@@ -46,6 +46,7 @@ App::App()
                      b1_, b2_, b3_, b4_, sw_}),
 #endif
 #if defined(HAS_DISPLAY)
+      mdi_(device_state_),
       display_(device_state_, mdi_),
 #endif
       topics_(device_state_),

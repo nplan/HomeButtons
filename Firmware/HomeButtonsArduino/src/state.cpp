@@ -36,6 +36,7 @@ void DeviceState::save_user() {
   preferences_.putString(
       "dns2",
       ip_address_to_static_string(user_preferences_.network.dns2).c_str());
+  preferences_.putString("icon_srv", user_preferences_.icon_server.c_str());
   preferences_.end();
 }
 
@@ -75,6 +76,9 @@ void DeviceState::load_user() {
   _load_to_ip_address(user_preferences_.network.subnet, "s_net", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.dns, "dns", "0.0.0.0");
   _load_to_ip_address(user_preferences_.network.dns2, "dns2", "0.0.0.0");
+
+  _load_to_static_string(user_preferences_.icon_server, "icon_srv",
+                         ICON_URL_DFLT);
 
   preferences_.end();
 }

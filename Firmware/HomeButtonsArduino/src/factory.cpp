@@ -154,13 +154,12 @@ bool FactoryTest::run_test() {
   // test display
   info("Testing display");
   bool display_passed = true;
-  MDIHelper mdi;
-  mdi.begin();
+  app_.mdi_.begin();
 
-  mdi.remove(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE);
+  app_.mdi_.remove(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE);
 
-  if (mdi.check_connection()) {
-    if (!mdi.download(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE)) {
+  if (app_.mdi_.check_connection()) {
+    if (!app_.mdi_.download(test_spec_.mdi_name.c_str(), TEST_ICON_SIZE)) {
       error("MDI download failed");
       display_passed = false;
     }
@@ -168,7 +167,7 @@ bool FactoryTest::run_test() {
     error("MDI server connection failed");
     display_passed = false;
   }
-  mdi.end();
+  app_.mdi_.end();
 
   app_.display_.disp_test(test_spec_.disp_text.c_str(),
                           test_spec_.mdi_name.c_str(), 100);
