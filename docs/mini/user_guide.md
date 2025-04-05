@@ -24,9 +24,9 @@ You can configure most of the settings directly in *Home Assistant*.
 In the *Controls* card, enter the name of the icon, that you want to be shown on the e-paper display. Icons will be updated next time you press a button or on the next sensor update interval.
 
 
-You can choose any of the [*Material Design Icons*](https://materialdesignicons.com/){:target="_blank"}. Enter the icon name in the label field in the format `mdi:{icon name}`. For example, `mdi:lightbulb-auto-outline`.
+You can choose any of the [*Material Design Icons*](https://pictogrammers.com/library/mdi/){:target="_blank"}. Enter the icon name in the label field in the format `mdi:{icon name}`. For example, `mdi:lightbulb-auto-outline`.
 
-Icons are downloaded from a *Github* repository. For that purpose an internet connection is required. Once downloaded, the icons are stored permanently on the device. If you do not wish to have *Home Buttons* connected to the internet, you can set up the icons once and then disable internet access.
+Icons are downloaded from the [Icon Server](#icon_server). For that purpose an internet connection is required. Once downloaded, the icons are stored permanently on the device. If you do not wish to have *Home Buttons* connected to the internet, you can set up the icons once and then disable internet access. Alternatively, you can host your own icon server. See [Self Hosted Icon Server](#self_hosted_icon_server) for more information.
 
 ### Configure Button Actions
 
@@ -93,9 +93,9 @@ Begin setup by going to [*Settings Menu*](#settings) and pressing :material-acco
 
 Click `Configure WiFi` to change Wi-Fi connection settings. Select a network, enter the password and click save. Wait a few seconds and then press any button to exit setup. *Home Buttons* will connect to the newly selected Wi-Fi network.
 
-### Change MQTT settings & Button labels
+### Change device settings
 
-Click `Setup` to change MQTT settings or button labels. A page with the following parameters will open:
+Click `Setup`. A page with the following parameters will open:
 
 - `Device Name` - Name of your device as it will appear in *Home Assistant*.
 
@@ -123,6 +123,8 @@ Leave that unchanged if you haven't modified *Home Assistant*'s configuration.
 - `Secondary DNS Server` - If left empty, `1.1.1.1` will be used.
 
 - `Button {1-4} Label` - Label that will be displayed next to each button.
+
+- `Icon Server` - Default is `https://icons.home-buttons.com/mdi/`. See [Icon Server](#icon_server) for more information.
 
 - `Temperature Unit` - Either `C` - Celsius  or `F` - Fahrenheit.
 
@@ -285,6 +287,36 @@ target:
 
 Publish a message to the `{base_topic}/{device_name}/cmd/button_{button_number}_label` topic. The message payload should be the label you want to set. The label will be updated on the next wakeup.
 
+
+## Icon Server {#icon_server}
+
+*Home Buttons* downloads icons from an Icon Server. The default is `https://icons.home-buttons.com/mdi/`, hosted by us.
+
+The icons are in the BMP format, converted from the official *Material Design Icons* [SVG files](https://github.com/Templarian/MaterialDesign){:target="_blank"}.
+The server is used only when the icon is first downloaded. After that, the icon is stored in the device's flash memory and can be used offline.
+
+Repository with converted BMP files and converstion script is [here](https://github.com/nplan/MDI-BMP){:target="_blank"}.
+
+### Self Hosted Icon Server {#self_hosted_icon_server}
+You can aslo host your own icon server. *Home Buttons* expects the following URL structure:
+
+```
+http://{ICON_SERVER}/{icon_size}/{icon_name}.bmp
+```
+
+- `{ICON_SERVER}` - IP address or domain name of your icon server
+- `{icon_name}` - Name of the icon, as in the *Material Design Icons* repository.
+- `{icon_size}` - Size of the icon. One of the following: `100x100`, `64x64` and `48x48`.
+
+All three sizes must be available.
+
+Example URL: `http://192.168.1.123/100x100/home.bmp`
+
+> When using a self hosted icon server, the device is not using HTTPS. It's recommended to only use it on a local network.
+
+**Hosting with *Home Assistant***
+
+For a simple fully local setup, *Home Assistant* may be used as an icon server. Create a new folder `mdi` in the `www` directory and copy the BMP files there. Then set the `Icon Server`to `http://{home_assistant_ip}:8123/local/mdi/`. The icons must be in the following structure: `/mdi/{icon_size}/{icon_name}.bmp`. For example: `/mdi/100x100/home.bmp`.
 
 ## Opening The Case {#opening_case}
 

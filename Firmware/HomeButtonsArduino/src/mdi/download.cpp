@@ -16,7 +16,7 @@ bool download::download_file(const char* url, File& file,
                              const char* certificate) {
   static Logger logger("Download");
 
-  // Send a GET request for the BMP file
+  // connect
   HTTPClient https;
   https.setConnectTimeout(DOWNLOAD_TIMEOUT);
   https.setTimeout(DOWNLOAD_TIMEOUT);
@@ -27,6 +27,8 @@ bool download::download_file(const char* url, File& file,
     logger.debug("Not using certificate");
     https.begin(url);
   }
+
+  // Send a GET request for the BMP file
   int http_code = https.GET();
   if (http_code != HTTP_CODE_OK) {
     logger.error("GET request failed with code %d", http_code);
@@ -76,7 +78,7 @@ bool download::download_file(const char* url, File& file,
 bool download::check_connection(const char* url, const char* certificate) {
   static Logger logger("Download");
 
-  // Send a GET request for the BMP file
+  // connect
   HTTPClient https;
   https.setConnectTimeout(DOWNLOAD_TIMEOUT);
   https.setTimeout(DOWNLOAD_TIMEOUT);
@@ -87,6 +89,8 @@ bool download::check_connection(const char* url, const char* certificate) {
     logger.debug("Not using certificate");
     https.begin(url);
   }
+
+  // Send a GET request for the BMP file
   int http_code = https.GET();
   https.end();
   logger.info("GET request to %s returned %d", url, http_code);

@@ -43,7 +43,7 @@
 
 // ------ device ------
 static constexpr char MANUFACTURER[] = "PLab";
-static constexpr char SW_VERSION[] = "v2.6.0-beta";
+static constexpr char SW_VERSION[] = "v2.6.0";
 
 #if defined(HOME_BUTTONS_ORIGINAL)
 static constexpr char SW_MODEL_ID[] = "A1";
@@ -67,8 +67,7 @@ static constexpr char DOCS_LINK[] = "https://docs.home-buttons.com/pro/setup/";
 static constexpr char DOCS_LINK[] =
     "https://docs.home-buttons.com/industrial/setup/";
 #endif
-static constexpr char ICON_URL_DFLT[] =
-    "https://raw.githubusercontent.com/nplan/MDI-BMP/main/";
+static constexpr char ICON_URL_DFLT[] = "https://icons.home-buttons.com/mdi/";
 
 // ------ wifi AP ------
 static constexpr char SETUP_AP_PASSWORD[] = "password123";

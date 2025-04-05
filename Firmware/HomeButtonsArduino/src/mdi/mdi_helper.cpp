@@ -1,7 +1,7 @@
 #include "mdi_helper.h"
 
 #include "download.h"
-#include "github_raw_cert.h"
+#include "certificates.h"
 #include "config.h"
 
 static constexpr char FOLDER[] = "/mdi";
@@ -47,7 +47,7 @@ bool MDIHelper::check_connection() {
     debug("Using default icon server");
     return download::check_connection(
         _device_state.user_preferences().icon_server.c_str(),
-        github_raw_cert::DigiCert_Global_Root_G2);
+        certificates::isrg_root_x1);
   } else {
     debug("Using user icon server: %s",
           _device_state.user_preferences().icon_server.c_str());
@@ -83,8 +83,8 @@ bool MDIHelper::download(const char* name, uint16_t size) {
   info("Icon URL: %s", url.c_str());
   bool ret;
   if (_device_state.user_preferences().icon_server == ICON_URL_DFLT) {
-    ret = download::download_file(url.c_str(), file,
-                                  github_raw_cert::DigiCert_Global_Root_G2);
+    ret =
+        download::download_file(url.c_str(), file, certificates::isrg_root_x1);
   } else {
     ret = download::download_file(url.c_str(), file);
   }

@@ -187,8 +187,8 @@ void HBSetup::save_params_callback() {
 
 #if defined(HAS_DISPLAY)
   set_device_state_from_btn_label_params(app_.device_state_);
-  app_.device_state_.set_icon_server(
-      IconServerType{icon_server_param.getValue()});
+  app_.device_state_.set_icon_server(IconServerType{
+      ensure_trailing_slash(IconServerType{icon_server_param.getValue()})});
 #endif
 
 #if defined(HAS_TH_SENSOR)
