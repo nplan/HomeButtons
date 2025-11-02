@@ -350,6 +350,8 @@ void App::_main_task() {
     _sleep_or_restart();
   }
 
+  device_state_.load_all(hw_);
+
   // ------ factory test ------
   FactoryTest factory_test(*this);
   if (factory_test.is_test_required()) {
@@ -375,7 +377,6 @@ void App::_main_task() {
     }
   }
 
-  device_state_.load_all(hw_);
   _begin_hw();
 
   // ------ test code ------
