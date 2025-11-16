@@ -1,0 +1,1941 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../user_guide/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/home_buttons_logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Getting Started - Home Buttons</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-F5LT7JQ5LS"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-F5LT7JQ5LS",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-F5LT7JQ5LS",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="cyan" data-md-color-accent="orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#getting-started" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Home Buttons" class="md-header__button md-logo" aria-label="Home Buttons" data-md-component="logo">
+      
+  <img src="../../assets/home_buttons_logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Home Buttons
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Getting Started
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="cyan" data-md-color-accent="orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nplan/HomeButtons" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nplan/HomeButtons
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Home Buttons
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../mini/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Home Buttons Mini
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../industrial/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Home Buttons Industrial
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../help/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Support
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Home Buttons" class="md-nav__button md-logo" aria-label="Home Buttons" data-md-component="logo">
+      
+  <img src="../../assets/home_buttons_logo.svg" alt="logo">
+
+    </a>
+    Home Buttons
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nplan/HomeButtons" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nplan/HomeButtons
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home Buttons
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home Buttons
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#solder-battery-holder-or-dc-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solder battery holder or DC terminal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#insert-battery-cell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Insert Battery Cell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup_wifi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up Wi-Fi Connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-mqtt-broker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up MQTT Broker
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup_mqtt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up MQTT connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-home-assistant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up Home Assistant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Set Up Home Assistant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-button-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Button Labels
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure Button Labels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#icons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Icons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-button-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Button Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mount-to-the-wall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mount To The Wall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-important-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Important Information
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Important Information">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#charging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Charging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature-humidity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temperature &amp; Humidity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's next?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mqtt_topics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MQTT Topics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../soldering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Soldering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hardware_hacks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Hacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firmware Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../mini/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home Buttons Mini
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home Buttons Mini
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mini/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mini/user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mini/mqtt_topics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MQTT Topics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mini/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firmware Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../industrial/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home Buttons Industrial
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Home Buttons Industrial
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../industrial/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../industrial/user_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../industrial/mqtt_topics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MQTT Topics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../industrial/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firmware Update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Support
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Support
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../help/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frequent Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../minimal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Minimal Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#solder-battery-holder-or-dc-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solder battery holder or DC terminal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#insert-battery-cell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Insert Battery Cell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup_wifi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up Wi-Fi Connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-mqtt-broker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up MQTT Broker
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup_mqtt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up MQTT connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#set-up-home-assistant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Set Up Home Assistant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Set Up Home Assistant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-button-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Button Labels
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure Button Labels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#icons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Icons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-button-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure Button Actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mount-to-the-wall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mount To The Wall
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-important-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Important Information
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other Important Information">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#charging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Charging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature-humidity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temperature &amp; Humidity
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's next?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="getting-started">Getting Started</h1>
+<p><strong>Setup up your <em>Home Buttons</em> in a few simple steps!</strong></p>
+<p>You will need:</p>
+<ol>
+<li>Depending on the desired power source (one out of):</li>
+<li>18650 Li-Ion battery cell (not included). <strong><em>WARNING:</em></strong> maximum length is 65.5 mm. Button top cells might not fit properly.</li>
+<li>USB-C power brick</li>
+<li>5V DC power supply</li>
+<li>2x mounting screws with anchors suitable for your walls <strong><em>or</em></strong> double sided tape (must stick to plastic well)</li>
+<li>A Wi-Fi network</li>
+<li>An MQTT broker</li>
+<li><em>Home Assistant</em> (optional - can work only through MQTT)</li>
+</ol>
+<h2 id="solder-battery-holder-or-dc-terminal">Solder battery holder or DC terminal</h2>
+<p>If you purchased a version of <em>Home Buttons</em> that requires soldering, see <a href="../soldering/">here</a> for instructions.</p>
+<p>You can skip this step if you purchased a fully soldered device.</p>
+<h2 id="insert-battery-cell">Insert Battery Cell</h2>
+<blockquote>
+<p>Skip this step if you will power the device by USB-C or 5V DC input.</p>
+</blockquote>
+<p>You need one 18650 Li-Ion battery cell (<strong>not included</strong>). Please use a high quality cell with greater than 3000 mAh capacity.
+The length of the cell must not exceed 65.5 mm. Button top cells might not fit properly. </p>
+<blockquote>
+<p>If you have a device with a different case design see <a href="../user_guide/#open_older_case">here</a> for how to open it.</p>
+</blockquote>
+<ol>
+<li>
+<p>Open the back cover by pressing the tab on the bottom of the device.</p>
+<p><img alt="Open back cover image" src="../assets/push_cover_tab.jpeg" width="300" /></p>
+</li>
+<li>
+<p>Insert the battery cell. Be careful to orient it so that polarity matches markings on the PCB.</p>
+<p><img alt="Insert battery" src="../assets/insert_battery.jpeg" width="300" /></p>
+</li>
+<li>
+<p>Replace the back cover by aligning it first at the top and then pressing it down until it clicks.</p>
+<p><img alt="Close back cover image" src="../assets/close_back_cover.jpeg" width="300" /></p>
+</li>
+</ol>
+<h2 id="setup_wifi">Set Up Wi-Fi Connection</h2>
+<p>After inserting the battery, press any button to wake the device and start Wi-Fi setup procedure.</p>
+<blockquote>
+<p>If the device doesn't wake when pressing a button, briefly connect it to an USB-C charger</p>
+<p>If you don't complete the setup in 10 minutes, <em>Home Buttons</em> will turn off again to save battery.
+Press any button to wake the device and start again.</p>
+</blockquote>
+<ol>
+<li>
+<p><em>Home Buttons</em> establishes a Wi-Fi hotspot for configuration.
+Connect to it by scanning the QR code on the display or manually connecting to Wi-Fi network and entering the password.</p>
+<p><img alt="Wi-Fi Setup Screen" src="../assets/wifi_setup_screen.png" width="125" /></p>
+</li>
+<li>
+<p>After connecting to <em>Home Buttons</em> Wi-Fi with your device, a <strong>captive portal</strong> will pop up automatically.
+If it doesn't, open the web browser and navigate to http://192.168.4.1.</p>
+<p><img alt="Wi-Fi Setup Page" src="../assets/wifi_setup_page_1.png" width="200" /></p>
+</li>
+<li>
+<p>Click on <code>Configure WiFi</code> and wait a few seconds for a list of networks to appear.</p>
+</li>
+<li>
+<p>Select your network, enter the password and click <code>Save</code>.</p>
+</li>
+</ol>
+<p><em>Home Buttons</em> will disable the hotspot and connect to your Wi-Fi network in a few seconds. <code>Wi-Fi connected</code> will appear on display.</p>
+<blockquote>
+<p>If connection is not successful, <code>Wi-Fi connection error</code> will be displayed and <em>Home Buttons</em> will return to welcome screen.
+You can start Wi-Fi setup again by pressing any button. Please make sure to enter the password correctly.</p>
+</blockquote>
+<h2 id="set-up-mqtt-broker">Set Up MQTT Broker</h2>
+<p><em>Home Buttons</em> requires an MQTT broker. If you don't already use it, you should install one now.
+See this <a href="https://www.home-assistant.io/integrations/mqtt/" target="_blank">page</a> for more information.
+Usually, the simplest way is to install <em>Mosquitto MQTT</em> as a <em>Home Assistant</em> add-on.</p>
+<blockquote>
+<p>If you're using <em>Mosquitto MQTT</em> add-on, you must use username and password of your <em>Home Assistant</em> account. It's recommended to create a new account for use with MQTT.</p>
+</blockquote>
+<p>If you don't use <em>Home Assistant</em>, see <a href="../../minimal/">Minimal Setup</a> guide.</p>
+<h2 id="setup_mqtt">Set Up MQTT connection</h2>
+<p>When connected to the Wi-Fi, <em>Home Buttons</em> can be configured using any device on your local network.</p>
+<ol>
+<li>
+<p>Scan the QR code or enter the local IP into a web browser. The setup page will load:</p>
+<p><img alt="Setup Page" src="../assets/setup_page.jpeg" width="250" /></p>
+</li>
+<li>
+<p>Click <code>Setup</code></p>
+</li>
+<li>
+<p>Enter the connection parameters:</p>
+<ul>
+<li>
+<p><code>Device Name</code> - Name of your device as it will appear in <em>Home Assistant</em>.</p>
+</li>
+<li>
+<p><code>MQTT Server</code> - IP address of your MQTT broker. Usually the same as IP of your <em>Home Assistant</em> server.</p>
+</li>
+<li>
+<p><code>MQTT Port</code> - Port used by MQTT broker. The default is usually <em>1883</em>.</p>
+</li>
+<li>
+<p><code>MQTT User</code> - MQTT user name (can be empty if not required by broker).</p>
+</li>
+<li>
+<p><code>MQTT Password</code> - MQTT password (can be empty if not required by broker).</p>
+</li>
+<li>
+<p><code>Base Topic</code> - MQTT topic that will be prepended to all topics used by <em>Home Buttons</em>. The default is <code>homebuttons</code>.</p>
+</li>
+<li>
+<p><code>Discovery Prefix</code> - <em>Home Assistant</em> parameter for MQTT discovery. The default is <code>homeassistant</code>.
+Leave that unchanged if you haven't modified <em>Home Assistant</em>'s configuration.</p>
+</li>
+<li>
+<p><code>Temperature Unit</code> - Either <code>C</code> - Celsius  or <code>F</code> - Fahrenheit.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Enter static IP details (optional):</p>
+<ul>
+<li>
+<p><code>Static IP</code> - IP of <em>Home Buttons</em>. Must be outside the DHCP address range of your router.</p>
+</li>
+<li>
+<p><code>Gateway</code> - The IP address of your router.</p>
+</li>
+<li>
+<p><code>Subnet Mask</code> - Usually <code>255.255.255.0.</code></p>
+</li>
+<li>
+<p><code>Primary DNS Server</code> - If left empty, <code>Gateway</code> IP will be used.</p>
+</li>
+<li>
+<p><code>Secondary DNS Server</code> - If left empty, <code>1.1.1.1</code> will be used.</p>
+</li>
+</ul>
+<blockquote>
+<p>This parameters are optional, but highly recommended, to reduce response time and increase battery life. Especially if you use a WPA-3 network.</p>
+<p>Please double check that the IP address you enter is not already in use by another device on your network.</p>
+</blockquote>
+</li>
+<li>
+<p>Enter button labels</p>
+<blockquote>
+<p>This step is not necessary, you can do it later directly in <em>Home Assistant</em>.</p>
+</blockquote>
+<ul>
+<li><code>Button {1-6} Label</code> - Label that will be displayed next to each button. The order is from top to bottom.</li>
+</ul>
+</li>
+<li>
+<p>Confirm by clicking <code>Save</code>. Device will exit the setup and display button labels.</p>
+</li>
+</ol>
+<blockquote>
+<p>If MQTT connection is not successful, <code>MQTT error</code> will be displayed and <em>Home Buttons</em> will return to welcome screen.
+You can start the setup again by pressing any button. Please make sure to enter correct MQTT parameters.</p>
+</blockquote>
+<h2 id="set-up-home-assistant">Set Up Home Assistant</h2>
+<p><em>Home Buttons</em> uses <em>MQTT Discovery</em> and will appear in <em>Home Assistant</em> automatically.</p>
+<p>To get to the device's page in <em>Home Assistant</em>, click settings in the left side bar, then open <em>Devices &amp; Services</em>, move to the <em>Devices</em> tab and click on the name you gave your <em>Home Buttons</em> in the previous step.</p>
+<p><img alt="Home Assistant Device Page" src="../assets/home_assistant_device.png" width="500" /></p>
+<p>Here you can see <strong>device info</strong>, <strong>sensor readings</strong> and <strong>battery level</strong>. You can also configure <strong>button labels</strong>,  <strong>button actions</strong> and <strong>sensor publish interval</strong>.</p>
+<h3 id="configure-button-labels">Configure Button Labels</h3>
+<p>In the <em>Controls</em> card, enter the button labels that you want to be shown on the e-paper display. The buttons are ordered from top to bottom. Labels will be updated next time you press a button or on the next sensor update interval.</p>
+<p>Labels can be:</p>
+<ol>
+<li><code>Text</code></li>
+<li><em>Icon</em> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span></li>
+<li>Mixed - <code>Text</code> and <em>Icon</em> <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span></li>
+</ol>
+<h4 id="text">Text</h4>
+<p>Enter any text you want. Labels support UTF-8 with special characters. <em>Home Buttons</em> will choose between two font sizes automatically. It can display around <strong>5</strong> letters in large font and around <strong>7</strong> letters in smaller font.</p>
+<h4 id="icons">Icons <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span></h4>
+<p>You can choose any of the <a href="https://materialdesignicons.com/" target="_blank">Material Design Icons</a>. Enter the icon name in the label field in the format <code>mdi:{icon name}</code>. For example, <code>mdi:lightbulb-auto-outline</code>.</p>
+<p>Icons are downloaded from a <em>Github</em> repository. For that purpose an internet connection is required. Once downloaded, the icons are stored permanently on the device. If you do not wish to have <em>Home Buttons</em> connected to the internet, you can set up the icons once and then disable internet access.</p>
+<h4 id="mixed">Mixed</h4>
+<p>In label field, enter: <code>mdi:{icon name} {text}</code>. For example, <code>mdi:lightbulb Bedroom</code>. There must be a single space separating the icon name and the text. Label name must always be first. The actual position of the icon will be before or after the text, based on the location of the button.</p>
+<blockquote>
+<p>Icons are slightly smaller in this mode.</p>
+</blockquote>
+<h3 id="configure-button-actions">Configure Button Actions</h3>
+<p>To configure button actions, click "+" on the <em>Automations</em> card, select one of the buttons and set up an automation with <em>Home Assistant</em>'s editor.</p>
+<p><img alt="Home Assistant Triggers" src="../assets/home_assistant_triggers.png" width="350" /></p>
+<blockquote>
+<p>The expected delay from a button being pressed to the automation being triggered is around 1 second (depending on your network).</p>
+</blockquote>
+<h2 id="mount-to-the-wall">Mount To The Wall</h2>
+<p>Mount the <strong>back cover</strong> of <em>Home Buttons</em> to the wall. There are 2 options:</p>
+<ol>
+<li>
+<p><strong>Screws</strong></p>
+<p>Use two screws (max diameter 4.5 mm) with anchors suitable for your walls (not included).</p>
+</li>
+<li>
+<p><strong>Tape</strong></p>
+<p>Use double sided tape (not included). Use only high quality heavy duty foam mounting tape.
+A small patch of size around 1 x 1 cm in each corner works best.</p>
+</li>
+</ol>
+<blockquote>
+<p>Make sure the arrow is pointing upwards!</p>
+</blockquote>
+<h2 id="other-important-information">Other Important Information</h2>
+<h3 id="charging">Charging</h3>
+<p>The expected battery life is &gt; 1.5 years with a high quality 18650 cell.
+When the battery is getting low, <em>Home Buttons</em> will remind you to charge after pressing a button.
+If the battery gets critically low, the device will turn off.
+The display will show: <code>TURNED OFF PLEASE RECHARGE BATTERY</code>. You can see the remaining battery percentage as a sensor in <em>Home Assistant</em>.</p>
+<p>Plug in any USB-C charger to charge the battery. The expected full charge time is 4 hours.</p>
+<p>When the device is charging, there is a solid line displayed at the bottom of the screen. When charging is done, the line disappears.</p>
+<blockquote>
+<p>For hardware revision &lt;= 2.1 there is no charging indicator. When the battery is fully charged, the display will show <code>FULLY CHARGED</code>.</p>
+</blockquote>
+<h3 id="temperature-humidity">Temperature &amp; Humidity</h3>
+<p><em>Home Buttons</em> includes a high precision temperature and humidity sensor. The readings are taken every few minutes (configurable) and on every button press.
+The values are displayed as sensors in <em>Home Assistant</em>. </p>
+<blockquote>
+<p>You can bring up a display of current temperature, humidity &amp; battery level by pressing any button for 2 seconds.
+The device will automatically revert to showing button labels in 30 seconds. Or do that manually by pressing any button again.</p>
+</blockquote>
+<h2 id="whats-next">What's next?</h2>
+<p>See <a href="../user_guide/">User Guide</a> for further information.</p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2022 - 2023 PLab
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.annotate", "navigation.indexes", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
