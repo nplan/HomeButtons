@@ -53,6 +53,7 @@ from factory_data import FactoryData
 from efuse_tool import burn_efuses
 
 NVS_GEN_PATH = "components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py"
+FLASH_SUCCESS_MARKER = "Hash of data verified."
 
 
 @dataclass
@@ -117,6 +118,27 @@ def generate_nvs(out_file_path, size: str, factory_test_params: FactoryTestSetup
         subprocess.run(tokens, check=True, capture_output=True, text=True)
 
 
+def run_flash_command(tokens):
+    result = subprocess.run(
+        tokens,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    output = result.stdout or ""
+    if result.returncode == 0 or FLASH_SUCCESS_MARKER in output:
+        return
+
+    print(f"esptool failed with exit code {result.returncode}.")
+    if output:
+        output_lines = output.strip().splitlines()
+        tail_lines = output_lines[-20:]
+        if len(output_lines) > len(tail_lines):
+            print("...")
+        print("\n".join(tail_lines))
+    raise SystemExit(result.returncode)
+
+
 def flash_firmware(port: str, baud: int, fw_zip_path: str, test_setup: FactoryTestSetup, spiffs_image_path: str = None):
     with TemporaryDirectory() as tmp_dir:
         # unzip firmware
@@ -141,11 +163,7 @@ def flash_firmware(port: str, baud: int, fw_zip_path: str, test_setup: FactoryTe
         if spiffs_image_path is not None:
             tokens += [partitions["spiffs"]["Offset"], spiffs_image_path]
 
-        try:
-            subprocess.run(tokens, check=True, capture_output=True, text=True)
-        except subprocess.CalledProcessError as e:
-            print(e.stdout)
-            quit()
+        run_flash_command(tokens)
 
 
 if __name__ == "__main__":
@@ -302,7 +320,7 @@ if __name__ == "__main__":
                        test_setup, spiffs_image_path)
         if args.series:
             append_inventory(inventory_path, factory_data)
-        print("DONE.")
+        print("DONE")
     else:
         # auto mode
         jig = HBMiniTestJig(args.jig_serial)
@@ -321,4 +339,4 @@ if __name__ == "__main__":
         jig.green_led_on()
         if args.series:
             append_inventory(inventory_path, factory_data)
-        print("DONE.")
+        print("DONE")
