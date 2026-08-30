@@ -1,0 +1,293 @@
+blueprint:
+  name: Home Buttons Mini
+  author: PLab
+  description: >
+    Assign Home Assistant actions to each button on a Home Buttons Mini
+    (4 buttons, top to bottom).
+
+    Each physical button publishes MQTT device triggers for short, double,
+    triple, and quadruple press. Leave an action empty to ignore that press.
+
+    Long-press is handled locally on the device (info screen / settings) and
+    is not an MQTT device trigger.
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+  input:
+    device:
+      name: Home Buttons Mini
+      description: MQTT device to use (PLab, model Home Buttons Mini).
+      selector:
+        device:
+          filter:
+            - integration: mqtt
+              manufacturer: PLab
+              model: Home Buttons Mini
+    button_1:
+      name: Button 1
+      icon: mdi:numeric-1-box
+      collapsed: true
+      input:
+        button_1_short_press:
+          name: Short press
+          default: []
+          selector:
+            action: {}
+        button_1_double_press:
+          name: Double press
+          default: []
+          selector:
+            action: {}
+        button_1_triple_press:
+          name: Triple press
+          default: []
+          selector:
+            action: {}
+        button_1_quadruple_press:
+          name: Quadruple press
+          default: []
+          selector:
+            action: {}
+    button_2:
+      name: Button 2
+      icon: mdi:numeric-2-box
+      collapsed: true
+      input:
+        button_2_short_press:
+          name: Short press
+          default: []
+          selector:
+            action: {}
+        button_2_double_press:
+          name: Double press
+          default: []
+          selector:
+            action: {}
+        button_2_triple_press:
+          name: Triple press
+          default: []
+          selector:
+            action: {}
+        button_2_quadruple_press:
+          name: Quadruple press
+          default: []
+          selector:
+            action: {}
+    button_3:
+      name: Button 3
+      icon: mdi:numeric-3-box
+      collapsed: true
+      input:
+        button_3_short_press:
+          name: Short press
+          default: []
+          selector:
+            action: {}
+        button_3_double_press:
+          name: Double press
+          default: []
+          selector:
+            action: {}
+        button_3_triple_press:
+          name: Triple press
+          default: []
+          selector:
+            action: {}
+        button_3_quadruple_press:
+          name: Quadruple press
+          default: []
+          selector:
+            action: {}
+    button_4:
+      name: Button 4
+      icon: mdi:numeric-4-box
+      collapsed: true
+      input:
+        button_4_short_press:
+          name: Short press
+          default: []
+          selector:
+            action: {}
+        button_4_double_press:
+          name: Double press
+          default: []
+          selector:
+            action: {}
+        button_4_triple_press:
+          name: Triple press
+          default: []
+          selector:
+            action: {}
+        button_4_quadruple_press:
+          name: Quadruple press
+          default: []
+          selector:
+            action: {}
+
+mode: queued
+max_exceeded: silent
+
+trigger:
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_short_press
+    subtype: button_1
+    id: button_1_short_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_double_press
+    subtype: button_1
+    id: button_1_double_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_triple_press
+    subtype: button_1
+    id: button_1_triple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_quadruple_press
+    subtype: button_1
+    id: button_1_quadruple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_short_press
+    subtype: button_2
+    id: button_2_short_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_double_press
+    subtype: button_2
+    id: button_2_double_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_triple_press
+    subtype: button_2
+    id: button_2_triple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_quadruple_press
+    subtype: button_2
+    id: button_2_quadruple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_short_press
+    subtype: button_3
+    id: button_3_short_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_double_press
+    subtype: button_3
+    id: button_3_double_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_triple_press
+    subtype: button_3
+    id: button_3_triple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_quadruple_press
+    subtype: button_3
+    id: button_3_quadruple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_short_press
+    subtype: button_4
+    id: button_4_short_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_double_press
+    subtype: button_4
+    id: button_4_double_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_triple_press
+    subtype: button_4
+    id: button_4_triple_press
+  - platform: device
+    domain: mqtt
+    device_id: !input device
+    type: button_quadruple_press
+    subtype: button_4
+    id: button_4_quadruple_press
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: button_1_short_press
+        sequence: !input button_1_short_press
+      - conditions:
+          - condition: trigger
+            id: button_1_double_press
+        sequence: !input button_1_double_press
+      - conditions:
+          - condition: trigger
+            id: button_1_triple_press
+        sequence: !input button_1_triple_press
+      - conditions:
+          - condition: trigger
+            id: button_1_quadruple_press
+        sequence: !input button_1_quadruple_press
+      - conditions:
+          - condition: trigger
+            id: button_2_short_press
+        sequence: !input button_2_short_press
+      - conditions:
+          - condition: trigger
+            id: button_2_double_press
+        sequence: !input button_2_double_press
+      - conditions:
+          - condition: trigger
+            id: button_2_triple_press
+        sequence: !input button_2_triple_press
+      - conditions:
+          - condition: trigger
+            id: button_2_quadruple_press
+        sequence: !input button_2_quadruple_press
+      - conditions:
+          - condition: trigger
+            id: button_3_short_press
+        sequence: !input button_3_short_press
+      - conditions:
+          - condition: trigger
+            id: button_3_double_press
+        sequence: !input button_3_double_press
+      - conditions:
+          - condition: trigger
+            id: button_3_triple_press
+        sequence: !input button_3_triple_press
+      - conditions:
+          - condition: trigger
+            id: button_3_quadruple_press
+        sequence: !input button_3_quadruple_press
+      - conditions:
+          - condition: trigger
+            id: button_4_short_press
+        sequence: !input button_4_short_press
+      - conditions:
+          - condition: trigger
+            id: button_4_double_press
+        sequence: !input button_4_double_press
+      - conditions:
+          - condition: trigger
+            id: button_4_triple_press
+        sequence: !input button_4_triple_press
+      - conditions:
+          - condition: trigger
+            id: button_4_quadruple_press
+        sequence: !input button_4_quadruple_press
